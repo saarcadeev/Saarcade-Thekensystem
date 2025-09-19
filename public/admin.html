@@ -11,7 +11,7 @@ saarcade_admin_complete.html
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>âš™ï¸ Saarcade Admin - Demo Dashboard</title>
+    <title>Saarcade Admin - Demo Dashboard</title>
     <meta name="description" content="Admin-Dashboard fÃ¼r Saarcade Kassenwart">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -334,8 +334,8 @@ saarcade_admin_complete.html
 <body>
     <div class="header">
         <div class="demo-badge">DEMO DASHBOARD</div>
-        <h1>âš™ï¸ Saarcade Admin-Dashboard</h1>
-        <p class="subtitle">VollstÃ¤ndige Verwaltung fÃ¼r Kassenwart und Vereinsvorstand</p>
+        <h1>Saarcade Admin-Dashboard</h1>
+        <p class="subtitle">Vollständige Verwaltung für Kassenwart und Vereinsvorstand</p>
     </div>
 
     <div class="container">
@@ -358,18 +358,18 @@ saarcade_admin_complete.html
             </div>
             <div class="stat-card">
                 <div class="stat-number" id="lowStockCount">-</div>
-                <div class="stat-label">Niedrige BestÃ¤nde</div>
+                <div class="stat-label">Niedrige Bestände</div>
                 <div class="stat-detail">Nachbestellen</div>
             </div>
         </div>
 
         <!-- Navigation Tabs -->
         <div class="tabs">
-            <button class="tab active" onclick="showTab('overview')">ðŸ“Š Ãœbersicht</button>
-            <button class="tab" onclick="showTab('users')">ðŸ‘¥ Mitglieder</button>
-            <button class="tab" onclick="showTab('transactions')">ðŸ’° Transaktionen</button>
-            <button class="tab" onclick="showTab('sepa')">ðŸ’³ SEPA-Export</button>
-            <button class="tab" onclick="showTab('inventory')">ðŸ“¦ Inventar</button>
+            <button class="tab active" onclick="showTab('overview')">Übersicht</button>
+            <button class="tab" onclick="showTab('users')">Mitglieder</button>
+            <button class="tab" onclick="showTab('transactions')">Transaktionen</button>
+            <button class="tab" onclick="showTab('sepa')">SEPA-Export</button>
+            <button class="tab" onclick="showTab('inventory')">Inventar</button>
         </div>
 
         <!-- Ãœbersicht Tab -->
@@ -378,17 +378,17 @@ saarcade_admin_complete.html
                 <span style="font-size: 1.5em;">â„¹ï¸</span>
                 <div>
                     <strong>Demo-Status:</strong> Alle Daten sind realistisch aber nur zu Demonstrationszwecken. 
-                    Das System ist vollstÃ¤ndig funktionsfÃ¤hig und bereit fÃ¼r den Produktiveinsatz.
+                    Das System ist vollstÃ¤ndig funktionsfÃ¤hig und bereit für den Produktiveinsatz.
                 </div>
             </div>
 
             <div class="section">
-                <h2>ðŸš€ Schnellaktionen</h2>
+                <h2>Schnellaktionen</h2>
                 <div class="quick-actions">
                     <div class="action-card" onclick="window.open('/kasse', '_blank')">
                         <div class="action-icon">ðŸ›’</div>
                         <h3>Kassen-Interface</h3>
-                        <p>Kassensystem fÃ¼r BarkrÃ¤fte Ã¶ffnen</p>
+                        <p>Kassensystem für Barkräfte öffnen</p>
                     </div>
                     <div class="action-card" onclick="generateSepaExport()">
                         <div class="action-icon">ðŸ’³</div>
@@ -397,8 +397,8 @@ saarcade_admin_complete.html
                     </div>
                     <div class="action-card" onclick="showTab('inventory')">
                         <div class="action-icon">ðŸ“¦</div>
-                        <h3>Inventar prÃ¼fen</h3>
-                        <p>BestÃ¤nde und Nachbestellungen</p>
+                        <h3>Inventar prüfen</h3>
+                        <p>Bestände und Nachbestellungen</p>
                     </div>
                     <div class="action-card" onclick="createBackup()">
                         <div class="action-icon">ðŸ’¾</div>
@@ -409,7 +409,7 @@ saarcade_admin_complete.html
             </div>
 
             <div class="section">
-                <h2>ðŸ“ˆ Aktuelle Trends</h2>
+                <h2>Aktuelle Trends</h2>
                 <div id="trendChart" class="loading">Trend-Daten werden geladen...</div>
             </div>
         </div>
@@ -417,10 +417,10 @@ saarcade_admin_complete.html
         <!-- Mitglieder Tab -->
         <div id="users" class="tab-content">
             <div class="section">
-                <h2>ðŸ‘¥ Mitgliederverwaltung</h2>
+                <h2>Mitgliederverwaltung</h2>
                 <div style="margin-bottom: 20px;">
-                    <button class="btn btn-success" onclick="exportUserList()">ðŸ“Š Mitgliederliste exportieren</button>
-                    <button class="btn btn-warning" onclick="resetAllBalances()">âš ï¸ Alle Salden zurÃ¼cksetzen</button>
+                    <button class="btn btn-success" onclick="exportUserList()">Mitgliederliste exportieren</button>
+                    <button class="btn btn-warning" onclick="resetAllBalances()">Alle Salden zurücksetzen</button>
                 </div>
                 
                 <div style="overflow-x: auto;">
@@ -446,10 +446,10 @@ saarcade_admin_complete.html
         <!-- Transaktionen Tab -->
         <div id="transactions" class="tab-content">
             <div class="section">
-                <h2>ðŸ’° Transaktionshistorie</h2>
+                <h2>Transaktionshistorie</h2>
                 <div style="margin-bottom: 20px;">
                     <button class="btn btn-secondary" onclick="exportTransactions()">ðŸ“Š CSV Export</button>
-                    <button class="btn btn-warning" onclick="clearOldTransactions()">ðŸ—‘ï¸ Alte Transaktionen lÃ¶schen</button>
+                    <button class="btn btn-warning" onclick="clearOldTransactions()">ðŸ—‘ï¸ Alte Transaktionen löschen</button>
                 </div>
                 
                 <div style="overflow-x: auto;">
@@ -475,11 +475,11 @@ saarcade_admin_complete.html
         <!-- SEPA Tab -->
         <div id="sepa" class="tab-content">
             <div class="section">
-                <h2>ðŸ’³ SEPA-Lastschrift Export</h2>
+                <h2>SEPA-Lastschrift Export</h2>
                 
                 <div class="sepa-highlight">
-                    <h3 style="color: #2d5f2d; margin-bottom: 15px;">ðŸ’° Automatischer Lastschrift-Einzug</h3>
-                    <p style="margin-bottom: 20px;">Erstelle SEPA-XML-Dateien fÃ¼r alle Mitglieder mit negativem Saldo und vorhandenem Lastschrift-Mandat.</p>
+                    <h3 style="color: #2d5f2d; margin-bottom: 15px;">Automatischer Lastschrift-Einzug</h3>
+                    <p style="margin-bottom: 20px;">Erstelle SEPA-XML-Dateien für alle Mitglieder mit negativem Saldo und vorhandenem Lastschrift-Mandat.</p>
                     
                     <div class="sepa-summary" id="sepaSummary">
                         <!-- Wird dynamisch gefÃ¼llt -->
@@ -522,8 +522,8 @@ saarcade_admin_complete.html
                 </div>
                 
                 <div style="margin-bottom: 20px;">
-                    <button class="btn btn-secondary" onclick="exportInventory()">ðŸ“Š Inventar exportieren</button>
-                    <button class="btn btn-warning" onclick="updateStockLevels()">ðŸ“¦ BestÃ¤nde aktualisieren</button>
+                    <button class="btn btn-secondary" onclick="exportInventory()">Inventar exportieren</button>
+                    <button class="btn btn-warning" onclick="updateStockLevels()">Bestände aktualisieren</button>
                 </div>
                 
                 <div style="overflow-x: auto;">
