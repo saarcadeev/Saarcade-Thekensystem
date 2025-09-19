@@ -11,8 +11,8 @@ saarcade_kasse_interface.html
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ðŸŽ® Saarcade Kasse - Demo</title>
-    <meta name="description" content="Kassensystem fÃ¼r Saarcade e.V. BarkrÃ¤fte">
+    <title>Saarcade Kasse - Demo</title>
+    <meta name="description" content="Kassensystem für Saarcade e.V. Barkräfte">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -568,11 +568,11 @@ saarcade_kasse_interface.html
 
                 <div class="category-tabs">
                     <button class="category-tab active" onclick="filterProducts('all')">Alle</button>
-                    <button class="category-tab" onclick="filterProducts('bier')">ðŸº Bier</button>
-                    <button class="category-tab" onclick="filterProducts('softdrinks')">ðŸ¥¤ Softdrinks</button>
-                    <button class="category-tab" onclick="filterProducts('schnaps')">ðŸ¥ƒ Spirituosen</button>
-                    <button class="category-tab" onclick="filterProducts('snacks')">ðŸ¿ Snacks</button>
-                    <button class="category-tab" onclick="filterProducts('heissgetraenke')">â˜• HeiÃŸgetrÃ¤nke</button>
+                    <button class="category-tab" onclick="filterProducts('bier')">Bier</button>
+                    <button class="category-tab" onclick="filterProducts('softdrinks')">Softdrinks</button>
+                    <button class="category-tab" onclick="filterProducts('schnaps')">Spirituosen</button>
+                    <button class="category-tab" onclick="filterProducts('snacks')">Snacks</button>
+                    <button class="category-tab" onclick="filterProducts('heissgetraenke')">Heißgetränke</button>
                 </div>
 
                 <div class="products-grid" id="productsGrid">
@@ -581,13 +581,13 @@ saarcade_kasse_interface.html
             </div>
 
             <div class="cart-section">
-                <h2 style="font-size: 1.4em; margin: 0; color: #2d3748;">ðŸ›’ Warenkorb</h2>
+                <h2 style="font-size: 1.4em; margin: 0; color: #2d3748;">Warenkorb</h2>
                 
                 <div class="cart-items" id="cartItems">
                     <div style="text-align: center; color: #718096; margin: 20px 0;">
                         <div style="font-size: 3em; margin-bottom: 10px;">ðŸ›’</div>
                         <p>Warenkorb ist leer</p>
-                        <p style="font-size: 0.9em;">Produkte durch Klicken hinzufÃ¼gen</p>
+                        <p style="font-size: 0.9em;">Produkte durch Klicken hinzufügen</p>
                     </div>
                 </div>
                 
@@ -601,7 +601,7 @@ saarcade_kasse_interface.html
                         ðŸ”„ Neue Session
                     </button>
                     <button class="btn" onclick="window.open('/', '_blank')" style="background: linear-gradient(135deg, #38a169, #2f855a);">
-                        ðŸ  ZurÃ¼ck zur Startseite
+                        ðŸ  Zurück zur Startseite
                     </button>
                 </div>
             </div>
@@ -697,7 +697,7 @@ saarcade_kasse_interface.html
 
                     if (user) {
                         this.selectUser(user);
-                        this.showStatus(`Willkommen ${user.full_name}! Jetzt Produkte auswÃ¤hlen.`, 'success');
+                        this.showStatus(`Willkommen ${user.full_name}! Jetzt Produkte auswählen.`, 'success');
                         this.updateScannerState('product');
                     } else {
                         this.showStatus('Mitglied nicht gefunden. Bitte erneut versuchen.', 'error');
@@ -712,7 +712,7 @@ saarcade_kasse_interface.html
                             this.addToCart(product);
                             this.showStatus(`${product.name} hinzugefÃ¼gt (${this.getCurrentPrice(product).toFixed(2)}â‚¬)`, 'success');
                         } else {
-                            this.showStatus('Produkt nicht gefunden oder nicht verfÃ¼gbar', 'error');
+                            this.showStatus('Produkt nicht gefunden oder nicht verfügbar', 'error');
                         }
                     } catch (error) {
                         this.showStatus('Fehler bei der Produktsuche: ' + error.message, 'error');
@@ -723,7 +723,7 @@ saarcade_kasse_interface.html
             selectUser(user) {
                 this.currentUser = user;
                 this.updateUI();
-                console.log('âœ… Benutzer ausgewÃ¤hlt:', user.full_name);
+                console.log('âœ… Benutzer ausgewählt:', user.full_name);
             }
 
             addToCart(product) {
@@ -807,7 +807,7 @@ saarcade_kasse_interface.html
                         if (!this.currentUser.stay_active) {
                             setTimeout(() => {
                                 this.resetSession();
-                                this.showStatus('Benutzer abgemeldet - NÃ¤chsten Mitgliedsausweis scannen', 'info');
+                                this.showStatus('Benutzer abgemeldet - Nächsten Mitgliedsausweis scannen', 'info');
                             }, 2000);
                         }
                     } else {
@@ -865,7 +865,7 @@ saarcade_kasse_interface.html
                         <div style="text-align: center; color: #718096; margin: 20px 0;">
                             <div style="font-size: 3em; margin-bottom: 10px;">ðŸ›’</div>
                             <p>Warenkorb ist leer</p>
-                            <p style="font-size: 0.9em;">Produkte durch Klicken hinzufÃ¼gen</p>
+                            <p style="font-size: 0.9em;">Produkte durch Klicken hinzufügen</p>
                         </div>
                     `;
                     cartTotalDiv.style.display = 'none';
