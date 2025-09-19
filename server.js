@@ -13,6 +13,11 @@ const helmet = require('helmet');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+   app.use((req, res, next) => {
+       res.setHeader('Content-Type', 'text/html; charset=utf-8');
+       next();
+   });
+
 // ============ MIDDLEWARE SETUP ============
 app.use(helmet({
     contentSecurityPolicy: {
