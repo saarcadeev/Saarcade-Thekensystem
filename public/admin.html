@@ -363,6 +363,8 @@
         <!-- Navigation Tabs -->
         <div class="tabs">
             <button class="tab active" onclick="showTab('users')">👥 Mitglieder</button>
+            <button class="tab" onclick="showTab('transactions')">💰 Transaktionen</button>
+            <button class="tab" onclick="showTab('sepa')">💳 SEPA-Export</button>
             <button class="tab" onclick="showTab('inventory')">📦 Inventar</button>
             <button class="tab" onclick="showTab('settings')">⚙️ Einstellungen</button>
         </div>
@@ -394,6 +396,121 @@
                                 <th>Saldo</th>
                                 <th>SEPA</th>
                                 <th>Aktionen</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Wird dynamisch gefüllt -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transaktionen Tab -->
+        <div id="transactions" class="tab-content">
+            <div class="section">
+                <h2>💰 Transaktionsverlauf</h2>
+                
+                <div class="toolbar">
+                    <button class="btn btn-success" onclick="exportTransactions()">
+                        📊 Transaktionen exportieren
+                    </button>
+                    <button class="btn btn-secondary" onclick="loadTransactions()">
+                        🔄 Aktualisieren
+                    </button>
+                    <button class="btn btn-warning" onclick="clearOldTransactions()">
+                        🗑️ Alte Transaktionen löschen
+                    </button>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="font-weight: 600; margin-right: 10px;">Zeitraum:</label>
+                    <input type="date" id="transactionDateFrom" style="margin-right: 10px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    <span style="margin: 0 10px;">bis</span>
+                    <input type="date" id="transactionDateTo" style="margin-right: 15px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    <button class="btn btn-secondary" onclick="filterTransactions()" style="padding: 8px 15px;">
+                        🔍 Filtern
+                    </button>
+                </div>
+                
+                <div style="overflow-x: auto;">
+                    <table class="data-table" id="transactionTable">
+                        <thead>
+                            <tr>
+                                <th>Datum/Zeit</th>
+                                <th>Benutzer</th>
+                                <th>Artikel</th>
+                                <th>Menge</th>
+                                <th>Einzelpreis</th>
+                                <th>Gesamtbetrag</th>
+                                <th>Zahlart</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Wird dynamisch gefüllt -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div id="transactionSummary" style="margin-top: 20px; padding: 20px; background: #f7fafc; border-radius: 10px;">
+                    <!-- Wird dynamisch gefüllt -->
+                </div>
+            </div>
+        </div>
+
+        <!-- SEPA Tab -->
+        <div id="sepa" class="tab-content">
+            <div class="section">
+                <h2>💳 SEPA-Lastschriften</h2>
+                
+                <div class="alert alert-info">
+                    <span>ℹ️</span>
+                    <div>
+                        <strong>SEPA-Export bereit:</strong> Alle Mitglieder mit negativem Saldo und aktivem SEPA-Mandat können abgebucht werden.
+                    </div>
+                </div>
+                
+                <div class="dashboard-grid" style="margin-bottom: 30px;">
+                    <div class="stat-card">
+                        <div class="stat-number" id="sepaUserCount">0</div>
+                        <div class="stat-label">Benutzer mit SEPA</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="sepaAmount">0.00€</div>
+                        <div class="stat-label">Gesamtbetrag</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="sepaDueDate">-</div>
+                        <div class="stat-label">Fälligkeitsdatum</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="sepaFileCount">0</div>
+                        <div class="stat-label">Heute erstellt</div>
+                    </div>
+                </div>
+                
+                <div class="toolbar">
+                    <button class="btn btn-success" onclick="downloadSepaFile()" id="sepaDownloadBtn">
+                        💾 SEPA-XML herunterladen
+                    </button>
+                    <button class="btn btn-warning" onclick="previewSepaFile()">
+                        👁️ Vorschau anzeigen
+                    </button>
+                    <button class="btn btn-secondary" onclick="updateSepaDueDate()">
+                        📅 Fälligkeitsdatum ändern
+                    </button>
+                </div>
+                
+                <div style="overflow-x: auto; margin-top: 20px;">
+                    <table class="data-table" id="sepaTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>IBAN</th>
+                                <th>Betrag</th>
+                                <th>Mandat-ID</th>
+                                <th>Status</th>
+                                <th>Letzte Abbuchung</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -681,11 +798,11 @@
     <script>
         // ============ DATENSTRUKTUREN ============
         let users = [
-            { id: 1, firstName: 'Max', lastName: 'Mustermann', role: 'member', barcode: 'SAAR001', balance: -15.50, sepa: true, email: 'max@example.com' },
-            { id: 2, firstName: 'Anna', lastName: 'Schmidt', role: 'member', barcode: 'SAAR002', balance: -8.20, sepa: true, email: 'anna@example.com' },
-            { id: 3, firstName: 'Tom', lastName: 'Wagner', role: 'bartender', barcode: 'SAAR003', balance: 2.40, sepa: false, email: 'tom@example.com' },
-            { id: 4, firstName: 'Sarah', lastName: 'Klein', role: 'member', barcode: 'SAAR004', balance: -12.30, sepa: true, email: 'sarah@example.com' },
-            { id: 5, firstName: 'Gast', lastName: 'Benutzer', role: 'guest', barcode: 'GUEST001', balance: 0.00, sepa: false, email: '' }
+            { id: 1, firstName: 'Max', lastName: 'Mustermann', role: 'member', barcode: 'SAAR001', balance: -15.50, sepa: true, email: 'max@example.com', iban: 'DE89 3704 0044 0532 0130 00', mandateId: 'SEPA-001', lastDebit: '2024-08-15' },
+            { id: 2, firstName: 'Anna', lastName: 'Schmidt', role: 'member', barcode: 'SAAR002', balance: -8.20, sepa: true, email: 'anna@example.com', iban: 'DE12 3004 0033 0200 0001 23', mandateId: 'SEPA-002', lastDebit: '2024-08-15' },
+            { id: 3, firstName: 'Tom', lastName: 'Wagner', role: 'bartender', barcode: 'SAAR003', balance: 2.40, sepa: false, email: 'tom@example.com', iban: '', mandateId: '', lastDebit: '' },
+            { id: 4, firstName: 'Sarah', lastName: 'Klein', role: 'member', barcode: 'SAAR004', balance: -12.30, sepa: true, email: 'sarah@example.com', iban: 'DE45 5007 0010 0987 6543 21', mandateId: 'SEPA-004', lastDebit: '2024-08-15' },
+            { id: 5, firstName: 'Gast', lastName: 'Benutzer', role: 'guest', barcode: 'GUEST001', balance: 0.00, sepa: false, email: '', iban: '', mandateId: '', lastDebit: '' }
         ];
 
         let products = [
@@ -698,14 +815,33 @@
             { id: 7, name: 'Kaffee', category: 'heissgetraenke', emoji: '☕', memberPrice: 1.00, guestPrice: 1.50, stock: 1, minStock: 20, available: true, barcode: '4008400123457' }
         ];
 
+        // Mock-Transaktionsdaten
+        let transactions = [
+            { id: 1, date: '2024-09-20 14:30', userId: 1, userName: 'Max Mustermann', productId: 1, productName: 'Augustiner Helles', quantity: 2, price: 2.50, total: 5.00, paymentType: 'account' },
+            { id: 2, date: '2024-09-20 14:15', userId: 2, userName: 'Anna Schmidt', productId: 3, productName: 'Coca Cola', quantity: 1, price: 1.50, total: 1.50, paymentType: 'account' },
+            { id: 3, date: '2024-09-20 14:15', userId: 2, userName: 'Anna Schmidt', productId: 2, productName: 'Erdinger Weissbier', quantity: 1, price: 2.80, total: 2.80, paymentType: 'account' },
+            { id: 4, date: '2024-09-20 13:45', userId: 4, userName: 'Sarah Klein', productId: 5, productName: 'Jägermeister', quantity: 1, price: 3.50, total: 3.50, paymentType: 'account' },
+            { id: 5, date: '2024-09-20 13:45', userId: 4, userName: 'Sarah Klein', productId: 6, productName: 'Erdnüsse', quantity: 2, price: 2.00, total: 4.00, paymentType: 'account' },
+            { id: 6, date: '2024-09-20 13:20', userId: 3, userName: 'Tom Wagner', productId: 4, productName: 'Sprite', quantity: 2, price: 1.50, total: 3.00, paymentType: 'account' },
+            { id: 7, date: '2024-09-19 19:30', userId: 1, userName: 'Max Mustermann', productId: 1, productName: 'Augustiner Helles', quantity: 3, price: 2.50, total: 7.50, paymentType: 'account' },
+            { id: 8, date: '2024-09-19 18:45', userId: 2, userName: 'Anna Schmidt', productId: 3, productName: 'Coca Cola', quantity: 2, price: 1.50, total: 3.00, paymentType: 'account' },
+            { id: 9, date: '2024-09-19 17:15', userId: 4, userName: 'Sarah Klein', productId: 2, productName: 'Erdinger Weissbier', quantity: 1, price: 2.80, total: 2.80, paymentType: 'account' }
+        ];
+
         let nextUserId = 6;
         let nextProductId = 8;
+        let nextTransactionId = 10;
+        let sepaDueDate = new Date();
+        sepaDueDate.setDate(sepaDueDate.getDate() + 3); // 3 Tage in der Zukunft
 
         // ============ INITIALISIERUNG ============
         document.addEventListener('DOMContentLoaded', function() {
             updateDashboard();
             renderUsers();
             renderProducts();
+            renderTransactions();
+            renderSepaData();
+            initializeDateFilters();
             console.log('✅ Admin-Dashboard geladen');
         });
 
@@ -1160,6 +1296,345 @@
             } else {
                 const message = `${lowStockProducts.length} Produkte haben niedrige Bestände:\n\n${lowStockProducts.map(p => `• ${p.name}: ${p.stock} (Min: ${p.minStock})`).join('\n')}`;
                 alert(message);
+            }
+        }
+
+        // ============ TRANSAKTIONS-VERWALTUNG ============
+        function renderTransactions() {
+            const tbody = document.querySelector('#transactionTable tbody');
+            tbody.innerHTML = '';
+            
+            // Sortiere nach Datum (neueste zuerst)
+            const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            sortedTransactions.forEach(transaction => {
+                const row = document.createElement('tr');
+                const date = new Date(transaction.date);
+                const formattedDate = date.toLocaleString('de-DE');
+                const paymentIcon = transaction.paymentType === 'cash' ? '💵' : '💳';
+                
+                row.innerHTML = `
+                    <td>${formattedDate}</td>
+                    <td>${transaction.userName}</td>
+                    <td>${transaction.productName}</td>
+                    <td>${transaction.quantity}x</td>
+                    <td>${transaction.price.toFixed(2)}€</td>
+                    <td style="font-weight: bold;">${transaction.total.toFixed(2)}€</td>
+                    <td>${paymentIcon} ${transaction.paymentType === 'cash' ? 'Bar' : 'Konto'}</td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            updateTransactionSummary();
+        }
+
+        function updateTransactionSummary() {
+            const today = new Date().toDateString();
+            const todayTransactions = transactions.filter(t => new Date(t.date).toDateString() === today);
+            const totalToday = todayTransactions.reduce((sum, t) => sum + t.total, 0);
+            const totalAll = transactions.reduce((sum, t) => sum + t.total, 0);
+            
+            document.getElementById('transactionSummary').innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 2em; font-weight: bold; color: #667eea;">${todayTransactions.length}</div>
+                        <div>Transaktionen heute</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 2em; font-weight: bold; color: #38a169;">${totalToday.toFixed(2)}€</div>
+                        <div>Umsatz heute</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 2em; font-weight: bold; color: #667eea;">${transactions.length}</div>
+                        <div>Transaktionen gesamt</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 2em; font-weight: bold; color: #38a169;">${totalAll.toFixed(2)}€</div>
+                        <div>Umsatz gesamt</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function exportTransactions() {
+            const csv = convertToCSV(transactions, ['date', 'userName', 'productName', 'quantity', 'price', 'total', 'paymentType']);
+            downloadCSV(csv, 'transaktionen.csv');
+            showAlert('Transaktionen exportiert', 'success');
+        }
+
+        function loadTransactions() {
+            // In Produktivversion: API-Call
+            renderTransactions();
+            showAlert('Transaktionen aktualisiert', 'info');
+        }
+
+        function clearOldTransactions() {
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - 30); // 30 Tage alt
+            
+            const oldCount = transactions.filter(t => new Date(t.date) < cutoffDate).length;
+            
+            if (oldCount === 0) {
+                showAlert('Keine alten Transaktionen gefunden', 'info');
+                return;
+            }
+            
+            if (confirm(`${oldCount} Transaktionen älter als 30 Tage löschen?`)) {
+                transactions = transactions.filter(t => new Date(t.date) >= cutoffDate);
+                renderTransactions();
+                showAlert(`${oldCount} alte Transaktionen gelöscht`, 'success');
+            }
+        }
+
+        function filterTransactions() {
+            const fromDate = document.getElementById('transactionDateFrom').value;
+            const toDate = document.getElementById('transactionDateTo').value;
+            
+            if (!fromDate || !toDate) {
+                showAlert('Bitte beide Datumsfelder ausfüllen', 'error');
+                return;
+            }
+            
+            const filteredTransactions = transactions.filter(t => {
+                const transactionDate = new Date(t.date).toDateString();
+                const from = new Date(fromDate).toDateString();
+                const to = new Date(toDate).toDateString();
+                return transactionDate >= from && transactionDate <= to;
+            });
+            
+            // Temporär gefilterte Daten anzeigen
+            const originalTransactions = [...transactions];
+            transactions = filteredTransactions;
+            renderTransactions();
+            transactions = originalTransactions;
+            
+            showAlert(`${filteredTransactions.length} Transaktionen im gewählten Zeitraum`, 'info');
+        }
+
+        function initializeDateFilters() {
+            const today = new Date().toISOString().split('T')[0];
+            const firstOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+            
+            document.getElementById('transactionDateFrom').value = firstOfMonth;
+            document.getElementById('transactionDateTo').value = today;
+        }
+
+        // ============ SEPA-VERWALTUNG ============
+        function renderSepaData() {
+            const sepaUsers = users.filter(u => u.sepa && u.balance < 0);
+            const totalAmount = sepaUsers.reduce((sum, u) => sum + Math.abs(u.balance), 0);
+            const dueDate = sepaDueDate.toLocaleDateString('de-DE');
+            
+            // Update Summary Cards
+            document.getElementById('sepaUserCount').textContent = sepaUsers.length;
+            document.getElementById('sepaAmount').textContent = totalAmount.toFixed(2) + '€';
+            document.getElementById('sepaDueDate').textContent = dueDate;
+            document.getElementById('sepaFileCount').textContent = '0'; // Demo
+            
+            // Render Table
+            const tbody = document.querySelector('#sepaTable tbody');
+            tbody.innerHTML = '';
+            
+            sepaUsers.forEach(user => {
+                const row = document.createElement('tr');
+                const amount = Math.abs(user.balance);
+                const lastDebit = user.lastDebit ? new Date(user.lastDebit).toLocaleDateString('de-DE') : 'Noch nie';
+                
+                row.innerHTML = `
+                    <td>${user.firstName} ${user.lastName}</td>
+                    <td>${user.iban || 'Keine IBAN'}</td>
+                    <td style="font-weight: bold; color: #e53e3e;">${amount.toFixed(2)}€</td>
+                    <td>${user.mandateId || 'Kein Mandat'}</td>
+                    <td><span style="color: #38a169;">✅ Bereit</span></td>
+                    <td>${lastDebit}</td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            // Enable/Disable Download Button
+            document.getElementById('sepaDownloadBtn').disabled = sepaUsers.length === 0;
+        }
+
+        function downloadSepaFile() {
+            const sepaUsers = users.filter(u => u.sepa && u.balance < 0);
+            
+            if (sepaUsers.length === 0) {
+                showAlert('Keine Benutzer für SEPA-Export verfügbar', 'error');
+                return;
+            }
+            
+            const sepaXml = generateSepaXML(sepaUsers);
+            const blob = new Blob([sepaXml], { type: 'application/xml' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `SEPA_Saarcade_${new Date().toISOString().split('T')[0]}.xml`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            // Update last debit date
+            sepaUsers.forEach(user => {
+                user.lastDebit = new Date().toISOString().split('T')[0];
+                user.balance = 0.00; // Reset balance after SEPA
+            });
+            
+            renderUsers();
+            renderSepaData();
+            updateDashboard();
+            
+            showAlert(`SEPA-Datei mit ${sepaUsers.length} Lastschriften erstellt`, 'success');
+        }
+
+        function generateSepaXML(sepaUsers) {
+            const totalAmount = sepaUsers.reduce((sum, u) => sum + Math.abs(u.balance), 0);
+            const msgId = `SAARCADE${Date.now()}`;
+            const creationDate = new Date().toISOString();
+            const dueDate = sepaDueDate.toISOString().split('T')[0];
+            
+            let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.008.001.02">
+    <CstmrDrctDbtInitn>
+        <GrpHdr>
+            <MsgId>${msgId}</MsgId>
+            <CreDtTm>${creationDate}</CreDtTm>
+            <NbOfTxs>${sepaUsers.length}</NbOfTxs>
+            <CtrlSum>${totalAmount.toFixed(2)}</CtrlSum>
+            <InitgPty>
+                <Nm>Saarcade e.V.</Nm>
+                <Id>
+                    <OrgId>
+                        <Othr>
+                            <Id>DE98ZZZ09999999999</Id>
+                        </Othr>
+                    </OrgId>
+                </Id>
+            </InitgPty>
+        </GrpHdr>
+        <PmtInf>
+            <PmtInfId>PMTINF-${Date.now()}</PmtInfId>
+            <PmtMtd>DD</PmtMtd>
+            <NbOfTxs>${sepaUsers.length}</NbOfTxs>
+            <CtrlSum>${totalAmount.toFixed(2)}</CtrlSum>
+            <PmtTpInf>
+                <SvcLvl>
+                    <Cd>SEPA</Cd>
+                </SvcLvl>
+                <LclInstrm>
+                    <Cd>CORE</Cd>
+                </LclInstrm>
+                <SeqTp>RCUR</SeqTp>
+            </PmtTpInf>
+            <ReqdColltnDt>${dueDate}</ReqdColltnDt>
+            <Cdtr>
+                <Nm>Saarcade e.V.</Nm>
+            </Cdtr>
+            <CdtrAcct>
+                <Id>
+                    <IBAN>DE89370400440532013000</IBAN>
+                </Id>
+            </CdtrAcct>
+            <CdtrAgt>
+                <FinInstnId>
+                    <BIC>COBADEFFXXX</BIC>
+                </FinInstnId>
+            </CdtrAgt>
+            <CdtrSchmeId>
+                <Id>
+                    <PrvtId>
+                        <Othr>
+                            <Id>DE98ZZZ09999999999</Id>
+                            <SchmeNm>
+                                <Prtry>SEPA</Prtry>
+                            </SchmeNm>
+                        </Othr>
+                    </PrvtId>
+                </Id>
+            </CdtrSchmeId>`;
+            
+            sepaUsers.forEach((user, index) => {
+                const amount = Math.abs(user.balance);
+                xml += `
+            <DrctDbtTxInf>
+                <PmtId>
+                    <EndToEndId>TXN-${Date.now()}-${index + 1}</EndToEndId>
+                </PmtId>
+                <InstdAmt Ccy="EUR">${amount.toFixed(2)}</InstdAmt>
+                <DrctDbtTx>
+                    <MndtRltdInf>
+                        <MndtId>${user.mandateId}</MndtId>
+                        <DtOfSgntr>2024-01-01</DtOfSgntr>
+                    </MndtRltdInf>
+                </DrctDbtTx>
+                <DbtrAgt>
+                    <FinInstnId>
+                        <Othr>
+                            <Id>NOTPROVIDED</Id>
+                        </Othr>
+                    </FinInstnId>
+                </DbtrAgt>
+                <Dbtr>
+                    <Nm>${user.firstName} ${user.lastName}</Nm>
+                </Dbtr>
+                <DbtrAcct>
+                    <Id>
+                        <IBAN>${user.iban.replace(/\s/g, '')}</IBAN>
+                    </Id>
+                </DbtrAcct>
+                <RmtInf>
+                    <Ustrd>Saarcade Kassenabrechnng</Ustrd>
+                </RmtInf>
+            </DrctDbtTxInf>`;
+            });
+            
+            xml += `
+        </PmtInf>
+    </CstmrDrctDbtInitn>
+</Document>`;
+            
+            return xml;
+        }
+
+        function previewSepaFile() {
+            const sepaUsers = users.filter(u => u.sepa && u.balance < 0);
+            
+            if (sepaUsers.length === 0) {
+                showAlert('Keine Benutzer für SEPA-Export verfügbar', 'error');
+                return;
+            }
+            
+            const totalAmount = sepaUsers.reduce((sum, u) => sum + Math.abs(u.balance), 0);
+            const dueDate = sepaDueDate.toLocaleDateString('de-DE');
+            
+            let preview = `SEPA-Lastschrift Vorschau\n`;
+            preview += `========================\n\n`;
+            preview += `Fälligkeitsdatum: ${dueDate}\n`;
+            preview += `Anzahl Lastschriften: ${sepaUsers.length}\n`;
+            preview += `Gesamtbetrag: ${totalAmount.toFixed(2)}€\n\n`;
+            preview += `Details:\n--------\n`;
+            
+            sepaUsers.forEach((user, index) => {
+                const amount = Math.abs(user.balance);
+                preview += `${index + 1}. ${user.firstName} ${user.lastName}\n`;
+                preview += `   IBAN: ${user.iban}\n`;
+                preview += `   Betrag: ${amount.toFixed(2)}€\n`;
+                preview += `   Mandat: ${user.mandateId}\n\n`;
+            });
+            
+            alert(preview);
+        }
+
+        function updateSepaDueDate() {
+            const newDate = prompt('Neues Fälligkeitsdatum (YYYY-MM-DD):', sepaDueDate.toISOString().split('T')[0]);
+            
+            if (newDate && !isNaN(new Date(newDate))) {
+                sepaDueDate = new Date(newDate);
+                renderSepaData();
+                showAlert('Fälligkeitsdatum aktualisiert', 'success');
+            } else if (newDate) {
+                showAlert('Ungültiges Datum', 'error');
             }
         }
 
