@@ -1,102 +1,659 @@
-// Debug-Script für Kassensystem - In Browser-Console einfügen
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 Saarcade Kasse - Robust</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-console.log('=== KASSENSYSTEM DEBUG ===');
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            padding: 20px;
+        }
 
-// 1. Grundlegende Elemente prüfen
-const barcodeInput = document.getElementById('barcodeInput');
-const userDropdown = document.getElementById('userDropdown');
-const scannerCompact = document.getElementById('scannerCompact');
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
 
-console.log('📋 Element-Check:');
-console.log('- Barcode Input:', barcodeInput ? '✅' : '❌');
-console.log('- User Dropdown:', userDropdown ? '✅' : '❌');
-console.log('- Scanner Compact:', scannerCompact ? '✅' : '❌');
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
 
-// 2. Globale Variablen prüfen
-console.log('📋 Variable-Check:');
-console.log('- window.kasse:', window.kasse ? '✅' : '❌');
-console.log('- users array:', Array.isArray(users) ? `✅ (${users.length} Benutzer)` : '❌');
-console.log('- products array:', Array.isArray(products) ? `✅ (${products.length} Produkte)` : '❌');
+        .scanner-area {
+            display: grid;
+            grid-template-columns: 1fr 200px;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
 
-// 3. Event-Listener testen
-console.log('📋 Event-Listener-Test:');
-if (barcodeInput) {
-    console.log('- Input Events:', barcodeInput._events ? '✅' : '❌');
-}
+        .input-container {
+            position: relative;
+        }
 
-// 4. Dropdown-Test
-function testDropdown() {
-    console.log('🧪 Testing Dropdown...');
-    
-    if (!userDropdown) {
-        console.error('❌ Dropdown-Element nicht gefunden!');
-        return;
-    }
-    
-    // Test-HTML einfügen
-    userDropdown.innerHTML = `
-        <div class="user-dropdown-item" data-user-id="1">
-            <div class="user-dropdown-avatar">M</div>
-            <div class="user-dropdown-info">
-                <div class="user-dropdown-name">👥 Max Mustermann</div>
-                <div class="user-dropdown-details">Mitglied • -15.50€</div>
+        #barcodeInput {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 1.2em;
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            outline: none;
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+        }
+
+        #barcodeInput:focus {
+            border-color: #38a169;
+            box-shadow: 0 0 0 3px rgba(56, 161, 105, 0.2);
+        }
+
+        .user-info {
+            background: linear-gradient(135deg, #a0aec0, #718096);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .user-info.member { background: linear-gradient(135deg, #48bb78, #38a169); }
+        .user-info.guest { background: linear-gradient(135deg, #f6ad55, #ed8936); }
+        .user-info.bartender { background: linear-gradient(135deg, #9f7aea, #805ad5); }
+
+        .user-name {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        .user-balance {
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+
+        /* EINFACHER DROPDOWN */
+        .dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            margin-top: 5px;
+        }
+
+        .dropdown-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dropdown-item:hover {
+            background: #f7fafc;
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-avatar {
+            width: 35px;
+            height: 35px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .dropdown-info {
+            flex: 1;
+        }
+
+        .dropdown-name {
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        .dropdown-details {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .status-message {
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-weight: 600;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .status-message.show { opacity: 1; }
+        .status-message.success { background: #c6f6d5; color: #1a202c; border-left: 4px solid #38a169; }
+        .status-message.error { background: #fed7d7; color: #1a202c; border-left: 4px solid #e53e3e; }
+        .status-message.info { background: #bee3f8; color: #1a202c; border-left: 4px solid #3182ce; }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+        }
+
+        .products-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+
+        .no-user-message {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .product-card {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .product-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .product-card.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .product-emoji {
+            font-size: 2.5em;
+            margin-bottom: 8px;
+        }
+
+        .product-name {
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+
+        .product-price {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .cart-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+
+        .cart-items {
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 15px 0;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #f7fafc;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .cart-total {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+
+        .cart-total:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: #e53e3e;
+        }
+
+        .btn-danger:hover {
+            background: #c53030;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            .scanner-area {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 style="text-align: center; color: #2d3748; margin-bottom: 20px;">🎮 Saarcade Kassensystem</h1>
+            
+            <div class="status-message" id="statusMessage"></div>
+            
+            <div class="scanner-area">
+                <div class="input-container">
+                    <input type="text" id="barcodeInput" placeholder="Mitglied scannen oder Namen eingeben..." autocomplete="off">
+                    <div class="dropdown" id="userDropdown" style="display: none;"></div>
+                </div>
+                
+                <div class="user-info" id="userInfo">
+                    <div class="user-name">Kein Benutzer</div>
+                    <div class="user-balance">Bitte scannen</div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; font-size: 0.9em; color: #666;">
+                <strong>Demo-Codes:</strong> SAAR001 (Max), SAAR002 (Anna), SAAR003 (Tom), GUEST001 (Gast)
             </div>
         </div>
-    `;
-    
-    userDropdown.classList.add('show');
-    console.log('✅ Test-Dropdown angezeigt');
-    
-    // Click-Test
-    const testItem = userDropdown.querySelector('.user-dropdown-item');
-    if (testItem) {
-        testItem.addEventListener('click', () => {
-            console.log('✅ Dropdown-Click funktioniert!');
-            console.log('User ID:', testItem.dataset.userId);
+
+        <div class="main-content">
+            <div class="products-section">
+                <h2>Produkte</h2>
+                
+                <div id="noUserMessage" class="no-user-message">
+                    <div style="font-size: 3em; margin-bottom: 15px;">👤</div>
+                    <h3>Bitte zuerst Mitglied auswählen</h3>
+                    <p>Barcode scannen oder Namen eingeben</p>
+                </div>
+                
+                <div class="products-grid" id="productsGrid" style="display: none;">
+                    <!-- Produkte werden hier eingefügt -->
+                </div>
+            </div>
+
+            <div class="cart-section">
+                <h2>🛒 Warenkorb</h2>
+                
+                <div class="cart-items" id="cartItems">
+                    <div style="text-align: center; color: #666; padding: 20px;">
+                        Warenkorb ist leer
+                    </div>
+                </div>
+                
+                <div id="cartTotal" style="display: none;"></div>
+                
+                <div>
+                    <button class="btn btn-danger" onclick="clearCart()" id="clearBtn" disabled>🗑️ Leeren</button>
+                    <button class="btn" onclick="resetSession()">🔄 Neue Session</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ EINFACHE GLOBALE VARIABLEN ============
+        let currentUser = null;
+        let cart = [];
+        let searchTimeout = null;
+
+        // Mock-Daten (robuste Fallback-Daten)
+        const USERS = [
+            { id: 1, firstName: 'Max', lastName: 'Mustermann', fullName: 'Max Mustermann', role: 'member', barcode: 'SAAR001', balance: -15.50 },
+            { id: 2, firstName: 'Anna', lastName: 'Schmidt', fullName: 'Anna Schmidt', role: 'member', barcode: 'SAAR002', balance: -8.20 },
+            { id: 3, firstName: 'Tom', lastName: 'Wagner', fullName: 'Tom Wagner', role: 'bartender', barcode: 'SAAR003', balance: 2.40 },
+            { id: 4, firstName: 'Sarah', lastName: 'Klein', fullName: 'Sarah Klein', role: 'member', barcode: 'SAAR004', balance: -12.30 },
+            { id: 5, firstName: 'Gast', lastName: 'Benutzer', fullName: 'Gast Benutzer', role: 'guest', barcode: 'GUEST001', balance: 0.00 }
+        ];
+
+        const PRODUCTS = [
+            { id: 1, name: 'Augustiner Helles', memberPrice: 2.50, guestPrice: 3.00, emoji: '🍺' },
+            { id: 2, name: 'Erdinger Weissbier', memberPrice: 2.80, guestPrice: 3.30, emoji: '🍺' },
+            { id: 3, name: 'Coca Cola', memberPrice: 1.50, guestPrice: 2.00, emoji: '🥤' },
+            { id: 4, name: 'Sprite', memberPrice: 1.50, guestPrice: 2.00, emoji: '🥤' },
+            { id: 5, name: 'Jägermeister', memberPrice: 3.50, guestPrice: 4.50, emoji: '🥃' },
+            { id: 6, name: 'Erdnüsse', memberPrice: 2.00, guestPrice: 2.50, emoji: '🥜' },
+            { id: 7, name: 'Kaffee', memberPrice: 1.00, guestPrice: 1.50, emoji: '☕' }
+        ];
+
+        // ============ EINFACHE FUNKTIONEN ============
+        
+        function showStatus(message, type = 'info') {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.textContent = message;
+            statusEl.className = `status-message ${type} show`;
+            
+            setTimeout(() => {
+                statusEl.classList.remove('show');
+            }, 3000);
+        }
+
+        function updateUserInfo() {
+            const userInfoEl = document.getElementById('userInfo');
+            
+            if (!currentUser) {
+                userInfoEl.className = 'user-info';
+                userInfoEl.innerHTML = `
+                    <div class="user-name">Kein Benutzer</div>
+                    <div class="user-balance">Bitte scannen</div>
+                `;
+                return;
+            }
+
+            userInfoEl.className = `user-info ${currentUser.role}`;
+            userInfoEl.innerHTML = `
+                <div class="user-name">${currentUser.fullName}</div>
+                <div class="user-balance">${currentUser.balance.toFixed(2)}€</div>
+            `;
+        }
+
+        function updateProductsView() {
+            const noUserMsg = document.getElementById('noUserMessage');
+            const productsGrid = document.getElementById('productsGrid');
+            
+            if (!currentUser) {
+                noUserMsg.style.display = 'block';
+                productsGrid.style.display = 'none';
+                return;
+            }
+
+            noUserMsg.style.display = 'none';
+            productsGrid.style.display = 'grid';
+            
+            productsGrid.innerHTML = PRODUCTS.map(product => {
+                const price = currentUser.role === 'member' ? product.memberPrice : product.guestPrice;
+                return `
+                    <div class="product-card" onclick="addToCart(${product.id})">
+                        <div class="product-emoji">${product.emoji}</div>
+                        <div class="product-name">${product.name}</div>
+                        <div class="product-price">${price.toFixed(2)}€</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateCartView() {
+            const cartItemsEl = document.getElementById('cartItems');
+            const cartTotalEl = document.getElementById('cartTotal');
+            const clearBtn = document.getElementById('clearBtn');
+            
+            if (cart.length === 0) {
+                cartItemsEl.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">Warenkorb ist leer</div>';
+                cartTotalEl.style.display = 'none';
+                clearBtn.disabled = true;
+                return;
+            }
+
+            let total = 0;
+            cartItemsEl.innerHTML = cart.map((item, index) => {
+                const product = PRODUCTS.find(p => p.id === item.productId);
+                const price = currentUser.role === 'member' ? product.memberPrice : product.guestPrice;
+                const itemTotal = price * item.quantity;
+                total += itemTotal;
+                
+                return `
+                    <div class="cart-item">
+                        <div>
+                            <strong>${product.emoji} ${product.name}</strong><br>
+                            <small>${item.quantity}x ${price.toFixed(2)}€ = ${itemTotal.toFixed(2)}€</small>
+                        </div>
+                        <button class="btn btn-danger" onclick="removeFromCart(${index})" style="padding: 5px 8px;">−</button>
+                    </div>
+                `;
+            }).join('');
+
+            const newBalance = currentUser.balance - total;
+            cartTotalEl.innerHTML = `
+                <div class="cart-total" onclick="checkout()">
+                    <div>Gesamt: ${total.toFixed(2)}€</div>
+                    <div style="font-size: 0.9em; margin-top: 5px;">Neuer Saldo: ${newBalance.toFixed(2)}€</div>
+                    <div style="font-size: 0.8em; margin-top: 5px;">💳 Klicken zum Bezahlen</div>
+                </div>
+            `;
+            cartTotalEl.style.display = 'block';
+            clearBtn.disabled = false;
+        }
+
+        // ============ BENUTZER-FUNKTIONEN ============
+        
+        function selectUser(user) {
+            currentUser = user;
+            showStatus(`${user.fullName} ausgewählt!`, 'success');
+            updateUserInfo();
+            updateProductsView();
+            hideDropdown();
+            document.getElementById('barcodeInput').value = '';
+            document.getElementById('barcodeInput').focus();
+        }
+
+        function searchUsers(query) {
+            if (!query || query.length < 1) {
+                hideDropdown();
+                return;
+            }
+
+            const filtered = USERS.filter(user => 
+                user.barcode.toLowerCase().includes(query.toLowerCase()) ||
+                user.fullName.toLowerCase().includes(query.toLowerCase()) ||
+                user.firstName.toLowerCase().includes(query.toLowerCase())
+            );
+
+            if (filtered.length === 0) {
+                hideDropdown();
+                return;
+            }
+
+            showDropdown(filtered);
+        }
+
+        function showDropdown(users) {
+            const dropdown = document.getElementById('userDropdown');
+            
+            dropdown.innerHTML = users.slice(0, 5).map(user => `
+                <div class="dropdown-item" onclick="selectUser(${JSON.stringify(user).replace(/"/g, '&quot;')})">
+                    <div class="dropdown-avatar">${user.firstName.charAt(0)}</div>
+                    <div class="dropdown-info">
+                        <div class="dropdown-name">${getRoleIcon(user.role)} ${user.fullName}</div>
+                        <div class="dropdown-details">${getRoleText(user.role)} • ${user.balance.toFixed(2)}€</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            dropdown.style.display = 'block';
+        }
+
+        function hideDropdown() {
+            document.getElementById('userDropdown').style.display = 'none';
+        }
+
+        function getRoleIcon(role) {
+            const icons = { member: '👥', guest: '👤', bartender: '🍺', admin: '⚙️' };
+            return icons[role] || '👤';
+        }
+
+        function getRoleText(role) {
+            const texts = { member: 'Mitglied', guest: 'Gast', bartender: 'Barkeeper', admin: 'Admin' };
+            return texts[role] || role;
+        }
+
+        // ============ WARENKORB-FUNKTIONEN ============
+        
+        function addToCart(productId) {
+            if (!currentUser) {
+                showStatus('Bitte zuerst Benutzer auswählen', 'error');
+                return;
+            }
+
+            const existingItem = cart.find(item => item.productId === productId);
+            if (existingItem) {
+                existingItem.quantity++;
+            } else {
+                cart.push({ productId, quantity: 1 });
+            }
+
+            const product = PRODUCTS.find(p => p.id === productId);
+            showStatus(`${product.name} hinzugefügt`, 'success');
+            updateCartView();
+        }
+
+        function removeFromCart(index) {
+            const item = cart[index];
+            if (item.quantity > 1) {
+                item.quantity--;
+            } else {
+                cart.splice(index, 1);
+            }
+            updateCartView();
+        }
+
+        function clearCart() {
+            cart = [];
+            updateCartView();
+            showStatus('Warenkorb geleert', 'info');
+        }
+
+        function checkout() {
+            if (cart.length === 0) return;
+
+            let total = 0;
+            cart.forEach(item => {
+                const product = PRODUCTS.find(p => p.id === item.productId);
+                const price = currentUser.role === 'member' ? product.memberPrice : product.guestPrice;
+                total += price * item.quantity;
+            });
+
+            currentUser.balance -= total;
+            showStatus(`Kauf über ${total.toFixed(2)}€ abgeschlossen!`, 'success');
+            clearCart();
+            updateUserInfo();
+
+            // Auto-Reset nach 3 Sekunden
+            setTimeout(() => {
+                resetSession();
+                showStatus('Session beendet - Nächster Kunde', 'info');
+            }, 3000);
+        }
+
+        function resetSession() {
+            currentUser = null;
+            cart = [];
+            updateUserInfo();
+            updateProductsView();
+            updateCartView();
+            hideDropdown();
+            document.getElementById('barcodeInput').value = '';
+            document.getElementById('barcodeInput').focus();
+        }
+
+        // ============ EVENT LISTENERS ============
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const barcodeInput = document.getElementById('barcodeInput');
+            
+            // Input Event für Live-Suche
+            barcodeInput.addEventListener('input', function(e) {
+                clearTimeout(searchTimeout);
+                const query = e.target.value.trim();
+                
+                if (currentUser) return; // Nur suchen wenn noch kein User ausgewählt
+                
+                searchTimeout = setTimeout(() => {
+                    searchUsers(query);
+                }, 200);
+            });
+
+            // Enter-Taste für direkte Eingabe
+            barcodeInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    const input = e.target.value.trim();
+                    if (!input) return;
+
+                    // Direkter Barcode-Match
+                    const user = USERS.find(u => u.barcode === input.toUpperCase());
+                    if (user) {
+                        selectUser(user);
+                    } else {
+                        showStatus('Barcode nicht gefunden', 'error');
+                    }
+                }
+            });
+
+            // Außerhalb klicken = Dropdown verstecken
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.input-container')) {
+                    hideDropdown();
+                }
+            });
+
+            // Initial Setup
+            updateUserInfo();
+            updateProductsView();
+            updateCartView();
+            barcodeInput.focus();
+            
+            console.log('🎮 Saarcade Kasse bereit!');
+            console.log('📋 Verfügbare Barcodes:', USERS.map(u => u.barcode).join(', '));
         });
-        console.log('✅ Click-Handler hinzugefügt');
-    }
-}
-
-// 5. Benutzersuche testen
-function testUserSearch(query = 'max') {
-    console.log(`🧪 Testing User Search with: "${query}"`);
-    
-    if (!Array.isArray(users)) {
-        console.error('❌ Users-Array nicht verfügbar!');
-        return;
-    }
-    
-    const filteredUsers = users.filter(user =>
-        user.full_name.toLowerCase().includes(query.toLowerCase()) ||
-        user.first_name.toLowerCase().includes(query.toLowerCase()) ||
-        user.barcode.toLowerCase().includes(query.toLowerCase())
-    );
-    
-    console.log(`✅ Gefundene Benutzer (${filteredUsers.length}):`, filteredUsers);
-    return filteredUsers;
-}
-
-// 6. Manuelle Benutzerauswahl
-function selectUserManually(userId = 1) {
-    console.log(`🧪 Testing Manual User Selection: ${userId}`);
-    
-    if (window.kasse && typeof window.kasse.selectUserFromDropdown === 'function') {
-        window.kasse.selectUserFromDropdown(userId);
-        console.log('✅ Benutzer über Kasse-Objekt ausgewählt');
-    } else {
-        console.error('❌ Kasse-Objekt oder Methode nicht verfügbar!');
-    }
-}
-
-// Tests ausführen
-console.log('🚀 Führe Tests aus...');
-testDropdown();
-testUserSearch();
-
-console.log('🛠️ Verfügbare Debug-Funktionen:');
-console.log('- testDropdown() - Dropdown-Test');
-console.log('- testUserSearch("query") - Suchtest');
-console.log('- selectUserManually(1) - Manueller Benutzer-Test');
-
-console.log('=== DEBUG COMPLETE ===');
+    </script>
+</body>
+</html>
