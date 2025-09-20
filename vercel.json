@@ -22,11 +22,11 @@
     },
     {
       "src": "/kasse",
-      "dest": "/public/index.html"
+      "dest": "/public/kasse.html"
     },
     {
       "src": "/admin",
-      "dest": "/public/index.html"
+      "dest": "/public/admin.html"
     },
     {
       "src": "/public/(.*)",
