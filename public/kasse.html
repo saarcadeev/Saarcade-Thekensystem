@@ -1,159 +1,1092 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🎮 Saarcade Kasse - Mini</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;color:#333;user-select:none}
-.container{height:100vh;padding:15px;display:grid;grid-template-rows:auto 1fr;gap:15px}
-.header{background:rgba(255,255,255,0.95);border-radius:15px;padding:15px 25px;box-shadow:0 8px 32px rgba(31,38,135,0.37);display:grid;grid-template-columns:350px 1fr 350px;align-items:center;gap:20px;min-height:90px}
-.scanner-area{background:linear-gradient(135deg,#f0f8ff,#e6f3ff);border:3px dashed #667eea;border-radius:15px;padding:15px;display:flex;align-items:center;gap:12px;cursor:pointer;position:relative}
-.scanner-area.active{background:linear-gradient(135deg,#e6fffa,#b3f5e6);border-color:#38a169;animation:scanPulse 2s infinite}
-@keyframes scanPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}
-.scanner-icon{font-size:2em;flex-shrink:0}
-.scanner-input{font-family:'Courier New',monospace;font-size:1.1em;background:transparent;border:none;outline:none;flex:1;padding:8px;font-weight:600}
-.header-title{text-align:center}
-.header h1{color:#4a5568;font-size:2em;margin-bottom:5px}
-.status-display{font-size:1em;font-weight:600;padding:10px 15px;border-radius:10px;margin-top:8px;min-height:40px;display:flex;align-items:center;justify-content:center;opacity:0;transition:all 0.3s ease}
-.status-display.show{opacity:1}
-.status-success{background:linear-gradient(135deg,#c6f6d5,#9ae6b4);color:#1a202c;border-left:5px solid #38a169}
-.status-error{background:linear-gradient(135deg,#fed7d7,#feb2b2);color:#1a202c;border-left:5px solid #e53e3e}
-.status-info{background:linear-gradient(135deg,#bee3f8,#90cdf4);color:#1a202c;border-left:5px solid #3182ce}
-.user-display{background:linear-gradient(135deg,#a0aec0,#718096);color:white;padding:15px 20px;border-radius:15px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:5px;min-width:320px}
-.user-display.member{background:linear-gradient(135deg,#48bb78,#38a169)}
-.user-display.guest{background:linear-gradient(135deg,#f6ad55,#ed8936)}
-.user-display.bartender{background:linear-gradient(135deg,#9f7aea,#805ad5)}
-.user-name{font-size:1.2em;font-weight:bold}
-.user-balance{font-size:1.4em;font-weight:bold}
-.user-info{font-size:0.8em;opacity:0.9}
-.main-area{display:grid;grid-template-columns:1fr 380px;gap:15px;height:100%;overflow:hidden}
-.products-section{background:rgba(255,255,255,0.95);border-radius:15px;padding:20px;box-shadow:0 8px 32px rgba(31,38,135,0.37);overflow:hidden;display:flex;flex-direction:column}
-.category-tabs{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px}
-.category-tab{background:linear-gradient(135deg,#e2e8f0,#cbd5e0);color:#4a5568;border:none;padding:12px 20px;border-radius:20px;cursor:pointer;font-weight:600;font-size:0.9em}
-.category-tab:hover,.category-tab.active{background:linear-gradient(135deg,#667eea,#764ba2);color:white}
-.products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:15px;flex:1;overflow-y:auto}
-.product-card{background:linear-gradient(135deg,#f7fafc,#edf2f7);border-radius:15px;padding:15px;text-align:center;cursor:pointer;border:3px solid transparent;transition:all 0.3s ease;min-height:140px;display:flex;flex-direction:column;justify-content:space-between}
-.product-card:hover{transform:translateY(-5px);box-shadow:0 12px 30px rgba(102,126,234,0.3);border-color:#667eea}
-.product-card.disabled{opacity:0.5;cursor:not-allowed}
-.product-image{font-size:3em;margin-bottom:8px;height:60px;display:flex;align-items:center;justify-content:center}
-.product-name{font-size:0.95em;font-weight:bold;margin-bottom:8px;color:#2d3748}
-.product-price{font-size:1.2em;font-weight:bold;color:#667eea;padding:8px;border-radius:8px;background:rgba(102,126,234,0.1)}
-.cart-section{background:rgba(255,255,255,0.95);border-radius:15px;padding:20px;box-shadow:0 8px 32px rgba(31,38,135,0.37);display:grid;grid-template-rows:auto 1fr auto auto;gap:15px}
-.cart-items{overflow-y:auto;min-height:150px;max-height:calc(100vh - 500px)}
-.cart-item{display:flex;justify-content:space-between;align-items:center;padding:12px;background:linear-gradient(135deg,#f7fafc,#edf2f7);border-radius:10px;margin-bottom:8px;font-size:0.95em;border:1px solid #e2e8f0}
-.cart-item-info{flex:1}
-.cart-item-name{font-weight:bold;color:#2d3748}
-.cart-item-details{font-size:0.85em;color:#666}
-.cart-total{background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:20px;border-radius:15px;text-align:center;cursor:pointer}
-.cart-total:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(102,126,234,0.5)}
-.cart-total-amount{font-size:2em;font-weight:bold;margin-bottom:8px}
-.cart-total-info{font-size:0.9em;opacity:0.9}
-.btn{background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;padding:12px 18px;border-radius:10px;cursor:pointer;font-size:0.9em;font-weight:600;margin:5px 0}
-.btn:hover{transform:translateY(-2px);box-shadow:0 5px 15px rgba(102,126,234,0.4)}
-.btn-danger{background:linear-gradient(135deg,#f56565,#e53e3e)}
-.btn:disabled{opacity:0.5;cursor:not-allowed}
-.no-user-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.95);display:flex;align-items:center;justify-content:center;border-radius:15px}
-.overlay-content{text-align:center;padding:40px;background:white;border-radius:20px;box-shadow:0 15px 40px rgba(0,0,0,0.15);border:2px solid #667eea}
-.overlay-icon{font-size:4em;margin-bottom:20px;color:#667eea}
-.user-dropdown{position:absolute;top:100%;left:0;right:0;background:white;border:2px solid #667eea;border-radius:10px;max-height:300px;overflow-y:auto;z-index:1000;box-shadow:0 10px 30px rgba(0,0,0,0.2);display:none;margin-top:5px}
-.user-dropdown.show{display:block}
-.user-dropdown-item{padding:15px 20px;cursor:pointer;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:12px}
-.user-dropdown-item:hover{background:#f7fafc}
-.user-dropdown-avatar{width:40px;height:40px;background:linear-gradient(45deg,#667eea,#764ba2);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold}
-.user-dropdown-info{flex:1}
-.user-dropdown-name{font-weight:bold;color:#2d3748}
-.user-dropdown-details{font-size:0.85em;color:#718096}
-@media(max-width:1024px){.main-area{grid-template-columns:1fr;grid-template-rows:1fr auto}.header{grid-template-columns:1fr;text-align:center;gap:15px}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 Saarcade Kasse - Professional</title>
+    <meta name="description" content="Kassensystem für Saarcade e.V. Barkräfte">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .container {
+            height: 100vh;
+            padding: 15px;
+            display: grid;
+            grid-template-rows: auto 1fr;
+            gap: 15px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 15px 25px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            display: grid;
+            grid-template-columns: 350px 1fr 350px;
+            align-items: center;
+            gap: 20px;
+            min-height: 90px;
+        }
+
+        .scanner-compact {
+            background: linear-gradient(135deg, #f0f8ff, #e6f3ff);
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .scanner-compact.active {
+            background: linear-gradient(135deg, #e6fffa, #b3f5e6);
+            border-color: #38a169;
+            animation: scanPulse 2s infinite;
+        }
+
+        @keyframes scanPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .scanner-icon-compact {
+            font-size: 2em;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+
+        .scanner-input-compact {
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+            background: transparent;
+            border: none;
+            outline: none;
+            flex: 1;
+            padding: 8px;
+            font-weight: 600;
+        }
+
+        .header-title {
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #4a5568;
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        .status-message {
+            font-size: 1em;
+            font-weight: 600;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-top: 8px;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .status-message.show { opacity: 1; }
+
+        .status-success {
+            background: linear-gradient(135deg, #c6f6d5, #9ae6b4);
+            color: #1a202c;
+            border-left: 5px solid #38a169;
+        }
+
+        .status-error {
+            background: linear-gradient(135deg, #fed7d7, #feb2b2);
+            color: #1a202c;
+            border-left: 5px solid #e53e3e;
+        }
+
+        .status-info {
+            background: linear-gradient(135deg, #bee3f8, #90cdf4);
+            color: #1a202c;
+            border-left: 5px solid #3182ce;
+        }
+
+        .user-compact {
+            background: linear-gradient(135deg, #a0aec0, #718096);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 15px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            min-width: 320px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .user-compact.member {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+        }
+
+        .user-compact.guest {
+            background: linear-gradient(135deg, #f6ad55, #ed8936);
+        }
+
+        .user-compact.bartender {
+            background: linear-gradient(135deg, #9f7aea, #805ad5);
+        }
+
+        .user-compact.admin {
+            background: linear-gradient(135deg, #f56565, #e53e3e);
+        }
+
+        .user-compact-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+
+        .user-compact-balance {
+            font-size: 1.4em;
+            font-weight: bold;
+        }
+
+        .main-area {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 15px;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .products-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-categories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .category-btn {
+            background: linear-gradient(135deg, #e2e8f0, #cbd5e0);
+            color: #4a5568;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .category-btn:hover, .category-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            transform: translateY(-2px);
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .product-card {
+            background: linear-gradient(135deg, #f7fafc, #edf2f7);
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s ease;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 140px;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.3);
+            border-color: #667eea;
+            background: linear-gradient(135deg, #fff, #f8fafc);
+        }
+
+        .product-card.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .product-image {
+            font-size: 3em;
+            margin-bottom: 8px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .product-name {
+            font-size: 0.95em;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #2d3748;
+            line-height: 1.2;
+        }
+
+        .product-price {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #667eea;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .product-price:hover {
+            background: #667eea;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .cart-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            display: grid;
+            grid-template-rows: auto 1fr auto auto;
+            gap: 15px;
+        }
+
+        .cart-items {
+            overflow-y: auto;
+            min-height: 150px;
+            max-height: calc(100vh - 500px);
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: linear-gradient(135deg, #f7fafc, #edf2f7);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .cart-item:hover {
+            transform: translateX(5px);
+            border-color: #667eea;
+        }
+
+        .cart-item-info { flex: 1; }
+
+        .cart-item-name {
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        .cart-item-details {
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        .cart-total {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+        }
+
+        .cart-total:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.5);
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .cart-total-amount {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .cart-total-info {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 5px 0;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f56565, #e53e3e);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .no-user-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 15px;
+            backdrop-filter: blur(8px);
+        }
+
+        .overlay-content {
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            border: 2px solid #667eea;
+        }
+
+        .overlay-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            display: none;
+            margin-top: 5px;
+        }
+
+        .user-dropdown.show { display: block; }
+
+        .user-dropdown-item {
+            padding: 15px 20px;
+            cursor: pointer;
+            border-bottom: 1px solid #e2e8f0;
+            transition: background 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-dropdown-item:hover {
+            background: #f7fafc;
+        }
+
+        .user-dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .user-dropdown-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .user-dropdown-info { flex: 1; }
+
+        .user-dropdown-name {
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        .user-dropdown-details {
+            font-size: 0.85em;
+            color: #718096;
+        }
+
+        @media (max-width: 1024px) {
+            .main-area {
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr auto;
+            }
+            
+            .header {
+                grid-template-columns: 1fr;
+                text-align: center;
+                gap: 15px;
+            }
+            
+            .scanner-compact, .user-compact {
+                max-width: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 10px; }
+            .products-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+            .header h1 { font-size: 1.5em; }
+        }
+    </style>
 </head>
 <body>
-<div class="container">
-<div class="header">
-<div class="scanner-area" id="scannerArea" onclick="focusScanner()">
-<div class="scanner-icon" id="scannerIcon">📷</div>
-<input type="text" id="barcodeInput" class="scanner-input" placeholder="Barcode scannen oder Name eingeben..." autocomplete="off">
-<div class="user-dropdown" id="userDropdown"></div>
-</div>
-<div class="header-title">
-<h1>🎮 Saarcade Kasse</h1>
-<div class="status-display" id="statusDisplay"></div>
-</div>
-<div class="user-display" id="userDisplay">
-<div class="user-name">Kein Benutzer</div>
-<div class="user-balance">Bitte scannen</div>
-<div class="user-info">Barcode oder Namen eingeben</div>
-</div>
-</div>
-<div class="main-area">
-<div class="products-section">
-<div class="no-user-overlay" id="noUserOverlay">
-<div class="overlay-content">
-<div class="overlay-icon">👤</div>
-<h2>Bitte zuerst Mitglied scannen</h2>
-<p>Barcode scannen oder Namen eingeben</p>
-<div style="margin-top:20px;font-size:0.9em;color:#666;"><strong>Demo-Barcodes:</strong><br>SAAR001 (Max), SAAR002 (Anna), GUEST001 (Gast)</div>
-</div>
-</div>
-<div class="category-tabs">
-<button class="category-tab active" data-category="all">Alle</button>
-<button class="category-tab" data-category="bier">🍺 Bier</button>
-<button class="category-tab" data-category="softdrinks">🥤 Softdrinks</button>
-<button class="category-tab" data-category="schnaps">🥃 Spirituosen</button>
-<button class="category-tab" data-category="snacks">🍿 Snacks</button>
-<button class="category-tab" data-category="heissgetraenke">☕ Heißgetränke</button>
-</div>
-<div class="products-grid" id="productsGrid"></div>
-</div>
-<div class="cart-section">
-<h2 style="font-size:1.4em;margin:0;color:#2d3748;">🛒 Warenkorb</h2>
-<div class="cart-items" id="cartItems">
-<div style="text-align:center;color:#718096;margin:20px 0;">
-<div style="font-size:3em;margin-bottom:10px;">🛒</div>
-<p>Warenkorb ist leer</p>
-<p style="font-size:0.9em;">Produkte durch Klicken hinzufügen</p>
-</div>
-</div>
-<div id="cartTotal" style="display:none;"></div>
-<div class="cart-actions">
-<button class="btn btn-danger" id="clearCartBtn" disabled>🗑️ Warenkorb leeren</button>
-<button class="btn" onclick="resetSession()">🔄 Neue Session</button>
-<button class="btn" onclick="window.open('/','_blank')" style="background:linear-gradient(135deg,#38a169,#2f855a);">🏠 Zurück zur Startseite</button>
-</div>
-</div>
-</div>
-</div>
-<script>
-class K{constructor(){this.products=[];this.users=[];this.currentUser=null;this.cart=[];this.currentFilter='all';this.init()}
-async init(){try{await this.loadData();this.setupEvents();this.renderProducts();this.updateUI();this.showStatus('System bereit - Mitglied scannen','info');console.log('✅ Kasse initialisiert')}catch(e){console.error('❌ Fehler:',e)}}
-async loadData(){const[p,u]=await Promise.all([fetch('/api/products'),fetch('/api/users')]);this.products=await p.json();this.users=await u.json();console.log(`📦 ${this.products.length} Produkte, 👥 ${this.users.length} Benutzer`)}
-setupEvents(){const i=document.getElementById('barcodeInput');i.addEventListener('keypress',e=>{if(e.key==='Enter'){this.processInput(e.target.value.trim());e.target.value='';this.hideDropdown()}});i.addEventListener('input',e=>{const q=e.target.value.trim();if(q.length>=1&&!this.currentUser){this.showDropdown(q)}else{this.hideDropdown()}});document.addEventListener('click',e=>{if(e.target.closest('.user-dropdown-item')){const id=parseInt(e.target.closest('.user-dropdown-item').dataset.userId);this.selectFromDropdown(id);return}if(e.target.closest('.product-card')&&this.currentUser){const card=e.target.closest('.product-card');if(!card.classList.contains('disabled')){const p=JSON.parse(card.dataset.product);this.addToCart(p)}return}if(e.target.closest('.cart-total')){this.finalizePurchase();return}if(e.target.classList.contains('cart-remove-btn')){const idx=parseInt(e.target.dataset.index);this.removeFromCart(idx);return}if(e.target.classList.contains('category-tab')){const cat=e.target.dataset.category;this.filterProducts(cat);document.querySelectorAll('.category-tab').forEach(t=>t.classList.remove('active'));e.target.classList.add('active');return}if(!e.target.closest('.scanner-area')&&!e.target.closest('.user-dropdown')){setTimeout(()=>i.focus(),100)}});i.focus()}
-async processInput(input){if(!input)return;if(!this.currentUser){const u=this.users.find(user=>user.barcode===input||user.full_name.toLowerCase()===input.toLowerCase()||user.first_name.toLowerCase()===input.toLowerCase());if(u){this.selectUser(u);this.showStatus(`Willkommen ${u.full_name}!`,'success');this.updateScannerState('product')}else{this.showStatus('Mitglied nicht gefunden','error')}}else{try{const r=await fetch(`/api/products/barcode/${encodeURIComponent(input)}`);const p=await r.json();if(p){this.addToCart(p);this.showStatus(`${p.name} hinzugefügt`,'success')}else{this.showStatus('Produkt nicht gefunden','error')}}catch(e){this.showStatus('Fehler bei Produktsuche','error')}}}
-selectUser(u){this.currentUser=u;this.updateUI()}
-selectFromDropdown(id){const u=this.users.find(user=>user.id===id);if(u){this.selectUser(u);this.showStatus(`${u.full_name} ausgewählt!`,'success');this.updateScannerState('product');document.getElementById('barcodeInput').value='';this.hideDropdown()}}
-addToCart(p){const existing=this.cart.find(item=>item.product.id===p.id);if(existing){existing.quantity++}else{this.cart.push({product:p,quantity:1})}this.updateCart();this.showStatus(`${p.name} hinzugefügt!`,'success')}
-removeFromCart(idx){const item=this.cart[idx];if(item.quantity>1){item.quantity--}else{this.cart.splice(idx,1)}this.updateCart()}
-clearCart(){this.cart=[];this.updateCart();this.showStatus('Warenkorb geleert','info')}
-getPrice(p){if(!this.currentUser)return p.guest_price;return this.currentUser.role==='member'?p.member_price:p.guest_price}
-async finalizePurchase(){if(this.cart.length===0||!this.currentUser){this.showStatus('Warenkorb leer oder kein Benutzer','error');return}try{let total=0;const items=this.cart.map(item=>{const price=this.getPrice(item.product);const itemTotal=price*item.quantity;total+=itemTotal;return{productId:item.product.id,productName:item.product.name,quantity:item.quantity,price:price,total:itemTotal}});const r=await fetch('/api/transactions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:this.currentUser.id,userName:this.currentUser.full_name,items:items,total:total,paymentMethod:'account'})});const result=await r.json();if(r.ok){this.currentUser.balance-=total;this.showStatus(`Kauf über ${total.toFixed(2)}€ abgeschlossen!`,'success');this.clearCart();this.updateUserDisplay();if(!this.currentUser.stay_active){setTimeout(()=>{this.resetSession();this.showStatus('Benutzer abgemeldet','info')},2000)}}else{this.showStatus('Fehler beim Kauf: '+result.error,'error')}}catch(e){this.showStatus('Verbindungsfehler','error')}}
-resetSession(){this.currentUser=null;this.cart=[];this.updateUI();this.updateScannerState('user');this.hideDropdown();document.getElementById('barcodeInput').focus()}
-updateUI(){this.updateUserDisplay();this.updateCart();this.updateNoUserOverlay();this.updateButtons()}
-updateUserDisplay(){const d=document.getElementById('userDisplay');if(!this.currentUser){d.className='user-display';d.innerHTML='<div class="user-name">Kein Benutzer</div><div class="user-balance">Bitte scannen</div><div class="user-info">Barcode oder Namen eingeben</div>';return}d.className=`user-display ${this.currentUser.role}`;d.innerHTML=`<div class="user-name">${this.currentUser.full_name}</div><div class="user-balance">${this.currentUser.balance.toFixed(2)}€</div><div class="user-info">${this.getRoleDisplayName(this.currentUser.role)}</div>`}
-updateCart(){const cartDiv=document.getElementById('cartItems');const totalDiv=document.getElementById('cartTotal');if(this.cart.length===0){cartDiv.innerHTML='<div style="text-align:center;color:#718096;margin:20px 0;"><div style="font-size:3em;margin-bottom:10px;">🛒</div><p>Warenkorb ist leer</p><p style="font-size:0.9em;">Produkte durch Klicken hinzufügen</p></div>';totalDiv.style.display='none';return}let total=0;let html='';this.cart.forEach((item,idx)=>{const price=this.getPrice(item.product);const itemTotal=price*item.quantity;total+=itemTotal;html+=`<div class="cart-item"><div class="cart-item-info"><div class="cart-item-name">${item.product.image} ${item.product.name}</div><div class="cart-item-details">${item.quantity}x ${price.toFixed(2)}€ = ${itemTotal.toFixed(2)}€</div></div><button class="cart-remove-btn" data-index="${idx}" style="background:#f56565;color:white;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;">−</button></div>`});cartDiv.innerHTML=html;const newBalance=this.currentUser?(this.currentUser.balance-total).toFixed(2):'0.00';const balanceColor=parseFloat(newBalance)>=0?'#38a169':'#e53e3e';totalDiv.innerHTML=`<div class="cart-total" style="cursor:pointer;"><div class="cart-total-amount">${total.toFixed(2)}€</div>${this.currentUser?`<div style="color:${balanceColor};">Neuer Saldo: ${newBalance}€</div>`:''}<div class="cart-total-info">💳 Klicken zum Kaufen</div></div>`;totalDiv.style.display='block'}
-updateNoUserOverlay(){const o=document.getElementById('noUserOverlay');o.style.display=this.currentUser?'none':'flex'}
-updateButtons(){const btn=document.getElementById('clearCartBtn');if(btn)btn.disabled=this.cart.length===0}
-updateScannerState(mode){const area=document.getElementById('scannerArea');const icon=document.getElementById('scannerIcon');area.classList.remove('active');if(mode==='user'){icon.textContent='👤'}else if(mode==='product'){area.classList.add('active');icon.textContent='📱'}}
-renderProducts(){const grid=document.getElementById('productsGrid');let filtered=this.currentFilter==='all'?this.products:this.products.filter(p=>p.category===this.currentFilter);grid.innerHTML=filtered.map(p=>`<div class="product-card ${!this.currentUser?'disabled':''}" data-product='${JSON.stringify(p)}'><div class="product-image">${p.image||'📦'}</div><div class="product-name">${p.name}</div><div class="product-price">${this.getPrice(p).toFixed(2)}€</div></div>`).join('')}
-async showDropdown(query){try{const r=await fetch(`/api/users/search/${encodeURIComponent(query)}`);const users=await r.json();if(users.length===0){this.hideDropdown();return}const d=document.getElementById('userDropdown');d.innerHTML=users.slice(0,5).map(u=>`<div class="user-dropdown-item" data-user-id="${u.id}"><div class="user-dropdown-avatar">${u.first_name.charAt(0)}</div><div class="user-dropdown-info"><div class="user-dropdown-name">👥 ${u.full_name}</div><div class="user-dropdown-details">${u.balance.toFixed(2)}€</div></div></div>`).join('');d.classList.add('show')}catch(e){console.error('Dropdown error:',e)}}
-hideDropdown(){const d=document.getElementById('userDropdown');if(d)d.classList.remove('show')}
-filterProducts(cat){this.currentFilter=cat;this.renderProducts()}
-getRoleDisplayName(role){const names={member:'Mitglied',guest:'Gast',bartender:'Barkeeper',admin:'Vorstand'};return names[role]||role}
-showStatus(msg,type='info'){const s=document.getElementById('statusDisplay');s.className=`status-display status-${type}`;s.textContent=msg;s.classList.add('show');setTimeout(()=>s.classList.remove('show'),4000)}}
-function focusScanner(){document.getElementById('barcodeInput').focus()}
-function clearCart(){if(window.kasse)window.kasse.clearCart()}
-function resetSession(){if(window.kasse)window.kasse.resetSession()}
-document.addEventListener('DOMContentLoaded',()=>{window.kasse=new K();console.log('🎮 Mini-Kasse geladen')});
-</script>
+    <div class="container">
+        <div class="header">
+            <!-- Scanner kompakt links -->
+            <div class="scanner-compact" id="scannerCompact" onclick="focusScanner()">
+                <div class="scanner-icon-compact" id="scannerIconCompact">📷</div>
+                <input type="text" id="barcodeInput" class="scanner-input-compact" placeholder="Barcode scannen oder Name eingeben..." autocomplete="off">
+                <div class="user-dropdown" id="userDropdown"></div>
+            </div>
+
+            <!-- Titel zentriert -->
+            <div class="header-title">
+                <h1>🎮 Saarcade Kasse</h1>
+                <div class="status-message" id="statusMessage"></div>
+            </div>
+
+            <!-- Benutzer kompakt rechts -->
+            <div class="user-compact no-user" id="userCompact" onclick="showUserHistory()">
+                <div class="user-compact-name">Kein Benutzer</div>
+                <div class="user-compact-balance">Bitte scannen</div>
+            </div>
+        </div>
+
+        <div class="main-area">
+            <div class="products-section">
+                <div class="no-user-overlay" id="noUserOverlay">
+                    <div class="overlay-content">
+                        <div class="overlay-icon">👤</div>
+                        <h2>Bitte zuerst Mitglied scannen</h2>
+                        <p>Barcode scannen oder Namen eingeben</p>
+                        <div style="margin-top: 20px; font-size: 0.9em; color: #666;">
+                            <strong>Demo-Barcodes:</strong><br>
+                            SAAR001 (Max), SAAR002 (Anna), GUEST001 (Gast)
+                        </div>
+                    </div>
+                </div>
+
+                <div class="product-categories">
+                    <button class="category-btn active" data-category="all">Alle</button>
+                    <button class="category-btn" data-category="bier">🍺 Bier</button>
+                    <button class="category-btn" data-category="softdrinks">🥤 Softdrinks</button>
+                    <button class="category-btn" data-category="schnaps">🥃 Spirituosen</button>
+                    <button class="category-btn" data-category="snacks">🍿 Snacks</button>
+                    <button class="category-btn" data-category="heissgetraenke">☕ Heißgetränke</button>
+                </div>
+
+                <div class="products-grid" id="productsGrid">
+                    <!-- Produkte werden dynamisch geladen -->
+                </div>
+            </div>
+
+            <div class="cart-section">
+                <h2 style="font-size: 1.4em; margin: 0; color: #2d3748;">🛒 Warenkorb</h2>
+                
+                <div class="cart-items" id="cartItems">
+                    <div style="text-align: center; color: #718096; margin: 20px 0;">
+                        <div style="font-size: 3em; margin-bottom: 10px;">🛒</div>
+                        <p>Warenkorb ist leer</p>
+                        <p style="font-size: 0.9em;">Produkte durch Klicken hinzufügen</p>
+                    </div>
+                </div>
+                
+                <div id="cartTotal" style="display: none;"></div>
+                
+                <div class="cart-actions">
+                    <button class="btn btn-danger" id="clearCartBtn" disabled>
+                        🗑️ Warenkorb leeren
+                    </button>
+                    <button class="btn" onclick="resetSession()">
+                        🔄 Neue Session
+                    </button>
+                    <button class="btn" onclick="window.open('/', '_blank')" style="background: linear-gradient(135deg, #38a169, #2f855a);">
+                        🏠 Zurück zur Startseite
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ KASSENSYSTEM HAUPTKLASSE ============
+        class SaarcadeKasse {
+            constructor() {
+                this.products = [];
+                this.users = [];
+                this.currentUser = null;
+                this.cart = [];
+                this.currentFilter = 'all';
+                
+                this.initialize();
+            }
+
+            async initialize() {
+                console.log('🎮 Saarcade Kasse wird initialisiert...');
+                
+                try {
+                    await this.loadData();
+                    this.setupEventListeners();
+                    this.renderProducts();
+                    this.updateUI();
+                    this.showStatus('System bereit - Mitglied scannen zum Starten', 'info');
+                    console.log('✅ Kasse erfolgreich initialisiert');
+                } catch (error) {
+                    console.error('❌ Initialisierungsfehler:', error);
+                    this.showStatus('Fehler beim Laden der Daten: ' + error.message, 'error');
+                }
+            }
+
+            async loadData() {
+                // Lade Daten von Mock-API oder echten Endpunkten
+                try {
+                    const [productsResponse, usersResponse] = await Promise.all([
+                        fetch('/api/products').catch(() => ({ json: () => this.getMockProducts() })),
+                        fetch('/api/users').catch(() => ({ json: () => this.getMockUsers() }))
+                    ]);
+
+                    this.products = await productsResponse.json();
+                    this.users = await usersResponse.json();
+                    
+                    console.log(`📦 ${this.products.length} Produkte geladen`);
+                    console.log(`👥 ${this.users.length} Benutzer geladen`);
+                } catch (error) {
+                    console.error('Lade Fallback-Daten:', error);
+                    this.products = this.getMockProducts();
+                    this.users = this.getMockUsers();
+                }
+            }
+
+            getMockProducts() {
+                return [
+                    { id: 1, name: 'Augustiner Helles', category: 'bier', member_price: 2.50, guest_price: 3.00, image: '🍺', available: true },
+                    { id: 2, name: 'Erdinger Weissbier', category: 'bier', member_price: 2.80, guest_price: 3.30, image: '🍺', available: true },
+                    { id: 3, name: 'Coca Cola', category: 'softdrinks', member_price: 1.50, guest_price: 2.00, image: '🥤', available: true },
+                    { id: 4, name: 'Sprite', category: 'softdrinks', member_price: 1.50, guest_price: 2.00, image: '🥤', available: true },
+                    { id: 5, name: 'Jägermeister', category: 'schnaps', member_price: 3.50, guest_price: 4.50, image: '🥃', available: true },
+                    { id: 6, name: 'Erdnüsse', category: 'snacks', member_price: 2.00, guest_price: 2.50, image: '🥜', available: true },
+                    { id: 7, name: 'Kaffee', category: 'heissgetraenke', member_price: 1.00, guest_price: 1.50, image: '☕', available: true }
+                ];
+            }
+
+            getMockUsers() {
+                return [
+                    { id: 1, first_name: 'Max', last_name: 'Mustermann', full_name: 'Max Mustermann', role: 'member', barcode: 'SAAR001', balance: -15.50 },
+                    { id: 2, first_name: 'Anna', last_name: 'Schmidt', full_name: 'Anna Schmidt', role: 'member', barcode: 'SAAR002', balance: -8.20 },
+                    { id: 3, first_name: 'Tom', last_name: 'Wagner', full_name: 'Tom Wagner', role: 'bartender', barcode: 'SAAR003', balance: 2.40 },
+                    { id: 4, first_name: 'Gast', last_name: 'Benutzer', full_name: 'Gast Benutzer', role: 'guest', barcode: 'GUEST001', balance: 0.00 }
+                ];
+            }
+
+            setupEventListeners() {
+                const barcodeInput = document.getElementById('barcodeInput');
+                
+                // Barcode Input Events
+                barcodeInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.processBarcodeInput(e.target.value.trim());
+                        e.target.value = '';
+                        this.hideUserDropdown();
+                    }
+                });
+
+                barcodeInput.addEventListener('input', (e) => {
+                    const query = e.target.value.trim();
+                    if (query.length >= 1 && !this.currentUser) {
+                        this.showUserDropdown(query);
+                    } else {
+                        this.hideUserDropdown();
+                    }
+                });
+
+                // Event Delegation für dynamische Inhalte
+                document.addEventListener('click', (e) => {
+                    // User Dropdown Items
+                    if (e.target.closest('.user-dropdown-item')) {
+                        const item = e.target.closest('.user-dropdown-item');
+                        const userId = parseInt(item.dataset.userId);
+                        this.selectUserFromDropdown(userId);
+                        return;
+                    }
+                    
+                    // Product Cards
+                    if (e.target.closest('.product-card') && this.currentUser) {
+                        const card = e.target.closest('.product-card');
+                        if (!card.classList.contains('disabled')) {
+                            const productData = JSON.parse(card.dataset.product);
+                            this.addToCart(productData);
+                        }
+                        return;
+                    }
+                    
+                    // Cart Total (Checkout)
+                    if (e.target.closest('.cart-total')) {
+                        this.finalizePurchase();
+                        return;
+                    }
+                    
+                    // Cart Item Remove
+                    if (e.target.classList.contains('cart-remove-btn')) {
+                        const index = parseInt(e.target.dataset.index);
+                        this.removeFromCart(index);
+                        return;
+                    }
+                    
+                    // Category Buttons
+                    if (e.target.classList.contains('category-btn')) {
+                        const category = e.target.dataset.category;
+                        this.filterProducts(category);
+                        
+                        // Update active button
+                        document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+                        e.target.classList.add('active');
+                        return;
+                    }
+                    
+                    // Clear Cart Button
+                    if (e.target.id === 'clearCartBtn') {
+                        this.clearCart();
+                        return;
+                    }
+                    
+                    // Focus scanner if clicking outside dropdown
+                    if (!e.target.closest('.scanner-compact') && !e.target.closest('.user-dropdown')) {
+                        setTimeout(() => barcodeInput.focus(), 100);
+                    }
+                });
+
+                // Initial focus
+                barcodeInput.focus();
+            }
+
+            async processBarcodeInput(input) {
+                if (!input) return;
+
+                console.log('🔍 Verarbeite Eingabe:', input);
+
+                if (!this.currentUser) {
+                    // Benutzer suchen
+                    const user = this.users.find(u => 
+                        u.barcode === input || 
+                        u.full_name.toLowerCase() === input.toLowerCase() ||
+                        u.first_name.toLowerCase() === input.toLowerCase()
+                    );
+
+                    if (user) {
+                        this.selectUser(user);
+                        this.showStatus(`Willkommen ${user.full_name}! Jetzt Produkte auswählen.`, 'success');
+                        this.updateScannerState('product');
+                    } else {
+                        this.showStatus('Mitglied nicht gefunden. Bitte erneut versuchen.', 'error');
+                    }
+                } else {
+                    // Produkt per Barcode suchen (Demo-Implementation)
+                    const demoBarcode = input.match(/^\d+$/);
+                    if (demoBarcode && this.products.length > 0) {
+                        const productIndex = parseInt(input.slice(-1)) % this.products.length;
+                        const product = this.products[productIndex];
+                        if (product) {
+                            this.addToCart(product);
+                            this.showStatus(`${product.name} hinzugefügt (${this.getCurrentPrice(product).toFixed(2)}€)`, 'success');
+                        }
+                    } else {
+                        this.showStatus('Produkt nicht gefunden', 'error');
+                    }
+                }
+            }
+
+            selectUser(user) {
+                this.currentUser = user;
+                this.updateUI();
+                console.log('✅ Benutzer ausgewählt:', user.full_name);
+            }
+
+            selectUserFromDropdown(userId) {
+                console.log('🖱️ Dropdown-Klick für Benutzer ID:', userId);
+                const user = this.users.find(u => u.id === userId);
+                if (user) {
+                    this.selectUser(user);
+                    this.showStatus(`${user.full_name} ausgewählt!`, 'success');
+                    this.updateScannerState('product');
+                    document.getElementById('barcodeInput').value = '';
+                    this.hideUserDropdown();
+                } else {
+                    console.error('Benutzer nicht gefunden:', userId);
+                }
+            }
+
+            addToCart(product) {
+                console.log('🛒 Produkt hinzufügen:', product.name);
+                const existingItem = this.cart.find(item => item.product.id === product.id);
+                
+                if (existingItem) {
+                    existingItem.quantity++;
+                } else {
+                    this.cart.push({ product: product, quantity: 1 });
+                }
+                
+                this.updateCart();
+                this.showStatus(`${product.name} hinzugefügt!`, 'success');
+            }
+
+            removeFromCart(index) {
+                const item = this.cart[index];
+                if (item.quantity > 1) {
+                    item.quantity--;
+                } else {
+                    this.cart.splice(index, 1);
+                }
+                this.updateCart();
+            }
+
+            clearCart() {
+                this.cart = [];
+                this.updateCart();
+                this.showStatus('Warenkorb geleert', 'info');
+            }
+
+            getCurrentPrice(product) {
+                if (!this.currentUser) return product.guest_price;
+                return this.currentUser.role === 'member' ? product.member_price : product.guest_price;
+            }
+
+            async finalizePurchase() {
+                if (this.cart.length === 0 || !this.currentUser) {
+                    this.showStatus('Warenkorb ist leer oder kein Benutzer ausgewählt', 'error');
+                    return;
+                }
+
+                try {
+                    let total = 0;
+                    this.cart.forEach(item => {
+                        const price = this.getCurrentPrice(item.product);
+                        total += price * item.quantity;
+                    });
+
+                    // Lokalen Saldo aktualisieren
+                    this.currentUser.balance -= total;
+                    
+                    this.showStatus(`Kauf über ${total.toFixed(2)}€ abgeschlossen!`, 'success');
+                    this.clearCart();
+                    this.updateUserDisplay();
+
+                    // Demo: Nach 3 Sekunden Session zurücksetzen
+                    setTimeout(() => {
+                        this.resetSession();
+                        this.showStatus('Session beendet - Nächsten Benutzer scannen', 'info');
+                    }, 3000);
+                } catch (error) {
+                    this.showStatus('Fehler beim Kaufabschluss: ' + error.message, 'error');
+                }
+            }
+
+            resetSession() {
+                this.currentUser = null;
+                this.cart = [];
+                this.updateUI();
+                this.updateScannerState('user');
+                this.hideUserDropdown();
+                document.getElementById('barcodeInput').focus();
+            }
+
+            // ============ UI UPDATES ============
+            updateUI() {
+                this.updateUserDisplay();
+                this.updateCart();
+                this.updateNoUserOverlay();
+                this.updateButtons();
+            }
+
+            updateUserDisplay() {
+                const userDisplay = document.getElementById('userCompact');
+                
+                if (!this.currentUser) {
+                    userDisplay.className = 'user-compact no-user';
+                    userDisplay.innerHTML = `
+                        <div class="user-compact-name">Kein Benutzer</div>
+                        <div class="user-compact-balance">Bitte scannen</div>
+                    `;
+                    return;
+                }
+
+                userDisplay.className = `user-compact ${this.currentUser.role}`;
+                userDisplay.innerHTML = `
+                    <div class="user-compact-name">${this.currentUser.full_name}</div>
+                    <div class="user-compact-balance">${this.currentUser.balance.toFixed(2)}€</div>
+                `;
+            }
+
+            updateCart() {
+                const cartItemsDiv = document.getElementById('cartItems');
+                const cartTotalDiv = document.getElementById('cartTotal');
+                
+                if (this.cart.length === 0) {
+                    cartItemsDiv.innerHTML = `
+                        <div style="text-align: center; color: #718096; margin: 20px 0;">
+                            <div style="font-size: 3em; margin-bottom: 10px;">🛒</div>
+                            <p>Warenkorb ist leer</p>
+                            <p style="font-size: 0.9em;">Produkte durch Klicken hinzufügen</p>
+                        </div>
+                    `;
+                    cartTotalDiv.style.display = 'none';
+                    return;
+                }
+
+                let total = 0;
+                let cartHTML = '';
+                
+                this.cart.forEach((item, index) => {
+                    const price = this.getCurrentPrice(item.product);
+                    const itemTotal = price * item.quantity;
+                    total += itemTotal;
+                    
+                    cartHTML += `
+                        <div class="cart-item">
+                            <div class="cart-item-info">
+                                <div class="cart-item-name">${item.product.image} ${item.product.name}</div>
+                                <div class="cart-item-details">${item.quantity}x ${price.toFixed(2)}€ = ${itemTotal.toFixed(2)}€</div>
+                            </div>
+                            <button class="cart-remove-btn" data-index="${index}" style="background: #f56565; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">−</button>
+                        </div>
+                    `;
+                });
+                
+                cartItemsDiv.innerHTML = cartHTML;
+                
+                const newBalance = this.currentUser ? (this.currentUser.balance - total).toFixed(2) : '0.00';
+                const balanceColor = parseFloat(newBalance) >= 0 ? '#38a169' : '#e53e3e';
+                
+                cartTotalDiv.innerHTML = `
+                    <div class="cart-total" style="cursor: pointer;">
+                        <div class="cart-total-amount">${total.toFixed(2)}€</div>
+                        ${this.currentUser ? `<div style="color: ${balanceColor};">Neuer Saldo: ${newBalance}€</div>` : ''}
+                        <div class="cart-total-info">💳 Klicken zum Kaufen</div>
+                    </div>
+                `;
+                cartTotalDiv.style.display = 'block';
+            }
+
+            updateNoUserOverlay() {
+                const overlay = document.getElementById('noUserOverlay');
+                overlay.style.display = this.currentUser ? 'none' : 'flex';
+            }
+
+            updateButtons() {
+                const clearCartBtn = document.getElementById('clearCartBtn');
+                if (clearCartBtn) {
+                    clearCartBtn.disabled = this.cart.length === 0;
+                }
+            }
+
+            updateScannerState(mode) {
+                const scannerArea = document.getElementById('scannerCompact');
+                const scannerIcon = document.getElementById('scannerIconCompact');
+                
+                scannerArea.classList.remove('active');
+                
+                if (mode === 'user') {
+                    scannerIcon.textContent = '👤';
+                } else if (mode === 'product') {
+                    scannerArea.classList.add('active');
+                    scannerIcon.textContent = '📱';
+                }
+            }
+
+            renderProducts() {
+                const grid = document.getElementById('productsGrid');
+                
+                let filteredProducts = this.currentFilter === 'all' 
+                    ? this.products 
+                    : this.products.filter(p => p.category === this.currentFilter);
+                
+                grid.innerHTML = filteredProducts.map(product => `
+                    <div class="product-card ${!this.currentUser ? 'disabled' : ''}" 
+                         data-product='${JSON.stringify(product)}'>
+                        <div class="product-image">${product.image || '📦'}</div>
+                        <div class="product-name">${product.name}</div>
+                        <div class="product-price">${this.getCurrentPrice(product).toFixed(2)}€</div>
+                    </div>
+                `).join('');
+            }
+
+            async showUserDropdown(query) {
+                try {
+                    // Filter Benutzer lokal (für Demo)
+                    const filteredUsers = this.users.filter(user =>
+                        user.full_name.toLowerCase().includes(query.toLowerCase()) ||
+                        user.first_name.toLowerCase().includes(query.toLowerCase()) ||
+                        user.barcode.toLowerCase().includes(query.toLowerCase())
+                    );
+                    
+                    if (filteredUsers.length === 0) {
+                        this.hideUserDropdown();
+                        return;
+                    }
+
+                    const dropdown = document.getElementById('userDropdown');
+                    dropdown.innerHTML = filteredUsers.slice(0, 5).map(user => `
+                        <div class="user-dropdown-item" data-user-id="${user.id}">
+                            <div class="user-dropdown-avatar">${user.first_name.charAt(0)}</div>
+                            <div class="user-dropdown-info">
+                                <div class="user-dropdown-name">${this.getRoleIcon(user.role)} ${user.full_name}</div>
+                                <div class="user-dropdown-details">${this.getRoleDisplayName(user.role)} • ${user.balance.toFixed(2)}€</div>
+                            </div>
+                        </div>
+                    `).join('');
+                    
+                    dropdown.classList.add('show');
+                    console.log('✅ Dropdown angezeigt mit', filteredUsers.length, 'Benutzern');
+                } catch (error) {
+                    console.error('Fehler bei Benutzersuche:', error);
+                }
+            }
+
+            hideUserDropdown() {
+                const dropdown = document.getElementById('userDropdown');
+                if (dropdown) {
+                    dropdown.classList.remove('show');
+                }
+            }
+
+            filterProducts(category) {
+                this.currentFilter = category;
+                this.renderProducts();
+            }
+
+            getRoleDisplayName(role) {
+                const roleNames = {
+                    'member': 'Mitglied',
+                    'guest': 'Gast',
+                    'bartender': 'Barkeeper',
+                    'admin': 'Vorstand'
+                };
+                return roleNames[role] || role;
+            }
+
+            getRoleIcon(role) {
+                const roleIcons = {
+                    'member': '👥',
+                    'guest': '👤',
+                    'bartender': '🍺',
+                    'admin': '⚙️'
+                };
+                return roleIcons[role] || '👤';
+            }
+
+            showStatus(message, type = 'info') {
+                const statusDiv = document.getElementById('statusMessage');
+                statusDiv.className = `status-message status-${type}`;
+                statusDiv.textContent = message;
+                
+                statusDiv.classList.add('show');
+                
+                setTimeout(() => {
+                    statusDiv.classList.remove('show');
+                }, 4000);
+            }
+        }
+
+        // ============ GLOBALE FUNKTIONEN ============
+        function focusScanner() {
+            document.getElementById('barcodeInput').focus();
+        }
+
+        function resetSession() {
+            if (window.kasse) {
+                window.kasse.resetSession();
+            }
+        }
+
+        function showUserHistory() {
+            if (window.kasse && window.kasse.currentUser) {
+                window.kasse.showStatus('User-Historie: Feature kommt bald', 'info');
+            }
+        }
+
+        // ============ INITIALISIERUNG ============
+        let kasse;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            kasse = new SaarcadeKasse();
+            window.kasse = kasse; // Global verfügbar machen
+            console.log('🎮 Kasse im Window-Scope verfügbar');
+        });
+
+        // Debug-Informationen
+        console.log('🎮 Saarcade Kassen-Interface geladen!');
+        console.log('🔍 Demo-Barcodes: SAAR001, SAAR002, SAAR003, GUEST001');
+        console.log('📦 Produkt-Barcodes: 4000417025001, 5000112637447');
+        console.log('🖱️ Event-Delegation aktiviert - Klicks sollten funktionieren');
+    </script>
 </body>
 </html>
