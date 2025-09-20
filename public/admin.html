@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚙️ Saarcade Admin - Dashboard</title>
-    <meta name="description" content="Admin-Dashboard für Saarcade Kassenwart">
+    <title>⚙️ Saarcade Admin - Vollständig</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -13,89 +12,14 @@
             background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
             color: #2d3748;
             line-height: 1.6;
-        }
-
-        .login-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-
-        .login-form {
-            background: white;
-            padding: 50px;
-            border-radius: 20px;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2);
-            text-align: center;
-            max-width: 400px;
-            width: 90%;
-        }
-
-        .login-form h2 {
-            color: #2d3748;
-            margin-bottom: 30px;
-            font-size: 2em;
-        }
-
-        .login-input {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            font-size: 1.1em;
-            margin-bottom: 20px;
-            outline: none;
-            transition: border-color 0.3s ease;
-        }
-
-        .login-input:focus {
-            border-color: #667eea;
-        }
-
-        .login-btn {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 10px;
-            font-size: 1.1em;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-            transition: all 0.3s ease;
-        }
-
-        .login-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
-        }
-
-        .login-error {
-            color: #e53e3e;
-            margin-top: 15px;
-            font-weight: 600;
-        }
-
-        .login-demo-info {
-            margin-top: 25px;
-            padding: 15px;
-            background: #f7fafc;
-            border-radius: 10px;
-            font-size: 0.9em;
-            color: #666;
+            min-height: 100vh;
         }
 
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 30px 20px;
+            text-align: center;
             box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
         }
 
@@ -103,11 +27,6 @@
             font-size: 2.5em;
             margin-bottom: 10px;
             text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .header .subtitle {
-            font-size: 1.2em;
-            opacity: 0.9;
         }
 
         .demo-badge {
@@ -120,68 +39,47 @@
             border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
-        .logout-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            padding: 10px 20px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .logout-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
-
         .container {
             max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
         }
 
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
-            margin-bottom: 40px;
+        .tabs {
+            display: flex;
+            background: #f7fafc;
+            border-radius: 10px;
+            padding: 5px;
+            margin-bottom: 25px;
+            overflow-x: auto;
         }
 
-        .stat-card {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        .tab {
+            flex: 1;
+            min-width: 150px;
+            padding: 15px 20px;
             text-align: center;
-            border-left: 5px solid #667eea;
-            transition: all 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
-        }
-
-        .stat-number {
-            font-size: 3em;
-            font-weight: bold;
-            color: #667eea;
-            margin-bottom: 10px;
-        }
-
-        .stat-label {
-            color: #666;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
             font-weight: 600;
-            margin-bottom: 5px;
+            transition: all 0.3s ease;
+            color: #666;
         }
 
-        .stat-detail {
-            font-size: 0.85em;
-            color: #999;
+        .tab.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
         }
 
         .section {
@@ -225,21 +123,10 @@
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
 
-        .btn-success {
-            background: linear-gradient(135deg, #48bb78, #38a169);
-        }
-
-        .btn-warning {
-            background: linear-gradient(135deg, #ed8936, #dd6b20);
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #f56565, #e53e3e);
-        }
-
-        .btn-secondary {
-            background: linear-gradient(135deg, #a0aec0, #718096);
-        }
+        .btn-success { background: linear-gradient(135deg, #48bb78, #38a169); }
+        .btn-warning { background: linear-gradient(135deg, #ed8936, #dd6b20); }
+        .btn-danger { background: linear-gradient(135deg, #f56565, #e53e3e); }
+        .btn-secondary { background: linear-gradient(135deg, #a0aec0, #718096); }
 
         .data-table {
             width: 100%;
@@ -248,6 +135,7 @@
             border-radius: 10px;
             overflow: hidden;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-top: 20px;
         }
 
         .data-table th, .data-table td {
@@ -268,14 +156,97 @@
             background: #f7fafc;
         }
 
-        .data-table tr:last-child td {
-            border-bottom: none;
+        /* MODAL STYLES */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.5em;
+        }
+
+        .close {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #ddd;
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
         }
 
         .alert {
-            padding: 20px;
-            margin-bottom: 25px;
-            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
             font-weight: 600;
             display: flex;
             align-items: center;
@@ -288,547 +259,454 @@
             border-left: 5px solid #38a169;
         }
 
+        .alert-error {
+            background: linear-gradient(135deg, #fed7d7, #feb2b2);
+            color: #1a202c;
+            border-left: 5px solid #e53e3e;
+        }
+
         .alert-info {
             background: linear-gradient(135deg, #bee3f8, #90cdf4);
             color: #1a202c;
             border-left: 5px solid #3182ce;
         }
 
-        .alert-warning {
-            background: linear-gradient(135deg, #faf089, #f6e05e);
-            color: #1a202c;
-            border-left: 5px solid #d69e2e;
-        }
-
-        .tabs {
-            display: flex;
-            background: #f7fafc;
-            border-radius: 10px;
-            padding: 5px;
-            margin-bottom: 25px;
-            overflow-x: auto;
-        }
-
-        .tab {
-            flex: 1;
-            min-width: 150px;
-            padding: 15px 20px;
-            text-align: center;
-            background: transparent;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            color: #666;
-        }
-
-        .tab.active {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .quick-actions {
+        .dashboard-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin: 25px 0;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
         }
 
-        .action-card {
-            background: linear-gradient(135deg, #f7fafc, #edf2f7);
-            padding: 25px;
+        .stat-card {
+            background: white;
+            padding: 30px;
             border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
             text-align: center;
-            cursor: pointer;
-            border: 2px solid #e2e8f0;
+            border-left: 5px solid #667eea;
             transition: all 0.3s ease;
         }
 
-        .action-card:hover {
+        .stat-card:hover {
             transform: translateY(-5px);
-            border-color: #667eea;
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
         }
 
-        .action-icon {
+        .stat-number {
             font-size: 3em;
-            margin-bottom: 15px;
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .action-card h3 {
-            color: #2d3748;
+            font-weight: bold;
+            color: #667eea;
             margin-bottom: 10px;
         }
 
-        .action-card p {
+        .stat-label {
             color: #666;
-            font-size: 0.9em;
+            font-weight: 600;
+            margin-bottom: 5px;
         }
 
-        .sepa-summary {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin: 20px 0;
+        .toolbar {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
-        .sepa-item {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            border: 2px solid #38a169;
+        .editable-cell {
+            background: #f0f8ff;
+            border: 1px dashed #667eea;
+            padding: 5px;
+            cursor: pointer;
+            border-radius: 4px;
         }
 
-        .sepa-highlight {
-            background: linear-gradient(135deg, #e6fffa, #b2f5ea);
-            border: 2px solid #38a169;
-            border-radius: 12px;
-            padding: 25px;
-            margin: 25px 0;
+        .editable-cell:hover {
+            background: #e6f3ff;
         }
 
         @media (max-width: 768px) {
             .container { padding: 10px; }
-            .dashboard-grid { grid-template-columns: 1fr; }
-            .header h1 { font-size: 2em; }
-            .logout-btn { position: static; margin-top: 15px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .toolbar { flex-direction: column; }
         }
-
-        .hidden { display: none; }
     </style>
 </head>
 <body>
-    <!-- Login Overlay -->
-    <div class="login-overlay" id="loginOverlay">
-        <div class="login-form">
-            <h2>🔐 Admin-Zugang</h2>
-            <p>Bitte geben Sie das Admin-Passwort ein:</p>
-            
-            <input type="password" class="login-input" id="passwordInput" placeholder="Admin-Passwort" autocomplete="off">
-            <button class="login-btn" onclick="checkPassword()">Anmelden</button>
-            
-            <div class="login-error hidden" id="loginError">
-                ❌ Falsches Passwort!
+    <div class="header">
+        <div class="demo-badge">VOLLSTÄNDIGES ADMIN DASHBOARD</div>
+        <h1>⚙️ Saarcade Admin-Dashboard</h1>
+        <p>Komplette Verwaltung für Kassenwart und Vereinsvorstand</p>
+    </div>
+
+    <div class="container">
+        <!-- Dashboard Statistiken -->
+        <div class="dashboard-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="memberCount">0</div>
+                <div class="stat-label">Vereinsmitglieder</div>
             </div>
-            
-            <div class="login-demo-info">
-                <strong>Demo-Zugang:</strong><br>
-                Passwort: <code>admin123</code>
+            <div class="stat-card">
+                <div class="stat-number" id="productCount">0</div>
+                <div class="stat-label">Produkte</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalStock">0</div>
+                <div class="stat-label">Gesamtbestand</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="lowStockCount">0</div>
+                <div class="stat-label">Niedrige Bestände</div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('users')">👥 Mitglieder</button>
+            <button class="tab" onclick="showTab('inventory')">📦 Inventar</button>
+            <button class="tab" onclick="showTab('settings')">⚙️ Einstellungen</button>
+        </div>
+
+        <!-- Mitglieder Tab -->
+        <div id="users" class="tab-content active">
+            <div class="section">
+                <h2>👥 Mitgliederverwaltung</h2>
+                
+                <div class="toolbar">
+                    <button class="btn btn-success" onclick="openAddUserModal()">
+                        ➕ Neues Mitglied
+                    </button>
+                    <button class="btn btn-warning" onclick="resetAllBalances()">
+                        💰 Alle Salden zurücksetzen
+                    </button>
+                    <button class="btn btn-secondary" onclick="exportUsers()">
+                        📊 Mitglieder exportieren
+                    </button>
+                </div>
+                
+                <div style="overflow-x: auto;">
+                    <table class="data-table" id="userTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Rolle</th>
+                                <th>Barcode</th>
+                                <th>Saldo</th>
+                                <th>SEPA</th>
+                                <th>Aktionen</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Wird dynamisch gefüllt -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventar Tab -->
+        <div id="inventory" class="tab-content">
+            <div class="section">
+                <h2>📦 Inventar-Management</h2>
+                
+                <div class="toolbar">
+                    <button class="btn btn-success" onclick="openAddProductModal()">
+                        ➕ Neues Produkt
+                    </button>
+                    <button class="btn btn-warning" onclick="showLowStock()">
+                        ⚠️ Niedrige Bestände
+                    </button>
+                    <button class="btn btn-secondary" onclick="exportInventory()">
+                        📊 Inventar exportieren
+                    </button>
+                </div>
+                
+                <div style="overflow-x: auto;">
+                    <table class="data-table" id="inventoryTable">
+                        <thead>
+                            <tr>
+                                <th>Produkt</th>
+                                <th>Kategorie</th>
+                                <th>Bestand</th>
+                                <th>Mindestbestand</th>
+                                <th>Mitgliedspreis</th>
+                                <th>Gastpreis</th>
+                                <th>Status</th>
+                                <th>Aktionen</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Wird dynamisch gefüllt -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Einstellungen Tab -->
+        <div id="settings" class="tab-content">
+            <div class="section">
+                <h2>⚙️ System-Einstellungen</h2>
+                
+                <div class="alert alert-info">
+                    <span>ℹ️</span>
+                    <div>
+                        <strong>Demo-Modus:</strong> Alle Änderungen werden lokal gespeichert und gehen beim Neuladen verloren. 
+                        In der Produktivversion werden alle Daten persistent in der Datenbank gespeichert.
+                    </div>
+                </div>
+
+                <div class="toolbar">
+                    <button class="btn btn-success" onclick="createBackup()">
+                        💾 Backup erstellen
+                    </button>
+                    <button class="btn btn-warning" onclick="loadDemoData()">
+                        📝 Demo-Daten laden
+                    </button>
+                    <button class="btn btn-danger" onclick="clearAllData()">
+                        🗑️ Alle Daten löschen
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Main Content (hidden until login) -->
-    <div class="hidden" id="mainContent">
-        <div class="header">
-            <button class="logout-btn" onclick="logout()">🚪 Abmelden</button>
-            <div class="demo-badge">DEMO DASHBOARD</div>
-            <h1>⚙️ Saarcade Admin-Dashboard</h1>
-            <p class="subtitle">Vollständige Verwaltung für Kassenwart und Vereinsvorstand</p>
-        </div>
-
-        <div class="container">
-            <!-- Dashboard-Statistiken -->
-            <div class="dashboard-grid" id="dashboardStats">
-                <div class="stat-card">
-                    <div class="stat-number" id="memberCount">6</div>
-                    <div class="stat-label">Vereinsmitglieder</div>
-                    <div class="stat-detail">Aktive Benutzer</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="revenueTotal">156€</div>
-                    <div class="stat-label">Umsatz (30 Tage)</div>
-                    <div class="stat-detail">Gesamteinnahmen</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="transactionCount">42</div>
-                    <div class="stat-label">Transaktionen</div>
-                    <div class="stat-detail">Letzten 30 Tage</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="lowStockCount">3</div>
-                    <div class="stat-label">Niedrige Bestände</div>
-                    <div class="stat-detail">Nachbestellen</div>
-                </div>
+    <!-- Benutzer Modal -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="userModalTitle">Mitglied bearbeiten</h3>
+                <span class="close" onclick="closeModal('userModal')">&times;</span>
             </div>
-
-            <!-- Navigation Tabs -->
-            <div class="tabs">
-                <button class="tab active" onclick="showTab('overview')">📊 Übersicht</button>
-                <button class="tab" onclick="showTab('users')">👥 Mitglieder</button>
-                <button class="tab" onclick="showTab('transactions')">💰 Transaktionen</button>
-                <button class="tab" onclick="showTab('sepa')">💳 SEPA-Export</button>
-                <button class="tab" onclick="showTab('inventory')">📦 Inventar</button>
-            </div>
-
-            <!-- Übersicht Tab -->
-            <div id="overview" class="tab-content active">
-                <div class="alert alert-info">
-                    <span style="font-size: 1.5em;">ℹ️</span>
-                    <div>
-                        <strong>Demo-Status:</strong> Alle Daten sind realistisch aber nur zu Demonstrationszwecken. 
-                        Das System ist vollständig funktionsfähig und bereit für den Produktiveinsatz.
-                    </div>
-                </div>
-
-                <div class="section">
-                    <h2>🚀 Schnellaktionen</h2>
-                    <div class="quick-actions">
-                        <div class="action-card" onclick="window.open('/kasse', '_blank')">
-                            <div class="action-icon">🛒</div>
-                            <h3>Kassen-Interface</h3>
-                            <p>Kassensystem für Barkräfte öffnen</p>
+            <div class="modal-body">
+                <form id="userForm" onsubmit="saveUser(event)">
+                    <input type="hidden" id="userId" value="">
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Vorname *</label>
+                            <input type="text" id="userFirstName" required>
                         </div>
-                        <div class="action-card" onclick="generateSepaExport()">
-                            <div class="action-icon">💳</div>
-                            <h3>SEPA-Export</h3>
-                            <p>Lastschrift-Datei erstellen</p>
+                        <div class="form-group">
+                            <label>Nachname *</label>
+                            <input type="text" id="userLastName" required>
                         </div>
-                        <div class="action-card" onclick="showTab('inventory')">
-                            <div class="action-icon">📦</div>
-                            <h3>Inventar prüfen</h3>
-                            <p>Bestände und Nachbestellungen</p>
-                        </div>
-                        <div class="action-card" onclick="createBackup()">
-                            <div class="action-icon">💾</div>
-                            <h3>Backup erstellen</h3>
-                            <p>Datensicherung herunterladen</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Mitglieder Tab -->
-            <div id="users" class="tab-content">
-                <div class="section">
-                    <h2>👥 Mitgliederverwaltung</h2>
-                    <div style="margin-bottom: 20px;">
-                        <button class="btn btn-success" onclick="exportUserList()">📊 Mitgliederliste exportieren</button>
-                        <button class="btn btn-warning" onclick="resetAllBalances()">⚠️ Alle Salden zurücksetzen</button>
                     </div>
                     
-                    <div style="overflow-x: auto;">
-                        <table class="data-table" id="userTable">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Rolle</th>
-                                    <th>Barcode</th>
-                                    <th>Saldo</th>
-                                    <th>SEPA</th>
-                                    <th>Aktionen</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>Max Mustermann</td>
-                                    <td>👥 Mitglied</td>
-                                    <td>SAAR001</td>
-                                    <td style="color: #e53e3e;">-15.50€</td>
-                                    <td>✅ Aktiv</td>
-                                    <td>
-                                        <button class="btn btn-secondary" style="font-size: 0.8em; padding: 5px 10px;">Bearbeiten</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Anna Schmidt</td>
-                                    <td>👥 Mitglied</td>
-                                    <td>SAAR002</td>
-                                    <td style="color: #e53e3e;">-8.20€</td>
-                                    <td>✅ Aktiv</td>
-                                    <td>
-                                        <button class="btn btn-secondary" style="font-size: 0.8em; padding: 5px 10px;">Bearbeiten</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Tom Wagner</td>
-                                    <td>🍺 Barkeeper</td>
-                                    <td>SAAR003</td>
-                                    <td style="color: #38a169;">2.40€</td>
-                                    <td>❌ Inaktiv</td>
-                                    <td>
-                                        <button class="btn btn-secondary" style="font-size: 0.8em; padding: 5px 10px;">Bearbeiten</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Sarah Klein</td>
-                                    <td>👥 Mitglied</td>
-                                    <td>SAAR004</td>
-                                    <td style="color: #e53e3e;">-12.30€</td>
-                                    <td>✅ Aktiv</td>
-                                    <td>
-                                        <button class="btn btn-secondary" style="font-size: 0.8em; padding: 5px 10px;">Bearbeiten</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Gast Benutzer</td>
-                                    <td>👤 Gast</td>
-                                    <td>GUEST001</td>
-                                    <td style="color: #666;">0.00€</td>
-                                    <td>❌ Inaktiv</td>
-                                    <td>
-                                        <button class="btn btn-secondary" style="font-size: 0.8em; padding: 5px 10px;">Bearbeiten</button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Transaktionen Tab -->
-            <div id="transactions" class="tab-content">
-                <div class="section">
-                    <h2>💰 Transaktionsverlauf</h2>
-                    <div style="margin-bottom: 20px;">
-                        <button class="btn btn-success" onclick="exportTransactions()">📊 Transaktionen exportieren</button>
-                        <button class="btn btn-secondary" onclick="loadTransactions()">🔄 Aktualisieren</button>
-                    </div>
-                    
-                    <div style="overflow-x: auto;">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Datum</th>
-                                    <th>Benutzer</th>
-                                    <th>Betrag</th>
-                                    <th>Artikel</th>
-                                    <th>Zahlart</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>19.09.2025 14:30</td>
-                                    <td>Max Mustermann</td>
-                                    <td>5.00€</td>
-                                    <td>2x Augustiner Helles</td>
-                                    <td>Konto</td>
-                                </tr>
-                                <tr>
-                                    <td>19.09.2025 14:15</td>
-                                    <td>Anna Schmidt</td>
-                                    <td>4.30€</td>
-                                    <td>1x Coca Cola, 1x Erdinger</td>
-                                    <td>Konto</td>
-                                </tr>
-                                <tr>
-                                    <td>19.09.2025 13:45</td>
-                                    <td>Sarah Klein</td>
-                                    <td>6.60€</td>
-                                    <td>1x Jägermeister, 2x Chips</td>
-                                    <td>Konto</td>
-                                </tr>
-                                <tr>
-                                    <td>19.09.2025 13:20</td>
-                                    <td>Tom Wagner</td>
-                                    <td>3.60€</td>
-                                    <td>2x Spezi</td>
-                                    <td>Konto</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- SEPA Tab -->
-            <div id="sepa" class="tab-content">
-                <div class="section">
-                    <h2>💳 SEPA-Lastschriften</h2>
-                    
-                    <div class="sepa-highlight">
-                        <h3>📋 SEPA-Export bereit</h3>
-                        <p>Alle Mitglieder mit negativem Saldo und aktivem SEPA-Mandat können abgebucht werden.</p>
-                        
-                        <div class="sepa-summary">
-                            <div class="sepa-item">
-                                <h4>3</h4>
-                                <p>Benutzer mit SEPA</p>
-                            </div>
-                            <div class="sepa-item">
-                                <h4>36.00€</h4>
-                                <p>Gesamtbetrag</p>
-                            </div>
-                            <div class="sepa-item">
-                                <h4>23.09.2025</h4>
-                                <p>Fälligkeitsdatum</p>
-                            </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Rolle</label>
+                            <select id="userRole">
+                                <option value="member">Mitglied</option>
+                                <option value="guest">Gast</option>
+                                <option value="bartender">Barkeeper</option>
+                                <option value="admin">Administrator</option>
+                            </select>
                         </div>
-                        
-                        <button class="btn btn-success" onclick="downloadSepaFile()" style="margin-top: 20px;">
-                            💾 SEPA-XML herunterladen
+                        <div class="form-group">
+                            <label>Barcode *</label>
+                            <input type="text" id="userBarcode" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Aktueller Saldo (€)</label>
+                            <input type="number" id="userBalance" step="0.01" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>SEPA-Mandat</label>
+                            <select id="userSepa">
+                                <option value="false">Inaktiv</option>
+                                <option value="true">Aktiv</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>E-Mail (optional)</label>
+                        <input type="email" id="userEmail">
+                    </div>
+                    
+                    <div style="text-align: right; margin-top: 30px;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('userModal')">
+                            Abbrechen
+                        </button>
+                        <button type="submit" class="btn btn-success">
+                            💾 Speichern
                         </button>
                     </div>
-
-                    <div style="overflow-x: auto;">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>IBAN</th>
-                                    <th>Betrag</th>
-                                    <th>Mandat</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>Max Mustermann</td>
-                                    <td>DE89 3704 0044 0532 0130 00</td>
-                                    <td>15.50€</td>
-                                    <td>SEPA-001</td>
-                                    <td>✅ Bereit</td>
-                                </tr>
-                                <tr>
-                                    <td>Anna Schmidt</td>
-                                    <td>DE12 3004 0033 0200 0001 23</td>
-                                    <td>8.20€</td>
-                                    <td>SEPA-002</td>
-                                    <td>✅ Bereit</td>
-                                </tr>
-                                <tr>
-                                    <td>Sarah Klein</td>
-                                    <td>DE45 5007 0010 0987 6543 21</td>
-                                    <td>12.30€</td>
-                                    <td>SEPA-004</td>
-                                    <td>✅ Bereit</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                </form>
             </div>
+        </div>
+    </div>
 
-            <!-- Inventar Tab -->
-            <div id="inventory" class="tab-content">
-                <div class="section">
-                    <h2>📦 Inventar-Management</h2>
-                    <div style="margin-bottom: 20px;">
-                        <button class="btn btn-warning" onclick="showLowStock()">⚠️ Niedrige Bestände</button>
-                        <button class="btn btn-success" onclick="exportInventory()">📊 Inventar exportieren</button>
+    <!-- Produkt Modal -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="productModalTitle">Produkt bearbeiten</h3>
+                <span class="close" onclick="closeModal('productModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="productForm" onsubmit="saveProduct(event)">
+                    <input type="hidden" id="productId" value="">
+                    
+                    <div class="form-group">
+                        <label>Produktname *</label>
+                        <input type="text" id="productName" required>
                     </div>
                     
-                    <div style="overflow-x: auto;">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Produkt</th>
-                                    <th>Kategorie</th>
-                                    <th>Bestand</th>
-                                    <th>Mindestbestand</th>
-                                    <th>Mitgliedspreis</th>
-                                    <th>Gastpreis</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>🍺 Augustiner Helles</td>
-                                    <td>Bier</td>
-                                    <td>24</td>
-                                    <td>10</td>
-                                    <td>2.50€</td>
-                                    <td>3.00€</td>
-                                    <td>✅ OK</td>
-                                </tr>
-                                <tr>
-                                    <td>🍺 Erdinger Weissbier</td>
-                                    <td>Bier</td>
-                                    <td>6</td>
-                                    <td>8</td>
-                                    <td>2.80€</td>
-                                    <td>3.30€</td>
-                                    <td style="color: #ed8936;">⚠️ Niedrig</td>
-                                </tr>
-                                <tr>
-                                    <td>🥤 Coca Cola</td>
-                                    <td>Softdrinks</td>
-                                    <td>36</td>
-                                    <td>15</td>
-                                    <td>1.50€</td>
-                                    <td>2.00€</td>
-                                    <td>✅ OK</td>
-                                </tr>
-                                <tr>
-                                    <td>🥃 Jägermeister</td>
-                                    <td>Spirituosen</td>
-                                    <td>3</td>
-                                    <td>5</td>
-                                    <td>3.50€</td>
-                                    <td>4.50€</td>
-                                    <td style="color: #ed8936;">⚠️ Niedrig</td>
-                                </tr>
-                                <tr>
-                                    <td>☕ Kaffee</td>
-                                    <td>Heißgetränke</td>
-                                    <td>1</td>
-                                    <td>20</td>
-                                    <td>1.00€</td>
-                                    <td>1.50€</td>
-                                    <td style="color: #e53e3e;">❌ Kritisch</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Kategorie</label>
+                            <select id="productCategory">
+                                <option value="bier">🍺 Bier</option>
+                                <option value="softdrinks">🥤 Softdrinks</option>
+                                <option value="schnaps">🥃 Spirituosen</option>
+                                <option value="snacks">🍿 Snacks</option>
+                                <option value="heissgetraenke">☕ Heißgetränke</option>
+                                <option value="sonstiges">📦 Sonstiges</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Emoji/Icon</label>
+                            <input type="text" id="productEmoji" placeholder="🍺" maxlength="2">
+                        </div>
                     </div>
-                </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Mitgliedspreis (€) *</label>
+                            <input type="number" id="productMemberPrice" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Gastpreis (€) *</label>
+                            <input type="number" id="productGuestPrice" step="0.01" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Aktueller Bestand</label>
+                            <input type="number" id="productStock" min="0" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Mindestbestand</label>
+                            <input type="number" id="productMinStock" min="0" value="5">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Barcode (optional)</label>
+                        <input type="text" id="productBarcode">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="productAvailable" checked>
+                            Verfügbar
+                        </label>
+                    </div>
+                    
+                    <div style="text-align: right; margin-top: 30px;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('productModal')">
+                            Abbrechen
+                        </button>
+                        <button type="submit" class="btn btn-success">
+                            💾 Speichern
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bestand bearbeiten Modal -->
+    <div id="stockModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📦 Bestand bearbeiten</h3>
+                <span class="close" onclick="closeModal('stockModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="stockForm" onsubmit="updateStock(event)">
+                    <input type="hidden" id="stockProductId" value="">
+                    
+                    <div class="form-group">
+                        <label>Produkt</label>
+                        <input type="text" id="stockProductName" readonly style="background: #f7fafc;">
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Aktueller Bestand</label>
+                            <input type="number" id="stockCurrent" readonly style="background: #f7fafc;">
+                        </div>
+                        <div class="form-group">
+                            <label>Neuer Bestand</label>
+                            <input type="number" id="stockNew" min="0" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Grund für Änderung</label>
+                        <select id="stockReason">
+                            <option value="nachkauf">📦 Nachkauf/Lieferung</option>
+                            <option value="inventur">📋 Inventur-Korrektur</option>
+                            <option value="verlust">❌ Verlust/Verderb</option>
+                            <option value="rueckgabe">↩️ Rückgabe</option>
+                            <option value="sonstiges">ℹ️ Sonstiges</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Notiz (optional)</label>
+                        <textarea id="stockNote" rows="3" placeholder="Zusätzliche Informationen..."></textarea>
+                    </div>
+                    
+                    <div style="text-align: right; margin-top: 30px;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('stockModal')">
+                            Abbrechen
+                        </button>
+                        <button type="submit" class="btn btn-success">
+                            📦 Bestand aktualisieren
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
     <script>
-        // ============ AUTHENTICATION ============
-        function checkPassword() {
-            const password = document.getElementById('passwordInput').value;
-            const errorDiv = document.getElementById('loginError');
-            
-            if (password === 'admin123') {
-                // Login erfolgreich
-                document.getElementById('loginOverlay').classList.add('hidden');
-                document.getElementById('mainContent').classList.remove('hidden');
-                loadDashboardData();
-                console.log('✅ Admin-Login erfolgreich');
-            } else {
-                // Falsches Passwort
-                errorDiv.classList.remove('hidden');
-                document.getElementById('passwordInput').value = '';
-                document.getElementById('passwordInput').focus();
-                
-                setTimeout(() => {
-                    errorDiv.classList.add('hidden');
-                }, 3000);
-            }
-        }
+        // ============ DATENSTRUKTUREN ============
+        let users = [
+            { id: 1, firstName: 'Max', lastName: 'Mustermann', role: 'member', barcode: 'SAAR001', balance: -15.50, sepa: true, email: 'max@example.com' },
+            { id: 2, firstName: 'Anna', lastName: 'Schmidt', role: 'member', barcode: 'SAAR002', balance: -8.20, sepa: true, email: 'anna@example.com' },
+            { id: 3, firstName: 'Tom', lastName: 'Wagner', role: 'bartender', barcode: 'SAAR003', balance: 2.40, sepa: false, email: 'tom@example.com' },
+            { id: 4, firstName: 'Sarah', lastName: 'Klein', role: 'member', barcode: 'SAAR004', balance: -12.30, sepa: true, email: 'sarah@example.com' },
+            { id: 5, firstName: 'Gast', lastName: 'Benutzer', role: 'guest', barcode: 'GUEST001', balance: 0.00, sepa: false, email: '' }
+        ];
 
-        function logout() {
-            if (confirm('Möchten Sie sich wirklich abmelden?')) {
-                document.getElementById('loginOverlay').classList.remove('hidden');
-                document.getElementById('mainContent').classList.add('hidden');
-                document.getElementById('passwordInput').value = '';
-                document.getElementById('passwordInput').focus();
-                console.log('🚪 Admin abgemeldet');
-            }
-        }
+        let products = [
+            { id: 1, name: 'Augustiner Helles', category: 'bier', emoji: '🍺', memberPrice: 2.50, guestPrice: 3.00, stock: 24, minStock: 10, available: true, barcode: '4000417025001' },
+            { id: 2, name: 'Erdinger Weissbier', category: 'bier', emoji: '🍺', memberPrice: 2.80, guestPrice: 3.30, stock: 6, minStock: 8, available: true, barcode: '4002103001011' },
+            { id: 3, name: 'Coca Cola', category: 'softdrinks', emoji: '🥤', memberPrice: 1.50, guestPrice: 2.00, stock: 36, minStock: 15, available: true, barcode: '5000112637447' },
+            { id: 4, name: 'Sprite', category: 'softdrinks', emoji: '🥤', memberPrice: 1.50, guestPrice: 2.00, stock: 28, minStock: 15, available: true, barcode: '5000112637448' },
+            { id: 5, name: 'Jägermeister', category: 'schnaps', emoji: '🥃', memberPrice: 3.50, guestPrice: 4.50, stock: 3, minStock: 5, available: true, barcode: '4000417025200' },
+            { id: 6, name: 'Erdnüsse', category: 'snacks', emoji: '🥜', memberPrice: 2.00, guestPrice: 2.50, stock: 15, minStock: 10, available: true, barcode: '4008400123456' },
+            { id: 7, name: 'Kaffee', category: 'heissgetraenke', emoji: '☕', memberPrice: 1.00, guestPrice: 1.50, stock: 1, minStock: 20, available: true, barcode: '4008400123457' }
+        ];
 
-        // Enter-Taste für Login
-        document.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' && !document.getElementById('loginOverlay').classList.contains('hidden')) {
-                checkPassword();
-            }
+        let nextUserId = 6;
+        let nextProductId = 8;
+
+        // ============ INITIALISIERUNG ============
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDashboard();
+            renderUsers();
+            renderProducts();
+            console.log('✅ Admin-Dashboard geladen');
         });
 
         // ============ TAB NAVIGATION ============
@@ -840,174 +718,469 @@
             // Aktiven Tab setzen
             event.target.classList.add('active');
             document.getElementById(tabName).classList.add('active');
-            
-            console.log('📑 Tab gewechselt zu:', tabName);
         }
 
         // ============ DASHBOARD FUNCTIONS ============
-        async function loadDashboardData() {
-            try {
-                // Demo-Daten laden (in Produktion von API)
-                console.log('📊 Dashboard-Daten werden geladen...');
+        function updateDashboard() {
+            document.getElementById('memberCount').textContent = users.length;
+            document.getElementById('productCount').textContent = products.length;
+            
+            const totalStock = products.reduce((sum, p) => sum + p.stock, 0);
+            document.getElementById('totalStock').textContent = totalStock;
+            
+            const lowStockCount = products.filter(p => p.stock <= p.minStock).length;
+            document.getElementById('lowStockCount').textContent = lowStockCount;
+        }
+
+        // ============ BENUTZER-VERWALTUNG ============
+        function renderUsers() {
+            const tbody = document.querySelector('#userTable tbody');
+            tbody.innerHTML = '';
+            
+            users.forEach(user => {
+                const row = document.createElement('tr');
+                const balanceColor = user.balance >= 0 ? '#38a169' : '#e53e3e';
+                const roleIcon = getRoleIcon(user.role);
+                const sepaStatus = user.sepa ? '✅ Aktiv' : '❌ Inaktiv';
                 
-                // Simulate API call delay
-                setTimeout(() => {
-                    updateDashboardStats({
-                        memberCount: 6,
-                        revenueTotal: 156.50,
-                        transactionCount: 42,
-                        lowStockCount: 3
-                    });
-                }, 500);
-                
-            } catch (error) {
-                console.error('❌ Fehler beim Laden der Dashboard-Daten:', error);
+                row.innerHTML = `
+                    <td>${user.firstName} ${user.lastName}</td>
+                    <td>${roleIcon} ${getRoleText(user.role)}</td>
+                    <td>${user.barcode}</td>
+                    <td style="color: ${balanceColor}; font-weight: bold;">${user.balance.toFixed(2)}€</td>
+                    <td>${sepaStatus}</td>
+                    <td>
+                        <button class="btn btn-secondary" onclick="editUser(${user.id})" style="padding: 5px 10px; font-size: 0.8em;">
+                            ✏️ Bearbeiten
+                        </button>
+                        <button class="btn btn-danger" onclick="deleteUser(${user.id})" style="padding: 5px 10px; font-size: 0.8em;">
+                            🗑️ Löschen
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function openAddUserModal() {
+            document.getElementById('userModalTitle').textContent = 'Neues Mitglied hinzufügen';
+            document.getElementById('userForm').reset();
+            document.getElementById('userId').value = '';
+            document.getElementById('userBalance').value = '0.00';
+            document.getElementById('userModal').style.display = 'block';
+        }
+
+        function editUser(userId) {
+            const user = users.find(u => u.id === userId);
+            if (!user) return;
+            
+            document.getElementById('userModalTitle').textContent = 'Mitglied bearbeiten';
+            document.getElementById('userId').value = user.id;
+            document.getElementById('userFirstName').value = user.firstName;
+            document.getElementById('userLastName').value = user.lastName;
+            document.getElementById('userRole').value = user.role;
+            document.getElementById('userBarcode').value = user.barcode;
+            document.getElementById('userBalance').value = user.balance.toFixed(2);
+            document.getElementById('userSepa').value = user.sepa ? 'true' : 'false';
+            document.getElementById('userEmail').value = user.email || '';
+            
+            document.getElementById('userModal').style.display = 'block';
+        }
+
+        function saveUser(event) {
+            event.preventDefault();
+            
+            const userId = document.getElementById('userId').value;
+            const userData = {
+                firstName: document.getElementById('userFirstName').value.trim(),
+                lastName: document.getElementById('userLastName').value.trim(),
+                role: document.getElementById('userRole').value,
+                barcode: document.getElementById('userBarcode').value.trim(),
+                balance: parseFloat(document.getElementById('userBalance').value) || 0,
+                sepa: document.getElementById('userSepa').value === 'true',
+                email: document.getElementById('userEmail').value.trim()
+            };
+            
+            // Validierung
+            if (!userData.firstName || !userData.lastName || !userData.barcode) {
+                showAlert('Bitte alle Pflichtfelder ausfüllen', 'error');
+                return;
+            }
+            
+            // Barcode-Eindeutigkeit prüfen
+            const existingUser = users.find(u => u.barcode === userData.barcode && u.id !== parseInt(userId));
+            if (existingUser) {
+                showAlert('Dieser Barcode ist bereits vergeben', 'error');
+                return;
+            }
+            
+            if (userId) {
+                // Benutzer bearbeiten
+                const userIndex = users.findIndex(u => u.id === parseInt(userId));
+                if (userIndex !== -1) {
+                    users[userIndex] = { ...users[userIndex], ...userData };
+                    showAlert('Mitglied erfolgreich aktualisiert', 'success');
+                }
+            } else {
+                // Neuen Benutzer hinzufügen
+                const newUser = { id: nextUserId++, ...userData };
+                users.push(newUser);
+                showAlert('Neues Mitglied erfolgreich hinzugefügt', 'success');
+            }
+            
+            renderUsers();
+            updateDashboard();
+            closeModal('userModal');
+        }
+
+        function deleteUser(userId) {
+            const user = users.find(u => u.id === userId);
+            if (!user) return;
+            
+            if (confirm(`Möchten Sie ${user.firstName} ${user.lastName} wirklich löschen?\n\nDiese Aktion kann nicht rückgängig gemacht werden.`)) {
+                users = users.filter(u => u.id !== userId);
+                renderUsers();
+                updateDashboard();
+                showAlert('Mitglied gelöscht', 'success');
             }
         }
 
-        function updateDashboardStats(data) {
-            document.getElementById('memberCount').textContent = data.memberCount;
-            document.getElementById('revenueTotal').textContent = data.revenueTotal.toFixed(2) + '€';
-            document.getElementById('transactionCount').textContent = data.transactionCount;
-            document.getElementById('lowStockCount').textContent = data.lowStockCount;
+        function resetAllBalances() {
+            if (confirm('Möchten Sie wirklich alle Mitgliedersalden auf 0,00€ zurücksetzen?\n\nDiese Aktion kann nicht rückgängig gemacht werden!')) {
+                users.forEach(user => user.balance = 0.00);
+                renderUsers();
+                showAlert('Alle Salden wurden zurückgesetzt', 'success');
+            }
+        }
+
+        // ============ PRODUKT-VERWALTUNG ============
+        function renderProducts() {
+            const tbody = document.querySelector('#inventoryTable tbody');
+            tbody.innerHTML = '';
             
-            console.log('✅ Dashboard-Statistiken aktualisiert');
+            products.forEach(product => {
+                const row = document.createElement('tr');
+                const stockStatus = getStockStatus(product);
+                const statusText = stockStatus.text;
+                const statusColor = stockStatus.color;
+                
+                row.innerHTML = `
+                    <td>${product.emoji} ${product.name}</td>
+                    <td>${getCategoryText(product.category)}</td>
+                    <td>
+                        <span class="editable-cell" onclick="openStockModal(${product.id})" title="Klicken zum Bearbeiten">
+                            ${product.stock}
+                        </span>
+                    </td>
+                    <td>${product.minStock}</td>
+                    <td>${product.memberPrice.toFixed(2)}€</td>
+                    <td>${product.guestPrice.toFixed(2)}€</td>
+                    <td style="color: ${statusColor}; font-weight: bold;">${statusText}</td>
+                    <td>
+                        <button class="btn btn-secondary" onclick="editProduct(${product.id})" style="padding: 5px 10px; font-size: 0.8em;">
+                            ✏️ Bearbeiten
+                        </button>
+                        <button class="btn btn-warning" onclick="openStockModal(${product.id})" style="padding: 5px 10px; font-size: 0.8em;">
+                            📦 Bestand
+                        </button>
+                        <button class="btn btn-danger" onclick="deleteProduct(${product.id})" style="padding: 5px 10px; font-size: 0.8em;">
+                            🗑️ Löschen
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
         }
 
-        // ============ EXPORT FUNCTIONS ============
-        function generateSepaExport() {
-            showAlert('💳 SEPA-Export wird vorbereitet...', 'info');
+        function openAddProductModal() {
+            document.getElementById('productModalTitle').textContent = 'Neues Produkt hinzufügen';
+            document.getElementById('productForm').reset();
+            document.getElementById('productId').value = '';
+            document.getElementById('productStock').value = '0';
+            document.getElementById('productMinStock').value = '5';
+            document.getElementById('productAvailable').checked = true;
+            document.getElementById('productModal').style.display = 'block';
+        }
+
+        function editProduct(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
             
-            setTimeout(() => {
-                showAlert('✅ SEPA-Export erfolgreich erstellt!', 'success');
-                console.log('💳 SEPA-Export generiert');
-            }, 2000);
-        }
-
-        function downloadSepaFile() {
-            // Demo: SEPA-XML generieren
-            const sepaData = generateDemoSepaXML();
-            const blob = new Blob([sepaData], { type: 'application/xml' });
-            const url = URL.createObjectURL(blob);
+            document.getElementById('productModalTitle').textContent = 'Produkt bearbeiten';
+            document.getElementById('productId').value = product.id;
+            document.getElementById('productName').value = product.name;
+            document.getElementById('productCategory').value = product.category;
+            document.getElementById('productEmoji').value = product.emoji || '';
+            document.getElementById('productMemberPrice').value = product.memberPrice.toFixed(2);
+            document.getElementById('productGuestPrice').value = product.guestPrice.toFixed(2);
+            document.getElementById('productStock').value = product.stock;
+            document.getElementById('productMinStock').value = product.minStock;
+            document.getElementById('productBarcode').value = product.barcode || '';
+            document.getElementById('productAvailable').checked = product.available;
             
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `SEPA_Saarcade_${new Date().toISOString().split('T')[0]}.xml`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            document.getElementById('productModal').style.display = 'block';
+        }
+
+        function saveProduct(event) {
+            event.preventDefault();
             
-            showAlert('💾 SEPA-Datei wurde heruntergeladen!', 'success');
+            const productId = document.getElementById('productId').value;
+            const productData = {
+                name: document.getElementById('productName').value.trim(),
+                category: document.getElementById('productCategory').value,
+                emoji: document.getElementById('productEmoji').value.trim() || '📦',
+                memberPrice: parseFloat(document.getElementById('productMemberPrice').value) || 0,
+                guestPrice: parseFloat(document.getElementById('productGuestPrice').value) || 0,
+                stock: parseInt(document.getElementById('productStock').value) || 0,
+                minStock: parseInt(document.getElementById('productMinStock').value) || 0,
+                barcode: document.getElementById('productBarcode').value.trim() || '',
+                available: document.getElementById('productAvailable').checked
+            };
+            
+            // Validierung
+            if (!productData.name || productData.memberPrice <= 0 || productData.guestPrice <= 0) {
+                showAlert('Bitte alle Pflichtfelder korrekt ausfüllen', 'error');
+                return;
+            }
+            
+            if (productData.guestPrice < productData.memberPrice) {
+                showAlert('Gastpreis muss mindestens so hoch wie Mitgliedspreis sein', 'error');
+                return;
+            }
+            
+            // Barcode-Eindeutigkeit prüfen (falls angegeben)
+            if (productData.barcode) {
+                const existingProduct = products.find(p => p.barcode === productData.barcode && p.id !== parseInt(productId));
+                if (existingProduct) {
+                    showAlert('Dieser Barcode ist bereits vergeben', 'error');
+                    return;
+                }
+            }
+            
+            if (productId) {
+                // Produkt bearbeiten
+                const productIndex = products.findIndex(p => p.id === parseInt(productId));
+                if (productIndex !== -1) {
+                    products[productIndex] = { ...products[productIndex], ...productData };
+                    showAlert('Produkt erfolgreich aktualisiert', 'success');
+                }
+            } else {
+                // Neues Produkt hinzufügen
+                const newProduct = { id: nextProductId++, ...productData };
+                products.push(newProduct);
+                showAlert('Neues Produkt erfolgreich hinzugefügt', 'success');
+            }
+            
+            renderProducts();
+            updateDashboard();
+            closeModal('productModal');
         }
 
-        function generateDemoSepaXML() {
-            return `<?xml version="1.0" encoding="UTF-8"?>
-<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.008.001.02">
-    <CstmrDrctDbtInitn>
-        <GrpHdr>
-            <MsgId>SAARCADE${Date.now()}</MsgId>
-            <CreDtTm>${new Date().toISOString()}</CreDtTm>
-            <NbOfTxs>3</NbOfTxs>
-            <CtrlSum>36.00</CtrlSum>
-            <InitgPty>
-                <Nm>Saarcade e.V.</Nm>
-            </InitgPty>
-        </GrpHdr>
-        <!-- Demo SEPA-Daten -->
-    </CstmrDrctDbtInitn>
-</Document>`;
+        function deleteProduct(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+            
+            if (confirm(`Möchten Sie "${product.name}" wirklich löschen?\n\nDiese Aktion kann nicht rückgängig gemacht werden.`)) {
+                products = products.filter(p => p.id !== productId);
+                renderProducts();
+                updateDashboard();
+                showAlert('Produkt gelöscht', 'success');
+            }
         }
 
-        function exportUserList() {
-            showAlert('📊 Mitgliederliste wird exportiert...', 'info');
-            console.log('👥 Mitgliederliste exportiert');
+        // ============ BESTAND-VERWALTUNG ============
+        function openStockModal(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+            
+            document.getElementById('stockProductId').value = product.id;
+            document.getElementById('stockProductName').value = `${product.emoji} ${product.name}`;
+            document.getElementById('stockCurrent').value = product.stock;
+            document.getElementById('stockNew').value = product.stock;
+            document.getElementById('stockReason').value = 'nachkauf';
+            document.getElementById('stockNote').value = '';
+            
+            document.getElementById('stockModal').style.display = 'block';
         }
 
-        function exportTransactions() {
-            showAlert('💰 Transaktionen werden exportiert...', 'info');
-            console.log('💰 Transaktionen exportiert');
+        function updateStock(event) {
+            event.preventDefault();
+            
+            const productId = parseInt(document.getElementById('stockProductId').value);
+            const newStock = parseInt(document.getElementById('stockNew').value);
+            const reason = document.getElementById('stockReason').value;
+            const note = document.getElementById('stockNote').value.trim();
+            
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+            
+            const oldStock = product.stock;
+            const difference = newStock - oldStock;
+            
+            if (newStock < 0) {
+                showAlert('Bestand kann nicht negativ sein', 'error');
+                return;
+            }
+            
+            // Bestand aktualisieren
+            product.stock = newStock;
+            
+            // Log erstellen (in Produktivversion würde das in die Datenbank)
+            console.log(`Bestandsänderung: ${product.name} von ${oldStock} auf ${newStock} (${difference >= 0 ? '+' : ''}${difference}) - Grund: ${reason}${note ? ' - ' + note : ''}`);
+            
+            renderProducts();
+            updateDashboard();
+            closeModal('stockModal');
+            
+            const action = difference > 0 ? 'erhöht' : difference < 0 ? 'reduziert' : 'unverändert';
+            showAlert(`Bestand für "${product.name}" ${action} (${difference >= 0 ? '+' : ''}${difference})`, 'success');
+        }
+
+        // ============ HILFSFUNKTIONEN ============
+        function getRoleIcon(role) {
+            const icons = { member: '👥', guest: '👤', bartender: '🍺', admin: '⚙️' };
+            return icons[role] || '👤';
+        }
+
+        function getRoleText(role) {
+            const texts = { member: 'Mitglied', guest: 'Gast', bartender: 'Barkeeper', admin: 'Administrator' };
+            return texts[role] || role;
+        }
+
+        function getCategoryText(category) {
+            const categories = {
+                bier: '🍺 Bier',
+                softdrinks: '🥤 Softdrinks',
+                schnaps: '🥃 Spirituosen',
+                snacks: '🍿 Snacks',
+                heissgetraenke: '☕ Heißgetränke',
+                sonstiges: '📦 Sonstiges'
+            };
+            return categories[category] || category;
+        }
+
+        function getStockStatus(product) {
+            if (product.stock <= 0) {
+                return { text: '❌ Ausverkauft', color: '#e53e3e' };
+            } else if (product.stock <= product.minStock) {
+                return { text: '⚠️ Niedrig', color: '#ed8936' };
+            } else {
+                return { text: '✅ OK', color: '#38a169' };
+            }
+        }
+
+        // ============ MODAL FUNKTIONEN ============
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Schließen bei Klick außerhalb
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+
+        // ============ EXPORT/IMPORT FUNKTIONEN ============
+        function exportUsers() {
+            const csv = convertToCSV(users, ['firstName', 'lastName', 'role', 'barcode', 'balance', 'sepa', 'email']);
+            downloadCSV(csv, 'mitglieder.csv');
+            showAlert('Mitgliederliste exportiert', 'success');
         }
 
         function exportInventory() {
-            showAlert('📦 Inventar wird exportiert...', 'info');
-            console.log('📦 Inventar exportiert');
+            const csv = convertToCSV(products, ['name', 'category', 'memberPrice', 'guestPrice', 'stock', 'minStock', 'available', 'barcode']);
+            downloadCSV(csv, 'inventar.csv');
+            showAlert('Inventar exportiert', 'success');
+        }
+
+        function convertToCSV(data, fields) {
+            const header = fields.join(',');
+            const rows = data.map(item => 
+                fields.map(field => `"${item[field] || ''}"`).join(',')
+            );
+            return [header, ...rows].join('\n');
+        }
+
+        function downloadCSV(csv, filename) {
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         function createBackup() {
-            showAlert('💾 Backup wird erstellt...', 'info');
+            const backup = {
+                timestamp: new Date().toISOString(),
+                version: '1.0',
+                users: users,
+                products: products
+            };
             
-            setTimeout(() => {
-                const backupData = {
-                    timestamp: new Date().toISOString(),
-                    version: '2.0.0-demo',
-                    users: 6,
-                    products: 18,
-                    transactions: 42
-                };
-                
-                const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `Saarcade_Backup_${new Date().toISOString().split('T')[0]}.json`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                
-                showAlert('✅ Backup erfolgreich erstellt und heruntergeladen!', 'success');
-            }, 2000);
+            const json = JSON.stringify(backup, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `saarcade_backup_${new Date().toISOString().split('T')[0]}.json`;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showAlert('Backup erfolgreich erstellt', 'success');
         }
 
-        // ============ UTILITY FUNCTIONS ============
-        function showAlert(message, type = 'info') {
-            // Create alert element
-            const alert = document.createElement('div');
-            alert.className = `alert alert-${type}`;
-            alert.style.position = 'fixed';
-            alert.style.top = '20px';
-            alert.style.right = '20px';
-            alert.style.zIndex = '2000';
-            alert.style.minWidth = '300px';
-            alert.innerHTML = message;
-            
-            document.body.appendChild(alert);
-            
-            // Remove after 3 seconds
-            setTimeout(() => {
-                if (alert.parentNode) {
-                    alert.parentNode.removeChild(alert);
+        function loadDemoData() {
+            if (confirm('Demo-Daten laden? Aktuelle Änderungen gehen verloren.')) {
+                location.reload();
+            }
+        }
+
+        function clearAllData() {
+            if (confirm('ACHTUNG: Alle Daten werden gelöscht!\n\nDiese Aktion kann nicht rückgängig gemacht werden.')) {
+                if (confirm('Letzte Warnung: Wirklich ALLE Daten löschen?')) {
+                    users.length = 0;
+                    products.length = 0;
+                    renderUsers();
+                    renderProducts();
+                    updateDashboard();
+                    showAlert('Alle Daten wurden gelöscht', 'error');
                 }
-            }, 3000);
-        }
-
-        function resetAllBalances() {
-            if (confirm('⚠️ ACHTUNG: Möchten Sie wirklich alle Mitgliedersalden auf 0.00€ zurücksetzen?\n\nDiese Aktion kann nicht rückgängig gemacht werden!')) {
-                showAlert('💰 Alle Salden wurden zurückgesetzt', 'warning');
-                console.log('⚠️ Alle Salden zurückgesetzt');
             }
         }
 
         function showLowStock() {
-            showAlert('⚠️ 3 Artikel haben niedrige Bestände!', 'warning');
-            console.log('📦 Niedrige Bestände angezeigt');
+            const lowStockProducts = products.filter(p => p.stock <= p.minStock);
+            if (lowStockProducts.length === 0) {
+                showAlert('Alle Bestände sind ausreichend', 'success');
+            } else {
+                const message = `${lowStockProducts.length} Produkte haben niedrige Bestände:\n\n${lowStockProducts.map(p => `• ${p.name}: ${p.stock} (Min: ${p.minStock})`).join('\n')}`;
+                alert(message);
+            }
         }
 
-        function loadTransactions() {
-            showAlert('🔄 Transaktionen werden aktualisiert...', 'info');
-            console.log('💰 Transaktionen neu geladen');
-        }
-
-        // ============ INITIALIZATION ============
-        document.addEventListener('DOMContentLoaded', function() {
-            // Focus password input
-            document.getElementById('passwordInput').focus();
+        // ============ ALERT SYSTEM ============
+        function showAlert(message, type = 'info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
             
-            console.log('⚙️ Admin-Dashboard geladen');
-            console.log('🔐 Demo-Passwort: admin123');
-        });
+            const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+            alertDiv.innerHTML = `<span>${icon}</span><div>${message}</div>`;
+            
+            const container = document.querySelector('.container');
+            container.insertBefore(alertDiv, container.children[1]);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 4000);
+        }
+
+        console.log('⚙️ Admin-Dashboard vollständig geladen');
+        console.log('✅ Alle CRUD-Funktionen verfügbar');
     </script>
 </body>
 </html>
