@@ -15,7 +15,8 @@
   },
   "dependencies": {
     "express": "^4.18.2",
-    "sqlite3": "^5.1.6",
+    "pg": "^8.11.3",
+    "dotenv": "^16.3.1",
     "cors": "^2.8.5",
     "helmet": "^7.0.0",
     "bcryptjs": "^2.4.3"
@@ -30,7 +31,8 @@
     "verein",
     "gastronomie",
     "demo",
-    "sqlite",
+    "postgresql",
+    "supabase",
     "nodejs"
   ],
   "author": "Saarcade e.V.",
@@ -42,15 +44,6 @@
   "config": {
     "demo_mode": true,
     "admin_password": "demo123",
-    "database": "sqlite"
-  }
-}
-
-{
-  "dependencies": {
-    "express": "^4.18.2",
-    "pg": "^8.11.3",
-    "dotenv": "^16.3.1",
-    "cors": "^2.8.5"
+    "database": "postgresql"
   }
 }
