@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎮 Saarcade Kasse - Robust</title>
+    <title>🎮 Saarcade Kasse - API Version</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -67,7 +67,7 @@
 
         .user-info.member { background: linear-gradient(135deg, #48bb78, #38a169); }
         .user-info.guest { background: linear-gradient(135deg, #f6ad55, #ed8936); }
-        .user-info.bartender { background: linear-gradient(135deg, #9f7aea, #805ad5); }
+        .user-info.admin { background: linear-gradient(135deg, #9f7aea, #805ad5); }
 
         .user-name {
             font-weight: bold;
@@ -80,7 +80,6 @@
             font-weight: bold;
         }
 
-        /* EINFACHER DROPDOWN */
         .dropdown {
             position: absolute;
             top: 100%;
@@ -152,6 +151,7 @@
         .status-message.success { background: #c6f6d5; color: #1a202c; border-left: 4px solid #38a169; }
         .status-message.error { background: #fed7d7; color: #1a202c; border-left: 4px solid #e53e3e; }
         .status-message.info { background: #bee3f8; color: #1a202c; border-left: 4px solid #3182ce; }
+        .status-message.loading { background: #faf5ff; color: #1a202c; border-left: 4px solid #9f7aea; }
 
         .main-content {
             display: grid;
@@ -168,6 +168,12 @@
         }
 
         .no-user-message {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .loading-message {
             text-align: center;
             padding: 40px;
             color: #666;
@@ -252,11 +258,17 @@
             font-size: 1.2em;
             font-weight: bold;
             margin-top: 15px;
+            transition: all 0.3s ease;
         }
 
         .cart-total:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .cart-total.processing {
+            background: linear-gradient(135deg, #a0aec0, #718096);
+            cursor: not-allowed;
         }
 
         .btn {
@@ -268,11 +280,18 @@
             cursor: pointer;
             font-weight: 600;
             margin: 5px;
+            transition: all 0.3s ease;
         }
 
         .btn:hover {
             background: #5a67d8;
             transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .btn-danger {
@@ -281,6 +300,16 @@
 
         .btn-danger:hover {
             background: #c53030;
+        }
+
+        .offline-indicator {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+            display: none;
         }
 
         @media (max-width: 768px) {
@@ -298,6 +327,10 @@
         <div class="header">
             <h1 style="text-align: center; color: #2d3748; margin-bottom: 20px;">🎮 Saarcade Kassensystem</h1>
             
+            <div class="offline-indicator" id="offlineIndicator">
+                ⚠️ Keine Verbindung zur Datenbank - Offline-Modus
+            </div>
+            
             <div class="status-message" id="statusMessage"></div>
             
             <div class="scanner-area">
@@ -311,17 +344,18 @@
                     <div class="user-balance">Bitte scannen</div>
                 </div>
             </div>
-            
-            <div style="text-align: center; font-size: 0.9em; color: #666;">
-                <strong>Demo-Codes:</strong> SAAR001 (Max), SAAR002 (Anna), SAAR003 (Tom), GUEST001 (Gast)
-            </div>
         </div>
 
         <div class="main-content">
             <div class="products-section">
                 <h2>Produkte</h2>
                 
-                <div id="noUserMessage" class="no-user-message">
+                <div id="loadingMessage" class="loading-message">
+                    <div style="font-size: 3em; margin-bottom: 15px;">⏳</div>
+                    <h3>Lade Produkte...</h3>
+                </div>
+                
+                <div id="noUserMessage" class="no-user-message" style="display: none;">
                     <div style="font-size: 3em; margin-bottom: 15px;">👤</div>
                     <h3>Bitte zuerst Mitglied auswählen</h3>
                     <p>Barcode scannen oder Namen eingeben</p>
@@ -352,31 +386,90 @@
     </div>
 
     <script>
-        // ============ EINFACHE GLOBALE VARIABLEN ============
+        // ============ GLOBALE VARIABLEN ============
         let currentUser = null;
         let cart = [];
         let searchTimeout = null;
+        let users = [];
+        let products = [];
+        let isProcessing = false;
 
-        // Mock-Daten (robuste Fallback-Daten)
-        const USERS = [
-            { id: 1, firstName: 'Max', lastName: 'Mustermann', fullName: 'Max Mustermann', role: 'member', barcode: 'SAAR001', balance: -15.50 },
-            { id: 2, firstName: 'Anna', lastName: 'Schmidt', fullName: 'Anna Schmidt', role: 'member', barcode: 'SAAR002', balance: -8.20 },
-            { id: 3, firstName: 'Tom', lastName: 'Wagner', fullName: 'Tom Wagner', role: 'bartender', barcode: 'SAAR003', balance: 2.40 },
-            { id: 4, firstName: 'Sarah', lastName: 'Klein', fullName: 'Sarah Klein', role: 'member', barcode: 'SAAR004', balance: -12.30 },
-            { id: 5, firstName: 'Gast', lastName: 'Benutzer', fullName: 'Gast Benutzer', role: 'guest', barcode: 'GUEST001', balance: 0.00 }
-        ];
+        // ============ API FUNCTIONS ============
+        
+        async function apiCall(endpoint, options = {}) {
+            try {
+                const response = await fetch(endpoint, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error(`API Error (${endpoint}):`, error);
+                showStatus(`Verbindungsfehler: ${error.message}`, 'error');
+                showOfflineIndicator(true);
+                throw error;
+            }
+        }
 
-        const PRODUCTS = [
-            { id: 1, name: 'Augustiner Helles', memberPrice: 2.50, guestPrice: 3.00, emoji: '🍺' },
-            { id: 2, name: 'Erdinger Weissbier', memberPrice: 2.80, guestPrice: 3.30, emoji: '🍺' },
-            { id: 3, name: 'Coca Cola', memberPrice: 1.50, guestPrice: 2.00, emoji: '🥤' },
-            { id: 4, name: 'Sprite', memberPrice: 1.50, guestPrice: 2.00, emoji: '🥤' },
-            { id: 5, name: 'Jägermeister', memberPrice: 3.50, guestPrice: 4.50, emoji: '🥃' },
-            { id: 6, name: 'Erdnüsse', memberPrice: 2.00, guestPrice: 2.50, emoji: '🥜' },
-            { id: 7, name: 'Kaffee', memberPrice: 1.00, guestPrice: 1.50, emoji: '☕' }
-        ];
+        async function loadUsers() {
+            try {
+                users = await apiCall('/api/users');
+                console.log(`✅ ${users.length} Benutzer geladen`);
+                showOfflineIndicator(false);
+            } catch (error) {
+                console.error('Fehler beim Laden der Benutzer:', error);
+                // Fallback: Leeres Array
+                users = [];
+            }
+        }
 
-        // ============ EINFACHE FUNKTIONEN ============
+        async function loadProducts() {
+            try {
+                products = await apiCall('/api/products');
+                console.log(`✅ ${products.length} Produkte geladen`);
+                showOfflineIndicator(false);
+                updateProductsView();
+            } catch (error) {
+                console.error('Fehler beim Laden der Produkte:', error);
+                // Fallback: Leeres Array
+                products = [];
+                updateProductsView();
+            }
+        }
+
+        async function searchUserByBarcode(barcode) {
+            try {
+                const user = await apiCall(`/api/users/${barcode}`);
+                return user;
+            } catch (error) {
+                // User nicht gefunden ist ein normaler Fall
+                return null;
+            }
+        }
+
+        async function createTransaction(transactionData) {
+            try {
+                const transaction = await apiCall('/api/transactions', {
+                    method: 'POST',
+                    body: JSON.stringify(transactionData)
+                });
+                console.log('✅ Transaktion gespeichert:', transaction);
+                return transaction;
+            } catch (error) {
+                console.error('Fehler beim Speichern der Transaktion:', error);
+                throw error;
+            }
+        }
+
+        // ============ UI FUNCTIONS ============
         
         function showStatus(message, type = 'info') {
             const statusEl = document.getElementById('statusMessage');
@@ -386,6 +479,11 @@
             setTimeout(() => {
                 statusEl.classList.remove('show');
             }, 3000);
+        }
+
+        function showOfflineIndicator(show) {
+            const indicator = document.getElementById('offlineIndicator');
+            indicator.style.display = show ? 'block' : 'none';
         }
 
         function updateUserInfo() {
@@ -402,16 +500,31 @@
 
             userInfoEl.className = `user-info ${currentUser.role}`;
             userInfoEl.innerHTML = `
-                <div class="user-name">${currentUser.fullName}</div>
+                <div class="user-name">${currentUser.full_name}</div>
                 <div class="user-balance">${currentUser.balance.toFixed(2)}€</div>
             `;
         }
 
         function updateProductsView() {
+            const loadingMsg = document.getElementById('loadingMessage');
             const noUserMsg = document.getElementById('noUserMessage');
             const productsGrid = document.getElementById('productsGrid');
             
+            // Loading verstecken
+            loadingMsg.style.display = 'none';
+            
             if (!currentUser) {
+                noUserMsg.style.display = 'block';
+                productsGrid.style.display = 'none';
+                return;
+            }
+
+            if (products.length === 0) {
+                noUserMsg.innerHTML = `
+                    <div style="font-size: 3em; margin-bottom: 15px;">📦</div>
+                    <h3>Keine Produkte verfügbar</h3>
+                    <p>Prüfen Sie die Datenbankverbindung</p>
+                `;
                 noUserMsg.style.display = 'block';
                 productsGrid.style.display = 'none';
                 return;
@@ -420,11 +533,11 @@
             noUserMsg.style.display = 'none';
             productsGrid.style.display = 'grid';
             
-            productsGrid.innerHTML = PRODUCTS.map(product => {
-                const price = currentUser.role === 'member' ? product.memberPrice : product.guestPrice;
+            productsGrid.innerHTML = products.map(product => {
+                const price = currentUser.role === 'member' ? product.member_price : product.guest_price;
                 return `
                     <div class="product-card" onclick="addToCart(${product.id})">
-                        <div class="product-emoji">${product.emoji}</div>
+                        <div class="product-emoji">${product.image || '📦'}</div>
                         <div class="product-name">${product.name}</div>
                         <div class="product-price">${price.toFixed(2)}€</div>
                     </div>
@@ -446,15 +559,17 @@
 
             let total = 0;
             cartItemsEl.innerHTML = cart.map((item, index) => {
-                const product = PRODUCTS.find(p => p.id === item.productId);
-                const price = currentUser.role === 'member' ? product.memberPrice : product.guestPrice;
+                const product = products.find(p => p.id === item.productId);
+                if (!product) return '';
+                
+                const price = currentUser.role === 'member' ? product.member_price : product.guest_price;
                 const itemTotal = price * item.quantity;
                 total += itemTotal;
                 
                 return `
                     <div class="cart-item">
                         <div>
-                            <strong>${product.emoji} ${product.name}</strong><br>
+                            <strong>${product.image || '📦'} ${product.name}</strong><br>
                             <small>${item.quantity}x ${price.toFixed(2)}€ = ${itemTotal.toFixed(2)}€</small>
                         </div>
                         <button class="btn btn-danger" onclick="removeFromCart(${index})" style="padding: 5px 8px;">−</button>
@@ -463,22 +578,25 @@
             }).join('');
 
             const newBalance = currentUser.balance - total;
+            const processingClass = isProcessing ? ' processing' : '';
             cartTotalEl.innerHTML = `
-                <div class="cart-total" onclick="checkout()">
+                <div class="cart-total${processingClass}" onclick="checkout()">
                     <div>Gesamt: ${total.toFixed(2)}€</div>
                     <div style="font-size: 0.9em; margin-top: 5px;">Neuer Saldo: ${newBalance.toFixed(2)}€</div>
-                    <div style="font-size: 0.8em; margin-top: 5px;">💳 Klicken zum Bezahlen</div>
+                    <div style="font-size: 0.8em; margin-top: 5px;">
+                        ${isProcessing ? '⏳ Verarbeite...' : '💳 Klicken zum Bezahlen'}
+                    </div>
                 </div>
             `;
             cartTotalEl.style.display = 'block';
             clearBtn.disabled = false;
         }
 
-        // ============ BENUTZER-FUNKTIONEN ============
+        // ============ USER FUNCTIONS ============
         
         function selectUser(user) {
             currentUser = user;
-            showStatus(`${user.fullName} ausgewählt!`, 'success');
+            showStatus(`${user.full_name} ausgewählt!`, 'success');
             updateUserInfo();
             updateProductsView();
             hideDropdown();
@@ -492,10 +610,10 @@
                 return;
             }
 
-            const filtered = USERS.filter(user => 
+            const filtered = users.filter(user => 
                 user.barcode.toLowerCase().includes(query.toLowerCase()) ||
-                user.fullName.toLowerCase().includes(query.toLowerCase()) ||
-                user.firstName.toLowerCase().includes(query.toLowerCase())
+                user.full_name.toLowerCase().includes(query.toLowerCase()) ||
+                user.first_name.toLowerCase().includes(query.toLowerCase())
             );
 
             if (filtered.length === 0) {
@@ -506,14 +624,14 @@
             showDropdown(filtered);
         }
 
-        function showDropdown(users) {
+        function showDropdown(userList) {
             const dropdown = document.getElementById('userDropdown');
             
-            dropdown.innerHTML = users.slice(0, 5).map(user => `
+            dropdown.innerHTML = userList.slice(0, 5).map(user => `
                 <div class="dropdown-item" onclick="selectUser(${JSON.stringify(user).replace(/"/g, '&quot;')})">
-                    <div class="dropdown-avatar">${user.firstName.charAt(0)}</div>
+                    <div class="dropdown-avatar">${user.first_name.charAt(0)}</div>
                     <div class="dropdown-info">
-                        <div class="dropdown-name">${getRoleIcon(user.role)} ${user.fullName}</div>
+                        <div class="dropdown-name">${getRoleIcon(user.role)} ${user.full_name}</div>
                         <div class="dropdown-details">${getRoleText(user.role)} • ${user.balance.toFixed(2)}€</div>
                     </div>
                 </div>
@@ -527,16 +645,16 @@
         }
 
         function getRoleIcon(role) {
-            const icons = { member: '👥', guest: '👤', bartender: '🍺', admin: '⚙️' };
+            const icons = { member: '👥', guest: '👤', admin: '⚙️' };
             return icons[role] || '👤';
         }
 
         function getRoleText(role) {
-            const texts = { member: 'Mitglied', guest: 'Gast', bartender: 'Barkeeper', admin: 'Admin' };
+            const texts = { member: 'Mitglied', guest: 'Gast', admin: 'Admin' };
             return texts[role] || role;
         }
 
-        // ============ WARENKORB-FUNKTIONEN ============
+        // ============ CART FUNCTIONS ============
         
         function addToCart(productId) {
             if (!currentUser) {
@@ -551,7 +669,7 @@
                 cart.push({ productId, quantity: 1 });
             }
 
-            const product = PRODUCTS.find(p => p.id === productId);
+            const product = products.find(p => p.id === productId);
             showStatus(`${product.name} hinzugefügt`, 'success');
             updateCartView();
         }
@@ -572,31 +690,68 @@
             showStatus('Warenkorb geleert', 'info');
         }
 
-        function checkout() {
-            if (cart.length === 0) return;
+        async function checkout() {
+            if (cart.length === 0 || isProcessing) return;
 
-            let total = 0;
-            cart.forEach(item => {
-                const product = PRODUCTS.find(p => p.id === item.productId);
-                const price = currentUser.role === 'member' ? product.memberPrice : product.guestPrice;
-                total += price * item.quantity;
-            });
+            isProcessing = true;
+            updateCartView();
+            showStatus('Verarbeite Transaktion...', 'loading');
 
-            currentUser.balance -= total;
-            showStatus(`Kauf über ${total.toFixed(2)}€ abgeschlossen!`, 'success');
-            clearCart();
-            updateUserInfo();
+            try {
+                // Transaktionsdaten vorbereiten
+                let total = 0;
+                const items = cart.map(cartItem => {
+                    const product = products.find(p => p.id === cartItem.productId);
+                    const price = currentUser.role === 'member' ? product.member_price : product.guest_price;
+                    const itemTotal = price * cartItem.quantity;
+                    total += itemTotal;
+                    
+                    return {
+                        productId: product.id,
+                        productName: product.name,
+                        quantity: cartItem.quantity,
+                        price: price,
+                        total: itemTotal
+                    };
+                });
 
-            // Auto-Reset nach 3 Sekunden
-            setTimeout(() => {
-                resetSession();
-                showStatus('Session beendet - Nächster Kunde', 'info');
-            }, 3000);
+                const transactionData = {
+                    userId: currentUser.id,
+                    userName: currentUser.full_name,
+                    items: items,
+                    total: total,
+                    paymentMethod: 'balance'
+                };
+
+                // Transaktion an API senden
+                await createTransaction(transactionData);
+
+                // Lokalen User-Saldo aktualisieren
+                currentUser.balance -= total;
+                
+                showStatus(`Kauf über ${total.toFixed(2)}€ abgeschlossen!`, 'success');
+                clearCart();
+                updateUserInfo();
+
+                // Auto-Reset nach 3 Sekunden
+                setTimeout(() => {
+                    resetSession();
+                    showStatus('Session beendet - Nächster Kunde', 'info');
+                }, 3000);
+
+            } catch (error) {
+                showStatus('Fehler beim Abschließen des Kaufs', 'error');
+                console.error('Checkout-Fehler:', error);
+            } finally {
+                isProcessing = false;
+                updateCartView();
+            }
         }
 
         function resetSession() {
             currentUser = null;
             cart = [];
+            isProcessing = false;
             updateUserInfo();
             updateProductsView();
             updateCartView();
@@ -607,8 +762,13 @@
 
         // ============ EVENT LISTENERS ============
         
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             const barcodeInput = document.getElementById('barcodeInput');
+            
+            // Daten laden
+            showStatus('Lade Systemdaten...', 'loading');
+            await Promise.all([loadUsers(), loadProducts()]);
+            showStatus('System bereit!', 'success');
             
             // Input Event für Live-Suche
             barcodeInput.addEventListener('input', function(e) {
@@ -623,17 +783,29 @@
             });
 
             // Enter-Taste für direkte Eingabe
-            barcodeInput.addEventListener('keypress', function(e) {
+            barcodeInput.addEventListener('keypress', async function(e) {
                 if (e.key === 'Enter') {
                     const input = e.target.value.trim();
                     if (!input) return;
 
-                    // Direkter Barcode-Match
-                    const user = USERS.find(u => u.barcode === input.toUpperCase());
-                    if (user) {
-                        selectUser(user);
-                    } else {
-                        showStatus('Barcode nicht gefunden', 'error');
+                    showStatus('Suche Benutzer...', 'loading');
+
+                    try {
+                        // Zuerst API-Suche
+                        const user = await searchUserByBarcode(input.toUpperCase());
+                        if (user) {
+                            selectUser(user);
+                        } else {
+                            // Fallback: Lokale Suche
+                            const localUser = users.find(u => u.barcode === input.toUpperCase());
+                            if (localUser) {
+                                selectUser(localUser);
+                            } else {
+                                showStatus('Barcode nicht gefunden', 'error');
+                            }
+                        }
+                    } catch (error) {
+                        showStatus('Fehler bei der Benutzersuche', 'error');
                     }
                 }
             });
@@ -651,8 +823,19 @@
             updateCartView();
             barcodeInput.focus();
             
-            console.log('🎮 Saarcade Kasse bereit!');
-            console.log('📋 Verfügbare Barcodes:', USERS.map(u => u.barcode).join(', '));
+            console.log('🎮 Saarcade Kasse mit API-Integration bereit!');
+        });
+
+        // ============ ERROR HANDLING ============
+        
+        window.addEventListener('error', function(e) {
+            console.error('JavaScript-Fehler:', e.error);
+            showStatus('Unerwarteter Fehler aufgetreten', 'error');
+        });
+
+        window.addEventListener('unhandledrejection', function(e) {
+            console.error('Unbehandelte Promise-Rejection:', e.reason);
+            showStatus('Verbindungsfehler aufgetreten', 'error');
         });
     </script>
 </body>
