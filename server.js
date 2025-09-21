@@ -16,28 +16,29 @@ app.get('/api/test-db', async (req, res) => {
   try {
     const dbUrl = process.env.DATABASE_URL;
     
-    // Zeige Details ohne Passwort
-    if (!dbUrl) {
-      return res.json({ success: false, error: 'DATABASE_URL missing' });
-    }
+    // Schritt 1: Pool erstellen ohne SSL zuerst
+    const { Pool } = require('pg');
+    const pool = new Pool({
+      connectionString: dbUrl
+      // SSL erstmal weglassen
+    });
     
-    // URL-Teile analysieren
-    const urlParts = {
-      starts_with_postgresql: dbUrl.startsWith('postgresql://'),
-      length: dbUrl.length,
-      has_at_symbol: dbUrl.includes('@'),
-      has_colon_after_at: dbUrl.split('@')[1]?.includes(':'),
-      preview: dbUrl.substring(0, 50) + '...'
-    };
+    // Schritt 2: Einfachste Query
+    const result = await pool.query('SELECT 1 as test');
     
     res.json({ 
-      success: false, 
-      analysis: urlParts,
-      error: 'Analysis only - no connection attempt'
+      success: true, 
+      result: result.rows[0],
+      message: 'Connection working!'
     });
     
   } catch (error) {
-    res.json({ success: false, error: error.message });
+    res.json({ 
+      success: false, 
+      error: error.message,
+      error_code: error.code,
+      stack: error.stack?.split('\n')[0] // Nur erste Zeile des Stacks
+    });
   }
 });
 
