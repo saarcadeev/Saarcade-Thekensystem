@@ -1,7 +1,7 @@
 {
   "name": "saarcade-kassensystem-demo",
   "version": "2.0.0",
-  "description": "Vollständiges Kassensystem für Saarcade e.V. - Professional Demo",
+  "description": "Vollständiges Kassensystem für Saarcade e.V. - PostgreSQL Version",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
