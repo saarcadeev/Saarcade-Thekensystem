@@ -1,237 +1,318 @@
-// server.js - Vercel-optimierte Version
+// server.js - PostgreSQL/Supabase Version
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
-const fs = require('fs');
+const cors = require('cors');
+const helmet = require('helmet');
+require('dotenv').config();
+
+// PostgreSQL via Supabase
+const { pool, initDatabase } = require('./db/database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
+app.use(helmet({
+  contentSecurityPolicy: false, // Für lokale Entwicklung
+}));
+app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
-// SQLite-Datenbank für Vercel anpassen
-const isVercel = process.env.VERCEL || process.env.NODE_ENV === 'production';
-const dbPath = isVercel ? '/tmp/saarcade.db' : './saarcade_demo.db';
-
-// In-Memory-Datenbank für Vercel als Fallback
-let db;
-
-function initializeDatabase() {
-  if (isVercel) {
-    // Für Vercel: In-Memory-Datenbank mit vordefinierten Daten
-    db = new sqlite3.Database(':memory:');
-    
-    // Demo-Daten für Vercel laden
-    const initSQL = `
-      -- Benutzer Tabelle
-      CREATE TABLE users (
-        barcode TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        role TEXT DEFAULT 'member',
-        balance REAL DEFAULT 0,
-        sepa_mandate INTEGER DEFAULT 0,
-        auto_logout INTEGER DEFAULT 1
-      );
-      
-      -- Produkte Tabelle  
-      CREATE TABLE products (
-        barcode TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        price_member REAL NOT NULL,
-        price_guest REAL NOT NULL,
-        stock INTEGER DEFAULT 0,
-        category TEXT DEFAULT 'Getränke'
-      );
-      
-      -- Transaktionen Tabelle
-      CREATE TABLE transactions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_barcode TEXT,
-        product_barcode TEXT,
-        quantity INTEGER,
-        amount REAL,
-        payment_method TEXT,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-      );
-      
-      -- Demo-Benutzer einfügen
-      INSERT INTO users VALUES
-      ('SAAR001', 'Max Mustermann', 'member', -15.50, 1, 1),
-      ('SAAR002', 'Anna Schmidt', 'member', -8.20, 0, 1),
-      ('SAAR003', 'Tom Wagner', 'barkeeper', 2.40, 0, 0),
-      ('GUEST001', 'Gast Benutzer', 'guest', 0.00, 0, 1);
-      
-      -- Demo-Produkte einfügen
-      INSERT INTO products VALUES
-      ('4000417025001', 'Augustiner Helles', 2.50, 3.00, 24, 'Bier'),
-      ('5000112637447', 'Coca Cola', 1.50, 2.00, 18, 'Softdrinks'),
-      ('4002103001011', 'Erdinger Weissbier', 2.80, 3.30, 12, 'Bier'),
-      ('4000417025200', 'Jägermeister', 3.50, 4.50, 6, 'Spirituosen');
-    `;
-    
-    db.exec(initSQL, (err) => {
-      if (err) {
-        console.error('Fehler beim Initialisieren der Datenbank:', err);
-      } else {
-        console.log('✅ In-Memory-Datenbank für Vercel initialisiert');
-      }
-    });
-  } else {
-    // Lokale SQLite-Datei für Entwicklung
-    db = new sqlite3.Database(dbPath);
-  }
-}
-
-// Datenbank initialisieren
-initializeDatabase();
+// Datenbank beim Start initialisieren
+initDatabase();
 
 // Health Check für Vercel
-app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    timestamp: new Date().toISOString(),
-    environment: isVercel ? 'vercel' : 'local',
-    database: isVercel ? 'memory' : 'sqlite'
-  });
+app.get('/health', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT NOW()');
+    res.json({ 
+      status: 'OK', 
+      timestamp: result.rows[0].now,
+      environment: process.env.NODE_ENV || 'development',
+      database: 'supabase-postgresql'
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      status: 'ERROR', 
+      error: error.message,
+      database: 'supabase-postgresql'
+    });
+  }
 });
 
-// API Routes
-app.get('/api/users', (req, res) => {
-  db.all('SELECT * FROM users', (err, rows) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-    } else {
-      res.json(rows);
-    }
-  });
+// Dashboard-Statistiken
+app.get('/api/dashboard', async (req, res) => {
+  try {
+    const stats = await pool.query(`
+      SELECT 
+        (SELECT COUNT(*) FROM users WHERE role = 'member') as total_members,
+        (SELECT COUNT(*) FROM products WHERE available = true) as total_products,
+        (SELECT COALESCE(SUM(total), 0) FROM transactions WHERE DATE(created_at) = CURRENT_DATE) as today_revenue,
+        (SELECT COUNT(*) FROM transactions WHERE DATE(created_at) = CURRENT_DATE) as today_transactions,
+        (SELECT COUNT(*) FROM users WHERE balance < 0) as users_with_debt,
+        (SELECT COALESCE(SUM(ABS(balance)), 0) FROM users WHERE balance < 0) as total_debt
+    `);
+    
+    res.json(stats.rows[0]);
+  } catch (error) {
+    console.error('Dashboard-Fehler:', error);
+    res.status(500).json({ error: 'Datenbankfehler' });
+  }
 });
 
-app.get('/api/users/:barcode', (req, res) => {
-  const { barcode } = req.params;
-  db.get('SELECT * FROM users WHERE barcode = ?', [barcode], (err, row) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-    } else if (row) {
-      res.json(row);
+// Alle Benutzer abrufen
+app.get('/api/users', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM users ORDER BY full_name');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Fehler beim Abrufen der Benutzer:', error);
+    res.status(500).json({ error: 'Datenbankfehler' });
+  }
+});
+
+// Benutzer per Barcode suchen
+app.get('/api/users/:barcode', async (req, res) => {
+  try {
+    const { barcode } = req.params;
+    const result = await pool.query('SELECT * FROM users WHERE barcode = $1', [barcode]);
+    
+    if (result.rows.length > 0) {
+      res.json(result.rows[0]);
     } else {
       res.status(404).json({ error: 'Benutzer nicht gefunden' });
     }
-  });
+  } catch (error) {
+    console.error('Fehler bei Benutzer-Suche:', error);
+    res.status(500).json({ error: 'Datenbankfehler' });
+  }
 });
 
-app.get('/api/products', (req, res) => {
-  db.all('SELECT * FROM products', (err, rows) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
+// Benutzer suchen (Name oder Barcode)
+app.get('/api/users/search/:query', async (req, res) => {
+  try {
+    const { query } = req.params;
+    const result = await pool.query(
+      'SELECT * FROM users WHERE full_name ILIKE $1 OR barcode = $2 ORDER BY full_name LIMIT 10',
+      [`%${query}%`, query]
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Fehler bei der Benutzersuche:', error);
+    res.status(500).json({ error: 'Datenbankfehler' });
+  }
+});
+
+// Neuen Benutzer erstellen
+app.post('/api/users', async (req, res) => {
+  try {
+    const { firstName, lastName, pin, barcode, role = 'member' } = req.body;
+    const fullName = `${firstName} ${lastName}`;
+    
+    const result = await pool.query(
+      'INSERT INTO users (first_name, last_name, full_name, pin, barcode, role) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [firstName, lastName, fullName, pin, barcode, role]
+    );
+    
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Fehler beim Erstellen des Benutzers:', error);
+    if (error.code === '23505') { // Unique constraint violation
+      res.status(400).json({ error: 'Barcode bereits vergeben' });
     } else {
-      res.json(rows);
+      res.status(500).json({ error: 'Datenbankfehler' });
     }
-  });
+  }
 });
 
-app.get('/api/products/:barcode', (req, res) => {
-  const { barcode } = req.params;
-  db.get('SELECT * FROM products WHERE barcode = ?', [barcode], (err, row) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-    } else if (row) {
-      res.json(row);
+// Benutzer aktualisieren
+app.put('/api/users/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { firstName, lastName, pin, balance, sepaMandate, iban, accountHolder } = req.body;
+    const fullName = `${firstName} ${lastName}`;
+    
+    const result = await pool.query(
+      `UPDATE users SET 
+       first_name = $1, last_name = $2, full_name = $3, pin = $4, 
+       balance = $5, sepa_mandate = $6, iban = $7, account_holder = $8
+       WHERE id = $9 RETURNING *`,
+      [firstName, lastName, fullName, pin, balance, sepaMandate, iban, accountHolder, id]
+    );
+    
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Fehler beim Aktualisieren des Benutzers:', error);
+    res.status(500).json({ error: 'Datenbankfehler' });
+  }
+});
+
+// Alle Produkte abrufen
+app.get('/api/products', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM products WHERE available = true ORDER BY name');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Fehler beim Abrufen der Produkte:', error);
+    res.status(500).json({ error: 'Datenbankfehler' });
+  }
+});
+
+// Produkt per Barcode finden
+app.get('/api/products/barcode/:barcode', async (req, res) => {
+  try {
+    const { barcode } = req.params;
+    const result = await pool.query(
+      'SELECT * FROM products WHERE $1 = ANY(barcodes) AND available = true',
+      [barcode]
+    );
+    
+    if (result.rows.length > 0) {
+      res.json(result.rows[0]);
     } else {
       res.status(404).json({ error: 'Produkt nicht gefunden' });
     }
-  });
+  } catch (error) {
+    console.error('Fehler bei Barcode-Suche:', error);
+    res.status(500).json({ error: 'Datenbankfehler' });
+  }
 });
 
-app.post('/api/transactions', (req, res) => {
-  const { user_barcode, product_barcode, quantity, payment_method } = req.body;
-  
-  // Produktpreis ermitteln
-  db.get('SELECT * FROM products WHERE barcode = ?', [product_barcode], (err, product) => {
-    if (err || !product) {
-      return res.status(404).json({ error: 'Produkt nicht gefunden' });
+// Neues Produkt erstellen
+app.post('/api/products', async (req, res) => {
+  try {
+    const { name, category, barcodes, memberPrice, guestPrice, description, stock, image } = req.body;
+    
+    const result = await pool.query(
+      'INSERT INTO products (name, category, barcodes, member_price, guest_price, description, stock, image) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+      [name, category, barcodes, memberPrice, guestPrice, description, stock, image]
+    );
+    
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Fehler beim Erstellen des Produkts:', error);
+    res.status(500).json({ error: 'Datenbankfehler' });
+  }
+});
+
+// Produkt aktualisieren
+app.put('/api/products/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, category, barcodes, memberPrice, guestPrice, description, stock, available } = req.body;
+    
+    const result = await pool.query(
+      `UPDATE products SET 
+       name = $1, category = $2, barcodes = $3, member_price = $4, 
+       guest_price = $5, description = $6, stock = $7, available = $8
+       WHERE id = $9 RETURNING *`,
+      [name, category, barcodes, memberPrice, guestPrice, description, stock, available, id]
+    );
+    
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Fehler beim Aktualisieren des Produkts:', error);
+    res.status(500).json({ error: 'Datenbankfehler' });
+  }
+});
+
+// Neue Transaktion erstellen
+app.post('/api/transactions', async (req, res) => {
+  try {
+    const { userId, userName, items, total, paymentMethod = 'balance' } = req.body;
+    
+    // Transaktion erstellen
+    const result = await pool.query(
+      'INSERT INTO transactions (user_id, user_name, items, total, payment_method) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [userId, userName, JSON.stringify(items), total, paymentMethod]
+    );
+    
+    // Bei Anschreibung: Benutzerguthaben aktualisieren
+    if (paymentMethod === 'balance' && userId) {
+      await pool.query(
+        'UPDATE users SET balance = balance - $1, last_activity = CURRENT_TIMESTAMP WHERE id = $2',
+        [total, userId]
+      );
     }
     
-    // Benutzer ermitteln für Preisberechnung
-    db.get('SELECT * FROM users WHERE barcode = ?', [user_barcode], (err, user) => {
-      if (err || !user) {
-        return res.status(404).json({ error: 'Benutzer nicht gefunden' });
-      }
-      
-      const price = user.role === 'guest' ? product.price_guest : product.price_member;
-      const amount = price * quantity;
-      
-      // Transaktion einfügen
-      db.run(
-        'INSERT INTO transactions (user_barcode, product_barcode, quantity, amount, payment_method) VALUES (?, ?, ?, ?, ?)',
-        [user_barcode, product_barcode, quantity, amount, payment_method],
-        function(err) {
-          if (err) {
-            res.status(500).json({ error: err.message });
-          } else {
-            // Benutzersaldo aktualisieren (nur bei Account-Zahlung)
-            if (payment_method === 'account') {
-              db.run(
-                'UPDATE users SET balance = balance - ? WHERE barcode = ?',
-                [amount, user_barcode],
-                (err) => {
-                  if (err) {
-                    console.error('Fehler beim Aktualisieren des Saldos:', err);
-                  }
-                }
-              );
-            }
-            
-            res.json({ 
-              id: this.lastID, 
-              amount: amount,
-              message: 'Transaktion erfolgreich' 
-            });
-          }
-        }
+    // Lagerbestand aktualisieren
+    for (const item of items) {
+      await pool.query(
+        'UPDATE products SET stock = stock - $1 WHERE id = $2',
+        [item.quantity, item.productId]
       );
-    });
-  });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Fehler beim Erstellen der Transaktion:', error);
+    res.status(500).json({ error: 'Datenbankfehler' });
+  }
 });
 
-app.get('/api/dashboard', (req, res) => {
-  // Dashboard-Statistiken
-  Promise.all([
-    new Promise((resolve, reject) => {
-      db.get('SELECT COUNT(*) as count FROM users', (err, row) => {
-        if (err) reject(err);
-        else resolve(row.count);
-      });
-    }),
-    new Promise((resolve, reject) => {
-      db.get('SELECT COUNT(*) as count FROM products', (err, row) => {
-        if (err) reject(err);
-        else resolve(row.count);
-      });
-    }),
-    new Promise((resolve, reject) => {
-      db.get('SELECT COUNT(*) as count FROM transactions WHERE date(timestamp) = date("now")', (err, row) => {
-        if (err) reject(err);
-        else resolve(row.count);
-      });
-    }),
-    new Promise((resolve, reject) => {
-      db.get('SELECT SUM(amount) as total FROM transactions WHERE date(timestamp) = date("now")', (err, row) => {
-        if (err) reject(err);
-        else resolve(row.total || 0);
-      });
-    })
-  ]).then(([userCount, productCount, transactionCount, dailyRevenue]) => {
-    res.json({
-      users: userCount,
-      products: productCount,
-      transactions_today: transactionCount,
-      revenue_today: dailyRevenue.toFixed(2)
-    });
-  }).catch(err => {
-    res.status(500).json({ error: err.message });
-  });
+// Transaktionen abrufen
+app.get('/api/transactions', async (req, res) => {
+  try {
+    const { limit = 50, offset = 0 } = req.query;
+    const result = await pool.query(
+      'SELECT * FROM transactions ORDER BY created_at DESC LIMIT $1 OFFSET $2',
+      [limit, offset]
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Fehler beim Abrufen der Transaktionen:', error);
+    res.status(500).json({ error: 'Datenbankfehler' });
+  }
+});
+
+// SEPA-Export für Lastschriften
+app.get('/api/sepa-export', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        id,
+        full_name as name,
+        iban,
+        account_holder,
+        mandate_reference,
+        ABS(balance) as amount,
+        balance
+      FROM users 
+      WHERE balance < 0 AND sepa_mandate = true AND iban IS NOT NULL AND iban != ''
+      ORDER BY full_name
+    `);
+    
+    res.json(result.rows);
+  } catch (error) {
+    console.error('SEPA-Export Fehler:', error);
+    res.status(500).json({ error: 'Datenbankfehler' });
+  }
+});
+
+// Backup-Endpunkt
+app.get('/api/backup', async (req, res) => {
+  try {
+    const users = await pool.query('SELECT * FROM users ORDER BY id');
+    const products = await pool.query('SELECT * FROM products ORDER BY id');
+    const transactions = await pool.query('SELECT * FROM transactions ORDER BY created_at DESC LIMIT 1000');
+    
+    const backup = {
+      timestamp: new Date().toISOString(),
+      version: '2.0.0',
+      database: 'postgresql',
+      data: {
+        users: users.rows,
+        products: products.rows,
+        transactions: transactions.rows
+      }
+    };
+    
+    res.json(backup);
+  } catch (error) {
+    console.error('Backup-Fehler:', error);
+    res.status(500).json({ error: 'Datenbankfehler' });
+  }
 });
 
 // Catch-all für SPA-Routing
@@ -243,10 +324,12 @@ app.get('*', (req, res) => {
 module.exports = app;
 
 // Lokaler Server starten (nur wenn nicht auf Vercel)
-if (!isVercel) {
+if (process.env.NODE_ENV !== 'production') {
   app.listen(PORT, () => {
-    console.log(`🎮 Saarcade Kassensystem läuft auf http://localhost:${PORT}`);
-    console.log(`📊 Dashboard: http://localhost:${PORT}/admin`);
+    console.log(`🎮 Saarcade Kassensystem läuft auf Port ${PORT}`);
+    console.log(`💾 Datenbank: Supabase PostgreSQL`);
+    console.log(`🌐 Frontend: http://localhost:${PORT}`);
+    console.log(`📊 Admin: http://localhost:${PORT}/admin`);
     console.log(`💰 Kasse: http://localhost:${PORT}/kasse`);
   });
 }
