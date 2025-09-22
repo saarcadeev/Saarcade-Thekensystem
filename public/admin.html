@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚙️ Saarcade Admin - Vollständig</title>
+    <title>⚙️ Saarcade Admin - Mit API-Integration</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -29,7 +29,7 @@
             text-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        .demo-badge {
+        .api-status {
             background: rgba(255, 255, 255, 0.2);
             padding: 8px 15px;
             border-radius: 20px;
@@ -37,6 +37,16 @@
             display: inline-block;
             margin-bottom: 15px;
             border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .api-status.connected {
+            background: rgba(76, 175, 80, 0.2);
+            border-color: rgba(76, 175, 80, 0.5);
+        }
+
+        .api-status.error {
+            background: rgba(244, 67, 54, 0.2);
+            border-color: rgba(244, 67, 54, 0.5);
         }
 
         .container {
@@ -123,6 +133,12 @@
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
 
+        .btn:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .btn-success { background: linear-gradient(135deg, #48bb78, #38a169); }
         .btn-warning { background: linear-gradient(135deg, #ed8936, #dd6b20); }
         .btn-danger { background: linear-gradient(135deg, #f56565, #e53e3e); }
@@ -154,121 +170,6 @@
 
         .data-table tr:hover {
             background: #f7fafc;
-        }
-
-        /* MODAL STYLES */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            backdrop-filter: blur(5px);
-        }
-
-        .modal-content {
-            background-color: white;
-            margin: 5% auto;
-            padding: 0;
-            border-radius: 15px;
-            width: 90%;
-            max-width: 600px;
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .modal-header {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            padding: 20px 30px;
-            border-radius: 15px 15px 0 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .modal-header h3 {
-            margin: 0;
-            font-size: 1.5em;
-        }
-
-        .close {
-            color: white;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .close:hover {
-            color: #ddd;
-        }
-
-        .modal-body {
-            padding: 30px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #2d3748;
-        }
-
-        .form-group input, .form-group select, .form-group textarea {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 1em;
-            transition: border-color 0.3s ease;
-        }
-
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        .alert {
-            padding: 15px 20px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .alert-success {
-            background: linear-gradient(135deg, #c6f6d5, #9ae6b4);
-            color: #1a202c;
-            border-left: 5px solid #38a169;
-        }
-
-        .alert-error {
-            background: linear-gradient(135deg, #fed7d7, #feb2b2);
-            color: #1a202c;
-            border-left: 5px solid #e53e3e;
-        }
-
-        .alert-info {
-            background: linear-gradient(135deg, #bee3f8, #90cdf4);
-            color: #1a202c;
-            border-left: 5px solid #3182ce;
         }
 
         .dashboard-grid {
@@ -313,50 +214,100 @@
             flex-wrap: wrap;
         }
 
-        .editable-cell {
-            background: #f0f8ff;
-            border: 1px dashed #667eea;
-            padding: 5px;
-            cursor: pointer;
-            border-radius: 4px;
+        .alert {
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
-        .editable-cell:hover {
-            background: #e6f3ff;
+        .alert-success {
+            background: linear-gradient(135deg, #c6f6d5, #9ae6b4);
+            color: #1a202c;
+            border-left: 5px solid #38a169;
+        }
+
+        .alert-error {
+            background: linear-gradient(135deg, #fed7d7, #feb2b2);
+            color: #1a202c;
+            border-left: 5px solid #e53e3e;
+        }
+
+        .alert-info {
+            background: linear-gradient(135deg, #bee3f8, #90cdf4);
+            color: #1a202c;
+            border-left: 5px solid #3182ce;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         @media (max-width: 768px) {
             .container { padding: 10px; }
-            .form-grid { grid-template-columns: 1fr; }
+            .dashboard-grid { grid-template-columns: 1fr; }
             .toolbar { flex-direction: column; }
         }
     </style>
 </head>
 <body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div>
+            <div class="loading-spinner"></div>
+            <p style="margin-top: 20px; font-weight: 600;">Lade Daten...</p>
+        </div>
+    </div>
+
     <div class="header">
-        <div class="demo-badge">VOLLSTÄNDIGES ADMIN DASHBOARD</div>
+        <div class="api-status" id="apiStatus">🔄 Verbinde mit API...</div>
         <h1>⚙️ Saarcade Admin-Dashboard</h1>
-        <p>Komplette Verwaltung für Kassenwart und Vereinsvorstand</p>
+        <p>Vollständige Verwaltung mit Datenbank-Integration</p>
     </div>
 
     <div class="container">
         <!-- Dashboard Statistiken -->
         <div class="dashboard-grid">
             <div class="stat-card">
-                <div class="stat-number" id="memberCount">0</div>
+                <div class="stat-number" id="memberCount">-</div>
                 <div class="stat-label">Vereinsmitglieder</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="productCount">0</div>
+                <div class="stat-number" id="productCount">-</div>
                 <div class="stat-label">Produkte</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="totalStock">0</div>
+                <div class="stat-number" id="totalStock">-</div>
                 <div class="stat-label">Gesamtbestand</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="lowStockCount">0</div>
-                <div class="stat-label">Niedrige Bestände</div>
+                <div class="stat-number" id="todayRevenue">-</div>
+                <div class="stat-label">Heute (€)</div>
             </div>
         </div>
 
@@ -364,9 +315,8 @@
         <div class="tabs">
             <button class="tab active" onclick="showTab('users')">👥 Mitglieder</button>
             <button class="tab" onclick="showTab('transactions')">💰 Transaktionen</button>
+            <button class="tab" onclick="showTab('products')">📦 Produkte</button>
             <button class="tab" onclick="showTab('sepa')">💳 SEPA-Export</button>
-            <button class="tab" onclick="showTab('inventory')">📦 Inventar</button>
-            <button class="tab" onclick="showTab('settings')">⚙️ Einstellungen</button>
         </div>
 
         <!-- Mitglieder Tab -->
@@ -375,14 +325,11 @@
                 <h2>👥 Mitgliederverwaltung</h2>
                 
                 <div class="toolbar">
-                    <button class="btn btn-success" onclick="openAddUserModal()">
-                        ➕ Neues Mitglied
+                    <button class="btn btn-success" onclick="loadUsers()" id="loadUsersBtn">
+                        🔄 Neu laden
                     </button>
-                    <button class="btn btn-warning" onclick="resetAllBalances()">
-                        💰 Alle Salden zurücksetzen
-                    </button>
-                    <button class="btn btn-secondary" onclick="exportUsers()">
-                        📊 Mitglieder exportieren
+                    <button class="btn btn-secondary" onclick="exportData('users')">
+                        📊 Export CSV
                     </button>
                 </div>
                 
@@ -395,11 +342,15 @@
                                 <th>Barcode</th>
                                 <th>Saldo</th>
                                 <th>SEPA</th>
-                                <th>Aktionen</th>
+                                <th>E-Mail</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- Wird dynamisch gefüllt -->
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 40px; color: #666;">
+                                    Lade Mitgliederdaten...
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -412,24 +363,11 @@
                 <h2>💰 Transaktionsverlauf</h2>
                 
                 <div class="toolbar">
-                    <button class="btn btn-success" onclick="exportTransactions()">
-                        📊 Transaktionen exportieren
+                    <button class="btn btn-success" onclick="loadTransactions()" id="loadTransactionsBtn">
+                        🔄 Neu laden
                     </button>
-                    <button class="btn btn-secondary" onclick="loadTransactions()">
-                        🔄 Aktualisieren
-                    </button>
-                    <button class="btn btn-warning" onclick="clearOldTransactions()">
-                        🗑️ Alte Transaktionen löschen
-                    </button>
-                </div>
-                
-                <div style="margin-bottom: 20px;">
-                    <label style="font-weight: 600; margin-right: 10px;">Zeitraum:</label>
-                    <input type="date" id="transactionDateFrom" style="margin-right: 10px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                    <span style="margin: 0 10px;">bis</span>
-                    <input type="date" id="transactionDateTo" style="margin-right: 15px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                    <button class="btn btn-secondary" onclick="filterTransactions()" style="padding: 8px 15px;">
-                        🔍 Filtern
+                    <button class="btn btn-secondary" onclick="exportData('transactions')">
+                        📊 Export CSV
                     </button>
                 </div>
                 
@@ -441,19 +379,57 @@
                                 <th>Benutzer</th>
                                 <th>Artikel</th>
                                 <th>Menge</th>
-                                <th>Einzelpreis</th>
-                                <th>Gesamtbetrag</th>
+                                <th>Preis</th>
+                                <th>Gesamt</th>
                                 <th>Zahlart</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- Wird dynamisch gefüllt -->
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 40px; color: #666;">
+                                    Lade Transaktionsdaten...
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+
+        <!-- Produkte Tab -->
+        <div id="products" class="tab-content">
+            <div class="section">
+                <h2>📦 Produktverwaltung</h2>
                 
-                <div id="transactionSummary" style="margin-top: 20px; padding: 20px; background: #f7fafc; border-radius: 10px;">
-                    <!-- Wird dynamisch gefüllt -->
+                <div class="toolbar">
+                    <button class="btn btn-success" onclick="loadProducts()" id="loadProductsBtn">
+                        🔄 Neu laden
+                    </button>
+                    <button class="btn btn-secondary" onclick="exportData('products')">
+                        📊 Export CSV
+                    </button>
+                </div>
+                
+                <div style="overflow-x: auto;">
+                    <table class="data-table" id="productTable">
+                        <thead>
+                            <tr>
+                                <th>Produkt</th>
+                                <th>Kategorie</th>
+                                <th>Mitgliedspreis</th>
+                                <th>Gastpreis</th>
+                                <th>Bestand</th>
+                                <th>Verfügbar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 40px; color: #666;">
+                                    Lade Produktdaten...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -466,842 +442,341 @@
                 <div class="alert alert-info">
                     <span>ℹ️</span>
                     <div>
-                        <strong>SEPA-Export bereit:</strong> Alle Mitglieder mit negativem Saldo und aktivem SEPA-Mandat können abgebucht werden.
-                    </div>
-                </div>
-                
-                <div class="dashboard-grid" style="margin-bottom: 30px;">
-                    <div class="stat-card">
-                        <div class="stat-number" id="sepaUserCount">0</div>
-                        <div class="stat-label">Benutzer mit SEPA</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="sepaAmount">0.00€</div>
-                        <div class="stat-label">Gesamtbetrag</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="sepaDueDate">-</div>
-                        <div class="stat-label">Fälligkeitsdatum</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="sepaFileCount">0</div>
-                        <div class="stat-label">Heute erstellt</div>
+                        <strong>SEPA-Export:</strong> Alle Mitglieder mit negativem Saldo und aktivem SEPA-Mandat können abgebucht werden.
                     </div>
                 </div>
                 
                 <div class="toolbar">
-                    <button class="btn btn-success" onclick="downloadSepaFile()" id="sepaDownloadBtn">
+                    <button class="btn btn-success" onclick="loadSepaUsers()" id="loadSepaBtn">
+                        🔄 SEPA-Daten laden
+                    </button>
+                    <button class="btn btn-warning" onclick="downloadSepaXML()" id="sepaDownloadBtn" disabled>
                         💾 SEPA-XML herunterladen
-                    </button>
-                    <button class="btn btn-warning" onclick="previewSepaFile()">
-                        👁️ Vorschau anzeigen
-                    </button>
-                    <button class="btn btn-secondary" onclick="updateSepaDueDate()">
-                        📅 Fälligkeitsdatum ändern
                     </button>
                 </div>
                 
-                <div style="overflow-x: auto; margin-top: 20px;">
+                <div style="overflow-x: auto;">
                     <table class="data-table" id="sepaTable">
                         <thead>
                             <tr>
                                 <th>Name</th>
                                 <th>IBAN</th>
                                 <th>Betrag</th>
-                                <th>Mandat-ID</th>
                                 <th>Status</th>
-                                <th>Letzte Abbuchung</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- Wird dynamisch gefüllt -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Inventar Tab -->
-        <div id="inventory" class="tab-content">
-            <div class="section">
-                <h2>📦 Inventar-Management</h2>
-                
-                <div class="toolbar">
-                    <button class="btn btn-success" onclick="openAddProductModal()">
-                        ➕ Neues Produkt
-                    </button>
-                    <button class="btn btn-warning" onclick="showLowStock()">
-                        ⚠️ Niedrige Bestände
-                    </button>
-                    <button class="btn btn-secondary" onclick="exportInventory()">
-                        📊 Inventar exportieren
-                    </button>
-                </div>
-                
-                <div style="overflow-x: auto;">
-                    <table class="data-table" id="inventoryTable">
-                        <thead>
                             <tr>
-                                <th>Produkt</th>
-                                <th>Kategorie</th>
-                                <th>Bestand</th>
-                                <th>Mindestbestand</th>
-                                <th>Mitgliedspreis</th>
-                                <th>Gastpreis</th>
-                                <th>Status</th>
-                                <th>Aktionen</th>
+                                <td colspan="4" style="text-align: center; padding: 40px; color: #666;">
+                                    Klicke "SEPA-Daten laden" um Lastschriften anzuzeigen
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Wird dynamisch gefüllt -->
                         </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
-
-        <!-- Einstellungen Tab -->
-        <div id="settings" class="tab-content">
-            <div class="section">
-                <h2>⚙️ System-Einstellungen</h2>
-                
-                <div class="alert alert-info">
-                    <span>ℹ️</span>
-                    <div>
-                        <strong>Demo-Modus:</strong> Alle Änderungen werden lokal gespeichert und gehen beim Neuladen verloren. 
-                        In der Produktivversion werden alle Daten persistent in der Datenbank gespeichert.
-                    </div>
-                </div>
-
-                <div class="toolbar">
-                    <button class="btn btn-success" onclick="createBackup()">
-                        💾 Backup erstellen
-                    </button>
-                    <button class="btn btn-warning" onclick="loadDemoData()">
-                        📝 Demo-Daten laden
-                    </button>
-                    <button class="btn btn-danger" onclick="clearAllData()">
-                        🗑️ Alle Daten löschen
-                    </button>
-                </div>
-            </div>
-            
-            <!-- SEPA-Einstellungen -->
-            <div class="section">
-                <h2>💳 SEPA-Gläubiger-Einstellungen</h2>
-                
-                <div class="alert alert-warning">
-                    <span>⚠️</span>
-                    <div>
-                        <strong>Wichtig:</strong> Diese Daten werden für SEPA-Lastschriften benötigt. 
-                        Falsche Angaben führen zu Rückweisungen bei der Bank.
-                    </div>
-                </div>
-                
-                <form id="sepaSettingsForm">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Vereinsname (offiziell) *</label>
-                            <input type="text" id="creditorName" required placeholder="z.B. Saarcade e.V.">
-                        </div>
-                        <div class="form-group">
-                            <label>Gläubiger-Identifikationsnummer *</label>
-                            <input type="text" id="creditorId" required placeholder="DE98ZZZ09999999999" maxlength="35">
-                            <small style="color: #666;">18-stellige Nummer von der Bundesbank</small>
-                        </div>
-                    </div>
-                    
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Vereins-IBAN *</label>
-                            <input type="text" id="creditorIban" required placeholder="DE89 3704 0044 0532 0130 00" maxlength="34">
-                        </div>
-                        <div class="form-group">
-                            <label>BIC der Bank *</label>
-                            <input type="text" id="creditorBic" required placeholder="COBADEFFXXX" maxlength="11">
-                        </div>
-                    </div>
-                    
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Bankname</label>
-                            <input type="text" id="creditorBankName" placeholder="Commerzbank AG">
-                        </div>
-                        <div class="form-group">
-                            <label>Standard-Verwendungszweck</label>
-                            <input type="text" id="defaultReference" placeholder="Saarcade Kassenabrechnung" maxlength="140">
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Vereinsadresse</label>
-                        <textarea id="creditorAddress" rows="3" placeholder="Musterstraße 123&#10;66123 Saarbrücken&#10;Deutschland"></textarea>
-                    </div>
-                    
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Standard-Vorlaufzeit (Tage)</label>
-                            <input type="number" id="sepaLeadTime" min="1" max="14" value="5">
-                            <small style="color: #666;">Mindestens 1 Tag, bei Erstlastschrift 5 Tage</small>
-                        </div>
-                        <div class="form-group">
-                            <label>Sequenz-Typ</label>
-                            <select id="sepaSequence">
-                                <option value="RCUR">RCUR (Folgelastschrift)</option>
-                                <option value="FRST">FRST (Erstlastschrift)</option>
-                                <option value="OOFF">OOFF (Einmalige Lastschrift)</option>
-                                <option value="FNAL">FNAL (Letzte Lastschrift)</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div style="text-align: right; margin-top: 30px;">
-                        <button type="button" class="btn btn-secondary" onclick="loadSepaSettings()">
-                            🔄 Laden
-                        </button>
-                        <button type="button" class="btn btn-success" onclick="saveSepaSettings()">
-                            💾 SEPA-Einstellungen speichern
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Benutzer Modal -->
-    <div id="userModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="userModalTitle">Mitglied bearbeiten</h3>
-                <span class="close" onclick="closeModal('userModal')">&times;</span>
-            </div>
-            <div class="modal-body">
-                <form id="userForm" onsubmit="saveUser(event)">
-                    <input type="hidden" id="userId" value="">
-                    
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Vorname *</label>
-                            <input type="text" id="userFirstName" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Nachname *</label>
-                            <input type="text" id="userLastName" required>
-                        </div>
-                    </div>
-                    
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Rolle</label>
-                            <select id="userRole">
-                                <option value="member">Mitglied</option>
-                                <option value="guest">Gast</option>
-                                <option value="bartender">Barkeeper</option>
-                                <option value="admin">Administrator</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Barcode *</label>
-                            <input type="text" id="userBarcode" required>
-                        </div>
-                    </div>
-                    
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Aktueller Saldo (€)</label>
-                            <input type="number" id="userBalance" step="0.01" value="0">
-                        </div>
-                        <div class="form-group">
-                            <label>SEPA-Mandat</label>
-                            <select id="userSepa">
-                                <option value="false">Inaktiv</option>
-                                <option value="true">Aktiv</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>E-Mail (optional)</label>
-                        <input type="email" id="userEmail">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>IBAN (für SEPA-Lastschrift)</label>
-                        <input type="text" id="userIban" placeholder="DE89 3704 0044 0532 0130 00" maxlength="34">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Mandat-ID (automatisch generiert)</label>
-                        <input type="text" id="userMandateId" placeholder="Wird automatisch erstellt" readonly style="background: #f7fafc;">
-                    </div>
-                    
-                    <div style="text-align: right; margin-top: 30px;">
-                        <button type="button" class="btn btn-secondary" onclick="closeModal('userModal')">
-                            Abbrechen
-                        </button>
-                        <button type="submit" class="btn btn-success">
-                            💾 Speichern
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Produkt Modal -->
-    <div id="productModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="productModalTitle">Produkt bearbeiten</h3>
-                <span class="close" onclick="closeModal('productModal')">&times;</span>
-            </div>
-            <div class="modal-body">
-                <form id="productForm" onsubmit="saveProduct(event)">
-                    <input type="hidden" id="productId" value="">
-                    
-                    <div class="form-group">
-                        <label>Produktname *</label>
-                        <input type="text" id="productName" required>
-                    </div>
-                    
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Kategorie</label>
-                            <select id="productCategory">
-                                <option value="bier">🍺 Bier</option>
-                                <option value="softdrinks">🥤 Softdrinks</option>
-                                <option value="schnaps">🥃 Spirituosen</option>
-                                <option value="snacks">🍿 Snacks</option>
-                                <option value="heissgetraenke">☕ Heißgetränke</option>
-                                <option value="sonstiges">📦 Sonstiges</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Emoji/Icon</label>
-                            <input type="text" id="productEmoji" placeholder="🍺" maxlength="2">
-                        </div>
-                    </div>
-                    
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Mitgliedspreis (€) *</label>
-                            <input type="number" id="productMemberPrice" step="0.01" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Gastpreis (€) *</label>
-                            <input type="number" id="productGuestPrice" step="0.01" required>
-                        </div>
-                    </div>
-                    
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Aktueller Bestand</label>
-                            <input type="number" id="productStock" min="0" value="0">
-                        </div>
-                        <div class="form-group">
-                            <label>Mindestbestand</label>
-                            <input type="number" id="productMinStock" min="0" value="5">
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Barcode (optional)</label>
-                        <input type="text" id="productBarcode">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="productAvailable" checked>
-                            Verfügbar
-                        </label>
-                    </div>
-                    
-                    <div style="text-align: right; margin-top: 30px;">
-                        <button type="button" class="btn btn-secondary" onclick="closeModal('productModal')">
-                            Abbrechen
-                        </button>
-                        <button type="submit" class="btn btn-success">
-                            💾 Speichern
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bestand bearbeiten Modal -->
-    <div id="stockModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>📦 Bestand bearbeiten</h3>
-                <span class="close" onclick="closeModal('stockModal')">&times;</span>
-            </div>
-            <div class="modal-body">
-                <form id="stockForm" onsubmit="updateStock(event)">
-                    <input type="hidden" id="stockProductId" value="">
-                    
-                    <div class="form-group">
-                        <label>Produkt</label>
-                        <input type="text" id="stockProductName" readonly style="background: #f7fafc;">
-                    </div>
-                    
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Aktueller Bestand</label>
-                            <input type="number" id="stockCurrent" readonly style="background: #f7fafc;">
-                        </div>
-                        <div class="form-group">
-                            <label>Neuer Bestand</label>
-                            <input type="number" id="stockNew" min="0" required>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Grund für Änderung</label>
-                        <select id="stockReason">
-                            <option value="nachkauf">📦 Nachkauf/Lieferung</option>
-                            <option value="inventur">📋 Inventur-Korrektur</option>
-                            <option value="verlust">❌ Verlust/Verderb</option>
-                            <option value="rueckgabe">↩️ Rückgabe</option>
-                            <option value="sonstiges">ℹ️ Sonstiges</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Notiz (optional)</label>
-                        <textarea id="stockNote" rows="3" placeholder="Zusätzliche Informationen..."></textarea>
-                    </div>
-                    
-                    <div style="text-align: right; margin-top: 30px;">
-                        <button type="button" class="btn btn-secondary" onclick="closeModal('stockModal')">
-                            Abbrechen
-                        </button>
-                        <button type="submit" class="btn btn-success">
-                            📦 Bestand aktualisieren
-                        </button>
-                    </div>
-                </form>
             </div>
         </div>
     </div>
 
     <script>
-        // ============ DATENSTRUKTUREN ============
-        let users = [
-            { id: 1, firstName: 'Max', lastName: 'Mustermann', role: 'member', barcode: 'SAAR001', balance: -15.50, sepa: true, email: 'max@example.com', iban: 'DE89370400440532013000', mandateId: 'SEPA-001', lastDebit: '2024-08-15' },
-            { id: 2, firstName: 'Anna', lastName: 'Schmidt', role: 'member', barcode: 'SAAR002', balance: -8.20, sepa: true, email: 'anna@example.com', iban: 'DE12300400330200000123', mandateId: 'SEPA-002', lastDebit: '2024-08-15' },
-            { id: 3, firstName: 'Tom', lastName: 'Wagner', role: 'bartender', barcode: 'SAAR003', balance: 2.40, sepa: false, email: 'tom@example.com', iban: '', mandateId: '', lastDebit: '' },
-            { id: 4, firstName: 'Sarah', lastName: 'Klein', role: 'member', barcode: 'SAAR004', balance: -12.30, sepa: true, email: 'sarah@example.com', iban: 'DE45500700100987654321', mandateId: 'SEPA-004', lastDebit: '2024-08-15' },
-            { id: 5, firstName: 'Gast', lastName: 'Benutzer', role: 'guest', barcode: 'GUEST001', balance: 0.00, sepa: false, email: '', iban: '', mandateId: '', lastDebit: '' }
-        ];
+        // ============ GLOBALE VARIABLEN ============
+        let apiConnected = false;
+        let users = [];
+        let products = [];
+        let transactions = [];
+        let sepaUsers = [];
 
-        let products = [
-            { id: 1, name: 'Augustiner Helles', category: 'bier', emoji: '🍺', memberPrice: 2.50, guestPrice: 3.00, stock: 24, minStock: 10, available: true, barcode: '4000417025001' },
-            { id: 2, name: 'Erdinger Weissbier', category: 'bier', emoji: '🍺', memberPrice: 2.80, guestPrice: 3.30, stock: 6, minStock: 8, available: true, barcode: '4002103001011' },
-            { id: 3, name: 'Coca Cola', category: 'softdrinks', emoji: '🥤', memberPrice: 1.50, guestPrice: 2.00, stock: 36, minStock: 15, available: true, barcode: '5000112637447' },
-            { id: 4, name: 'Sprite', category: 'softdrinks', emoji: '🥤', memberPrice: 1.50, guestPrice: 2.00, stock: 28, minStock: 15, available: true, barcode: '5000112637448' },
-            { id: 5, name: 'Jägermeister', category: 'schnaps', emoji: '🥃', memberPrice: 3.50, guestPrice: 4.50, stock: 3, minStock: 5, available: true, barcode: '4000417025200' },
-            { id: 6, name: 'Erdnüsse', category: 'snacks', emoji: '🥜', memberPrice: 2.00, guestPrice: 2.50, stock: 15, minStock: 10, available: true, barcode: '4008400123456' },
-            { id: 7, name: 'Kaffee', category: 'heissgetraenke', emoji: '☕', memberPrice: 1.00, guestPrice: 1.50, stock: 1, minStock: 20, available: true, barcode: '4008400123457' }
-        ];
+        // ============ API FUNCTIONS ============
+        
+        async function apiCall(endpoint, options = {}) {
+            try {
+                showLoading(true);
+                const response = await fetch(endpoint, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                updateApiStatus(true);
+                return data;
+                
+            } catch (error) {
+                console.error(`API Error (${endpoint}):`, error);
+                updateApiStatus(false, error.message);
+                throw error;
+            } finally {
+                showLoading(false);
+            }
+        }
 
-        // Mock-Transaktionsdaten
-        let transactions = [
-            { id: 1, date: '2024-09-20 14:30', userId: 1, userName: 'Max Mustermann', productId: 1, productName: 'Augustiner Helles', quantity: 2, price: 2.50, total: 5.00, paymentType: 'account' },
-            { id: 2, date: '2024-09-20 14:15', userId: 2, userName: 'Anna Schmidt', productId: 3, productName: 'Coca Cola', quantity: 1, price: 1.50, total: 1.50, paymentType: 'account' },
-            { id: 3, date: '2024-09-20 14:15', userId: 2, userName: 'Anna Schmidt', productId: 2, productName: 'Erdinger Weissbier', quantity: 1, price: 2.80, total: 2.80, paymentType: 'account' },
-            { id: 4, date: '2024-09-20 13:45', userId: 4, userName: 'Sarah Klein', productId: 5, productName: 'Jägermeister', quantity: 1, price: 3.50, total: 3.50, paymentType: 'account' },
-            { id: 5, date: '2024-09-20 13:45', userId: 4, userName: 'Sarah Klein', productId: 6, productName: 'Erdnüsse', quantity: 2, price: 2.00, total: 4.00, paymentType: 'account' },
-            { id: 6, date: '2024-09-20 13:20', userId: 3, userName: 'Tom Wagner', productId: 4, productName: 'Sprite', quantity: 2, price: 1.50, total: 3.00, paymentType: 'account' },
-            { id: 7, date: '2024-09-19 19:30', userId: 1, userName: 'Max Mustermann', productId: 1, productName: 'Augustiner Helles', quantity: 3, price: 2.50, total: 7.50, paymentType: 'account' },
-            { id: 8, date: '2024-09-19 18:45', userId: 2, userName: 'Anna Schmidt', productId: 3, productName: 'Coca Cola', quantity: 2, price: 1.50, total: 3.00, paymentType: 'account' },
-            { id: 9, date: '2024-09-19 17:15', userId: 4, userName: 'Sarah Klein', productId: 2, productName: 'Erdinger Weissbier', quantity: 1, price: 2.80, total: 2.80, paymentType: 'account' }
-        ];
+        // ============ UI FUNCTIONS ============
+        
+        function showLoading(show) {
+            document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
+        }
 
-        // SEPA-Gläubiger-Einstellungen
-        let sepaSettings = {
-            creditorName: 'Saarcade e.V.',
-            creditorId: 'DE98ZZZ09999999999',
-            creditorIban: 'DE89370400440532013000',
-            creditorBic: 'COBADEFFXXX',
-            creditorBankName: 'Commerzbank AG',
-            defaultReference: 'Saarcade Kassenabrechnung',
-            creditorAddress: 'Musterstraße 123\n66123 Saarbrücken\nDeutschland',
-            sepaLeadTime: 5,
-            sepaSequence: 'RCUR'
-        };
-
-        let nextUserId = 6;
-        let nextProductId = 8;
-        let nextTransactionId = 10;
-        let sepaDueDate = new Date();
-        sepaDueDate.setDate(sepaDueDate.getDate() + 3); // 3 Tage in der Zukunft
-
-        // ============ INITIALISIERUNG ============
-        document.addEventListener('DOMContentLoaded', function() {
-            updateDashboard();
-            renderUsers();
-            renderProducts();
-            renderTransactions();
-            renderSepaData();
-            initializeDateFilters();
-            loadSepaSettings();
+        function updateApiStatus(connected, errorMsg = '') {
+            const statusEl = document.getElementById('apiStatus');
+            apiConnected = connected;
             
-            // IBAN-Formatierung bei Eingabe
-            document.getElementById('userIban').addEventListener('input', formatIbanInput);
+            if (connected) {
+                statusEl.className = 'api-status connected';
+                statusEl.textContent = '✅ API verbunden';
+            } else {
+                statusEl.className = 'api-status error';
+                statusEl.textContent = `❌ API-Fehler: ${errorMsg}`;
+            }
+        }
+
+        function showAlert(message, type = 'info') {
+            const existingAlert = document.querySelector('.alert');
+            if (existingAlert) {
+                existingAlert.remove();
+            }
+
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
             
-            console.log('✅ Admin-Dashboard geladen');
-        });
+            const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+            alertDiv.innerHTML = `<span>${icon}</span><div>${message}</div>`;
+            
+            const container = document.querySelector('.container');
+            container.insertBefore(alertDiv, container.children[1]);
+            
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
 
         // ============ TAB NAVIGATION ============
         function showTab(tabName) {
-            // Alle Tabs deaktivieren
             document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
             
-            // Aktiven Tab setzen
             event.target.classList.add('active');
             document.getElementById(tabName).classList.add('active');
         }
 
-        // ============ DASHBOARD FUNCTIONS ============
-        function updateDashboard() {
-            document.getElementById('memberCount').textContent = users.length;
-            document.getElementById('productCount').textContent = products.length;
-            
-            const totalStock = products.reduce((sum, p) => sum + p.stock, 0);
-            document.getElementById('totalStock').textContent = totalStock;
-            
-            const lowStockCount = products.filter(p => p.stock <= p.minStock).length;
-            document.getElementById('lowStockCount').textContent = lowStockCount;
+        // ============ DATA LOADING FUNCTIONS ============
+        
+        async function loadDashboard() {
+            try {
+                const data = await apiCall('/api/dashboard');
+                console.log('Dashboard-Daten:', data);
+                
+                document.getElementById('memberCount').textContent = data.member_count || 0;
+                document.getElementById('productCount').textContent = data.available_products || 0;
+                document.getElementById('totalStock').textContent = data.total_stock || 0;
+                document.getElementById('todayRevenue').textContent = `${(data.today_revenue || 0).toFixed(2)}`;
+                
+            } catch (error) {
+                console.error('Fehler beim Laden der Dashboard-Daten:', error);
+                showAlert('Fehler beim Laden der Dashboard-Statistiken', 'error');
+            }
         }
 
-        // ============ BENUTZER-VERWALTUNG ============
+        async function loadUsers() {
+            try {
+                const loadBtn = document.getElementById('loadUsersBtn');
+                loadBtn.disabled = true;
+                loadBtn.textContent = '⏳ Lade...';
+                
+                users = await apiCall('/api/users');
+                console.log(`${users.length} Benutzer geladen`);
+                
+                renderUsers();
+                showAlert(`${users.length} Mitglieder erfolgreich geladen`, 'success');
+                
+            } catch (error) {
+                console.error('Fehler beim Laden der Benutzer:', error);
+                showAlert('Fehler beim Laden der Mitgliederdaten', 'error');
+            } finally {
+                const loadBtn = document.getElementById('loadUsersBtn');
+                loadBtn.disabled = false;
+                loadBtn.textContent = '🔄 Neu laden';
+            }
+        }
+
+        async function loadProducts() {
+            try {
+                const loadBtn = document.getElementById('loadProductsBtn');
+                loadBtn.disabled = true;
+                loadBtn.textContent = '⏳ Lade...';
+                
+                products = await apiCall('/api/products');
+                console.log(`${products.length} Produkte geladen`);
+                
+                renderProducts();
+                showAlert(`${products.length} Produkte erfolgreich geladen`, 'success');
+                
+            } catch (error) {
+                console.error('Fehler beim Laden der Produkte:', error);
+                showAlert('Fehler beim Laden der Produktdaten', 'error');
+            } finally {
+                const loadBtn = document.getElementById('loadProductsBtn');
+                loadBtn.disabled = false;
+                loadBtn.textContent = '🔄 Neu laden';
+            }
+        }
+
+        async function loadTransactions() {
+            try {
+                const loadBtn = document.getElementById('loadTransactionsBtn');
+                loadBtn.disabled = true;
+                loadBtn.textContent = '⏳ Lade...';
+                
+                transactions = await apiCall('/api/transactions');
+                console.log(`${transactions.length} Transaktionen geladen`);
+                
+                renderTransactions();
+                showAlert(`${transactions.length} Transaktionen erfolgreich geladen`, 'success');
+                
+            } catch (error) {
+                console.error('Fehler beim Laden der Transaktionen:', error);
+                showAlert('Fehler beim Laden der Transaktionsdaten', 'error');
+            } finally {
+                const loadBtn = document.getElementById('loadTransactionsBtn');
+                loadBtn.disabled = false;
+                loadBtn.textContent = '🔄 Neu laden';
+            }
+        }
+
+        async function loadSepaUsers() {
+            try {
+                const loadBtn = document.getElementById('loadSepaBtn');
+                loadBtn.disabled = true;
+                loadBtn.textContent = '⏳ Lade...';
+                
+                sepaUsers = await apiCall('/api/sepa-users');
+                console.log(`${sepaUsers.length} SEPA-Benutzer geladen`);
+                
+                renderSepaUsers();
+                document.getElementById('sepaDownloadBtn').disabled = sepaUsers.length === 0;
+                showAlert(`${sepaUsers.length} SEPA-Benutzer gefunden`, 'success');
+                
+            } catch (error) {
+                console.error('Fehler beim Laden der SEPA-Benutzer:', error);
+                showAlert('Fehler beim Laden der SEPA-Daten', 'error');
+            } finally {
+                const loadBtn = document.getElementById('loadSepaBtn');
+                loadBtn.disabled = false;
+                loadBtn.textContent = '🔄 SEPA-Daten laden';
+            }
+        }
+
+        // ============ RENDER FUNCTIONS ============
+        
         function renderUsers() {
             const tbody = document.querySelector('#userTable tbody');
-            tbody.innerHTML = '';
             
-            users.forEach(user => {
-                const row = document.createElement('tr');
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #666;">Keine Mitgliederdaten verfügbar</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = users.map(user => {
                 const balanceColor = user.balance >= 0 ? '#38a169' : '#e53e3e';
                 const roleIcon = getRoleIcon(user.role);
-                const sepaStatus = user.sepa ? '✅ Aktiv' : '❌ Inaktiv';
+                const sepaStatus = user.sepa_active ? '✅ Aktiv' : '❌ Inaktiv';
                 
-                row.innerHTML = `
-                    <td>${user.firstName} ${user.lastName}</td>
-                    <td>${roleIcon} ${getRoleText(user.role)}</td>
-                    <td>${user.barcode}</td>
-                    <td style="color: ${balanceColor}; font-weight: bold;">${user.balance.toFixed(2)}€</td>
-                    <td>${sepaStatus}</td>
-                    <td>
-                        <button class="btn btn-secondary" onclick="editUser(${user.id})" style="padding: 5px 10px; font-size: 0.8em;">
-                            ✏️ Bearbeiten
-                        </button>
-                        <button class="btn btn-danger" onclick="deleteUser(${user.id})" style="padding: 5px 10px; font-size: 0.8em;">
-                            🗑️ Löschen
-                        </button>
-                    </td>
+                return `
+                    <tr>
+                        <td>${user.first_name} ${user.last_name}</td>
+                        <td>${roleIcon} ${getRoleText(user.role)}</td>
+                        <td><code>${user.barcode}</code></td>
+                        <td style="color: ${balanceColor}; font-weight: bold;">${user.balance.toFixed(2)}€</td>
+                        <td>${sepaStatus}</td>
+                        <td>${user.email || '-'}</td>
+                    </tr>
                 `;
-                tbody.appendChild(row);
-            });
+            }).join('');
         }
 
-        function openAddUserModal() {
-            document.getElementById('userModalTitle').textContent = 'Neues Mitglied hinzufügen';
-            document.getElementById('userForm').reset();
-            document.getElementById('userId').value = '';
-            document.getElementById('userBalance').value = '0.00';
-            document.getElementById('userModal').style.display = 'block';
-        }
-
-        function editUser(userId) {
-            const user = users.find(u => u.id === userId);
-            if (!user) return;
-            
-            document.getElementById('userModalTitle').textContent = 'Mitglied bearbeiten';
-            document.getElementById('userId').value = user.id;
-            document.getElementById('userFirstName').value = user.firstName;
-            document.getElementById('userLastName').value = user.lastName;
-            document.getElementById('userRole').value = user.role;
-            document.getElementById('userBarcode').value = user.barcode;
-            document.getElementById('userBalance').value = user.balance.toFixed(2);
-            document.getElementById('userSepa').value = user.sepa ? 'true' : 'false';
-            document.getElementById('userEmail').value = user.email || '';
-            document.getElementById('userIban').value = formatIban(user.iban || '');
-            document.getElementById('userMandateId').value = user.mandateId || '';
-            
-            document.getElementById('userModal').style.display = 'block';
-        }
-
-        function saveUser(event) {
-            event.preventDefault();
-            
-            const userId = document.getElementById('userId').value;
-            const userData = {
-                firstName: document.getElementById('userFirstName').value.trim(),
-                lastName: document.getElementById('userLastName').value.trim(),
-                role: document.getElementById('userRole').value,
-                barcode: document.getElementById('userBarcode').value.trim(),
-                balance: parseFloat(document.getElementById('userBalance').value) || 0,
-                sepa: document.getElementById('userSepa').value === 'true',
-                email: document.getElementById('userEmail').value.trim(),
-                iban: document.getElementById('userIban').value.replace(/\s/g, ''),
-                mandateId: document.getElementById('userMandateId').value || generateMandateId()
-            };
-            
-            // Validierung
-            if (!userData.firstName || !userData.lastName || !userData.barcode) {
-                showAlert('Bitte alle Pflichtfelder ausfüllen', 'error');
-                return;
-            }
-            
-            // IBAN-Validierung wenn SEPA aktiv
-            if (userData.sepa && userData.iban && !isValidIban(userData.iban)) {
-                showAlert('Ungültige IBAN', 'error');
-                return;
-            }
-            
-            // SEPA-Logik: Wenn SEPA aktiviert ist, muss IBAN vorhanden sein
-            if (userData.sepa && !userData.iban) {
-                showAlert('Für SEPA-Lastschrift muss eine IBAN angegeben werden', 'error');
-                return;
-            }
-            
-            // Wenn SEPA deaktiviert wird, Mandat-ID leeren
-            if (!userData.sepa) {
-                userData.mandateId = '';
-            }
-            
-            // Barcode-Eindeutigkeit prüfen
-            const existingUser = users.find(u => u.barcode === userData.barcode && u.id !== parseInt(userId));
-            if (existingUser) {
-                showAlert('Dieser Barcode ist bereits vergeben', 'error');
-                return;
-            }
-            
-            if (userId) {
-                // Benutzer bearbeiten
-                const userIndex = users.findIndex(u => u.id === parseInt(userId));
-                if (userIndex !== -1) {
-                    users[userIndex] = { ...users[userIndex], ...userData };
-                    showAlert('Mitglied erfolgreich aktualisiert', 'success');
-                }
-            } else {
-                // Neuen Benutzer hinzufügen
-                const newUser = { id: nextUserId++, ...userData };
-                users.push(newUser);
-                showAlert('Neues Mitglied erfolgreich hinzugefügt', 'success');
-            }
-            
-            renderUsers();
-            updateDashboard();
-            closeModal('userModal');
-        }
-
-        function deleteUser(userId) {
-            const user = users.find(u => u.id === userId);
-            if (!user) return;
-            
-            if (confirm(`Möchten Sie ${user.firstName} ${user.lastName} wirklich löschen?\n\nDiese Aktion kann nicht rückgängig gemacht werden.`)) {
-                users = users.filter(u => u.id !== userId);
-                renderUsers();
-                updateDashboard();
-                showAlert('Mitglied gelöscht', 'success');
-            }
-        }
-
-        function resetAllBalances() {
-            if (confirm('Möchten Sie wirklich alle Mitgliedersalden auf 0,00€ zurücksetzen?\n\nDiese Aktion kann nicht rückgängig gemacht werden!')) {
-                users.forEach(user => user.balance = 0.00);
-                renderUsers();
-                showAlert('Alle Salden wurden zurückgesetzt', 'success');
-            }
-        }
-
-        // ============ PRODUKT-VERWALTUNG ============
         function renderProducts() {
-            const tbody = document.querySelector('#inventoryTable tbody');
-            tbody.innerHTML = '';
+            const tbody = document.querySelector('#productTable tbody');
             
-            products.forEach(product => {
-                const row = document.createElement('tr');
-                const stockStatus = getStockStatus(product);
-                const statusText = stockStatus.text;
-                const statusColor = stockStatus.color;
+            if (products.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #666;">Keine Produktdaten verfügbar</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = products.map(product => {
+                const stockColor = product.stock > 0 ? '#38a169' : '#e53e3e';
+                const availableText = product.available ? '✅ Ja' : '❌ Nein';
                 
-                row.innerHTML = `
-                    <td>${product.emoji} ${product.name}</td>
-                    <td>${getCategoryText(product.category)}</td>
-                    <td>
-                        <span class="editable-cell" onclick="openStockModal(${product.id})" title="Klicken zum Bearbeiten">
-                            ${product.stock}
-                        </span>
-                    </td>
-                    <td>${product.minStock}</td>
-                    <td>${product.memberPrice.toFixed(2)}€</td>
-                    <td>${product.guestPrice.toFixed(2)}€</td>
-                    <td style="color: ${statusColor}; font-weight: bold;">${statusText}</td>
-                    <td>
-                        <button class="btn btn-secondary" onclick="editProduct(${product.id})" style="padding: 5px 10px; font-size: 0.8em;">
-                            ✏️ Bearbeiten
-                        </button>
-                        <button class="btn btn-warning" onclick="openStockModal(${product.id})" style="padding: 5px 10px; font-size: 0.8em;">
-                            📦 Bestand
-                        </button>
-                        <button class="btn btn-danger" onclick="deleteProduct(${product.id})" style="padding: 5px 10px; font-size: 0.8em;">
-                            🗑️ Löschen
-                        </button>
-                    </td>
+                return `
+                    <tr>
+                        <td>${product.image || '📦'} ${product.name}</td>
+                        <td>${getCategoryText(product.category)}</td>
+                        <td>${product.member_price.toFixed(2)}€</td>
+                        <td>${product.guest_price.toFixed(2)}€</td>
+                        <td style="color: ${stockColor}; font-weight: bold;">${product.stock}</td>
+                        <td>${availableText}</td>
+                    </tr>
                 `;
-                tbody.appendChild(row);
-            });
+            }).join('');
         }
 
-        function openAddProductModal() {
-            document.getElementById('productModalTitle').textContent = 'Neues Produkt hinzufügen';
-            document.getElementById('productForm').reset();
-            document.getElementById('productId').value = '';
-            document.getElementById('productStock').value = '0';
-            document.getElementById('productMinStock').value = '5';
-            document.getElementById('productAvailable').checked = true;
-            document.getElementById('productModal').style.display = 'block';
-        }
-
-        function editProduct(productId) {
-            const product = products.find(p => p.id === productId);
-            if (!product) return;
+        function renderTransactions() {
+            const tbody = document.querySelector('#transactionTable tbody');
             
-            document.getElementById('productModalTitle').textContent = 'Produkt bearbeiten';
-            document.getElementById('productId').value = product.id;
-            document.getElementById('productName').value = product.name;
-            document.getElementById('productCategory').value = product.category;
-            document.getElementById('productEmoji').value = product.emoji || '';
-            document.getElementById('productMemberPrice').value = product.memberPrice.toFixed(2);
-            document.getElementById('productGuestPrice').value = product.guestPrice.toFixed(2);
-            document.getElementById('productStock').value = product.stock;
-            document.getElementById('productMinStock').value = product.minStock;
-            document.getElementById('productBarcode').value = product.barcode || '';
-            document.getElementById('productAvailable').checked = product.available;
-            
-            document.getElementById('productModal').style.display = 'block';
-        }
-
-        function saveProduct(event) {
-            event.preventDefault();
-            
-            const productId = document.getElementById('productId').value;
-            const productData = {
-                name: document.getElementById('productName').value.trim(),
-                category: document.getElementById('productCategory').value,
-                emoji: document.getElementById('productEmoji').value.trim() || '📦',
-                memberPrice: parseFloat(document.getElementById('productMemberPrice').value) || 0,
-                guestPrice: parseFloat(document.getElementById('productGuestPrice').value) || 0,
-                stock: parseInt(document.getElementById('productStock').value) || 0,
-                minStock: parseInt(document.getElementById('productMinStock').value) || 0,
-                barcode: document.getElementById('productBarcode').value.trim() || '',
-                available: document.getElementById('productAvailable').checked
-            };
-            
-            // Validierung
-            if (!productData.name || productData.memberPrice <= 0 || productData.guestPrice <= 0) {
-                showAlert('Bitte alle Pflichtfelder korrekt ausfüllen', 'error');
+            if (transactions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: #666;">Keine Transaktionsdaten verfügbar</td></tr>';
                 return;
             }
             
-            if (productData.guestPrice < productData.memberPrice) {
-                showAlert('Gastpreis muss mindestens so hoch wie Mitgliedspreis sein', 'error');
+            tbody.innerHTML = transactions.map(transaction => {
+                const date = new Date(transaction.created_at);
+                const formattedDate = date.toLocaleString('de-DE');
+                const paymentIcon = transaction.payment_method === 'cash' ? '💵' : '💳';
+                
+                return `
+                    <tr>
+                        <td>${formattedDate}</td>
+                        <td>${transaction.user_name}</td>
+                        <td>${transaction.product_name}</td>
+                        <td>${transaction.quantity}x</td>
+                        <td>${transaction.price.toFixed(2)}€</td>
+                        <td style="font-weight: bold;">${transaction.total.toFixed(2)}€</td>
+                        <td>${paymentIcon} ${transaction.payment_method === 'cash' ? 'Bar' : 'Konto'}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderSepaUsers() {
+            const tbody = document.querySelector('#sepaTable tbody');
+            
+            if (sepaUsers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px; color: #666;">Keine SEPA-Benutzer mit negativem Saldo gefunden</td></tr>';
                 return;
             }
             
-            // Barcode-Eindeutigkeit prüfen (falls angegeben)
-            if (productData.barcode) {
-                const existingProduct = products.find(p => p.barcode === productData.barcode && p.id !== parseInt(productId));
-                if (existingProduct) {
-                    showAlert('Dieser Barcode ist bereits vergeben', 'error');
-                    return;
-                }
-            }
-            
-            if (productId) {
-                // Produkt bearbeiten
-                const productIndex = products.findIndex(p => p.id === parseInt(productId));
-                if (productIndex !== -1) {
-                    products[productIndex] = { ...products[productIndex], ...productData };
-                    showAlert('Produkt erfolgreich aktualisiert', 'success');
-                }
-            } else {
-                // Neues Produkt hinzufügen
-                const newProduct = { id: nextProductId++, ...productData };
-                products.push(newProduct);
-                showAlert('Neues Produkt erfolgreich hinzugefügt', 'success');
-            }
-            
-            renderProducts();
-            updateDashboard();
-            closeModal('productModal');
+            tbody.innerHTML = sepaUsers.map(user => {
+                const amount = Math.abs(user.balance);
+                
+                return `
+                    <tr>
+                        <td>${user.first_name} ${user.last_name}</td>
+                        <td><code>${formatIban(user.iban)}</code></td>
+                        <td style="font-weight: bold; color: #e53e3e;">${amount.toFixed(2)}€</td>
+                        <td><span style="color: #38a169;">✅ Bereit</span></td>
+                    </tr>
+                `;
+            }).join('');
         }
 
-        function deleteProduct(productId) {
-            const product = products.find(p => p.id === productId);
-            if (!product) return;
-            
-            if (confirm(`Möchten Sie "${product.name}" wirklich löschen?\n\nDiese Aktion kann nicht rückgängig gemacht werden.`)) {
-                products = products.filter(p => p.id !== productId);
-                renderProducts();
-                updateDashboard();
-                showAlert('Produkt gelöscht', 'success');
-            }
-        }
-
-        // ============ BESTAND-VERWALTUNG ============
-        function openStockModal(productId) {
-            const product = products.find(p => p.id === productId);
-            if (!product) return;
-            
-            document.getElementById('stockProductId').value = product.id;
-            document.getElementById('stockProductName').value = `${product.emoji} ${product.name}`;
-            document.getElementById('stockCurrent').value = product.stock;
-            document.getElementById('stockNew').value = product.stock;
-            document.getElementById('stockReason').value = 'nachkauf';
-            document.getElementById('stockNote').value = '';
-            
-            document.getElementById('stockModal').style.display = 'block';
-        }
-
-        function updateStock(event) {
-            event.preventDefault();
-            
-            const productId = parseInt(document.getElementById('stockProductId').value);
-            const newStock = parseInt(document.getElementById('stockNew').value);
-            const reason = document.getElementById('stockReason').value;
-            const note = document.getElementById('stockNote').value.trim();
-            
-            const product = products.find(p => p.id === productId);
-            if (!product) return;
-            
-            const oldStock = product.stock;
-            const difference = newStock - oldStock;
-            
-            if (newStock < 0) {
-                showAlert('Bestand kann nicht negativ sein', 'error');
-                return;
-            }
-            
-            // Bestand aktualisieren
-            product.stock = newStock;
-            
-            // Log erstellen (in Produktivversion würde das in die Datenbank)
-            console.log(`Bestandsänderung: ${product.name} von ${oldStock} auf ${newStock} (${difference >= 0 ? '+' : ''}${difference}) - Grund: ${reason}${note ? ' - ' + note : ''}`);
-            
-            renderProducts();
-            updateDashboard();
-            closeModal('stockModal');
-            
-            const action = difference > 0 ? 'erhöht' : difference < 0 ? 'reduziert' : 'unverändert';
-            showAlert(`Bestand für "${product.name}" ${action} (${difference >= 0 ? '+' : ''}${difference})`, 'success');
-        }
-
-        // ============ HILFSFUNKTIONEN ============
+        // ============ HELPER FUNCTIONS ============
+        
         function getRoleIcon(role) {
             const icons = { member: '👥', guest: '👤', bartender: '🍺', admin: '⚙️' };
             return icons[role] || '👤';
@@ -1324,39 +799,44 @@
             return categories[category] || category;
         }
 
-        function getStockStatus(product) {
-            if (product.stock <= 0) {
-                return { text: '❌ Ausverkauft', color: '#e53e3e' };
-            } else if (product.stock <= product.minStock) {
-                return { text: '⚠️ Niedrig', color: '#ed8936' };
-            } else {
-                return { text: '✅ OK', color: '#38a169' };
+        function formatIban(iban) {
+            if (!iban) return '';
+            return iban.replace(/(.{4})/g, '$1 ').trim();
+        }
+
+        // ============ EXPORT FUNCTIONS ============
+        
+        function exportData(type) {
+            let data, filename, fields;
+            
+            switch(type) {
+                case 'users':
+                    data = users;
+                    filename = 'mitglieder.csv';
+                    fields = ['first_name', 'last_name', 'role', 'barcode', 'balance', 'sepa_active', 'email'];
+                    break;
+                case 'products':
+                    data = products;
+                    filename = 'produkte.csv';
+                    fields = ['name', 'category', 'member_price', 'guest_price', 'stock', 'available'];
+                    break;
+                case 'transactions':
+                    data = transactions;
+                    filename = 'transaktionen.csv';
+                    fields = ['created_at', 'user_name', 'product_name', 'quantity', 'price', 'total', 'payment_method'];
+                    break;
+                default:
+                    return;
             }
-        }
-
-        // ============ MODAL FUNKTIONEN ============
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
-
-        // Schließen bei Klick außerhalb
-        window.onclick = function(event) {
-            if (event.target.classList.contains('modal')) {
-                event.target.style.display = 'none';
+            
+            if (data.length === 0) {
+                showAlert(`Keine ${type}-Daten zum Exportieren verfügbar`, 'error');
+                return;
             }
-        }
-
-        // ============ EXPORT/IMPORT FUNKTIONEN ============
-        function exportUsers() {
-            const csv = convertToCSV(users, ['firstName', 'lastName', 'role', 'barcode', 'balance', 'sepa', 'email']);
-            downloadCSV(csv, 'mitglieder.csv');
-            showAlert('Mitgliederliste exportiert', 'success');
-        }
-
-        function exportInventory() {
-            const csv = convertToCSV(products, ['name', 'category', 'memberPrice', 'guestPrice', 'stock', 'minStock', 'available', 'barcode']);
-            downloadCSV(csv, 'inventar.csv');
-            showAlert('Inventar exportiert', 'success');
+            
+            const csv = convertToCSV(data, fields);
+            downloadCSV(csv, filename);
+            showAlert(`${type} erfolgreich als CSV exportiert`, 'success');
         }
 
         function convertToCSV(data, fields) {
@@ -1378,250 +858,34 @@
             document.body.removeChild(link);
         }
 
-        function createBackup() {
-            const backup = {
-                timestamp: new Date().toISOString(),
-                version: '1.0',
-                users: users,
-                products: products
-            };
+        // ============ SEPA FUNCTIONS ============
+        
+        function downloadSepaXML() {
+            if (sepaUsers.length === 0) {
+                showAlert('Keine SEPA-Benutzer zum Export verfügbar', 'error');
+                return;
+            }
             
-            const json = JSON.stringify(backup, null, 2);
-            const blob = new Blob([json], { type: 'application/json' });
+            const xml = generateSepaXML(sepaUsers);
+            const blob = new Blob([xml], { type: 'application/xml' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = `saarcade_backup_${new Date().toISOString().split('T')[0]}.json`;
+            link.download = `SEPA_Saarcade_${new Date().toISOString().split('T')[0]}.xml`;
             link.style.display = 'none';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
             
-            showAlert('Backup erfolgreich erstellt', 'success');
-        }
-
-        function loadDemoData() {
-            if (confirm('Demo-Daten laden? Aktuelle Änderungen gehen verloren.')) {
-                location.reload();
-            }
-        }
-
-        function clearAllData() {
-            if (confirm('ACHTUNG: Alle Daten werden gelöscht!\n\nDiese Aktion kann nicht rückgängig gemacht werden.')) {
-                if (confirm('Letzte Warnung: Wirklich ALLE Daten löschen?')) {
-                    users.length = 0;
-                    products.length = 0;
-                    renderUsers();
-                    renderProducts();
-                    updateDashboard();
-                    showAlert('Alle Daten wurden gelöscht', 'error');
-                }
-            }
-        }
-
-        function showLowStock() {
-            const lowStockProducts = products.filter(p => p.stock <= p.minStock);
-            if (lowStockProducts.length === 0) {
-                showAlert('Alle Bestände sind ausreichend', 'success');
-            } else {
-                const message = `${lowStockProducts.length} Produkte haben niedrige Bestände:\n\n${lowStockProducts.map(p => `• ${p.name}: ${p.stock} (Min: ${p.minStock})`).join('\n')}`;
-                alert(message);
-            }
-        }
-
-        // ============ TRANSAKTIONS-VERWALTUNG ============
-        function renderTransactions() {
-            const tbody = document.querySelector('#transactionTable tbody');
-            tbody.innerHTML = '';
-            
-            // Sortiere nach Datum (neueste zuerst)
-            const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
-            
-            sortedTransactions.forEach(transaction => {
-                const row = document.createElement('tr');
-                const date = new Date(transaction.date);
-                const formattedDate = date.toLocaleString('de-DE');
-                const paymentIcon = transaction.paymentType === 'cash' ? '💵' : '💳';
-                
-                row.innerHTML = `
-                    <td>${formattedDate}</td>
-                    <td>${transaction.userName}</td>
-                    <td>${transaction.productName}</td>
-                    <td>${transaction.quantity}x</td>
-                    <td>${transaction.price.toFixed(2)}€</td>
-                    <td style="font-weight: bold;">${transaction.total.toFixed(2)}€</td>
-                    <td>${paymentIcon} ${transaction.paymentType === 'cash' ? 'Bar' : 'Konto'}</td>
-                `;
-                tbody.appendChild(row);
-            });
-            
-            updateTransactionSummary();
-        }
-
-        function updateTransactionSummary() {
-            const today = new Date().toDateString();
-            const todayTransactions = transactions.filter(t => new Date(t.date).toDateString() === today);
-            const totalToday = todayTransactions.reduce((sum, t) => sum + t.total, 0);
-            const totalAll = transactions.reduce((sum, t) => sum + t.total, 0);
-            
-            document.getElementById('transactionSummary').innerHTML = `
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
-                    <div style="text-align: center;">
-                        <div style="font-size: 2em; font-weight: bold; color: #667eea;">${todayTransactions.length}</div>
-                        <div>Transaktionen heute</div>
-                    </div>
-                    <div style="text-align: center;">
-                        <div style="font-size: 2em; font-weight: bold; color: #38a169;">${totalToday.toFixed(2)}€</div>
-                        <div>Umsatz heute</div>
-                    </div>
-                    <div style="text-align: center;">
-                        <div style="font-size: 2em; font-weight: bold; color: #667eea;">${transactions.length}</div>
-                        <div>Transaktionen gesamt</div>
-                    </div>
-                    <div style="text-align: center;">
-                        <div style="font-size: 2em; font-weight: bold; color: #38a169;">${totalAll.toFixed(2)}€</div>
-                        <div>Umsatz gesamt</div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function exportTransactions() {
-            const csv = convertToCSV(transactions, ['date', 'userName', 'productName', 'quantity', 'price', 'total', 'paymentType']);
-            downloadCSV(csv, 'transaktionen.csv');
-            showAlert('Transaktionen exportiert', 'success');
-        }
-
-        function loadTransactions() {
-            // In Produktivversion: API-Call
-            renderTransactions();
-            showAlert('Transaktionen aktualisiert', 'info');
-        }
-
-        function clearOldTransactions() {
-            const cutoffDate = new Date();
-            cutoffDate.setDate(cutoffDate.getDate() - 30); // 30 Tage alt
-            
-            const oldCount = transactions.filter(t => new Date(t.date) < cutoffDate).length;
-            
-            if (oldCount === 0) {
-                showAlert('Keine alten Transaktionen gefunden', 'info');
-                return;
-            }
-            
-            if (confirm(`${oldCount} Transaktionen älter als 30 Tage löschen?`)) {
-                transactions = transactions.filter(t => new Date(t.date) >= cutoffDate);
-                renderTransactions();
-                showAlert(`${oldCount} alte Transaktionen gelöscht`, 'success');
-            }
-        }
-
-        function filterTransactions() {
-            const fromDate = document.getElementById('transactionDateFrom').value;
-            const toDate = document.getElementById('transactionDateTo').value;
-            
-            if (!fromDate || !toDate) {
-                showAlert('Bitte beide Datumsfelder ausfüllen', 'error');
-                return;
-            }
-            
-            const filteredTransactions = transactions.filter(t => {
-                const transactionDate = new Date(t.date).toDateString();
-                const from = new Date(fromDate).toDateString();
-                const to = new Date(toDate).toDateString();
-                return transactionDate >= from && transactionDate <= to;
-            });
-            
-            // Temporär gefilterte Daten anzeigen
-            const originalTransactions = [...transactions];
-            transactions = filteredTransactions;
-            renderTransactions();
-            transactions = originalTransactions;
-            
-            showAlert(`${filteredTransactions.length} Transaktionen im gewählten Zeitraum`, 'info');
-        }
-
-        function initializeDateFilters() {
-            const today = new Date().toISOString().split('T')[0];
-            const firstOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
-            
-            document.getElementById('transactionDateFrom').value = firstOfMonth;
-            document.getElementById('transactionDateTo').value = today;
-        }
-
-        // ============ SEPA-VERWALTUNG ============
-        function renderSepaData() {
-            const sepaUsers = users.filter(u => u.sepa && u.balance < 0);
-            const totalAmount = sepaUsers.reduce((sum, u) => sum + Math.abs(u.balance), 0);
-            const dueDate = sepaDueDate.toLocaleDateString('de-DE');
-            
-            // Update Summary Cards
-            document.getElementById('sepaUserCount').textContent = sepaUsers.length;
-            document.getElementById('sepaAmount').textContent = totalAmount.toFixed(2) + '€';
-            document.getElementById('sepaDueDate').textContent = dueDate;
-            document.getElementById('sepaFileCount').textContent = '0'; // Demo
-            
-            // Render Table
-            const tbody = document.querySelector('#sepaTable tbody');
-            tbody.innerHTML = '';
-            
-            sepaUsers.forEach(user => {
-                const row = document.createElement('tr');
-                const amount = Math.abs(user.balance);
-                const lastDebit = user.lastDebit ? new Date(user.lastDebit).toLocaleDateString('de-DE') : 'Noch nie';
-                
-                row.innerHTML = `
-                    <td>${user.firstName} ${user.lastName}</td>
-                    <td>${user.iban || 'Keine IBAN'}</td>
-                    <td style="font-weight: bold; color: #e53e3e;">${amount.toFixed(2)}€</td>
-                    <td>${user.mandateId || 'Kein Mandat'}</td>
-                    <td><span style="color: #38a169;">✅ Bereit</span></td>
-                    <td>${lastDebit}</td>
-                `;
-                tbody.appendChild(row);
-            });
-            
-            // Enable/Disable Download Button
-            document.getElementById('sepaDownloadBtn').disabled = sepaUsers.length === 0;
-        }
-
-        function downloadSepaFile() {
-            const sepaUsers = users.filter(u => u.sepa && u.balance < 0);
-            
-            if (sepaUsers.length === 0) {
-                showAlert('Keine Benutzer für SEPA-Export verfügbar', 'error');
-                return;
-            }
-            
-            const sepaXml = generateSepaXML(sepaUsers);
-            const blob = new Blob([sepaXml], { type: 'application/xml' });
-            const url = URL.createObjectURL(blob);
-            
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `SEPA_Saarcade_${new Date().toISOString().split('T')[0]}.xml`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            
-            // Update last debit date
-            sepaUsers.forEach(user => {
-                user.lastDebit = new Date().toISOString().split('T')[0];
-                user.balance = 0.00; // Reset balance after SEPA
-            });
-            
-            renderUsers();
-            renderSepaData();
-            updateDashboard();
-            
             showAlert(`SEPA-Datei mit ${sepaUsers.length} Lastschriften erstellt`, 'success');
         }
 
-        function generateSepaXML(sepaUsers) {
-            const totalAmount = sepaUsers.reduce((sum, u) => sum + Math.abs(u.balance), 0);
+        function generateSepaXML(users) {
+            const totalAmount = users.reduce((sum, u) => sum + Math.abs(u.balance), 0);
             const msgId = `SAARCADE${Date.now()}`;
             const creationDate = new Date().toISOString();
-            const dueDate = sepaDueDate.toISOString().split('T')[0];
+            const dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + 5); // 5 Tage Vorlauf
+            const dueDateStr = dueDate.toISOString().split('T')[0];
             
             let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.008.001.02">
@@ -1629,7 +893,7 @@
         <GrpHdr>
             <MsgId>${msgId}</MsgId>
             <CreDtTm>${creationDate}</CreDtTm>
-            <NbOfTxs>${sepaUsers.length}</NbOfTxs>
+            <NbOfTxs>${users.length}</NbOfTxs>
             <CtrlSum>${totalAmount.toFixed(2)}</CtrlSum>
             <InitgPty>
                 <Nm>Saarcade e.V.</Nm>
@@ -1645,7 +909,7 @@
         <PmtInf>
             <PmtInfId>PMTINF-${Date.now()}</PmtInfId>
             <PmtMtd>DD</PmtMtd>
-            <NbOfTxs>${sepaUsers.length}</NbOfTxs>
+            <NbOfTxs>${users.length}</NbOfTxs>
             <CtrlSum>${totalAmount.toFixed(2)}</CtrlSum>
             <PmtTpInf>
                 <SvcLvl>
@@ -1656,7 +920,7 @@
                 </LclInstrm>
                 <SeqTp>RCUR</SeqTp>
             </PmtTpInf>
-            <ReqdColltnDt>${dueDate}</ReqdColltnDt>
+            <ReqdColltnDt>${dueDateStr}</ReqdColltnDt>
             <Cdtr>
                 <Nm>Saarcade e.V.</Nm>
             </Cdtr>
@@ -1683,266 +947,7 @@
                 </Id>
             </CdtrSchmeId>`;
             
-            sepaUsers.forEach((user, index) => {
-                const amount = Math.abs(user.balance);
-                xml += `
-            <DrctDbtTxInf>
-                <PmtId>
-                    <EndToEndId>TXN-${Date.now()}-${index + 1}</EndToEndId>
-                </PmtId>
-                <InstdAmt Ccy="EUR">${amount.toFixed(2)}</InstdAmt>
-                <DrctDbtTx>
-                    <MndtRltdInf>
-                        <MndtId>${user.mandateId}</MndtId>
-                        <DtOfSgntr>2024-01-01</DtOfSgntr>
-                    </MndtRltdInf>
-                </DrctDbtTx>
-                <DbtrAgt>
-                    <FinInstnId>
-                        <Othr>
-                            <Id>NOTPROVIDED</Id>
-                        </Othr>
-                    </FinInstnId>
-                </DbtrAgt>
-                <Dbtr>
-                    <Nm>${user.firstName} ${user.lastName}</Nm>
-                </Dbtr>
-                <DbtrAcct>
-                    <Id>
-                        <IBAN>${user.iban.replace(/\s/g, '')}</IBAN>
-                    </Id>
-                </DbtrAcct>
-                <RmtInf>
-                    <Ustrd>Saarcade Kassenabrechnng</Ustrd>
-                </RmtInf>
-            </DrctDbtTxInf>`;
-            });
-            
-            xml += `
-        </PmtInf>
-    </CstmrDrctDbtInitn>
-</Document>`;
-            
-            return xml;
-        }
-
-        function previewSepaFile() {
-            const sepaUsers = users.filter(u => u.sepa && u.balance < 0);
-            
-            if (sepaUsers.length === 0) {
-                showAlert('Keine Benutzer für SEPA-Export verfügbar', 'error');
-                return;
-            }
-            
-            const totalAmount = sepaUsers.reduce((sum, u) => sum + Math.abs(u.balance), 0);
-            const dueDate = sepaDueDate.toLocaleDateString('de-DE');
-            
-            let preview = `SEPA-Lastschrift Vorschau\n`;
-            preview += `========================\n\n`;
-            preview += `Fälligkeitsdatum: ${dueDate}\n`;
-            preview += `Anzahl Lastschriften: ${sepaUsers.length}\n`;
-            preview += `Gesamtbetrag: ${totalAmount.toFixed(2)}€\n\n`;
-            preview += `Details:\n--------\n`;
-            
-            sepaUsers.forEach((user, index) => {
-                const amount = Math.abs(user.balance);
-                preview += `${index + 1}. ${user.firstName} ${user.lastName}\n`;
-                preview += `   IBAN: ${user.iban}\n`;
-                preview += `   Betrag: ${amount.toFixed(2)}€\n`;
-                preview += `   Mandat: ${user.mandateId}\n\n`;
-            });
-            
-            alert(preview);
-        }
-
-        function updateSepaDueDate() {
-            const newDate = prompt('Neues Fälligkeitsdatum (YYYY-MM-DD):', sepaDueDate.toISOString().split('T')[0]);
-            
-            if (newDate && !isNaN(new Date(newDate))) {
-                sepaDueDate = new Date(newDate);
-                renderSepaData();
-                showAlert('Fälligkeitsdatum aktualisiert', 'success');
-            } else if (newDate) {
-                showAlert('Ungültiges Datum', 'error');
-            }
-        }
-
-        // ============ IBAN UND SEPA FUNKTIONEN ============
-        function formatIbanInput(event) {
-            const input = event.target;
-            let value = input.value.replace(/\s/g, '').toUpperCase();
-            let formatted = '';
-            
-            for (let i = 0; i < value.length; i++) {
-                if (i > 0 && i % 4 === 0) {
-                    formatted += ' ';
-                }
-                formatted += value[i];
-            }
-            
-            input.value = formatted;
-            
-            // Auto-generate Mandate ID wenn IBAN gültig ist
-            if (isValidIban(value) && document.getElementById('userSepa').value === 'true') {
-                if (!document.getElementById('userMandateId').value) {
-                    document.getElementById('userMandateId').value = generateMandateId();
-                }
-            }
-        }
-
-        function formatIban(iban) {
-            if (!iban) return '';
-            const clean = iban.replace(/\s/g, '');
-            return clean.replace(/(.{4})/g, '$1 ').trim();
-        }
-
-        function isValidIban(iban) {
-            // Entferne Leerzeichen und konvertiere zu Großbuchstaben
-            const cleanIban = iban.replace(/\s/g, '').toUpperCase();
-            
-            // Prüfe Länge (zwischen 15 und 34 Zeichen)
-            if (cleanIban.length < 15 || cleanIban.length > 34) {
-                return false;
-            }
-            
-            // Prüfe Format (2 Buchstaben, 2 Zahlen, dann alphanumerisch)
-            const ibanRegex = /^[A-Z]{2}[0-9]{2}[A-Z0-9]+$/;
-            if (!ibanRegex.test(cleanIban)) {
-                return false;
-            }
-            
-            // IBAN-Prüfsumme (vereinfacht - in Produktion sollte Modulo-97-Prüfung verwendet werden)
-            return true; // Für Demo akzeptieren wir alle gültigen Formate
-        }
-
-        function generateMandateId() {
-            const timestamp = Date.now().toString().slice(-6);
-            const random = Math.floor(Math.random() * 999).toString().padStart(3, '0');
-            return `SEPA-${timestamp}${random}`;
-        }
-
-        // ============ SEPA-EINSTELLUNGEN ============
-        function saveSepaSettings() {
-            const settings = {
-                creditorName: document.getElementById('creditorName').value.trim(),
-                creditorId: document.getElementById('creditorId').value.trim(),
-                creditorIban: document.getElementById('creditorIban').value.replace(/\s/g, ''),
-                creditorBic: document.getElementById('creditorBic').value.trim().toUpperCase(),
-                creditorBankName: document.getElementById('creditorBankName').value.trim(),
-                defaultReference: document.getElementById('defaultReference').value.trim(),
-                creditorAddress: document.getElementById('creditorAddress').value.trim(),
-                sepaLeadTime: parseInt(document.getElementById('sepaLeadTime').value) || 5,
-                sepaSequence: document.getElementById('sepaSequence').value
-            };
-            
-            // Validierung
-            if (!settings.creditorName || !settings.creditorId || !settings.creditorIban || !settings.creditorBic) {
-                showAlert('Bitte alle Pflichtfelder ausfüllen', 'error');
-                return;
-            }
-            
-            if (!isValidIban(settings.creditorIban)) {
-                showAlert('Ungültige Vereins-IBAN', 'error');
-                return;
-            }
-            
-            if (settings.creditorId.length !== 18) {
-                showAlert('Gläubiger-ID muss genau 18 Zeichen haben', 'error');
-                return;
-            }
-            
-            // Speichern
-            sepaSettings = settings;
-            
-            // In Produktivversion: API-Call zum Speichern
-            console.log('SEPA-Einstellungen gespeichert:', settings);
-            
-            showAlert('SEPA-Einstellungen erfolgreich gespeichert', 'success');
-            renderSepaData(); // Aktualisiere SEPA-Anzeige
-        }
-
-        function loadSepaSettings() {
-            // In Produktivversion: API-Call zum Laden
-            document.getElementById('creditorName').value = sepaSettings.creditorName;
-            document.getElementById('creditorId').value = sepaSettings.creditorId;
-            document.getElementById('creditorIban').value = formatIban(sepaSettings.creditorIban);
-            document.getElementById('creditorBic').value = sepaSettings.creditorBic;
-            document.getElementById('creditorBankName').value = sepaSettings.creditorBankName;
-            document.getElementById('defaultReference').value = sepaSettings.defaultReference;
-            document.getElementById('creditorAddress').value = sepaSettings.creditorAddress;
-            document.getElementById('sepaLeadTime').value = sepaSettings.sepaLeadTime;
-            document.getElementById('sepaSequence').value = sepaSettings.sepaSequence;
-        }
-
-        // Erweiterte SEPA-XML-Generierung mit echten Vereinsdaten
-        function generateSepaXML(sepaUsers) {
-            const totalAmount = sepaUsers.reduce((sum, u) => sum + Math.abs(u.balance), 0);
-            const msgId = `${sepaSettings.creditorId.slice(-6)}${Date.now()}`;
-            const creationDate = new Date().toISOString();
-            const dueDate = sepaDueDate.toISOString().split('T')[0];
-            const pmtInfId = `PMTINF-${Date.now()}`;
-            
-            let xml = `<?xml version="1.0" encoding="UTF-8"?>
-<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.008.001.02" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-    <CstmrDrctDbtInitn>
-        <GrpHdr>
-            <MsgId>${msgId}</MsgId>
-            <CreDtTm>${creationDate}</CreDtTm>
-            <NbOfTxs>${sepaUsers.length}</NbOfTxs>
-            <CtrlSum>${totalAmount.toFixed(2)}</CtrlSum>
-            <InitgPty>
-                <Nm>${sepaSettings.creditorName}</Nm>
-                <Id>
-                    <OrgId>
-                        <Othr>
-                            <Id>${sepaSettings.creditorId}</Id>
-                        </Othr>
-                    </OrgId>
-                </Id>
-            </InitgPty>
-        </GrpHdr>
-        <PmtInf>
-            <PmtInfId>${pmtInfId}</PmtInfId>
-            <PmtMtd>DD</PmtMtd>
-            <NbOfTxs>${sepaUsers.length}</NbOfTxs>
-            <CtrlSum>${totalAmount.toFixed(2)}</CtrlSum>
-            <PmtTpInf>
-                <SvcLvl>
-                    <Cd>SEPA</Cd>
-                </SvcLvl>
-                <LclInstrm>
-                    <Cd>CORE</Cd>
-                </LclInstrm>
-                <SeqTp>${sepaSettings.sepaSequence}</SeqTp>
-            </PmtTpInf>
-            <ReqdColltnDt>${dueDate}</ReqdColltnDt>
-            <Cdtr>
-                <Nm>${sepaSettings.creditorName}</Nm>
-            </Cdtr>
-            <CdtrAcct>
-                <Id>
-                    <IBAN>${sepaSettings.creditorIban}</IBAN>
-                </Id>
-            </CdtrAcct>
-            <CdtrAgt>
-                <FinInstnId>
-                    <BIC>${sepaSettings.creditorBic}</BIC>
-                </FinInstnId>
-            </CdtrAgt>
-            <CdtrSchmeId>
-                <Id>
-                    <PrvtId>
-                        <Othr>
-                            <Id>${sepaSettings.creditorId}</Id>
-                            <SchmeNm>
-                                <Prtry>SEPA</Prtry>
-                            </SchmeNm>
-                        </Othr>
-                    </PrvtId>
-                </Id>
-            </CdtrSchmeId>`;
-            
-            sepaUsers.forEach((user, index) => {
+            users.forEach((user, index) => {
                 const amount = Math.abs(user.balance);
                 const endToEndId = `TXN-${Date.now()}-${(index + 1).toString().padStart(3, '0')}`;
                 
@@ -1954,7 +959,7 @@
                 <InstdAmt Ccy="EUR">${amount.toFixed(2)}</InstdAmt>
                 <DrctDbtTx>
                     <MndtRltdInf>
-                        <MndtId>${user.mandateId}</MndtId>
+                        <MndtId>SEPA-${user.id.toString().padStart(3, '0')}</MndtId>
                         <DtOfSgntr>2024-01-01</DtOfSgntr>
                     </MndtRltdInf>
                 </DrctDbtTx>
@@ -1966,7 +971,7 @@
                     </FinInstnId>
                 </DbtrAgt>
                 <Dbtr>
-                    <Nm>${user.firstName} ${user.lastName}</Nm>
+                    <Nm>${user.first_name} ${user.last_name}</Nm>
                 </Dbtr>
                 <DbtrAcct>
                     <Id>
@@ -1974,7 +979,7 @@
                     </Id>
                 </DbtrAcct>
                 <RmtInf>
-                    <Ustrd>${sepaSettings.defaultReference}</Ustrd>
+                    <Ustrd>Saarcade Kassenabrechnung</Ustrd>
                 </RmtInf>
             </DrctDbtTxInf>`;
             });
@@ -1987,24 +992,29 @@
             return xml;
         }
 
-        // ============ ALERT SYSTEM ============
-        function showAlert(message, type = 'info') {
-            const alertDiv = document.createElement('div');
-            alertDiv.className = `alert alert-${type}`;
+        // ============ INITIALIZATION ============
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('🚀 Admin-Dashboard mit API-Integration startet...');
             
-            const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
-            alertDiv.innerHTML = `<span>${icon}</span><div>${message}</div>`;
-            
-            const container = document.querySelector('.container');
-            container.insertBefore(alertDiv, container.children[1]);
-            
-            setTimeout(() => {
-                alertDiv.remove();
-            }, 4000);
-        }
-
-        console.log('⚙️ Admin-Dashboard vollständig geladen');
-        console.log('✅ Alle CRUD-Funktionen verfügbar');
+            try {
+                // API-Verbindung testen
+                await apiCall('/api/dashboard');
+                
+                // Initial Dashboard laden
+                await loadDashboard();
+                
+                // Initial Mitglieder laden
+                await loadUsers();
+                
+                console.log('✅ Admin-Dashboard erfolgreich initialisiert');
+                showAlert('Dashboard erfolgreich geladen', 'success');
+                
+            } catch (error) {
+                console.error('❌ Fehler bei der Initialisierung:', error);
+                showAlert('Fehler beim Laden des Dashboards. Prüfe die API-Verbindung.', 'error');
+            }
+        });
     </script>
 </body>
 </html>
