@@ -1,0 +1,6 @@
+# Diese Datei auch nach GitHub
+.env.local
+.env
+node_modules/
+.vercel/
+*.log
