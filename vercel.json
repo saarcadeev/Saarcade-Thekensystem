@@ -1,40 +1,5 @@
 {
-  "version": 2,
-  "name": "saarcade-kassensystem",
-  "builds": [
-    {
-      "src": "server.js",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/health",
-      "dest": "/server.js"
-    },
-    {
-      "src": "/api/(.*)",
-      "dest": "/server.js"
-    },
-    {
-      "src": "/kasse",
-      "dest": "/server.js"
-    },
-    {
-      "src": "/admin", 
-      "dest": "/server.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/server.js"
-    }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  },
-  "functions": {
-    "server.js": {
-      "maxDuration": 10
-    }
-  }
-}
+     "version": 2,
+     "builds": [{"src": "server.js", "use": "@vercel/node"}],
+     "routes": [{"src": "/(.*)", "dest": "/server.js"}]
+   }
