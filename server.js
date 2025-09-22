@@ -1,6 +1,8 @@
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
+const { Pool } = require('pg');
+require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -10,70 +12,23 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Database status
-let dbStatus = 'not_initialized';
-let pool = null;
+// PostgreSQL Connection Pool für Supabase
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  },
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+});
 
-// Mock-Daten für Fallback
-const mockUsers = [
-  { id: 1, first_name: 'Anna', last_name: 'Schmidt', full_name: 'Anna Schmidt', role: 'member', barcode: 'SAAR001', balance: -15.50, sepa_mandate: true },
-  { id: 2, first_name: 'Max', last_name: 'Mustermann', full_name: 'Max Mustermann', role: 'member', barcode: 'SAAR002', balance: -8.20, sepa_mandate: true },
-  { id: 3, first_name: 'Tom', last_name: 'Wagner', full_name: 'Tom Wagner', role: 'bartender', barcode: 'SAAR003', balance: 2.40, sepa_mandate: false },
-  { id: 4, first_name: 'Gast', last_name: 'Benutzer', full_name: 'Gast Benutzer', role: 'guest', barcode: 'GUEST001', balance: 0.00, sepa_mandate: false }
-];
-
-const mockProducts = [
-  { id: 1, name: 'Augustiner Hell', category: 'bier', member_price: 2.50, guest_price: 3.00, stock: 24, image: '🍺', available: true },
-  { id: 2, name: 'Coca Cola', category: 'softdrinks', member_price: 1.50, guest_price: 2.00, stock: 48, image: '🥤', available: true },
-  { id: 3, name: 'Erdinger Weissbier', category: 'bier', member_price: 2.80, guest_price: 3.30, stock: 18, image: '🍺', available: true },
-  { id: 4, name: 'Sprite', category: 'softdrinks', member_price: 1.50, guest_price: 2.00, stock: 24, image: '🥤', available: true },
-  { id: 5, name: 'Jägermeister', category: 'schnaps', member_price: 3.50, guest_price: 4.50, stock: 8, image: '🥃', available: true }
-];
-
-// Sichere Datenbank-Initialisierung (crasht nicht)
-async function tryInitDatabase() {
-  if (!process.env.DATABASE_URL) {
-    console.log('⚠️ DATABASE_URL not found - using mock data');
-    dbStatus = 'mock_mode';
-    return;
-  }
-
+// Database initialization
+async function initDatabase() {
   try {
-    console.log('🔄 Versuche Datenbankverbindung...');
-    
-    const { Pool } = require('pg');
-    pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false },
-      max: 5,
-      idleTimeoutMillis: 10000,
-      connectionTimeoutMillis: 3000,
-    });
+    console.log('🔧 Initialisiere Datenbank...');
 
-    // Test-Verbindung mit Timeout
-    const testQuery = await Promise.race([
-      pool.query('SELECT NOW()'),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Connection timeout')), 5000)
-      )
-    ]);
-
-    console.log('✅ Datenbankverbindung erfolgreich');
-    dbStatus = 'connected';
-    await createTables();
-    
-  } catch (error) {
-    console.log('⚠️ Datenbankverbindung fehlgeschlagen:', error.message);
-    console.log('🔄 Verwende Mock-Daten als Fallback');
-    dbStatus = 'mock_mode';
-    pool = null;
-  }
-}
-
-async function createTables() {
-  if (!pool) return;
-  
-  try {
+    // Users Tabelle
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -81,26 +36,38 @@ async function createTables() {
         last_name VARCHAR(100),
         full_name VARCHAR(200),
         role VARCHAR(20) DEFAULT 'member',
+        pin VARCHAR(10),
         barcode VARCHAR(50) UNIQUE,
         balance DECIMAL(10,2) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        stay_active BOOLEAN DEFAULT FALSE,
         sepa_mandate BOOLEAN DEFAULT FALSE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        iban VARCHAR(34),
+        account_holder VARCHAR(200),
+        mandate_reference VARCHAR(35),
+        last_billing DATE
       )
     `);
 
+    // Products Tabelle
     await pool.query(`
       CREATE TABLE IF NOT EXISTS products (
         id SERIAL PRIMARY KEY,
         name VARCHAR(200) NOT NULL,
         category VARCHAR(50),
+        barcodes TEXT[],
         member_price DECIMAL(10,2),
         guest_price DECIMAL(10,2),
+        description TEXT,
         available BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         stock INTEGER DEFAULT 0,
         image VARCHAR(10) DEFAULT '📦'
       )
     `);
 
+    // Transactions Tabelle
     await pool.query(`
       CREATE TABLE IF NOT EXISTS transactions (
         id SERIAL PRIMARY KEY,
@@ -109,43 +76,65 @@ async function createTables() {
         items JSONB,
         total DECIMAL(10,2),
         payment_method VARCHAR(20) DEFAULT 'balance',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        pos_terminal VARCHAR(50),
+        receipt_number VARCHAR(20)
       )
     `);
 
-    // Demo-Daten einfügen falls leer
-    const userCheck = await pool.query('SELECT COUNT(*) FROM users');
-    if (parseInt(userCheck.rows[0].count) === 0) {
-      await insertDemoData();
-    }
-
+    console.log('✅ Datenbank-Tabellen erstellt/geprüft');
+    
+    // Demo-Daten einfügen (nur wenn leer)
+    await insertDemoData();
+    
   } catch (error) {
-    console.log('⚠️ Tabellen-Erstellung fehlgeschlagen:', error.message);
+    console.error('❌ Datenbank-Initialisierung fehlgeschlagen:', error);
+    throw error;
   }
 }
 
+// Demo-Daten einfügen
 async function insertDemoData() {
   try {
+    // Prüfen ob bereits Daten vorhanden
+    const userCheck = await pool.query('SELECT COUNT(*) FROM users');
+    if (parseInt(userCheck.rows[0].count) > 0) {
+      console.log('📋 Demo-Daten bereits vorhanden');
+      return;
+    }
+
+    console.log('📦 Füge Demo-Daten ein...');
+
+    // Demo-Benutzer
     await pool.query(`
-      INSERT INTO users (first_name, last_name, full_name, barcode, balance, role, sepa_mandate) VALUES
-      ('Anna', 'Schmidt', 'Anna Schmidt', 'SAAR001', -15.50, 'member', true),
-      ('Max', 'Mustermann', 'Max Mustermann', 'SAAR002', -8.20, 'member', true),
-      ('Tom', 'Wagner', 'Tom Wagner', 'SAAR003', 2.40, 'bartender', false),
-      ('Gast', 'Benutzer', 'Gast Benutzer', 'GUEST001', 0.00, 'guest', false)
+      INSERT INTO users (first_name, last_name, full_name, pin, barcode, balance, role, sepa_mandate, iban, account_holder, mandate_reference) VALUES
+      ('Anna', 'Schmidt', 'Anna Schmidt', '1234', 'SAAR001', -15.50, 'member', true, 'DE89370400440532013000', 'Anna Schmidt', 'SAARCADE-2025-001'),
+      ('Max', 'Mustermann', 'Max Mustermann', '5678', 'SAAR002', -8.20, 'member', true, 'DE89370400440532013001', 'Max Mustermann', 'SAARCADE-2025-002'),
+      ('Sarah', 'Müller', 'Sarah Müller', '9999', 'SAAR003', 5.00, 'member', false, '', '', ''),
+      ('Tom', 'Wagner', 'Tom Wagner', '1111', 'SAAR004', 2.40, 'bartender', false, '', '', ''),
+      ('Gast', 'Benutzer', 'Gast Benutzer', '0000', 'GUEST001', 0.00, 'guest', false, '', '', '')
     `);
 
+    // Demo-Produkte
     await pool.query(`
-      INSERT INTO products (name, category, member_price, guest_price, stock, image) VALUES
-      ('Augustiner Hell', 'bier', 2.50, 3.00, 24, '🍺'),
-      ('Coca Cola', 'softdrinks', 1.50, 2.00, 48, '🥤'),
-      ('Erdinger Weissbier', 'bier', 2.80, 3.30, 18, '🍺'),
-      ('Sprite', 'softdrinks', 1.50, 2.00, 24, '🥤'),
-      ('Jägermeister', 'schnaps', 3.50, 4.50, 8, '🥃')
+      INSERT INTO products (name, category, barcodes, member_price, guest_price, description, stock, image) VALUES
+      ('Augustiner Hell', 'bier', ARRAY['4000417025001'], 2.50, 3.00, 'Bayerisches Helles 0.5L', 24, '🍺'),
+      ('Coca Cola', 'softdrinks', ARRAY['5000112637447'], 1.50, 2.00, 'Cola 0.33L', 48, '🥤'),
+      ('Erdinger Weissbier', 'bier', ARRAY['4002103001011'], 2.80, 3.30, 'Weissbier 0.5L', 18, '🍺'),
+      ('Sprite', 'softdrinks', ARRAY['4000417025500'], 1.50, 2.00, 'Zitronenlimonade 0.33L', 24, '🥤'),
+      ('Jägermeister', 'schnaps', ARRAY['4000417025200'], 3.50, 4.50, 'Kräuterlikör 2cl', 8, '🥃'),
+      ('Erdnüsse', 'snacks', ARRAY['4000417025300'], 2.00, 2.50, 'Gesalzene Erdnüsse', 12, '🥜'),
+      ('Franziskaner Weissbier', 'bier', ARRAY['4000417025400'], 2.70, 3.20, 'Weissbier 0.5L', 16, '🍺'),
+      ('Fanta', 'softdrinks', ARRAY['4000417025900'], 1.50, 2.00, 'Orangenlimonade 0.33L', 36, '🥤'),
+      ('Becks', 'bier', ARRAY['4000417025800'], 2.30, 2.80, 'Pils 0.33L', 30, '🍺'),
+      ('Vodka', 'schnaps', ARRAY['4000417025600'], 3.00, 4.00, 'Vodka 2cl', 12, '🥃'),
+      ('Chips', 'snacks', ARRAY['4000417025700'], 1.50, 2.00, 'Kartoffelchips', 20, '🍿'),
+      ('Kaffee', 'heissgetraenke', ARRAY['4008400123457'], 1.00, 1.50, 'Kaffee heiß', 50, '☕')
     `);
 
     console.log('✅ Demo-Daten eingefügt');
   } catch (error) {
-    console.log('⚠️ Demo-Daten Fehler:', error.message);
+    console.log('ℹ️ Demo-Daten bereits vorhanden oder Fehler:', error.message);
   }
 }
 
@@ -153,44 +142,11 @@ async function insertDemoData() {
 
 // Health Check
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    timestamp: new Date().toISOString(),
-    database: dbStatus,
-    environment: process.env.NODE_ENV || 'development',
-    has_database_url: !!process.env.DATABASE_URL
-  });
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// Test-Route für Debugging
+// Test-Route für Datenbankverbindung
 app.get('/api/test-db', async (req, res) => {
-  if (dbStatus === 'mock_mode') {
-    return res.json({ 
-      success: true, 
-      database: 'mock',
-      message: 'Using mock data (DATABASE_URL issue)',
-      users: mockUsers.length,
-      has_env_var: !!process.env.DATABASE_URL,
-      env_var_preview: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 20) + '...' : 'NOT_SET'
-    });
-  }
-
-  if (dbStatus === 'not_initialized') {
-    return res.json({
-      success: false,
-      database: 'not_initialized',
-      message: 'Database initialization not completed yet'
-    });
-  }
-
-  if (!pool) {
-    return res.json({
-      success: false,
-      database: 'no_pool',
-      message: 'No database pool available'
-    });
-  }
-
   try {
     const result = await pool.query('SELECT NOW() as current_time, COUNT(*) as user_count FROM users');
     res.json({ 
@@ -204,29 +160,32 @@ app.get('/api/test-db', async (req, res) => {
     res.status(500).json({ 
       success: false, 
       error: error.message,
-      database: 'query_error'
+      code: error.code,
+      detail: error.detail
     });
   }
 });
 
 // Dashboard-Statistiken
 app.get('/api/dashboard', async (req, res) => {
-  if (dbStatus !== 'connected' || !pool) {
-    return res.json({
-      users: { total: mockUsers.length },
-      products: { available_products: mockProducts.length },
-      transactions: { total_transactions: 42, total_revenue: 156.50 }
-    });
-  }
-
   try {
     const users = await pool.query('SELECT COUNT(*) as total FROM users');
     const products = await pool.query('SELECT COUNT(*) as available_products FROM products WHERE available = true');
+    const transactions = await pool.query(`
+      SELECT 
+        COUNT(*) as total_transactions,
+        COALESCE(SUM(total), 0) as total_revenue
+      FROM transactions 
+      WHERE created_at >= NOW() - INTERVAL '30 days'
+    `);
     
     res.json({
       users: { total: parseInt(users.rows[0].total) },
       products: { available_products: parseInt(products.rows[0].available_products) },
-      transactions: { total_transactions: 42, total_revenue: 156.50 }
+      transactions: {
+        total_transactions: parseInt(transactions.rows[0].total_transactions),
+        total_revenue: parseFloat(transactions.rows[0].total_revenue)
+      }
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -235,42 +194,28 @@ app.get('/api/dashboard', async (req, res) => {
 
 // Alle Benutzer abrufen
 app.get('/api/users', async (req, res) => {
-  if (dbStatus !== 'connected' || !pool) {
-    return res.json(mockUsers);
-  }
-
   try {
     const result = await pool.query(`
       SELECT 
         id, first_name, last_name, full_name, role, barcode, 
-        balance, sepa_mandate, created_at
+        balance, sepa_mandate, created_at, last_activity
       FROM users 
-      ORDER BY full_name
+      ORDER BY last_activity DESC
     `);
     res.json(result.rows);
   } catch (error) {
-    console.error('Users query error:', error);
-    res.json(mockUsers); // Fallback zu Mock-Daten
+    res.status(500).json({ error: error.message });
   }
 });
 
 // Benutzer per Barcode suchen
 app.get('/api/users/:barcode', async (req, res) => {
-  const { barcode } = req.params;
-  
-  if (dbStatus !== 'connected' || !pool) {
-    const user = mockUsers.find(u => u.barcode.toLowerCase() === barcode.toLowerCase());
-    if (!user) {
-      return res.status(404).json({ error: 'Benutzer nicht gefunden' });
-    }
-    return res.json(user);
-  }
-
   try {
+    const { barcode } = req.params;
     const result = await pool.query(`
       SELECT 
         id, first_name, last_name, full_name, role, barcode, 
-        balance, sepa_mandate, created_at
+        balance, sepa_mandate, created_at, last_activity
       FROM users 
       WHERE UPPER(barcode) = UPPER($1)
     `, [barcode]);
@@ -279,64 +224,37 @@ app.get('/api/users/:barcode', async (req, res) => {
       return res.status(404).json({ error: 'Benutzer nicht gefunden' });
     }
     
+    // Update last_activity
+    await pool.query('UPDATE users SET last_activity = NOW() WHERE id = $1', [result.rows[0].id]);
+    
     res.json(result.rows[0]);
   } catch (error) {
-    console.error('User lookup error:', error);
-    const user = mockUsers.find(u => u.barcode.toLowerCase() === barcode.toLowerCase());
-    if (!user) {
-      return res.status(404).json({ error: 'Benutzer nicht gefunden' });
-    }
-    res.json(user);
+    res.status(500).json({ error: error.message });
   }
 });
 
 // Alle Produkte abrufen
 app.get('/api/products', async (req, res) => {
-  if (dbStatus !== 'connected' || !pool) {
-    return res.json(mockProducts.filter(p => p.available));
-  }
-
   try {
     const result = await pool.query(`
       SELECT 
-        id, name, category, member_price, guest_price, 
-        available, stock, image
+        id, name, category, barcodes, member_price, guest_price, 
+        description, available, stock, image
       FROM products 
       WHERE available = true
       ORDER BY category, name
     `);
     res.json(result.rows);
   } catch (error) {
-    console.error('Products query error:', error);
-    res.json(mockProducts); // Fallback zu Mock-Daten
+    res.status(500).json({ error: error.message });
   }
 });
 
 // Transaktion erstellen
 app.post('/api/transactions', async (req, res) => {
-  const { userId, userName, items, total, paymentMethod = 'balance' } = req.body;
-  
-  if (dbStatus !== 'connected' || !pool) {
-    // Mock: Benutzer-Saldo aktualisieren
-    const user = mockUsers.find(u => u.id === userId);
-    if (user && paymentMethod === 'balance') {
-      user.balance -= total;
-    }
-    
-    const transaction = {
-      id: Date.now(),
-      user_id: userId,
-      user_name: userName,
-      items: items,
-      total: total,
-      payment_method: paymentMethod,
-      created_at: new Date().toISOString()
-    };
-    
-    return res.status(201).json(transaction);
-  }
-
   try {
+    const { userId, userName, items, total, paymentMethod = 'balance' } = req.body;
+    
     // Transaktion in DB speichern
     const result = await pool.query(`
       INSERT INTO transactions (user_id, user_name, items, total, payment_method)
@@ -348,37 +266,82 @@ app.post('/api/transactions', async (req, res) => {
     if (paymentMethod === 'balance') {
       await pool.query(`
         UPDATE users 
-        SET balance = balance - $1
+        SET balance = balance - $1, last_activity = NOW()
         WHERE id = $2
       `, [total, userId]);
     }
     
     res.status(201).json(result.rows[0]);
   } catch (error) {
-    console.error('Transaction error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Transaktionen abrufen
+app.get('/api/transactions', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        id, user_id, user_name, items, total, payment_method, created_at
+      FROM transactions 
+      ORDER BY created_at DESC 
+      LIMIT 100
+    `);
+    res.json(result.rows);
+  } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
 // Frontend Routes
 app.get('/kasse', (req, res) => {
-  res.sendFile(path.join(__dirname, 'kasse.html'));
+  res.sendFile(path.join(__dirname, 'public', 'kasse.html'));
 });
 
 app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin.html'));
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
 // Catch-all für Frontend
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Server starten (für Vercel als Serverless Function)
-// Die Datenbank-Initialisierung läuft asynchron und crasht nicht den Server
-tryInitDatabase().catch(err => {
-  console.log('Database init failed, continuing with mock data:', err.message);
-  dbStatus = 'mock_mode';
+// ============ SERVER START ============
+
+async function startServer() {
+  try {
+    // Datenbank initialisieren
+    await initDatabase();
+    
+    // Server starten
+    app.listen(PORT, () => {
+      console.log(`✅ Saarcade Kassensystem läuft auf Port ${PORT}`);
+      console.log(`🌐 Frontend: http://localhost:${PORT}`);
+      console.log(`🛒 Kasse: http://localhost:${PORT}/kasse`);
+      console.log(`⚙️ Admin: http://localhost:${PORT}/admin`);
+      console.log(`🗄️ Database: ${process.env.DATABASE_URL ? 'Supabase Connected' : 'Environment Variable Missing'}`);
+    });
+  } catch (error) {
+    console.error('❌ Server-Start fehlgeschlagen:', error);
+    process.exit(1);
+  }
+}
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('🛑 Server wird beendet...');
+  await pool.end();
+  process.exit(0);
 });
+
+process.on('SIGTERM', async () => {
+  console.log('🛑 Server wird beendet...');
+  await pool.end();
+  process.exit(0);
+});
+
+// Server starten
+startServer();
 
 module.exports = app;
