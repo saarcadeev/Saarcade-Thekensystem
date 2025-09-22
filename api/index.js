@@ -276,6 +276,19 @@ module.exports = async (req, res) => {
             return res.status(200).json(sepaUsers);
         }
 
+// Debug-Test ohne Supabase
+if (path === '/test' && method === 'GET') {
+    return res.status(200).json({
+        message: 'API funktioniert',
+        path: path,
+        method: method,
+        env_url_exists: !!supabaseUrl,
+        env_key_exists: !!supabaseKey,
+        env_url_value: supabaseUrl ? supabaseUrl.substring(0, 30) + '...' : 'undefined',
+        timestamp: new Date().toISOString()
+    });
+}
+        
         // ============ 404 - ENDPUNKT NICHT GEFUNDEN ============
         return res.status(404).json({ 
             error: 'Endpunkt nicht gefunden',
