@@ -739,11 +739,11 @@ async function checkout() {
         
         console.log('📡 Sende Transaktion:', transactionData); // <- NEU HINZUGEFÜGT
         
-        // Transaktion an API senden
-        await createTransaction(transactionData);
-        
-        // Lokalen User-Saldo aktualisieren
-        currentUser.balance -= total;
+  // Transaktion an API senden und Response speichern
+const result = await createTransaction(transactionData);
+
+// Backend-Response verwenden (genauer als lokale Berechnung)
+currentUser.balance = result.newBalance;
         
         showStatus(`Kauf über ${total.toFixed(2)}€ abgeschlossen!`, 'success');
         clearCart();
