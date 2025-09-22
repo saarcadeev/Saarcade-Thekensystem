@@ -13,7 +13,11 @@ if (!supabaseUrl || !supabaseKey) {
     console.error('SUPABASE_URL or SUPABASE_ANON_KEY missing');
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = createClient(supabaseUrl, supabaseKey, {
+    db: {
+        schema: 'public'
+    }
+});
 
 // CORS-Headers für alle Antworten
 const corsHeaders = {
