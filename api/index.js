@@ -288,6 +288,36 @@ if (path === '/test' && method === 'GET') {
         timestamp: new Date().toISOString()
     });
 }
+
+// Supabase-Verbindungstest - nach dem /test Endpunkt einfügen:
+if (path === '/supabase-test' && method === 'GET') {
+    try {
+        console.log('Testing Supabase connection to public.users...');
+        
+        // Einfachster möglicher Supabase-Call
+        const { data, error, count } = await supabase
+            .from('public.users')
+            .select('*', { count: 'exact' })
+            .limit(1);
+        
+        console.log('Supabase result:', { data, error, count });
+        
+        return res.status(200).json({
+            supabase_connection: error ? 'failed' : 'success',
+            error_message: error ? error.message : null,
+            error_code: error ? error.code : null,
+            data_length: data ? data.length : 0,
+            count: count,
+            first_user: data && data[0] ? data[0].first_name : null
+        });
+    } catch (e) {
+        console.log('Supabase exception:', e);
+        return res.status(500).json({
+            supabase_connection: 'exception',
+            error: e.message
+        });
+    }
+}
         
         // ============ 404 - ENDPUNKT NICHT GEFUNDEN ============
         return res.status(404).json({ 
