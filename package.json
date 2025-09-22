@@ -1,0 +1,26 @@
+{
+  "name": "saarcade-thekensystem",
+  "version": "2.0.0",
+  "description": "Saarcade Thekensystem - Vercel + Supabase",
+  "main": "api/index.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'Build completed'",
+    "start": "echo 'Use vercel dev for local development'"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "saarcade",
+    "thekensystem", 
+    "vercel",
+    "supabase",
+    "pos-system"
+  ],
+  "author": "Saarcade e.V.",
+  "license": "MIT"
+}
