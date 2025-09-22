@@ -455,19 +455,26 @@
             }
         }
 
-        async function createTransaction(transactionData) {
-            try {
-                const transaction = await apiCall('/api/transactions', {
-                    method: 'POST',
-                    body: JSON.stringify(transactionData)
-                });
-                console.log('✅ Transaktion gespeichert:', transaction);
-                return transaction;
-            } catch (error) {
-                console.error('Fehler beim Speichern der Transaktion:', error);
-                throw error;
-            }
-        }
+ // FINDE diese Funktion in kasse.html und ersetze sie KOMPLETT:
+
+async function createTransaction(transactionData) {
+    console.log('📡 createTransaction aufgerufen mit:', transactionData); // <- NEU HINZUGEFÜGT
+    
+    try {
+        console.log('📤 Sende API-Request an /api/transactions'); // <- NEU HINZUGEFÜGT
+        
+        const transaction = await apiCall('/api/transactions', {
+            method: 'POST',
+            body: JSON.stringify(transactionData)
+        });
+        
+        console.log('✅ Transaktion gespeichert:', transaction); // <- Diese Zeile war schon da
+        return transaction;
+    } catch (error) {
+        console.error('❌ Fehler beim Speichern der Transaktion:', error); // <- Diese Zeile war schon da
+        throw error;
+    }
+}
 
         // ============ UI FUNCTIONS ============
         
