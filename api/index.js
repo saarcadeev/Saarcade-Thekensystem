@@ -65,13 +65,13 @@ module.exports = async (req, res) => {
         if (path === '/dashboard' && method === 'GET') {
             try {
                 // Direkte Abfragen statt View verwenden
-                const { data: users } = await supabase.from('public.users').select('role').eq('role', 'member');
-                const { data: products } = await supabase.from('public.products').select('stock, available').eq('available', true);
-                const { data: allProducts } = await supabase.from('public.products').select('stock, min_stock');
+                const { data: users } = await supabase.from('users').select('role').eq('role', 'member');
+                const { data: products } = await supabase.from('products').select('stock, available').eq('available', true);
+                const { data: allProducts } = await supabase.from('products').select('stock, min_stock');
                 
                 const today = new Date().toISOString().split('T')[0];
                 const { data: todayTransactions } = await supabase
-                    .from('public.transactions')
+                    .from('transactions')
                     .select('total')
                     .gte('created_at', today);
 
@@ -96,7 +96,7 @@ module.exports = async (req, res) => {
         // Alle Benutzer
         if (path === '/users' && method === 'GET') {
             const { data, error } = await supabase
-                .from('public.users')
+                .from('users')
                 .select('*')
                 .order('first_name');
             
@@ -109,7 +109,7 @@ module.exports = async (req, res) => {
             const barcode = pathParts[1].toUpperCase();
             
             const { data, error } = await supabase
-                .from('public.users')
+                .from('users')
                 .select('*')
                 .eq('barcode', barcode)
                 .single();
@@ -129,7 +129,7 @@ module.exports = async (req, res) => {
         // Alle Produkte
         if (path === '/products' && method === 'GET') {
             const { data, error } = await supabase
-                .from('public.products')
+                .from('products')
                 .select('*')
                 .eq('available', true)
                 .order('category, name');
@@ -143,7 +143,7 @@ module.exports = async (req, res) => {
             const barcode = pathParts[2];
             
             const { data, error } = await supabase
-                .from('public.products')
+                .from('products')
                 .select('*')
                 .eq('barcode', barcode)
                 .eq('available', true)
@@ -164,7 +164,7 @@ module.exports = async (req, res) => {
         // Alle Transaktionen
         if (path === '/transactions' && method === 'GET') {
             const { data, error } = await supabase
-                .from('public.transactions')
+                .from('transactions')
                 .select('*')
                 .order('created_at', { ascending: false })
                 .limit(100);
@@ -184,7 +184,7 @@ module.exports = async (req, res) => {
 
             // Benutzer laden
             const { data: user, error: userError } = await supabase
-                .from('public.users')
+                .from('users')
                 .select('*')
                 .eq('id', transactionData.userId)
                 .single();
@@ -213,7 +213,7 @@ module.exports = async (req, res) => {
                 // Bestand reduzieren - Sicherer Weg
                 try {
                     const { data: product } = await supabase
-                        .from('public.products')
+                        .from('products')
                         .select('stock')
                         .eq('id', item.productId)
                         .single();
@@ -221,7 +221,7 @@ module.exports = async (req, res) => {
                     if (product && product.stock >= item.quantity) {
                         const newStock = product.stock - item.quantity;
                         await supabase
-                            .from('public.products')
+                            .from('products')
                             .update({ stock: newStock })
                             .eq('id', item.productId);
                     }
@@ -232,7 +232,7 @@ module.exports = async (req, res) => {
 
             // Transaktionen speichern
             const { data: savedTransactions, error: transactionError } = await supabase
-                .from('public.transactions')
+                .from('transactions')
                 .insert(transactions)
                 .select();
             
@@ -241,7 +241,7 @@ module.exports = async (req, res) => {
             // Benutzersaldo aktualisieren
             const newBalance = user.balance - totalAmount;
             const { error: balanceError } = await supabase
-                .from('public.users')
+                .from('users')
                 .update({ balance: newBalance })
                 .eq('id', transactionData.userId);
             
@@ -259,7 +259,7 @@ module.exports = async (req, res) => {
         // SEPA-fähige Benutzer
         if (path === '/sepa-users' && method === 'GET') {
             const { data, error } = await supabase
-                .from('public.users')
+                .from('users')
                 .select('*')
                 .eq('sepa_active', true)
                 .lt('balance', 0)
@@ -296,7 +296,7 @@ if (path === '/supabase-test' && method === 'GET') {
         
         // Einfachster möglicher Supabase-Call
         const { data, error, count } = await supabase
-            .from('public.users')
+            .from('users')
             .select('*', { count: 'exact' })
             .limit(1);
         
