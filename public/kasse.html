@@ -655,25 +655,39 @@ async function createTransaction(transactionData) {
             document.getElementById('barcodeInput').focus();
         }
 
-        function searchUsers(query) {
-            if (!query || query.length < 1) {
-                hideDropdown();
-                return;
-            }
+async function searchUsers(query) {
+    if (!query || query.length < 1) {
+        hideDropdown();
+        return;
+    }
 
-            const filtered = users.filter(user => 
-                user.barcode.toLowerCase().includes(query.toLowerCase()) ||
-                user.full_name.toLowerCase().includes(query.toLowerCase()) ||
-                user.first_name.toLowerCase().includes(query.toLowerCase())
-            );
-
-            if (filtered.length === 0) {
-                hideDropdown();
-                return;
-            }
-
-            showDropdown(filtered);
+    try {
+        // Alle User von API laden (immer aktuelle Daten)
+        const response = await fetch('/api/users');
+        if (!response.ok) {
+            hideDropdown();
+            return;
         }
+        
+        const allUsers = await response.json();
+        
+        const filtered = allUsers.filter(user => 
+            user.barcode.toLowerCase().includes(query.toLowerCase()) ||
+            user.full_name.toLowerCase().includes(query.toLowerCase()) ||
+            user.first_name.toLowerCase().includes(query.toLowerCase())
+        );
+
+        if (filtered.length === 0) {
+            hideDropdown();
+            return;
+        }
+
+        showDropdown(filtered);
+    } catch (error) {
+        console.error('Fehler bei User-Suche:', error);
+        hideDropdown();
+    }
+}
 
         function showDropdown(userList) {
             const dropdown = document.getElementById('userDropdown');
