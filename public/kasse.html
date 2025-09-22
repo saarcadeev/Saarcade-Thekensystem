@@ -449,11 +449,16 @@
             try {
                 const user = await apiCall(`/api/users/${barcode}`);
                 return user;
-            } catch (error) {
-                // User nicht gefunden ist ein normaler Fall
-                return null;
-            }
-        }
+// Falls der User nicht gefunden wird, bessere Meldung:
+} catch (error) {
+    if (error.message.includes('404')) {
+        showStatus('Barcode nicht gefunden', 'error');
+        // NICHT showOfflineIndicator(true) aufrufen
+    } else {
+        showStatus('Verbindungsfehler aufgetreten', 'error');
+        showOfflineIndicator(true);
+    }
+}
 
  // FINDE diese Funktion in kasse.html und ersetze sie KOMPLETT:
 
