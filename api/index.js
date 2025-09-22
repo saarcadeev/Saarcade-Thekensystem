@@ -250,17 +250,23 @@ module.exports = async (req, res) => {
                 
                 transactions.push(transaction);
                 totalAmount += item.total;
-                
-                // Bestand reduzieren
-                const { error: stockError } = await supabase
-                    .from('products')
-                    .update({ 
-                        stock: supabase.sql`stock - ${item.quantity}` 
-                    })
-                    .eq('id', item.productId);
-                
-                if (stockError) console.warn('Stock update error:', stockError);
-            }
+
+// Bestand reduzieren - Erst aktuellen Bestand laden
+const { data: product } = await supabase
+    .from('products')
+    .select('stock')
+    .eq('id', item.productId)
+    .single();
+
+if (product) {
+    const newStock = Math.max(0, product.stock - item.quantity);
+    const { error: stockError } = await supabase
+        .from('products')
+        .update({ stock: newStock })
+        .eq('id', item.productId);
+    
+    if (stockError) console.warn('Stock update error:', stockError);
+}
 
             // Transaktionen speichern
             const { data: savedTransactions, error: transactionError } = await supabase
