@@ -445,21 +445,54 @@
             }
         }
 
-        async function searchUserByBarcode(barcode) {
-            try {
-                const user = await apiCall(`/api/users/${barcode}`);
-                return user;
-// Falls der User nicht gefunden wird, bessere Meldung:
-} catch (error) {
-    if (error.message.includes('404')) {
-        showStatus('Barcode nicht gefunden', 'error');
-        // NICHT showOfflineIndicator(true) aufrufen
-    } else {
-        showStatus('Verbindungsfehler aufgetreten', 'error');
-        showOfflineIndicator(true);
+// FINDE in kasse.html die searchUserByBarcode Funktion und ersetze sie durch:
+
+async function searchUserByBarcode(barcode) {
+    try {
+        const user = await apiCall(`/api/users/${barcode}`);
+        return user;
+    } catch (error) {
+        // 404 = Benutzer nicht gefunden (normal)
+        if (error.message.includes('404')) {
+            console.log('Benutzer nicht gefunden:', barcode);
+            return null;
+        }
+        // Andere Fehler = echte Verbindungsprobleme
+        console.error('API-Verbindungsfehler:', error);
+        throw error;
     }
 }
 
+// UND in der Enter-Taste Event-Handler (dort wo searchUserByBarcode aufgerufen wird):
+
+barcodeInput.addEventListener('keypress', async function(e) {
+    if (e.key === 'Enter') {
+        const input = e.target.value.trim();
+        if (!input) return;
+
+        showStatus('Suche Benutzer...', 'loading');
+
+        try {
+            // API-Suche
+            const user = await searchUserByBarcode(input.toUpperCase());
+            if (user) {
+                selectUser(user);
+            } else {
+                // Fallback: Lokale Suche in geladenen Benutzern
+                const localUser = users.find(u => u.barcode === input.toUpperCase());
+                if (localUser) {
+                    selectUser(localUser);
+                } else {
+                    showStatus('Barcode nicht gefunden', 'error');
+                    // NICHT showOfflineIndicator(true) hier!
+                }
+            }
+        } catch (error) {
+            showStatus('Verbindungsfehler bei der Benutzersuche', 'error');
+            showOfflineIndicator(true);
+        }
+    }
+});
  // FINDE diese Funktion in kasse.html und ersetze sie KOMPLETT:
 
 async function createTransaction(transactionData) {
