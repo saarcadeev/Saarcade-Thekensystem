@@ -690,63 +690,73 @@
             showStatus('Warenkorb geleert', 'info');
         }
 
-        async function checkout() {
-            if (cart.length === 0 || isProcessing) return;
+       // FINDE diese Funktion in kasse.html und ersetze sie KOMPLETT:
 
-            isProcessing = true;
-            updateCartView();
-            showStatus('Verarbeite Transaktion...', 'loading');
+async function checkout() {
+    console.log('🛒 Checkout gestartet', { cart, currentUser }); // <- NEU HINZUGEFÜGT
+    
+    if (cart.length === 0 || isProcessing) {
+        console.log('❌ Checkout abgebrochen:', { cartEmpty: cart.length === 0, isProcessing }); // <- NEU HINZUGEFÜGT
+        return;
+    }
 
-            try {
-                // Transaktionsdaten vorbereiten
-                let total = 0;
-                const items = cart.map(cartItem => {
-                    const product = products.find(p => p.id === cartItem.productId);
-                    const price = currentUser.role === 'member' ? product.member_price : product.guest_price;
-                    const itemTotal = price * cartItem.quantity;
-                    total += itemTotal;
-                    
-                    return {
-                        productId: product.id,
-                        productName: product.name,
-                        quantity: cartItem.quantity,
-                        price: price,
-                        total: itemTotal
-                    };
-                });
+    isProcessing = true;
+    updateCartView();
+    showStatus('Verarbeite Transaktion...', 'loading');
+    
+    try {
+        // Transaktionsdaten vorbereiten
+        let total = 0;
+        const items = cart.map(cartItem => {
+            const product = products.find(p => p.id === cartItem.productId);
+            const price = currentUser.role === 'member' ? product.member_price : product.guest_price;
+            const itemTotal = price * cartItem.quantity;
+            total += itemTotal;
+            
+            return {
+                productId: product.id,
+                productName: product.name,
+                quantity: cartItem.quantity,
+                price: price,
+                total: itemTotal
+            };
+        });
+        
+        const transactionData = {
+            userId: currentUser.id,
+            userName: currentUser.full_name,
+            items: items,
+            total: total,
+            paymentMethod: 'balance'
+        };
+        
+        console.log('📡 Sende Transaktion:', transactionData); // <- NEU HINZUGEFÜGT
+        
+        // Transaktion an API senden
+        await createTransaction(transactionData);
+        
+        // Lokalen User-Saldo aktualisieren
+        currentUser.balance -= total;
+        
+        showStatus(`Kauf über ${total.toFixed(2)}€ abgeschlossen!`, 'success');
+        clearCart();
+        updateUserInfo();
+        
+        // Auto-Reset nach 3 Sekunden
+        setTimeout(() => {
+            resetSession();
+            showStatus('Session beendet - Nächster Kunde', 'info');
+        }, 3000);
 
-                const transactionData = {
-                    userId: currentUser.id,
-                    userName: currentUser.full_name,
-                    items: items,
-                    total: total,
-                    paymentMethod: 'balance'
-                };
-
-                // Transaktion an API senden
-                await createTransaction(transactionData);
-
-                // Lokalen User-Saldo aktualisieren
-                currentUser.balance -= total;
-                
-                showStatus(`Kauf über ${total.toFixed(2)}€ abgeschlossen!`, 'success');
-                clearCart();
-                updateUserInfo();
-
-                // Auto-Reset nach 3 Sekunden
-                setTimeout(() => {
-                    resetSession();
-                    showStatus('Session beendet - Nächster Kunde', 'info');
-                }, 3000);
-
-            } catch (error) {
-                showStatus('Fehler beim Abschließen des Kaufs', 'error');
-                console.error('Checkout-Fehler:', error);
-            } finally {
-                isProcessing = false;
-                updateCartView();
-            }
-        }
+    } catch (error) {
+        console.log('❌ Fehler in checkout:', error); // <- NEU HINZUGEFÜGT
+        showStatus('Fehler beim Abschließen des Kaufs', 'error');
+        console.error('Checkout-Fehler:', error);
+    } finally {
+        isProcessing = false;
+        updateCartView();
+    }
+}
 
         function resetSession() {
             currentUser = null;
