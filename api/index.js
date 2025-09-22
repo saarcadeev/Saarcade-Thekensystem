@@ -8,16 +8,15 @@ const { createClient } = require('@supabase/supabase-js');
 // Supabase-Konfiguration
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-    console.error('SUPABASE_URL or SUPABASE_ANON_KEY missing');
-}
-
 const supabase = createClient(supabaseUrl, supabaseKey, {
     db: {
         schema: 'public'
     }
 });
+
+if (!supabaseUrl || !supabaseKey) {
+    console.error('SUPABASE_URL or SUPABASE_ANON_KEY missing');
+}
 
 // CORS-Headers für alle Antworten
 const corsHeaders = {
