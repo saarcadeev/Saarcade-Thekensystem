@@ -396,28 +396,34 @@
 
         // ============ API FUNCTIONS ============
         
-        async function apiCall(endpoint, options = {}) {
-            try {
-                const response = await fetch(endpoint, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...options.headers
-                    },
-                    ...options
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                
-                return await response.json();
-            } catch (error) {
-                console.error(`API Error (${endpoint}):`, error);
-                showStatus(`Verbindungsfehler: ${error.message}`, 'error');
-                showOfflineIndicator(true);
-                throw error;
-            }
+async function apiCall(endpoint, options = {}) {
+    try {
+        const response = await fetch(endpoint, {
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            },
+            ...options
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
+        
+        return await response.json();
+    } catch (error) {
+        console.error(`API Error (${endpoint}):`, error);
+        
+        // NUR bei echten Verbindungsfehlern "Offline" anzeigen
+        // NICHT bei 404 (Benutzer nicht gefunden)
+        if (!error.message.includes('404')) {
+            showStatus(`Verbindungsfehler: ${error.message}`, 'error');
+            showOfflineIndicator(true);
+        }
+        
+        throw error;
+    }
+}
 
         async function loadUsers() {
             try {
