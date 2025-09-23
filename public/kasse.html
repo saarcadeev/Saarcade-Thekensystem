@@ -503,14 +503,14 @@
             </div>
 
             <div class="workflow-help">
-                <div class="workflow-steps">
-                    <div class="workflow-step active" id="step1">
+                <div style="display: flex; justify-content: space-between; gap: 8px; flex-direction: row;">
+                    <div style="flex: 1; text-align: center; padding: 6px 8px; border-radius: 6px; font-size: 0.85em; font-weight: 600; background: #667eea; color: white; transition: all 0.3s ease;" id="step1">
                         1️⃣ Mitglied scannen
                     </div>
-                    <div class="workflow-step" id="step2">
+                    <div style="flex: 1; text-align: center; padding: 6px 8px; border-radius: 6px; font-size: 0.85em; font-weight: 600; background: #e2e8f0; color: #4a5568; transition: all 0.3s ease;" id="step2">
                         2️⃣ Getränke wählen
                     </div>
-                    <div class="workflow-step" id="step3">
+                    <div style="flex: 1; text-align: center; padding: 6px 8px; border-radius: 6px; font-size: 0.85em; font-weight: 600; background: #e2e8f0; color: #4a5568; transition: all 0.3s ease;" id="step3">
                         3️⃣ Checkout
                     </div>
                 </div>
@@ -631,17 +631,25 @@
         }
 
         function updateWorkflowSteps() {
-            document.querySelectorAll('.workflow-step').forEach(step => {
-                step.classList.remove('active');
-            });
+            // Alle Schritte auf inaktiv setzen
+            document.getElementById('step1').style.background = '#e2e8f0';
+            document.getElementById('step1').style.color = '#4a5568';
+            document.getElementById('step2').style.background = '#e2e8f0';
+            document.getElementById('step2').style.color = '#4a5568';
+            document.getElementById('step3').style.background = '#e2e8f0';
+            document.getElementById('step3').style.color = '#4a5568';
             
+            // Aktiven Schritt hervorheben
             if (scannerMode === 'user') {
-                document.getElementById('step1').classList.add('active');
+                document.getElementById('step1').style.background = '#667eea';
+                document.getElementById('step1').style.color = 'white';
             } else if (scannerMode === 'product') {
                 if (cart.length === 0) {
-                    document.getElementById('step2').classList.add('active');
+                    document.getElementById('step2').style.background = '#667eea';
+                    document.getElementById('step2').style.color = 'white';
                 } else {
-                    document.getElementById('step3').classList.add('active');
+                    document.getElementById('step3').style.background = '#667eea';
+                    document.getElementById('step3').style.color = 'white';
                 }
             }
         }
