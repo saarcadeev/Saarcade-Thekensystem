@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎮 Saarcade Kasse - Barcode Scanner</title>
+    <title>🎮 Saarcade Kasse - Hybrid Scanner/Touch</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -102,6 +102,64 @@
             font-weight: bold;
         }
 
+        .dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            margin-top: 5px;
+        }
+
+        .dropdown-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dropdown-item:hover {
+            background: #f7fafc;
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-avatar {
+            width: 35px;
+            height: 35px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .dropdown-info {
+            flex: 1;
+        }
+
+        .dropdown-name {
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        .dropdown-details {
+            font-size: 0.9em;
+            color: #666;
+        }
+
         .status-message {
             padding: 12px 20px;
             border-radius: 8px;
@@ -155,6 +213,35 @@
             padding: 10px 15px;
             border-radius: 8px;
             font-weight: bold;
+        }
+
+        .category-filters {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .category-btn {
+            padding: 8px 16px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+        }
+
+        .category-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .category-btn:hover {
+            border-color: #667eea;
+            transform: translateY(-1px);
         }
 
         .products-grid {
@@ -365,6 +452,9 @@
             .products-grid {
                 grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
             }
+            .category-filters {
+                justify-content: center;
+            }
         }
     </style>
 </head>
@@ -384,7 +474,8 @@
                     <div class="scanner-status" id="scannerStatus">
                         🔍 Bereit für Barcode-Scanner
                     </div>
-                    <input type="text" id="barcodeInput" placeholder="Barcode hier scannen..." autocomplete="off" autofocus>
+                    <input type="text" id="barcodeInput" placeholder="Barcode scannen oder Name eingeben..." autocomplete="off" autofocus>
+                    <div class="dropdown" id="userDropdown" style="display: none;"></div>
                 </div>
                 
                 <div class="user-info" id="userInfo">
@@ -395,20 +486,31 @@
 
             <div class="workflow-help">
                 <div class="workflow-step active" id="step1">
-                    1️⃣ Mitgliedsausweis scannen
+                    1️⃣ Mitglied scannen oder Namen eingeben
                 </div>
                 <div class="workflow-step" id="step2">
-                    2️⃣ Getränke scannen (mehrere möglich)
+                    2️⃣ Getränke scannen oder klicken (mehrere möglich)
                 </div>
                 <div class="workflow-step" id="step3">
-                    3️⃣ CHECKOUT-Barcode scannen
+                    3️⃣ CHECKOUT-Barcode scannen oder manuell buchen
                 </div>
             </div>
         </div>
 
         <div class="main-content">
             <div class="products-section">
-                <h2>Produkte (auch per Klick wählbar)</h2>
+                <h2>Produkte</h2>
+                
+                <!-- Kategorie-Filter -->
+                <div class="category-filters" id="categoryFilters">
+                    <button class="category-btn active" data-category="all">📦 Alle</button>
+                    <button class="category-btn" data-category="bier">🍺 Bier</button>
+                    <button class="category-btn" data-category="softdrinks">🥤 Softdrinks</button>
+                    <button class="category-btn" data-category="schnaps">🥃 Spirituosen</button>
+                    <button class="category-btn" data-category="snacks">🍿 Snacks</button>
+                    <button class="category-btn" data-category="heissgetraenke">☕ Heißgetränke</button>
+                    <button class="category-btn" data-category="sonstiges">📋 Sonstiges</button>
+                </div>
                 
                 <div id="loadingMessage" style="text-align: center; padding: 40px; color: #666;">
                     <div style="font-size: 3em; margin-bottom: 15px;">⏳</div>
@@ -417,8 +519,8 @@
                 
                 <div id="noUserMessage" style="display: none; text-align: center; padding: 40px; color: #666;">
                     <div style="font-size: 3em; margin-bottom: 15px;">👤</div>
-                    <h3>Bitte zuerst Mitglied scannen</h3>
-                    <p>Mitgliedsausweis vor das Scangerät halten</p>
+                    <h3>Bitte zuerst Mitglied auswählen</h3>
+                    <p>Mitgliedsausweis scannen oder Namen eingeben</p>
                 </div>
                 
                 <div class="products-grid" id="productsGrid" style="display: none;">
@@ -429,15 +531,15 @@
                     <h4>📱 Spezielle Barcodes</h4>
                     <div class="barcode-item">
                         <span><strong>CHECKOUT</strong></span>
-                        <code>CHECKOUT123</code>
+                        <code id="checkoutBarcodeDisplay">CHECKOUT123</code>
                     </div>
                     <div class="barcode-item">
                         <span><strong>Abbrechen</strong></span>
-                        <code>CANCEL123</code>
+                        <code id="cancelBarcodeDisplay">CANCEL123</code>
                     </div>
                     <div class="barcode-item">
                         <span><strong>Admin-Reset</strong></span>
-                        <code>RESET123</code>
+                        <code id="resetBarcodeDisplay">RESET123</code>
                     </div>
                 </div>
             </div>
@@ -470,6 +572,13 @@
         let products = [];
         let isProcessing = false;
         let scannerMode = 'user'; // 'user' oder 'product'
+        let searchTimeout = null;
+        let currentCategory = 'all';
+        let specialBarcodes = {
+            checkout: 'CHECKOUT123',
+            cancel: 'CANCEL123',
+            reset: 'RESET123'
+        };
 
         // ============ SCANNER MODE MANAGEMENT ============
         
@@ -491,12 +600,12 @@
             switch(scannerMode) {
                 case 'user':
                     statusEl.className = 'scanner-status user-mode';
-                    statusEl.textContent = '👤 MITGLIED SCANNEN';
-                    inputEl.placeholder = 'Mitgliedsausweis scannen...';
+                    statusEl.textContent = '👤 MITGLIED SCANNEN oder Namen eingeben';
+                    inputEl.placeholder = 'Mitgliedsausweis scannen oder Namen eingeben...';
                     break;
                 case 'product':
                     statusEl.className = 'scanner-status product-mode';
-                    statusEl.textContent = '🍺 GETRÄNKE SCANNEN';
+                    statusEl.textContent = '🍺 GETRÄNKE SCANNEN oder klicken';
                     inputEl.placeholder = 'Getränke-Barcode oder CHECKOUT scannen...';
                     break;
             }
@@ -567,6 +676,25 @@
                 console.error('Fehler beim Laden der Produkte:', error);
                 products = [];
                 updateProductsView();
+            }
+        }
+
+        async function loadSettings() {
+            try {
+                const settings = await apiCall('/api/settings');
+                if (settings.checkout_barcode) specialBarcodes.checkout = settings.checkout_barcode;
+                if (settings.cancel_barcode) specialBarcodes.cancel = settings.cancel_barcode;
+                if (settings.reset_barcode) specialBarcodes.reset = settings.reset_barcode;
+                
+                // Anzeige aktualisieren
+                document.getElementById('checkoutBarcodeDisplay').textContent = specialBarcodes.checkout;
+                document.getElementById('cancelBarcodeDisplay').textContent = specialBarcodes.cancel;
+                document.getElementById('resetBarcodeDisplay').textContent = specialBarcodes.reset;
+                
+                console.log('Spezial-Barcodes geladen:', specialBarcodes);
+            } catch (error) {
+                console.error('Fehler beim Laden der Einstellungen:', error);
+                // Fallback auf Standard-Barcodes
             }
         }
 
@@ -642,6 +770,32 @@
             `;
         }
 
+        // ============ CATEGORY FILTER ============
+        
+        function initCategoryFilters() {
+            const filterButtons = document.querySelectorAll('.category-btn');
+            filterButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Alle Buttons deaktivieren
+                    filterButtons.forEach(b => b.classList.remove('active'));
+                    
+                    // Aktuellen Button aktivieren
+                    this.classList.add('active');
+                    
+                    // Kategorie setzen und Produkte filtern
+                    currentCategory = this.dataset.category;
+                    updateProductsView();
+                });
+            });
+        }
+
+        function filterProductsByCategory(productsToFilter) {
+            if (currentCategory === 'all') {
+                return productsToFilter;
+            }
+            return productsToFilter.filter(product => product.category === currentCategory);
+        }
+
         function updateProductsView() {
             const loadingMsg = document.getElementById('loadingMessage');
             const noUserMsg = document.getElementById('noUserMessage');
@@ -669,7 +823,21 @@
             noUserMsg.style.display = 'none';
             productsGrid.style.display = 'grid';
             
-            productsGrid.innerHTML = products.map(product => {
+            // Produkte nach Kategorie filtern
+            const filteredProducts = filterProductsByCategory(products.filter(p => p.available));
+            
+            if (filteredProducts.length === 0) {
+                productsGrid.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #666;">
+                        <div style="font-size: 3em; margin-bottom: 15px;">🔍</div>
+                        <h3>Keine Produkte in dieser Kategorie</h3>
+                        <p>Wähle eine andere Kategorie oder "Alle"</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            productsGrid.innerHTML = filteredProducts.map(product => {
                 const price = currentUser.role === 'member' ? product.member_price : product.guest_price;
                 
                 // Produkt-Bild: Falls vorhanden, sonst Emoji oder Standard
@@ -749,16 +917,75 @@
             updateWorkflowSteps();
         }
 
-        // ============ USER & PRODUCT FUNCTIONS ============
+        // ============ USER FUNCTIONS ============
         
         function selectUser(user) {
             currentUser = user;
-            showStatus(`${user.full_name} ausgewählt! Jetzt Getränke scannen.`, 'success');
+            showStatus(`${user.full_name} ausgewählt! Jetzt Getränke wählen.`, 'success');
             updateUserInfo();
             updateProductsView();
             setScannerMode('product');
+            hideDropdown();
         }
 
+        async function searchUsers(query) {
+            if (!query || query.length < 2) {
+                hideDropdown();
+                return;
+            }
+
+            // Lokale Suche in geladenen Benutzern
+            const filtered = users.filter(user => 
+                user.barcode.toLowerCase().includes(query.toLowerCase()) ||
+                user.full_name.toLowerCase().includes(query.toLowerCase()) ||
+                user.first_name.toLowerCase().includes(query.toLowerCase()) ||
+                user.last_name.toLowerCase().includes(query.toLowerCase())
+            );
+
+            if (filtered.length === 0) {
+                hideDropdown();
+                return;
+            }
+
+            showDropdown(filtered);
+        }
+
+        function showDropdown(userList) {
+            const dropdown = document.getElementById('userDropdown');
+            
+            dropdown.innerHTML = userList.slice(0, 5).map(user => `
+                <div class="dropdown-item" onclick='selectUserFromDropdown(${JSON.stringify(user)})'>
+                    <div class="dropdown-avatar">${user.first_name.charAt(0)}</div>
+                    <div class="dropdown-info">
+                        <div class="dropdown-name">${getRoleIcon(user.role)} ${user.full_name}</div>
+                        <div class="dropdown-details">${getRoleText(user.role)} • ${user.balance.toFixed(2)}€</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            dropdown.style.display = 'block';
+        }
+
+        function selectUserFromDropdown(user) {
+            selectUser(user);
+        }
+
+        function hideDropdown() {
+            document.getElementById('userDropdown').style.display = 'none';
+        }
+
+        function getRoleIcon(role) {
+            const icons = { member: '👥', guest: '👤', admin: '⚙️', bartender: '🍺' };
+            return icons[role] || '👤';
+        }
+
+        function getRoleText(role) {
+            const texts = { member: 'Mitglied', guest: 'Gast', admin: 'Admin', bartender: 'Barkeeper' };
+            return texts[role] || role;
+        }
+
+        // ============ CART FUNCTIONS ============
+        
         function addToCart(productId, fromBarcode = false) {
             if (!currentUser) {
                 showStatus('Bitte zuerst Benutzer auswählen', 'error');
@@ -880,10 +1107,17 @@
             currentUser = null;
             cart = [];
             isProcessing = false;
+            currentCategory = 'all';
+            
+            // Kategorie-Filter zurücksetzen
+            document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('[data-category="all"]').classList.add('active');
+            
             updateUserInfo();
             updateProductsView();
             updateCartView();
             setScannerMode('user');
+            hideDropdown();
             document.getElementById('barcodeInput').value = '';
             document.getElementById('barcodeInput').focus();
         }
@@ -895,10 +1129,10 @@
             
             if (!trimmedBarcode) return;
 
-            // Spezielle Barcodes
-            if (trimmedBarcode === 'CHECKOUT123' || trimmedBarcode === 'CHECKOUT') {
+            // Spezielle Barcodes (aus Datenbank geladen)
+            if (trimmedBarcode === specialBarcodes.checkout.toUpperCase()) {
                 if (cart.length > 0) {
-                    showStatus('🛒 CHECKOUT-Barcode erkannt', 'success');
+                    showStatus('🛒 Checkout-Barcode erkannt', 'success');
                     await checkout();
                 } else {
                     showStatus('Warenkorb ist leer - nichts zu buchen', 'error');
@@ -906,13 +1140,13 @@
                 return;
             }
 
-            if (trimmedBarcode === 'CANCEL123' || trimmedBarcode === 'CANCEL') {
+            if (trimmedBarcode === specialBarcodes.cancel.toUpperCase()) {
                 showStatus('❌ Vorgang abgebrochen', 'info');
                 clearCart();
                 return;
             }
 
-            if (trimmedBarcode === 'RESET123' || trimmedBarcode === 'RESET') {
+            if (trimmedBarcode === specialBarcodes.reset.toUpperCase()) {
                 showStatus('🔄 Session zurückgesetzt', 'info');
                 resetSession();
                 return;
@@ -978,14 +1212,33 @@
             
             // Daten laden
             showStatus('Lade Systemdaten...', 'loading');
-            await Promise.all([loadUsers(), loadProducts()]);
-            showStatus('System bereit für Barcode-Scanner!', 'success');
+            await Promise.all([loadUsers(), loadProducts(), loadSettings()]);
+            showStatus('System bereit für Scanner und Touch-Bedienung!', 'success');
             
-            // Barcode Input Handler
+            // Kategorie-Filter initialisieren
+            initCategoryFilters();
+            
+            // Input Event für Live-Suche (nur im User-Modus)
+            barcodeInput.addEventListener('input', function(e) {
+                clearTimeout(searchTimeout);
+                const query = e.target.value.trim();
+                
+                if (scannerMode !== 'user' || !query) {
+                    hideDropdown();
+                    return;
+                }
+                
+                searchTimeout = setTimeout(() => {
+                    searchUsers(query);
+                }, 300);
+            });
+
+            // Enter-Taste für direkte Eingabe
             barcodeInput.addEventListener('keypress', async function(e) {
                 if (e.key === 'Enter') {
                     const input = e.target.value;
                     e.target.value = ''; // Sofort leeren für nächsten Scan
+                    hideDropdown();
                     
                     if (input) {
                         await handleBarcodeInput(input);
@@ -1000,9 +1253,10 @@
                 }, 100);
             });
 
-            // Klick irgendwo = Fokus zurück auf Input
+            // Klick irgendwo = Fokus zurück auf Input (außer Dropdown)
             document.addEventListener('click', function(e) {
-                if (e.target.id !== 'barcodeInput') {
+                if (!e.target.closest('.input-container') && e.target.id !== 'barcodeInput') {
+                    hideDropdown();
                     setTimeout(() => {
                         barcodeInput.focus();
                     }, 100);
@@ -1015,7 +1269,7 @@
             updateProductsView();
             updateCartView();
             
-            console.log('🎮 Saarcade Kasse mit Barcode-Scanner-Workflow bereit!');
+            console.log('🎮 Saarcade Kasse mit Hybrid Scanner/Touch-Bedienung bereit!');
         });
 
         // ============ ERROR HANDLING ============
