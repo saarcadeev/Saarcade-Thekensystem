@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎮 Saarcade Kasse - API Version</title>
+    <title>🎮 Saarcade Kasse - Barcode Scanner</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -31,7 +31,7 @@
 
         .scanner-area {
             display: grid;
-            grid-template-columns: 1fr 200px;
+            grid-template-columns: 1fr 250px;
             gap: 20px;
             align-items: center;
             margin-bottom: 20px;
@@ -43,18 +43,40 @@
 
         #barcodeInput {
             width: 100%;
-            padding: 15px 20px;
-            font-size: 1.2em;
-            border: 3px solid #667eea;
-            border-radius: 10px;
+            padding: 20px 25px;
+            font-size: 1.4em;
+            border: 4px solid #667eea;
+            border-radius: 12px;
             outline: none;
             font-family: 'Courier New', monospace;
             font-weight: 600;
+            text-align: center;
+            background: #f8fafc;
         }
 
         #barcodeInput:focus {
             border-color: #38a169;
-            box-shadow: 0 0 0 3px rgba(56, 161, 105, 0.2);
+            box-shadow: 0 0 0 4px rgba(56, 161, 105, 0.2);
+            background: white;
+        }
+
+        .scanner-status {
+            background: #e2e8f0;
+            color: #4a5568;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .scanner-status.user-mode {
+            background: linear-gradient(135deg, #ed8936, #dd6b20);
+            color: white;
+        }
+
+        .scanner-status.product-mode {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
         }
 
         .user-info {
@@ -71,75 +93,17 @@
 
         .user-name {
             font-weight: bold;
-            font-size: 1.1em;
-            margin-bottom: 5px;
+            font-size: 1.2em;
+            margin-bottom: 8px;
         }
 
         .user-balance {
-            font-size: 1.3em;
+            font-size: 1.4em;
             font-weight: bold;
-        }
-
-        .dropdown {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border: 2px solid #667eea;
-            border-radius: 8px;
-            max-height: 300px;
-            overflow-y: auto;
-            z-index: 1000;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-            margin-top: 5px;
-        }
-
-        .dropdown-item {
-            padding: 12px 15px;
-            cursor: pointer;
-            border-bottom: 1px solid #e2e8f0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .dropdown-item:hover {
-            background: #f7fafc;
-        }
-
-        .dropdown-item:last-child {
-            border-bottom: none;
-        }
-
-        .dropdown-avatar {
-            width: 35px;
-            height: 35px;
-            background: #667eea;
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
-
-        .dropdown-info {
-            flex: 1;
-        }
-
-        .dropdown-name {
-            font-weight: bold;
-            color: #2d3748;
-        }
-
-        .dropdown-details {
-            font-size: 0.9em;
-            color: #666;
         }
 
         .status-message {
-            padding: 10px 15px;
+            padding: 12px 20px;
             border-radius: 8px;
             margin-bottom: 15px;
             font-weight: 600;
@@ -155,7 +119,7 @@
 
         .main-content {
             display: grid;
-            grid-template-columns: 1fr 350px;
+            grid-template-columns: 1fr 400px;
             gap: 20px;
         }
 
@@ -167,22 +131,36 @@
             box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
         }
 
-        .no-user-message {
+        .workflow-help {
+            background: #f0f8ff;
+            border: 2px dashed #667eea;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
             text-align: center;
-            padding: 40px;
-            color: #666;
         }
 
-        .loading-message {
-            text-align: center;
-            padding: 40px;
-            color: #666;
+        .workflow-step {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 10px 0;
+            font-size: 1.1em;
+        }
+
+        .workflow-step.active {
+            background: #667eea;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: bold;
         }
 
         .products-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
             margin-top: 20px;
         }
 
@@ -190,10 +168,14 @@
             background: #f7fafc;
             border: 2px solid #e2e8f0;
             border-radius: 10px;
-            padding: 15px;
+            padding: 12px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
+            min-height: 140px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
 
         .product-card:hover {
@@ -202,26 +184,42 @@
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
         }
 
-        .product-card.disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+        .product-card.just-added {
+            border-color: #38a169;
+            background: #f0fff4;
+            animation: addedPulse 1s ease-out;
         }
 
-        .product-emoji {
-            font-size: 2.5em;
-            margin-bottom: 8px;
+        @keyframes addedPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .product-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            object-fit: cover;
+            margin: 0 auto 8px;
+            background: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
         }
 
         .product-name {
             font-weight: bold;
-            margin-bottom: 8px;
-            font-size: 0.9em;
+            margin-bottom: 5px;
+            font-size: 0.85em;
+            line-height: 1.2;
         }
 
         .product-price {
             color: #667eea;
             font-weight: bold;
-            font-size: 1.1em;
+            font-size: 1em;
         }
 
         .cart-section {
@@ -233,7 +231,7 @@
         }
 
         .cart-items {
-            max-height: 300px;
+            max-height: 350px;
             overflow-y: auto;
             margin: 15px 0;
         }
@@ -242,20 +240,26 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px;
+            padding: 12px;
             background: #f7fafc;
             border-radius: 8px;
             margin-bottom: 8px;
         }
 
+        .cart-item.just-added {
+            background: #f0fff4;
+            border: 2px solid #38a169;
+            animation: addedPulse 1s ease-out;
+        }
+
         .cart-total {
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
-            padding: 15px;
+            padding: 20px;
             border-radius: 10px;
             text-align: center;
             cursor: pointer;
-            font-size: 1.2em;
+            font-size: 1.3em;
             font-weight: bold;
             margin-top: 15px;
             transition: all 0.3s ease;
@@ -269,18 +273,25 @@
         .cart-total.processing {
             background: linear-gradient(135deg, #a0aec0, #718096);
             cursor: not-allowed;
+            animation: processing 2s infinite;
+        }
+
+        @keyframes processing {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
         }
 
         .btn {
             background: #667eea;
             color: white;
             border: none;
-            padding: 10px 15px;
+            padding: 12px 18px;
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
             margin: 5px;
             transition: all 0.3s ease;
+            font-size: 0.9em;
         }
 
         .btn:hover {
@@ -302,6 +313,38 @@
             background: #c53030;
         }
 
+        .btn-success {
+            background: #38a169;
+        }
+
+        .btn-success:hover {
+            background: #2f855a;
+        }
+
+        .special-barcodes {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .special-barcodes h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .barcode-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #ffeaa7;
+        }
+
+        .barcode-item:last-child {
+            border-bottom: none;
+        }
+
         .offline-indicator {
             background: #fed7d7;
             color: #c53030;
@@ -319,6 +362,9 @@
             .scanner-area {
                 grid-template-columns: 1fr;
             }
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
         }
     </style>
 </head>
@@ -335,8 +381,10 @@
             
             <div class="scanner-area">
                 <div class="input-container">
-                    <input type="text" id="barcodeInput" placeholder="Mitglied scannen oder Namen eingeben..." autocomplete="off">
-                    <div class="dropdown" id="userDropdown" style="display: none;"></div>
+                    <div class="scanner-status" id="scannerStatus">
+                        🔍 Bereit für Barcode-Scanner
+                    </div>
+                    <input type="text" id="barcodeInput" placeholder="Barcode hier scannen..." autocomplete="off" autofocus>
                 </div>
                 
                 <div class="user-info" id="userInfo">
@@ -344,25 +392,53 @@
                     <div class="user-balance">Bitte scannen</div>
                 </div>
             </div>
+
+            <div class="workflow-help">
+                <div class="workflow-step active" id="step1">
+                    1️⃣ Mitgliedsausweis scannen
+                </div>
+                <div class="workflow-step" id="step2">
+                    2️⃣ Getränke scannen (mehrere möglich)
+                </div>
+                <div class="workflow-step" id="step3">
+                    3️⃣ CHECKOUT-Barcode scannen
+                </div>
+            </div>
         </div>
 
         <div class="main-content">
             <div class="products-section">
-                <h2>Produkte</h2>
+                <h2>Produkte (auch per Klick wählbar)</h2>
                 
-                <div id="loadingMessage" class="loading-message">
+                <div id="loadingMessage" style="text-align: center; padding: 40px; color: #666;">
                     <div style="font-size: 3em; margin-bottom: 15px;">⏳</div>
                     <h3>Lade Produkte...</h3>
                 </div>
                 
-                <div id="noUserMessage" class="no-user-message" style="display: none;">
+                <div id="noUserMessage" style="display: none; text-align: center; padding: 40px; color: #666;">
                     <div style="font-size: 3em; margin-bottom: 15px;">👤</div>
-                    <h3>Bitte zuerst Mitglied auswählen</h3>
-                    <p>Barcode scannen oder Namen eingeben</p>
+                    <h3>Bitte zuerst Mitglied scannen</h3>
+                    <p>Mitgliedsausweis vor das Scangerät halten</p>
                 </div>
                 
                 <div class="products-grid" id="productsGrid" style="display: none;">
                     <!-- Produkte werden hier eingefügt -->
+                </div>
+
+                <div class="special-barcodes">
+                    <h4>📱 Spezielle Barcodes</h4>
+                    <div class="barcode-item">
+                        <span><strong>CHECKOUT</strong></span>
+                        <code>CHECKOUT123</code>
+                    </div>
+                    <div class="barcode-item">
+                        <span><strong>Abbrechen</strong></span>
+                        <code>CANCEL123</code>
+                    </div>
+                    <div class="barcode-item">
+                        <span><strong>Admin-Reset</strong></span>
+                        <code>RESET123</code>
+                    </div>
                 </div>
             </div>
 
@@ -377,9 +453,10 @@
                 
                 <div id="cartTotal" style="display: none;"></div>
                 
-                <div>
+                <div style="margin-top: 15px;">
                     <button class="btn btn-danger" onclick="clearCart()" id="clearBtn" disabled>🗑️ Leeren</button>
-                    <button class="btn" onclick="resetSession()">🔄 Neue Session</button>
+                    <button class="btn btn-success" onclick="manualCheckout()" id="manualCheckoutBtn" disabled>💳 Manuell buchen</button>
+                    <button class="btn" onclick="resetSession()">🔄 Reset</button>
                 </div>
             </div>
         </div>
@@ -389,50 +466,94 @@
         // ============ GLOBALE VARIABLEN ============
         let currentUser = null;
         let cart = [];
-        let searchTimeout = null;
         let users = [];
         let products = [];
         let isProcessing = false;
+        let scannerMode = 'user'; // 'user' oder 'product'
+
+        // ============ SCANNER MODE MANAGEMENT ============
+        
+        function setScannerMode(mode) {
+            scannerMode = mode;
+            updateScannerStatus();
+            updateWorkflowSteps();
+            
+            // Fokus immer auf Barcode-Input setzen
+            const input = document.getElementById('barcodeInput');
+            input.focus();
+            input.value = '';
+        }
+
+        function updateScannerStatus() {
+            const statusEl = document.getElementById('scannerStatus');
+            const inputEl = document.getElementById('barcodeInput');
+            
+            switch(scannerMode) {
+                case 'user':
+                    statusEl.className = 'scanner-status user-mode';
+                    statusEl.textContent = '👤 MITGLIED SCANNEN';
+                    inputEl.placeholder = 'Mitgliedsausweis scannen...';
+                    break;
+                case 'product':
+                    statusEl.className = 'scanner-status product-mode';
+                    statusEl.textContent = '🍺 GETRÄNKE SCANNEN';
+                    inputEl.placeholder = 'Getränke-Barcode oder CHECKOUT scannen...';
+                    break;
+            }
+        }
+
+        function updateWorkflowSteps() {
+            document.querySelectorAll('.workflow-step').forEach(step => {
+                step.classList.remove('active');
+            });
+            
+            if (scannerMode === 'user') {
+                document.getElementById('step1').classList.add('active');
+            } else if (scannerMode === 'product') {
+                if (cart.length === 0) {
+                    document.getElementById('step2').classList.add('active');
+                } else {
+                    document.getElementById('step3').classList.add('active');
+                }
+            }
+        }
 
         // ============ API FUNCTIONS ============
         
-async function apiCall(endpoint, options = {}) {
-    try {
-        const response = await fetch(endpoint, {
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers
-            },
-            ...options
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        async function apiCall(endpoint, options = {}) {
+            try {
+                const response = await fetch(endpoint, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                showOfflineIndicator(false);
+                return data;
+                
+            } catch (error) {
+                console.error(`API Error (${endpoint}):`, error);
+                if (!error.message.includes('404')) {
+                    showStatus(`Verbindungsfehler: ${error.message}`, 'error');
+                    showOfflineIndicator(true);
+                }
+                throw error;
+            }
         }
-        
-        return await response.json();
-    } catch (error) {
-        console.error(`API Error (${endpoint}):`, error);
-        
-        // NUR bei echten Verbindungsfehlern "Offline" anzeigen
-        // NICHT bei 404 (Benutzer nicht gefunden)
-        if (!error.message.includes('404')) {
-            showStatus(`Verbindungsfehler: ${error.message}`, 'error');
-            showOfflineIndicator(true);
-        }
-        
-        throw error;
-    }
-}
 
         async function loadUsers() {
             try {
                 users = await apiCall('/api/users');
                 console.log(`✅ ${users.length} Benutzer geladen`);
-                showOfflineIndicator(false);
             } catch (error) {
                 console.error('Fehler beim Laden der Benutzer:', error);
-                // Fallback: Leeres Array
                 users = [];
             }
         }
@@ -441,84 +562,49 @@ async function apiCall(endpoint, options = {}) {
             try {
                 products = await apiCall('/api/products');
                 console.log(`✅ ${products.length} Produkte geladen`);
-                showOfflineIndicator(false);
                 updateProductsView();
             } catch (error) {
                 console.error('Fehler beim Laden der Produkte:', error);
-                // Fallback: Leeres Array
                 products = [];
                 updateProductsView();
             }
         }
 
-// FINDE in kasse.html die searchUserByBarcode Funktion und ersetze sie durch:
-
-async function searchUserByBarcode(barcode) {
-    try {
-        const user = await apiCall(`/api/users/${barcode}`);
-        return user;
-    } catch (error) {
-        // 404 = Benutzer nicht gefunden (normal)
-        if (error.message.includes('404')) {
-            console.log('Benutzer nicht gefunden:', barcode);
-            return null;
-        }
-        // Andere Fehler = echte Verbindungsprobleme
-        console.error('API-Verbindungsfehler:', error);
-        throw error;
-    }
-}
-
-// UND in der Enter-Taste Event-Handler (dort wo searchUserByBarcode aufgerufen wird):
-
-barcodeInput.addEventListener('keypress', async function(e) {
-    if (e.key === 'Enter') {
-        const input = e.target.value.trim();
-        if (!input) return;
-
-        showStatus('Suche Benutzer...', 'loading');
-
-        try {
-            // API-Suche
-            const user = await searchUserByBarcode(input.toUpperCase());
-            if (user) {
-                selectUser(user);
-            } else {
-                // Fallback: Lokale Suche in geladenen Benutzern
-                const localUser = users.find(u => u.barcode === input.toUpperCase());
-                if (localUser) {
-                    selectUser(localUser);
-                } else {
-                    showStatus('Barcode nicht gefunden', 'error');
-                    // NICHT showOfflineIndicator(true) hier!
+        async function searchUserByBarcode(barcode) {
+            try {
+                const user = await apiCall(`/api/users/${barcode}`);
+                return user;
+            } catch (error) {
+                if (error.message.includes('404')) {
+                    return null;
                 }
+                throw error;
             }
-        } catch (error) {
-            showStatus('Verbindungsfehler bei der Benutzersuche', 'error');
-            showOfflineIndicator(true);
         }
-    }
-});
- // FINDE diese Funktion in kasse.html und ersetze sie KOMPLETT:
 
-async function createTransaction(transactionData) {
-    console.log('📡 createTransaction aufgerufen mit:', transactionData); // <- NEU HINZUGEFÜGT
-    
-    try {
-        console.log('📤 Sende API-Request an /api/transactions'); // <- NEU HINZUGEFÜGT
-        
-        const transaction = await apiCall('/api/transactions', {
-            method: 'POST',
-            body: JSON.stringify(transactionData)
-        });
-        
-        console.log('✅ Transaktion gespeichert:', transaction); // <- Diese Zeile war schon da
-        return transaction;
-    } catch (error) {
-        console.error('❌ Fehler beim Speichern der Transaktion:', error); // <- Diese Zeile war schon da
-        throw error;
-    }
-}
+        async function searchProductByBarcode(barcode) {
+            try {
+                const product = await apiCall(`/api/products/barcode/${barcode}`);
+                return product;
+            } catch (error) {
+                if (error.message.includes('404')) {
+                    return null;
+                }
+                throw error;
+            }
+        }
+
+        async function createTransaction(transactionData) {
+            try {
+                const transaction = await apiCall('/api/transactions', {
+                    method: 'POST',
+                    body: JSON.stringify(transactionData)
+                });
+                return transaction;
+            } catch (error) {
+                throw error;
+            }
+        }
 
         // ============ UI FUNCTIONS ============
         
@@ -529,7 +615,7 @@ async function createTransaction(transactionData) {
             
             setTimeout(() => {
                 statusEl.classList.remove('show');
-            }, 3000);
+            }, 4000);
         }
 
         function showOfflineIndicator(show) {
@@ -561,7 +647,6 @@ async function createTransaction(transactionData) {
             const noUserMsg = document.getElementById('noUserMessage');
             const productsGrid = document.getElementById('productsGrid');
             
-            // Loading verstecken
             loadingMsg.style.display = 'none';
             
             if (!currentUser) {
@@ -586,9 +671,18 @@ async function createTransaction(transactionData) {
             
             productsGrid.innerHTML = products.map(product => {
                 const price = currentUser.role === 'member' ? product.member_price : product.guest_price;
+                
+                // Produkt-Bild: Falls vorhanden, sonst Emoji oder Standard
+                let imageHtml;
+                if (product.image_url) {
+                    imageHtml = `<img src="${product.image_url}" class="product-image" alt="${product.name}">`;
+                } else {
+                    imageHtml = `<div class="product-image">${product.image || '📦'}</div>`;
+                }
+                
                 return `
-                    <div class="product-card" onclick="addToCart(${product.id})">
-                        <div class="product-emoji">${product.image || '📦'}</div>
+                    <div class="product-card" onclick="addToCart(${product.id})" data-product-id="${product.id}">
+                        ${imageHtml}
                         <div class="product-name">${product.name}</div>
                         <div class="product-price">${price.toFixed(2)}€</div>
                     </div>
@@ -600,11 +694,14 @@ async function createTransaction(transactionData) {
             const cartItemsEl = document.getElementById('cartItems');
             const cartTotalEl = document.getElementById('cartTotal');
             const clearBtn = document.getElementById('clearBtn');
+            const manualBtn = document.getElementById('manualCheckoutBtn');
             
             if (cart.length === 0) {
                 cartItemsEl.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">Warenkorb ist leer</div>';
                 cartTotalEl.style.display = 'none';
                 clearBtn.disabled = true;
+                manualBtn.disabled = true;
+                updateWorkflowSteps();
                 return;
             }
 
@@ -618,7 +715,7 @@ async function createTransaction(transactionData) {
                 total += itemTotal;
                 
                 return `
-                    <div class="cart-item">
+                    <div class="cart-item ${item.justAdded ? 'just-added' : ''}">
                         <div>
                             <strong>${product.image || '📦'} ${product.name}</strong><br>
                             <small>${item.quantity}x ${price.toFixed(2)}€ = ${itemTotal.toFixed(2)}€</small>
@@ -628,100 +725,41 @@ async function createTransaction(transactionData) {
                 `;
             }).join('');
 
+            // "justAdded"-Klasse nach Animation entfernen
+            setTimeout(() => {
+                cart.forEach(item => delete item.justAdded);
+                updateCartView();
+            }, 1000);
+
             const newBalance = currentUser.balance - total;
             const processingClass = isProcessing ? ' processing' : '';
             cartTotalEl.innerHTML = `
-                <div class="cart-total${processingClass}" onclick="checkout()">
+                <div class="cart-total${processingClass}">
                     <div>Gesamt: ${total.toFixed(2)}€</div>
-                    <div style="font-size: 0.9em; margin-top: 5px;">Neuer Saldo: ${newBalance.toFixed(2)}€</div>
-                    <div style="font-size: 0.8em; margin-top: 5px;">
-                        ${isProcessing ? '⏳ Verarbeite...' : '💳 Klicken zum Bezahlen'}
+                    <div style="font-size: 0.9em; margin-top: 8px;">Neuer Saldo: ${newBalance.toFixed(2)}€</div>
+                    <div style="font-size: 0.8em; margin-top: 8px;">
+                        ${isProcessing ? '⏳ Verarbeite...' : '📱 Scan CHECKOUT oder klick hier'}
                     </div>
                 </div>
             `;
             cartTotalEl.style.display = 'block';
+            cartTotalEl.onclick = isProcessing ? null : checkout;
             clearBtn.disabled = false;
+            manualBtn.disabled = false;
+            updateWorkflowSteps();
         }
 
-        // ============ USER FUNCTIONS ============
+        // ============ USER & PRODUCT FUNCTIONS ============
         
         function selectUser(user) {
             currentUser = user;
-            showStatus(`${user.full_name} ausgewählt!`, 'success');
+            showStatus(`${user.full_name} ausgewählt! Jetzt Getränke scannen.`, 'success');
             updateUserInfo();
             updateProductsView();
-            hideDropdown();
-            document.getElementById('barcodeInput').value = '';
-            document.getElementById('barcodeInput').focus();
+            setScannerMode('product');
         }
 
-async function searchUsers(query) {
-    if (!query || query.length < 1) {
-        hideDropdown();
-        return;
-    }
-
-    try {
-        // Alle User von API laden (immer aktuelle Daten)
-        const response = await fetch('/api/users');
-        if (!response.ok) {
-            hideDropdown();
-            return;
-        }
-        
-        const allUsers = await response.json();
-        
-        const filtered = allUsers.filter(user => 
-            user.barcode.toLowerCase().includes(query.toLowerCase()) ||
-            user.full_name.toLowerCase().includes(query.toLowerCase()) ||
-            user.first_name.toLowerCase().includes(query.toLowerCase())
-        );
-
-        if (filtered.length === 0) {
-            hideDropdown();
-            return;
-        }
-
-        showDropdown(filtered);
-    } catch (error) {
-        console.error('Fehler bei User-Suche:', error);
-        hideDropdown();
-    }
-}
-
-        function showDropdown(userList) {
-            const dropdown = document.getElementById('userDropdown');
-            
-            dropdown.innerHTML = userList.slice(0, 5).map(user => `
-                <div class="dropdown-item" onclick="selectUser(${JSON.stringify(user).replace(/"/g, '&quot;')})">
-                    <div class="dropdown-avatar">${user.first_name.charAt(0)}</div>
-                    <div class="dropdown-info">
-                        <div class="dropdown-name">${getRoleIcon(user.role)} ${user.full_name}</div>
-                        <div class="dropdown-details">${getRoleText(user.role)} • ${user.balance.toFixed(2)}€</div>
-                    </div>
-                </div>
-            `).join('');
-            
-            dropdown.style.display = 'block';
-        }
-
-        function hideDropdown() {
-            document.getElementById('userDropdown').style.display = 'none';
-        }
-
-        function getRoleIcon(role) {
-            const icons = { member: '👥', guest: '👤', admin: '⚙️' };
-            return icons[role] || '👤';
-        }
-
-        function getRoleText(role) {
-            const texts = { member: 'Mitglied', guest: 'Gast', admin: 'Admin' };
-            return texts[role] || role;
-        }
-
-        // ============ CART FUNCTIONS ============
-        
-        function addToCart(productId) {
+        function addToCart(productId, fromBarcode = false) {
             if (!currentUser) {
                 showStatus('Bitte zuerst Benutzer auswählen', 'error');
                 return;
@@ -730,13 +768,33 @@ async function searchUsers(query) {
             const existingItem = cart.find(item => item.productId === productId);
             if (existingItem) {
                 existingItem.quantity++;
+                existingItem.justAdded = true;
             } else {
-                cart.push({ productId, quantity: 1 });
+                cart.push({ productId, quantity: 1, justAdded: true });
             }
 
             const product = products.find(p => p.id === productId);
-            showStatus(`${product.name} hinzugefügt`, 'success');
+            if (fromBarcode) {
+                showStatus(`📱 ${product.name} gescannt und hinzugefügt`, 'success');
+            } else {
+                showStatus(`${product.name} hinzugefügt`, 'success');
+            }
+            
+            // Visuelles Feedback
+            const productCard = document.querySelector(`[data-product-id="${productId}"]`);
+            if (productCard) {
+                productCard.classList.add('just-added');
+                setTimeout(() => {
+                    productCard.classList.remove('just-added');
+                }, 1000);
+            }
+            
             updateCartView();
+            
+            // Fokus zurück auf Scanner
+            setTimeout(() => {
+                document.getElementById('barcodeInput').focus();
+            }, 100);
         }
 
         function removeFromCart(index) {
@@ -753,75 +811,70 @@ async function searchUsers(query) {
             cart = [];
             updateCartView();
             showStatus('Warenkorb geleert', 'info');
+            setScannerMode('product');
         }
 
-       // FINDE diese Funktion in kasse.html und ersetze sie KOMPLETT:
+        async function checkout() {
+            if (cart.length === 0 || isProcessing) {
+                return;
+            }
 
-async function checkout() {
-    console.log('🛒 Checkout gestartet', { cart, currentUser }); // <- NEU HINZUGEFÜGT
-    
-    if (cart.length === 0 || isProcessing) {
-        console.log('❌ Checkout abgebrochen:', { cartEmpty: cart.length === 0, isProcessing }); // <- NEU HINZUGEFÜGT
-        return;
-    }
-
-    isProcessing = true;
-    updateCartView();
-    showStatus('Verarbeite Transaktion...', 'loading');
-    
-    try {
-        // Transaktionsdaten vorbereiten
-        let total = 0;
-        const items = cart.map(cartItem => {
-            const product = products.find(p => p.id === cartItem.productId);
-            const price = currentUser.role === 'member' ? product.member_price : product.guest_price;
-            const itemTotal = price * cartItem.quantity;
-            total += itemTotal;
+            isProcessing = true;
+            updateCartView();
+            showStatus('Verarbeite Transaktion...', 'loading');
             
-            return {
-                productId: product.id,
-                productName: product.name,
-                quantity: cartItem.quantity,
-                price: price,
-                total: itemTotal
-            };
-        });
-        
-        const transactionData = {
-            userId: currentUser.id,
-            userName: currentUser.full_name,
-            items: items,
-            total: total,
-            paymentMethod: 'balance'
-        };
-        
-        console.log('📡 Sende Transaktion:', transactionData); // <- NEU HINZUGEFÜGT
-        
-  // Transaktion an API senden und Response speichern
-const result = await createTransaction(transactionData);
+            try {
+                let total = 0;
+                const items = cart.map(cartItem => {
+                    const product = products.find(p => p.id === cartItem.productId);
+                    const price = currentUser.role === 'member' ? product.member_price : product.guest_price;
+                    const itemTotal = price * cartItem.quantity;
+                    total += itemTotal;
+                    
+                    return {
+                        productId: product.id,
+                        productName: product.name,
+                        quantity: cartItem.quantity,
+                        price: price,
+                        total: itemTotal
+                    };
+                });
+                
+                const transactionData = {
+                    userId: currentUser.id,
+                    userName: currentUser.full_name,
+                    items: items,
+                    total: total,
+                    paymentMethod: 'balance'
+                };
+                
+                const result = await createTransaction(transactionData);
+                currentUser.balance = result.newBalance;
+                
+                showStatus(`✅ Kauf über ${total.toFixed(2)}€ abgeschlossen!`, 'success');
+                clearCart();
+                updateUserInfo();
+                
+                // Auto-Reset nach erfolgreicher Buchung
+                setTimeout(() => {
+                    resetSession();
+                    showStatus('Session beendet - Nächster Kunde', 'info');
+                }, 2000);
 
-// Backend-Response verwenden (genauer als lokale Berechnung)
-currentUser.balance = result.newBalance;
-        
-        showStatus(`Kauf über ${total.toFixed(2)}€ abgeschlossen!`, 'success');
-        clearCart();
-        updateUserInfo();
-        
-        // Auto-Reset nach 3 Sekunden
-        setTimeout(() => {
-            resetSession();
-            showStatus('Session beendet - Nächster Kunde', 'info');
-        }, 1000);
+            } catch (error) {
+                showStatus('Fehler beim Abschließen des Kaufs', 'error');
+                console.error('Checkout-Fehler:', error);
+            } finally {
+                isProcessing = false;
+                updateCartView();
+            }
+        }
 
-    } catch (error) {
-        console.log('❌ Fehler in checkout:', error); // <- NEU HINZUGEFÜGT
-        showStatus('Fehler beim Abschließen des Kaufs', 'error');
-        console.error('Checkout-Fehler:', error);
-    } finally {
-        isProcessing = false;
-        updateCartView();
-    }
-}
+        function manualCheckout() {
+            if (confirm('Manuelle Buchung durchführen?')) {
+                checkout();
+            }
+        }
 
         function resetSession() {
             currentUser = null;
@@ -830,9 +883,92 @@ currentUser.balance = result.newBalance;
             updateUserInfo();
             updateProductsView();
             updateCartView();
-            hideDropdown();
+            setScannerMode('user');
             document.getElementById('barcodeInput').value = '';
             document.getElementById('barcodeInput').focus();
+        }
+
+        // ============ BARCODE SCANNER LOGIC ============
+        
+        async function handleBarcodeInput(barcode) {
+            const trimmedBarcode = barcode.trim().toUpperCase();
+            
+            if (!trimmedBarcode) return;
+
+            // Spezielle Barcodes
+            if (trimmedBarcode === 'CHECKOUT123' || trimmedBarcode === 'CHECKOUT') {
+                if (cart.length > 0) {
+                    showStatus('🛒 CHECKOUT-Barcode erkannt', 'success');
+                    await checkout();
+                } else {
+                    showStatus('Warenkorb ist leer - nichts zu buchen', 'error');
+                }
+                return;
+            }
+
+            if (trimmedBarcode === 'CANCEL123' || trimmedBarcode === 'CANCEL') {
+                showStatus('❌ Vorgang abgebrochen', 'info');
+                clearCart();
+                return;
+            }
+
+            if (trimmedBarcode === 'RESET123' || trimmedBarcode === 'RESET') {
+                showStatus('🔄 Session zurückgesetzt', 'info');
+                resetSession();
+                return;
+            }
+
+            // User-Modus: Mitglied suchen
+            if (scannerMode === 'user') {
+                showStatus('Suche Mitglied...', 'loading');
+                
+                try {
+                    const user = await searchUserByBarcode(trimmedBarcode);
+                    if (user) {
+                        selectUser(user);
+                    } else {
+                        // Fallback: Lokale Suche
+                        const localUser = users.find(u => u.barcode === trimmedBarcode);
+                        if (localUser) {
+                            selectUser(localUser);
+                        } else {
+                            showStatus('❌ Mitgliedsausweis nicht gefunden', 'error');
+                        }
+                    }
+                } catch (error) {
+                    showStatus('Verbindungsfehler bei der Mitgliedersuche', 'error');
+                }
+                return;
+            }
+
+            // Product-Modus: Produkt suchen
+            if (scannerMode === 'product') {
+                if (!currentUser) {
+                    showStatus('Bitte zuerst Mitglied scannen', 'error');
+                    setScannerMode('user');
+                    return;
+                }
+
+                showStatus('Suche Produkt...', 'loading');
+                
+                try {
+                    const product = await searchProductByBarcode(trimmedBarcode);
+                    if (product) {
+                        addToCart(product.id, true);
+                    } else {
+                        // Fallback: Lokale Suche
+                        const localProduct = products.find(p => p.barcode === trimmedBarcode);
+                        if (localProduct) {
+                            addToCart(localProduct.id, true);
+                        } else {
+                            showStatus('❌ Produkt-Barcode nicht gefunden', 'error');
+                        }
+                    }
+                } catch (error) {
+                    showStatus('Verbindungsfehler bei der Produktsuche', 'error');
+                }
+                return;
+            }
         }
 
         // ============ EVENT LISTENERS ============
@@ -843,62 +979,43 @@ currentUser.balance = result.newBalance;
             // Daten laden
             showStatus('Lade Systemdaten...', 'loading');
             await Promise.all([loadUsers(), loadProducts()]);
-            showStatus('System bereit!', 'success');
+            showStatus('System bereit für Barcode-Scanner!', 'success');
             
-            // Input Event für Live-Suche
-            barcodeInput.addEventListener('input', function(e) {
-                clearTimeout(searchTimeout);
-                const query = e.target.value.trim();
-                
-                if (currentUser) return; // Nur suchen wenn noch kein User ausgewählt
-                
-                searchTimeout = setTimeout(() => {
-                    searchUsers(query);
-                }, 200);
-            });
-
-            // Enter-Taste für direkte Eingabe
+            // Barcode Input Handler
             barcodeInput.addEventListener('keypress', async function(e) {
                 if (e.key === 'Enter') {
-                    const input = e.target.value.trim();
-                    if (!input) return;
-
-                    showStatus('Suche Benutzer...', 'loading');
-
-                    try {
-                        // Zuerst API-Suche
-                        const user = await searchUserByBarcode(input.toUpperCase());
-                        if (user) {
-                            selectUser(user);
-                        } else {
-                            // Fallback: Lokale Suche
-                            const localUser = users.find(u => u.barcode === input.toUpperCase());
-                            if (localUser) {
-                                selectUser(localUser);
-                            } else {
-                                showStatus('Barcode nicht gefunden', 'error');
-                            }
-                        }
-                    } catch (error) {
-                        showStatus('Fehler bei der Benutzersuche', 'error');
+                    const input = e.target.value;
+                    e.target.value = ''; // Sofort leeren für nächsten Scan
+                    
+                    if (input) {
+                        await handleBarcodeInput(input);
                     }
                 }
             });
 
-            // Außerhalb klicken = Dropdown verstecken
+            // Fokus immer auf Input halten
+            barcodeInput.addEventListener('blur', function() {
+                setTimeout(() => {
+                    this.focus();
+                }, 100);
+            });
+
+            // Klick irgendwo = Fokus zurück auf Input
             document.addEventListener('click', function(e) {
-                if (!e.target.closest('.input-container')) {
-                    hideDropdown();
+                if (e.target.id !== 'barcodeInput') {
+                    setTimeout(() => {
+                        barcodeInput.focus();
+                    }, 100);
                 }
             });
 
             // Initial Setup
+            setScannerMode('user');
             updateUserInfo();
             updateProductsView();
             updateCartView();
-            barcodeInput.focus();
             
-            console.log('🎮 Saarcade Kasse mit API-Integration bereit!');
+            console.log('🎮 Saarcade Kasse mit Barcode-Scanner-Workflow bereit!');
         });
 
         // ============ ERROR HANDLING ============
