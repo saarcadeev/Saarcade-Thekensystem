@@ -1519,26 +1519,37 @@
         // ============ BARCODE FUNCTIONS ============
         
         function saveSpecialBarcodes() {
-            specialBarcodes.checkout = document.getElementById('checkoutBarcode').value.trim() || 'CHECKOUT123';
-            specialBarcodes.cancel = document.getElementById('cancelBarcode').value.trim() || 'CANCEL123';
-            specialBarcodes.reset = document.getElementById('resetBarcode').value.trim() || 'RESET123';
+            const barcodes = {
+                checkout_barcode: document.getElementById('checkoutBarcode').value.trim() || 'CHECKOUT123',
+                cancel_barcode: document.getElementById('cancelBarcode').value.trim() || 'CANCEL123',
+                reset_barcode: document.getElementById('resetBarcode').value.trim() || 'RESET123'
+            };
             
-            // In Produktivversion: API-Call zum Speichern
-            localStorage.setItem('saarcade_special_barcodes', JSON.stringify(specialBarcodes));
-            
-            showAlert('Spezielle Barcodes erfolgreich gespeichert', 'success');
+            apiCall('/api/settings', {
+                method: 'PUT',
+                body: JSON.stringify(barcodes)
+            }).then(() => {
+                showAlert('Spezielle Barcodes erfolgreich gespeichert', 'success');
+            }).catch(error => {
+                console.error('Settings save error:', error);
+                showAlert('Fehler beim Speichern der Barcodes', 'error');
+            });
         }
 
-        function loadSpecialBarcodes() {
-            // In Produktivversion: API-Call zum Laden
-            const saved = localStorage.getItem('saarcade_special_barcodes');
-            if (saved) {
-                specialBarcodes = JSON.parse(saved);
+        async function loadSpecialBarcodes() {
+            try {
+                const settings = await apiCall('/api/settings');
+                
+                document.getElementById('checkoutBarcode').value = settings.checkout_barcode || 'CHECKOUT123';
+                document.getElementById('cancelBarcode').value = settings.cancel_barcode || 'CANCEL123';
+                document.getElementById('resetBarcode').value = settings.reset_barcode || 'RESET123';
+            } catch (error) {
+                console.error('Settings load error:', error);
+                // Fallback auf Standard-Werte
+                document.getElementById('checkoutBarcode').value = 'CHECKOUT123';
+                document.getElementById('cancelBarcode').value = 'CANCEL123';
+                document.getElementById('resetBarcode').value = 'RESET123';
             }
-            
-            document.getElementById('checkoutBarcode').value = specialBarcodes.checkout;
-            document.getElementById('cancelBarcode').value = specialBarcodes.cancel;
-            document.getElementById('resetBarcode').value = specialBarcodes.reset;
         }
 
         function printBarcodes() {
