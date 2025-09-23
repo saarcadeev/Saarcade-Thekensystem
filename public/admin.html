@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚙️ Saarcade Admin - Mit API-Integration</title>
+    <title>⚙️ Saarcade Admin - Vollständig</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -66,8 +66,8 @@
 
         .tab {
             flex: 1;
-            min-width: 150px;
-            padding: 15px 20px;
+            min-width: 120px;
+            padding: 12px 16px;
             text-align: center;
             background: transparent;
             border: none;
@@ -76,6 +76,7 @@
             font-weight: 600;
             transition: all 0.3s ease;
             color: #666;
+            font-size: 0.9em;
         }
 
         .tab.active {
@@ -95,17 +96,17 @@
         .section {
             background: white;
             border-radius: 15px;
-            padding: 30px;
-            margin-bottom: 30px;
+            padding: 25px;
+            margin-bottom: 25px;
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
         }
 
         .section h2 {
             color: #2d3748;
-            margin-bottom: 25px;
-            font-size: 1.8em;
+            margin-bottom: 20px;
+            font-size: 1.6em;
             border-bottom: 3px solid #667eea;
-            padding-bottom: 15px;
+            padding-bottom: 12px;
             display: flex;
             align-items: center;
             gap: 10px;
@@ -115,22 +116,22 @@
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
             border: none;
-            padding: 12px 24px;
-            border-radius: 10px;
+            padding: 10px 20px;
+            border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
             transition: all 0.3s ease;
-            margin: 5px;
+            margin: 4px;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            font-size: 0.9em;
+            gap: 6px;
+            font-size: 0.85em;
         }
 
         .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
         }
 
         .btn:disabled {
@@ -148,16 +149,18 @@
             width: 100%;
             border-collapse: collapse;
             background: white;
-            border-radius: 10px;
+            border-radius: 8px;
             overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            margin-top: 15px;
+            font-size: 0.9em;
         }
 
         .data-table th, .data-table td {
-            padding: 15px 12px;
+            padding: 8px 10px;
             text-align: left;
             border-bottom: 1px solid #e2e8f0;
+            vertical-align: middle;
         }
 
         .data-table th {
@@ -166,80 +169,107 @@
             font-weight: 600;
             position: sticky;
             top: 0;
+            font-size: 0.85em;
         }
 
         .data-table tr:hover {
             background: #f7fafc;
         }
 
+        .data-table tr.selected {
+            background: #e6f3ff;
+        }
+
+        .checkbox-cell {
+            width: 30px;
+            text-align: center;
+        }
+
+        .checkbox-cell input[type="checkbox"] {
+            transform: scale(1.2);
+            cursor: pointer;
+        }
+
         .dashboard-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
-            margin-bottom: 40px;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
         }
 
         .stat-card {
             background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
             text-align: center;
-            border-left: 5px solid #667eea;
+            border-left: 4px solid #667eea;
             transition: all 0.3s ease;
         }
 
         .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
         }
 
         .stat-number {
-            font-size: 3em;
+            font-size: 2.2em;
             font-weight: bold;
             color: #667eea;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .stat-label {
             color: #666;
             font-weight: 600;
-            margin-bottom: 5px;
+            font-size: 0.9em;
         }
 
         .toolbar {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             display: flex;
-            gap: 10px;
+            gap: 8px;
             flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .selection-info {
+            background: #e6f3ff;
+            color: #1a365d;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-left: auto;
         }
 
         .alert {
-            padding: 15px 20px;
-            margin-bottom: 20px;
-            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 15px;
+            border-radius: 6px;
             font-weight: 600;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
+            font-size: 0.9em;
         }
 
         .alert-success {
             background: linear-gradient(135deg, #c6f6d5, #9ae6b4);
             color: #1a202c;
-            border-left: 5px solid #38a169;
+            border-left: 4px solid #38a169;
         }
 
         .alert-error {
             background: linear-gradient(135deg, #fed7d7, #feb2b2);
             color: #1a202c;
-            border-left: 5px solid #e53e3e;
+            border-left: 4px solid #e53e3e;
         }
 
         .alert-info {
             background: linear-gradient(135deg, #bee3f8, #90cdf4);
             color: #1a202c;
-            border-left: 5px solid #3182ce;
+            border-left: 4px solid #3182ce;
         }
 
         .loading-overlay {
@@ -256,10 +286,10 @@
         }
 
         .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid #667eea;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -269,10 +299,137 @@
             100% { transform: rotate(360deg); }
         }
 
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(3px);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 3% auto;
+            padding: 0;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.3em;
+        }
+
+        .close {
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #ddd;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #2d3748;
+            font-size: 0.9em;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.9em;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .barcode-card {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .barcode-card h4 {
+            color: #495057;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .photo-upload {
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .photo-upload:hover {
+            background: #f8f9ff;
+            border-color: #5a67d8;
+        }
+
+        .photo-preview {
+            max-width: 120px;
+            max-height: 120px;
+            border-radius: 8px;
+            margin: 10px auto;
+            display: block;
+        }
+
         @media (max-width: 768px) {
             .container { padding: 10px; }
             .dashboard-grid { grid-template-columns: 1fr; }
-            .toolbar { flex-direction: column; }
+            .toolbar { flex-direction: column; align-items: stretch; }
+            .form-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -280,7 +437,7 @@
     <div class="loading-overlay" id="loadingOverlay">
         <div>
             <div class="loading-spinner"></div>
-            <p style="margin-top: 20px; font-weight: 600;">Lade Daten...</p>
+            <p style="margin-top: 15px; font-weight: 600;">Lade Daten...</p>
         </div>
     </div>
 
@@ -302,8 +459,8 @@
                 <div class="stat-label">Produkte</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="totalStock">-</div>
-                <div class="stat-label">Gesamtbestand</div>
+                <div class="stat-number" id="transactionCount">-</div>
+                <div class="stat-label">Transaktionen</div>
             </div>
             <div class="stat-card">
                 <div class="stat-number" id="todayRevenue">-</div>
@@ -314,9 +471,10 @@
         <!-- Navigation Tabs -->
         <div class="tabs">
             <button class="tab active" onclick="showTab('users')">👥 Mitglieder</button>
-            <button class="tab" onclick="showTab('transactions')">💰 Transaktionen</button>
             <button class="tab" onclick="showTab('products')">📦 Produkte</button>
-            <button class="tab" onclick="showTab('sepa')">💳 SEPA-Export</button>
+            <button class="tab" onclick="showTab('transactions')">💰 Transaktionen</button>
+            <button class="tab" onclick="showTab('barcodes')">🏷️ Barcodes</button>
+            <button class="tab" onclick="showTab('sepa')">💳 SEPA</button>
         </div>
 
         <!-- Mitglieder Tab -->
@@ -325,18 +483,31 @@
                 <h2>👥 Mitgliederverwaltung</h2>
                 
                 <div class="toolbar">
-                    <button class="btn btn-success" onclick="loadUsers()" id="loadUsersBtn">
+                    <button class="btn btn-success" onclick="openUserModal()" id="addUserBtn">
+                        ➕ Neues Mitglied
+                    </button>
+                    <button class="btn btn-warning" onclick="editSelectedUser()" id="editUserBtn" disabled>
+                        ✏️ Bearbeiten
+                    </button>
+                    <button class="btn btn-danger" onclick="deleteSelectedUsers()" id="deleteUserBtn" disabled>
+                        🗑️ Löschen
+                    </button>
+                    <button class="btn btn-secondary" onclick="loadUsers()" id="loadUsersBtn">
                         🔄 Neu laden
                     </button>
                     <button class="btn btn-secondary" onclick="exportData('users')">
                         📊 Export CSV
                     </button>
+                    <div class="selection-info" id="userSelectionInfo">0 ausgewählt</div>
                 </div>
                 
                 <div style="overflow-x: auto;">
                     <table class="data-table" id="userTable">
                         <thead>
                             <tr>
+                                <th class="checkbox-cell">
+                                    <input type="checkbox" id="selectAllUsers" onchange="toggleSelectAll('users')">
+                                </th>
                                 <th>Name</th>
                                 <th>Rolle</th>
                                 <th>Barcode</th>
@@ -347,8 +518,60 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td colspan="6" style="text-align: center; padding: 40px; color: #666;">
+                                <td colspan="7" style="text-align: center; padding: 30px; color: #666;">
                                     Lade Mitgliederdaten...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Produkte Tab -->
+        <div id="products" class="tab-content">
+            <div class="section">
+                <h2>📦 Produktverwaltung</h2>
+                
+                <div class="toolbar">
+                    <button class="btn btn-success" onclick="openProductModal()" id="addProductBtn">
+                        ➕ Neues Produkt
+                    </button>
+                    <button class="btn btn-warning" onclick="editSelectedProduct()" id="editProductBtn" disabled>
+                        ✏️ Bearbeiten
+                    </button>
+                    <button class="btn btn-danger" onclick="deleteSelectedProducts()" id="deleteProductBtn" disabled>
+                        🗑️ Löschen
+                    </button>
+                    <button class="btn btn-secondary" onclick="loadProducts()" id="loadProductsBtn">
+                        🔄 Neu laden
+                    </button>
+                    <button class="btn btn-secondary" onclick="exportData('products')">
+                        📊 Export CSV
+                    </button>
+                    <div class="selection-info" id="productSelectionInfo">0 ausgewählt</div>
+                </div>
+                
+                <div style="overflow-x: auto;">
+                    <table class="data-table" id="productTable">
+                        <thead>
+                            <tr>
+                                <th class="checkbox-cell">
+                                    <input type="checkbox" id="selectAllProducts" onchange="toggleSelectAll('products')">
+                                </th>
+                                <th>Bild</th>
+                                <th>Produkt</th>
+                                <th>Kategorie</th>
+                                <th>Mitgliedspreis</th>
+                                <th>Gastpreis</th>
+                                <th>Bestand</th>
+                                <th>Barcode</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="8" style="text-align: center; padding: 30px; color: #666;">
+                                    Klicke "Neu laden" um Produktdaten zu laden
                                 </td>
                             </tr>
                         </tbody>
@@ -363,12 +586,13 @@
                 <h2>💰 Transaktionsverlauf</h2>
                 
                 <div class="toolbar">
-                    <button class="btn btn-success" onclick="loadTransactions()" id="loadTransactionsBtn">
+                    <button class="btn btn-secondary" onclick="loadTransactions()" id="loadTransactionsBtn">
                         🔄 Neu laden
                     </button>
                     <button class="btn btn-secondary" onclick="exportData('transactions')">
                         📊 Export CSV
                     </button>
+                    <div class="selection-info" id="transactionSelectionInfo">Letzte 100 Transaktionen</div>
                 </div>
                 
                 <div style="overflow-x: auto;">
@@ -386,8 +610,8 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td colspan="7" style="text-align: center; padding: 40px; color: #666;">
-                                    Lade Transaktionsdaten...
+                                <td colspan="7" style="text-align: center; padding: 30px; color: #666;">
+                                    Klicke "Neu laden" um Transaktionsdaten zu laden
                                 </td>
                             </tr>
                         </tbody>
@@ -396,40 +620,52 @@
             </div>
         </div>
 
-        <!-- Produkte Tab -->
-        <div id="products" class="tab-content">
+        <!-- Barcodes Tab -->
+        <div id="barcodes" class="tab-content">
             <div class="section">
-                <h2>📦 Produktverwaltung</h2>
+                <h2>🏷️ Barcode-Verwaltung</h2>
                 
-                <div class="toolbar">
-                    <button class="btn btn-success" onclick="loadProducts()" id="loadProductsBtn">
-                        🔄 Neu laden
-                    </button>
-                    <button class="btn btn-secondary" onclick="exportData('products')">
-                        📊 Export CSV
-                    </button>
+                <div class="alert alert-info">
+                    <span>ℹ️</span>
+                    <div>
+                        <strong>Spezielle Barcodes:</strong> Diese Codes werden für besondere Funktionen in der Kasse verwendet.
+                    </div>
                 </div>
                 
-                <div style="overflow-x: auto;">
-                    <table class="data-table" id="productTable">
-                        <thead>
-                            <tr>
-                                <th>Produkt</th>
-                                <th>Kategorie</th>
-                                <th>Mitgliedspreis</th>
-                                <th>Gastpreis</th>
-                                <th>Bestand</th>
-                                <th>Verfügbar</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td colspan="6" style="text-align: center; padding: 40px; color: #666;">
-                                    Lade Produktdaten...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="barcode-card">
+                    <h4>🛒 CHECKOUT-Barcode</h4>
+                    <div class="form-group">
+                        <label>Barcode für Kassenabschluss:</label>
+                        <input type="text" id="checkoutBarcode" value="CHECKOUT123" placeholder="z.B. CHECKOUT123">
+                    </div>
+                    <p style="font-size: 0.85em; color: #666;">Wird gescannt um eine Transaktion abzuschließen</p>
+                </div>
+                
+                <div class="barcode-card">
+                    <h4>❌ CANCEL-Barcode</h4>
+                    <div class="form-group">
+                        <label>Barcode zum Abbrechen:</label>
+                        <input type="text" id="cancelBarcode" value="CANCEL123" placeholder="z.B. CANCEL123">
+                    </div>
+                    <p style="font-size: 0.85em; color: #666;">Leert den Warenkorb ohne zu buchen</p>
+                </div>
+                
+                <div class="barcode-card">
+                    <h4>🔄 RESET-Barcode</h4>
+                    <div class="form-group">
+                        <label>Barcode für Komplett-Reset:</label>
+                        <input type="text" id="resetBarcode" value="RESET123" placeholder="z.B. RESET123">
+                    </div>
+                    <p style="font-size: 0.85em; color: #666;">Setzt die komplette Kassen-Session zurück</p>
+                </div>
+                
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="btn btn-success" onclick="saveSpecialBarcodes()">
+                        💾 Barcodes speichern
+                    </button>
+                    <button class="btn btn-secondary" onclick="printBarcodes()">
+                        🖨️ Druckvorlage erstellen
+                    </button>
                 </div>
             </div>
         </div>
@@ -467,13 +703,180 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td colspan="4" style="text-align: center; padding: 40px; color: #666;">
+                                <td colspan="4" style="text-align: center; padding: 30px; color: #666;">
                                     Klicke "SEPA-Daten laden" um Lastschriften anzuzeigen
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Modal -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="userModalTitle">Mitglied bearbeiten</h3>
+                <span class="close" onclick="closeModal('userModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="userForm">
+                    <input type="hidden" id="userId" value="">
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Vorname *</label>
+                            <input type="text" id="userFirstName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Nachname *</label>
+                            <input type="text" id="userLastName" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Rolle</label>
+                            <select id="userRole">
+                                <option value="member">Mitglied</option>
+                                <option value="guest">Gast</option>
+                                <option value="bartender">Barkeeper</option>
+                                <option value="admin">Administrator</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Barcode *</label>
+                            <input type="text" id="userBarcode" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Aktueller Saldo (€)</label>
+                            <input type="number" id="userBalance" step="0.01" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>SEPA-Mandat</label>
+                            <select id="userSepa">
+                                <option value="false">Inaktiv</option>
+                                <option value="true">Aktiv</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>E-Mail (optional)</label>
+                        <input type="email" id="userEmail">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>IBAN (für SEPA-Lastschrift)</label>
+                        <input type="text" id="userIban" placeholder="DE89 3704 0044 0532 0130 00" maxlength="34">
+                    </div>
+                    
+                    <div style="text-align: right; margin-top: 20px;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('userModal')">
+                            Abbrechen
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="saveUser()">
+                            💾 Speichern
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Modal -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="productModalTitle">Produkt bearbeiten</h3>
+                <span class="close" onclick="closeModal('productModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="productForm">
+                    <input type="hidden" id="productId" value="">
+                    
+                    <div class="form-group">
+                        <label>Produktfoto</label>
+                        <div class="photo-upload" onclick="document.getElementById('photoInput').click()">
+                            <input type="file" id="photoInput" accept="image/*" style="display: none;" onchange="handlePhotoUpload(event)">
+                            <div id="photoPreview">
+                                <p>📷 Klicken um Foto hochzuladen</p>
+                                <p style="font-size: 0.8em; color: #666;">JPG, PNG bis 2MB</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Produktname *</label>
+                        <input type="text" id="productName" required>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Kategorie</label>
+                            <select id="productCategory">
+                                <option value="bier">🍺 Bier</option>
+                                <option value="softdrinks">🥤 Softdrinks</option>
+                                <option value="schnaps">🥃 Spirituosen</option>
+                                <option value="snacks">🍿 Snacks</option>
+                                <option value="heissgetraenke">☕ Heißgetränke</option>
+                                <option value="sonstiges">📦 Sonstiges</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Emoji/Icon</label>
+                            <input type="text" id="productEmoji" placeholder="🍺" maxlength="2">
+                        </div>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Mitgliedspreis (€) *</label>
+                            <input type="number" id="productMemberPrice" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Gastpreis (€) *</label>
+                            <input type="number" id="productGuestPrice" step="0.01" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Aktueller Bestand</label>
+                            <input type="number" id="productStock" min="0" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Mindestbestand</label>
+                            <input type="number" id="productMinStock" min="0" value="5">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Barcode (optional)</label>
+                        <input type="text" id="productBarcode">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="productAvailable" checked>
+                            Verfügbar
+                        </label>
+                    </div>
+                    
+                    <div style="text-align: right; margin-top: 20px;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('productModal')">
+                            Abbrechen
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="saveProduct()">
+                            💾 Speichern
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -485,6 +888,13 @@
         let products = [];
         let transactions = [];
         let sepaUsers = [];
+        let selectedUsers = [];
+        let selectedProducts = [];
+        let specialBarcodes = {
+            checkout: 'CHECKOUT123',
+            cancel: 'CANCEL123',
+            reset: 'RESET123'
+        };
 
         // ============ API FUNCTIONS ============
         
@@ -531,13 +941,13 @@
                 statusEl.textContent = '✅ API verbunden';
             } else {
                 statusEl.className = 'api-status error';
-                statusEl.textContent = `❌ API-Fehler: ${errorMsg}`;
+                statusEl.textContent = `❌ API-Fehler`;
             }
         }
 
         function showAlert(message, type = 'info') {
             const existingAlert = document.querySelector('.alert');
-            if (existingAlert) {
+            if (existingAlert && !existingAlert.classList.contains('alert-info')) {
                 existingAlert.remove();
             }
 
@@ -554,7 +964,7 @@
                 if (alertDiv.parentNode) {
                     alertDiv.remove();
                 }
-            }, 5000);
+            }, 4000);
         }
 
         // ============ TAB NAVIGATION ============
@@ -566,17 +976,77 @@
             document.getElementById(tabName).classList.add('active');
         }
 
+        // ============ SELECTION FUNCTIONS ============
+        
+        function toggleSelectAll(type) {
+            const checkbox = document.getElementById(`selectAll${type.charAt(0).toUpperCase() + type.slice(1)}`);
+            const isChecked = checkbox.checked;
+            
+            const checkboxes = document.querySelectorAll(`#${type}Table tbody input[type="checkbox"]`);
+            checkboxes.forEach(cb => {
+                cb.checked = isChecked;
+                toggleRowSelection(cb, type);
+            });
+            
+            updateSelectionInfo(type);
+        }
+
+        function toggleRowSelection(checkbox, type) {
+            const row = checkbox.closest('tr');
+            const id = parseInt(checkbox.value);
+            
+            if (checkbox.checked) {
+                row.classList.add('selected');
+                if (type === 'users') {
+                    if (!selectedUsers.includes(id)) selectedUsers.push(id);
+                } else if (type === 'products') {
+                    if (!selectedProducts.includes(id)) selectedProducts.push(id);
+                }
+            } else {
+                row.classList.remove('selected');
+                if (type === 'users') {
+                    selectedUsers = selectedUsers.filter(userId => userId !== id);
+                } else if (type === 'products') {
+                    selectedProducts = selectedProducts.filter(productId => productId !== id);
+                }
+            }
+            
+            updateSelectionInfo(type);
+        }
+
+        function updateSelectionInfo(type) {
+            let count, buttons;
+            
+            if (type === 'users') {
+                count = selectedUsers.length;
+                buttons = ['editUserBtn', 'deleteUserBtn'];
+                document.getElementById('userSelectionInfo').textContent = `${count} ausgewählt`;
+            } else if (type === 'products') {
+                count = selectedProducts.length;
+                buttons = ['editProductBtn', 'deleteProductBtn'];
+                document.getElementById('productSelectionInfo').textContent = `${count} ausgewählt`;
+            }
+            
+            buttons.forEach(btnId => {
+                const btn = document.getElementById(btnId);
+                if (btnId.includes('edit')) {
+                    btn.disabled = count !== 1;
+                } else {
+                    btn.disabled = count === 0;
+                }
+            });
+        }
+
         // ============ DATA LOADING FUNCTIONS ============
         
         async function loadDashboard() {
             try {
                 const data = await apiCall('/api/dashboard');
-                console.log('Dashboard-Daten:', data);
                 
                 document.getElementById('memberCount').textContent = data.member_count || 0;
                 document.getElementById('productCount').textContent = data.available_products || 0;
-                document.getElementById('totalStock').textContent = data.total_stock || 0;
-                document.getElementById('todayRevenue').textContent = `${(data.today_revenue || 0).toFixed(2)}`;
+                document.getElementById('transactionCount').textContent = data.today_transactions || 0;
+                document.getElementById('todayRevenue').textContent = `${(data.today_revenue || 0).toFixed(0)}`;
                 
             } catch (error) {
                 console.error('Fehler beim Laden der Dashboard-Daten:', error);
@@ -591,8 +1061,6 @@
                 loadBtn.textContent = '⏳ Lade...';
                 
                 users = await apiCall('/api/users');
-                console.log(`${users.length} Benutzer geladen`);
-                
                 renderUsers();
                 showAlert(`${users.length} Mitglieder erfolgreich geladen`, 'success');
                 
@@ -613,8 +1081,6 @@
                 loadBtn.textContent = '⏳ Lade...';
                 
                 products = await apiCall('/api/products');
-                console.log(`${products.length} Produkte geladen`);
-                
                 renderProducts();
                 showAlert(`${products.length} Produkte erfolgreich geladen`, 'success');
                 
@@ -635,8 +1101,6 @@
                 loadBtn.textContent = '⏳ Lade...';
                 
                 transactions = await apiCall('/api/transactions');
-                console.log(`${transactions.length} Transaktionen geladen`);
-                
                 renderTransactions();
                 showAlert(`${transactions.length} Transaktionen erfolgreich geladen`, 'success');
                 
@@ -657,8 +1121,6 @@
                 loadBtn.textContent = '⏳ Lade...';
                 
                 sepaUsers = await apiCall('/api/sepa-users');
-                console.log(`${sepaUsers.length} SEPA-Benutzer geladen`);
-                
                 renderSepaUsers();
                 document.getElementById('sepaDownloadBtn').disabled = sepaUsers.length === 0;
                 showAlert(`${sepaUsers.length} SEPA-Benutzer gefunden`, 'success');
@@ -677,25 +1139,30 @@
         
         function renderUsers() {
             const tbody = document.querySelector('#userTable tbody');
+            selectedUsers = [];
+            updateSelectionInfo('users');
             
             if (users.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #666;">Keine Mitgliederdaten verfügbar</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px; color: #666;">Keine Mitgliederdaten verfügbar</td></tr>';
                 return;
             }
             
             tbody.innerHTML = users.map(user => {
                 const balanceColor = user.balance >= 0 ? '#38a169' : '#e53e3e';
                 const roleIcon = getRoleIcon(user.role);
-                const sepaStatus = user.sepa_active ? '✅ Aktiv' : '❌ Inaktiv';
+                const sepaStatus = user.sepa_active ? '✅' : '❌';
                 
                 return `
                     <tr>
+                        <td class="checkbox-cell">
+                            <input type="checkbox" value="${user.id}" onchange="toggleRowSelection(this, 'users')">
+                        </td>
                         <td>${user.first_name} ${user.last_name}</td>
                         <td>${roleIcon} ${getRoleText(user.role)}</td>
-                        <td><code>${user.barcode}</code></td>
+                        <td><code style="font-size: 0.8em;">${user.barcode}</code></td>
                         <td style="color: ${balanceColor}; font-weight: bold;">${user.balance.toFixed(2)}€</td>
                         <td>${sepaStatus}</td>
-                        <td>${user.email || '-'}</td>
+                        <td style="font-size: 0.8em;">${user.email || '-'}</td>
                     </tr>
                 `;
             }).join('');
@@ -703,24 +1170,38 @@
 
         function renderProducts() {
             const tbody = document.querySelector('#productTable tbody');
+            selectedProducts = [];
+            updateSelectionInfo('products');
             
             if (products.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #666;">Keine Produktdaten verfügbar</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px; color: #666;">Keine Produktdaten verfügbar</td></tr>';
                 return;
             }
             
             tbody.innerHTML = products.map(product => {
                 const stockColor = product.stock > 0 ? '#38a169' : '#e53e3e';
-                const availableText = product.available ? '✅ Ja' : '❌ Nein';
+                const availableIcon = product.available ? '✅' : '❌';
+                
+                // Produktbild anzeigen
+                let imageHtml = '📦';
+                if (product.image_url) {
+                    imageHtml = `<img src="${product.image_url}" style="width: 30px; height: 30px; border-radius: 4px; object-fit: cover;" alt="${product.name}">`;
+                } else if (product.image) {
+                    imageHtml = product.image;
+                }
                 
                 return `
                     <tr>
-                        <td>${product.image || '📦'} ${product.name}</td>
+                        <td class="checkbox-cell">
+                            <input type="checkbox" value="${product.id}" onchange="toggleRowSelection(this, 'products')">
+                        </td>
+                        <td style="text-align: center;">${imageHtml}</td>
+                        <td>${product.name}</td>
                         <td>${getCategoryText(product.category)}</td>
                         <td>${product.member_price.toFixed(2)}€</td>
                         <td>${product.guest_price.toFixed(2)}€</td>
                         <td style="color: ${stockColor}; font-weight: bold;">${product.stock}</td>
-                        <td>${availableText}</td>
+                        <td><code style="font-size: 0.8em;">${product.barcode || '-'}</code></td>
                     </tr>
                 `;
             }).join('');
@@ -730,24 +1211,24 @@
             const tbody = document.querySelector('#transactionTable tbody');
             
             if (transactions.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: #666;">Keine Transaktionsdaten verfügbar</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px; color: #666;">Keine Transaktionsdaten verfügbar</td></tr>';
                 return;
             }
             
             tbody.innerHTML = transactions.map(transaction => {
                 const date = new Date(transaction.created_at);
-                const formattedDate = date.toLocaleString('de-DE');
+                const formattedDate = date.toLocaleString('de-DE').replace(',', '');
                 const paymentIcon = transaction.payment_method === 'cash' ? '💵' : '💳';
                 
                 return `
                     <tr>
-                        <td>${formattedDate}</td>
+                        <td style="font-size: 0.8em;">${formattedDate}</td>
                         <td>${transaction.user_name}</td>
                         <td>${transaction.product_name}</td>
                         <td>${transaction.quantity}x</td>
                         <td>${transaction.price.toFixed(2)}€</td>
                         <td style="font-weight: bold;">${transaction.total.toFixed(2)}€</td>
-                        <td>${paymentIcon} ${transaction.payment_method === 'cash' ? 'Bar' : 'Konto'}</td>
+                        <td>${paymentIcon}</td>
                     </tr>
                 `;
             }).join('');
@@ -757,7 +1238,7 @@
             const tbody = document.querySelector('#sepaTable tbody');
             
             if (sepaUsers.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px; color: #666;">Keine SEPA-Benutzer mit negativem Saldo gefunden</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px; color: #666;">Keine SEPA-Benutzer mit negativem Saldo gefunden</td></tr>';
                 return;
             }
             
@@ -767,12 +1248,347 @@
                 return `
                     <tr>
                         <td>${user.first_name} ${user.last_name}</td>
-                        <td><code>${formatIban(user.iban)}</code></td>
+                        <td><code style="font-size: 0.8em;">${formatIban(user.iban)}</code></td>
                         <td style="font-weight: bold; color: #e53e3e;">${amount.toFixed(2)}€</td>
                         <td><span style="color: #38a169;">✅ Bereit</span></td>
                     </tr>
                 `;
             }).join('');
+        }
+
+        // ============ MODAL FUNCTIONS ============
+        
+        function openUserModal(userId = null) {
+            const modal = document.getElementById('userModal');
+            const title = document.getElementById('userModalTitle');
+            const form = document.getElementById('userForm');
+            
+            form.reset();
+            document.getElementById('userId').value = '';
+            
+            if (userId) {
+                const user = users.find(u => u.id === userId);
+                if (user) {
+                    title.textContent = 'Mitglied bearbeiten';
+                    document.getElementById('userId').value = user.id;
+                    document.getElementById('userFirstName').value = user.first_name;
+                    document.getElementById('userLastName').value = user.last_name;
+                    document.getElementById('userRole').value = user.role;
+                    document.getElementById('userBarcode').value = user.barcode;
+                    document.getElementById('userBalance').value = user.balance.toFixed(2);
+                    document.getElementById('userSepa').value = user.sepa_active ? 'true' : 'false';
+                    document.getElementById('userEmail').value = user.email || '';
+                    document.getElementById('userIban').value = user.iban || '';
+                }
+            } else {
+                title.textContent = 'Neues Mitglied hinzufügen';
+                document.getElementById('userBalance').value = '0.00';
+            }
+            
+            modal.style.display = 'block';
+        }
+
+        function openProductModal(productId = null) {
+            const modal = document.getElementById('productModal');
+            const title = document.getElementById('productModalTitle');
+            const form = document.getElementById('productForm');
+            
+            form.reset();
+            document.getElementById('productId').value = '';
+            resetPhotoPreview();
+            
+            if (productId) {
+                const product = products.find(p => p.id === productId);
+                if (product) {
+                    title.textContent = 'Produkt bearbeiten';
+                    document.getElementById('productId').value = product.id;
+                    document.getElementById('productName').value = product.name;
+                    document.getElementById('productCategory').value = product.category;
+                    document.getElementById('productEmoji').value = product.image || '';
+                    document.getElementById('productMemberPrice').value = product.member_price.toFixed(2);
+                    document.getElementById('productGuestPrice').value = product.guest_price.toFixed(2);
+                    document.getElementById('productStock').value = product.stock;
+                    document.getElementById('productMinStock').value = product.min_stock || 5;
+                    document.getElementById('productBarcode').value = product.barcode || '';
+                    document.getElementById('productAvailable').checked = product.available;
+                    
+                    // Foto anzeigen falls vorhanden
+                    if (product.image_url) {
+                        showPhotoPreview(product.image_url);
+                    }
+                }
+            } else {
+                title.textContent = 'Neues Produkt hinzufügen';
+                document.getElementById('productStock').value = '0';
+                document.getElementById('productMinStock').value = '5';
+                document.getElementById('productAvailable').checked = true;
+            }
+            
+            modal.style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // ============ SAVE FUNCTIONS ============
+        
+        async function saveUser() {
+            const userId = document.getElementById('userId').value;
+            const userData = {
+                first_name: document.getElementById('userFirstName').value.trim(),
+                last_name: document.getElementById('userLastName').value.trim(),
+                role: document.getElementById('userRole').value,
+                barcode: document.getElementById('userBarcode').value.trim(),
+                balance: parseFloat(document.getElementById('userBalance').value) || 0,
+                sepa_active: document.getElementById('userSepa').value === 'true',
+                email: document.getElementById('userEmail').value.trim(),
+                iban: document.getElementById('userIban').value.replace(/\s/g, '')
+            };
+            
+            if (!userData.first_name || !userData.last_name || !userData.barcode) {
+                showAlert('Bitte alle Pflichtfelder ausfüllen', 'error');
+                return;
+            }
+            
+            try {
+                if (userId) {
+                    // Update existierender User
+                    await apiCall(`/api/users/${userId}`, {
+                        method: 'PUT',
+                        body: JSON.stringify(userData)
+                    });
+                    showAlert('Mitglied erfolgreich aktualisiert', 'success');
+                } else {
+                    // Neuer User
+                    await apiCall('/api/users', {
+                        method: 'POST',
+                        body: JSON.stringify(userData)
+                    });
+                    showAlert('Neues Mitglied erfolgreich hinzugefügt', 'success');
+                }
+                
+                closeModal('userModal');
+                loadUsers();
+                loadDashboard();
+                
+            } catch (error) {
+                showAlert('Fehler beim Speichern des Mitglieds', 'error');
+                console.error('Save user error:', error);
+            }
+        }
+
+        async function saveProduct() {
+            const productId = document.getElementById('productId').value;
+            const productData = {
+                name: document.getElementById('productName').value.trim(),
+                category: document.getElementById('productCategory').value,
+                image: document.getElementById('productEmoji').value.trim() || '📦',
+                member_price: parseFloat(document.getElementById('productMemberPrice').value) || 0,
+                guest_price: parseFloat(document.getElementById('productGuestPrice').value) || 0,
+                stock: parseInt(document.getElementById('productStock').value) || 0,
+                min_stock: parseInt(document.getElementById('productMinStock').value) || 0,
+                barcode: document.getElementById('productBarcode').value.trim() || null,
+                available: document.getElementById('productAvailable').checked
+            };
+            
+            if (!productData.name || productData.member_price <= 0 || productData.guest_price <= 0) {
+                showAlert('Bitte alle Pflichtfelder korrekt ausfüllen', 'error');
+                return;
+            }
+            
+            try {
+                if (productId) {
+                    // Update existierendes Produkt
+                    await apiCall(`/api/products/${productId}`, {
+                        method: 'PUT',
+                        body: JSON.stringify(productData)
+                    });
+                    showAlert('Produkt erfolgreich aktualisiert', 'success');
+                } else {
+                    // Neues Produkt
+                    await apiCall('/api/products', {
+                        method: 'POST',
+                        body: JSON.stringify(productData)
+                    });
+                    showAlert('Neues Produkt erfolgreich hinzugefügt', 'success');
+                }
+                
+                closeModal('productModal');
+                loadProducts();
+                loadDashboard();
+                
+            } catch (error) {
+                showAlert('Fehler beim Speichern des Produkts', 'error');
+                console.error('Save product error:', error);
+            }
+        }
+
+        // ============ EDIT/DELETE FUNCTIONS ============
+        
+        function editSelectedUser() {
+            if (selectedUsers.length !== 1) return;
+            openUserModal(selectedUsers[0]);
+        }
+
+        function editSelectedProduct() {
+            if (selectedProducts.length !== 1) return;
+            openProductModal(selectedProducts[0]);
+        }
+
+        async function deleteSelectedUsers() {
+            if (selectedUsers.length === 0) return;
+            
+            const userNames = selectedUsers.map(id => {
+                const user = users.find(u => u.id === id);
+                return user ? `${user.first_name} ${user.last_name}` : 'Unbekannt';
+            }).join(', ');
+            
+            if (confirm(`Möchten Sie diese ${selectedUsers.length} Mitglieder wirklich löschen?\n\n${userNames}\n\nDiese Aktion kann nicht rückgängig gemacht werden.`)) {
+                try {
+                    for (const userId of selectedUsers) {
+                        await apiCall(`/api/users/${userId}`, { method: 'DELETE' });
+                    }
+                    showAlert(`${selectedUsers.length} Mitglieder erfolgreich gelöscht`, 'success');
+                    loadUsers();
+                    loadDashboard();
+                } catch (error) {
+                    showAlert('Fehler beim Löschen der Mitglieder', 'error');
+                }
+            }
+        }
+
+        async function deleteSelectedProducts() {
+            if (selectedProducts.length === 0) return;
+            
+            const productNames = selectedProducts.map(id => {
+                const product = products.find(p => p.id === id);
+                return product ? product.name : 'Unbekannt';
+            }).join(', ');
+            
+            if (confirm(`Möchten Sie diese ${selectedProducts.length} Produkte wirklich löschen?\n\n${productNames}\n\nDiese Aktion kann nicht rückgängig gemacht werden.`)) {
+                try {
+                    for (const productId of selectedProducts) {
+                        await apiCall(`/api/products/${productId}`, { method: 'DELETE' });
+                    }
+                    showAlert(`${selectedProducts.length} Produkte erfolgreich gelöscht`, 'success');
+                    loadProducts();
+                    loadDashboard();
+                } catch (error) {
+                    showAlert('Fehler beim Löschen der Produkte', 'error');
+                }
+            }
+        }
+
+        // ============ PHOTO UPLOAD FUNCTIONS ============
+        
+        function handlePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (file.size > 2 * 1024 * 1024) {
+                showAlert('Datei zu groß. Maximum 2MB erlaubt.', 'error');
+                return;
+            }
+            
+            if (!file.type.startsWith('image/')) {
+                showAlert('Nur Bilddateien erlaubt.', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                showPhotoPreview(e.target.result);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function showPhotoPreview(imageSrc) {
+            const preview = document.getElementById('photoPreview');
+            preview.innerHTML = `<img src="${imageSrc}" class="photo-preview" alt="Produktfoto">`;
+        }
+
+        function resetPhotoPreview() {
+            const preview = document.getElementById('photoPreview');
+            preview.innerHTML = `
+                <p>📷 Klicken um Foto hochzuladen</p>
+                <p style="font-size: 0.8em; color: #666;">JPG, PNG bis 2MB</p>
+            `;
+        }
+
+        // ============ BARCODE FUNCTIONS ============
+        
+        function saveSpecialBarcodes() {
+            specialBarcodes.checkout = document.getElementById('checkoutBarcode').value.trim() || 'CHECKOUT123';
+            specialBarcodes.cancel = document.getElementById('cancelBarcode').value.trim() || 'CANCEL123';
+            specialBarcodes.reset = document.getElementById('resetBarcode').value.trim() || 'RESET123';
+            
+            // In Produktivversion: API-Call zum Speichern
+            localStorage.setItem('saarcade_special_barcodes', JSON.stringify(specialBarcodes));
+            
+            showAlert('Spezielle Barcodes erfolgreich gespeichert', 'success');
+        }
+
+        function loadSpecialBarcodes() {
+            // In Produktivversion: API-Call zum Laden
+            const saved = localStorage.getItem('saarcade_special_barcodes');
+            if (saved) {
+                specialBarcodes = JSON.parse(saved);
+            }
+            
+            document.getElementById('checkoutBarcode').value = specialBarcodes.checkout;
+            document.getElementById('cancelBarcode').value = specialBarcodes.cancel;
+            document.getElementById('resetBarcode').value = specialBarcodes.reset;
+        }
+
+        function printBarcodes() {
+            const barcodes = [
+                { label: 'CHECKOUT', code: specialBarcodes.checkout },
+                { label: 'ABBRECHEN', code: specialBarcodes.cancel },
+                { label: 'RESET', code: specialBarcodes.reset }
+            ];
+            
+            let printContent = `
+                <html>
+                <head>
+                    <title>Saarcade Spezial-Barcodes</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        .barcode-item { margin: 20px 0; padding: 15px; border: 2px solid #000; text-align: center; }
+                        .barcode-label { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
+                        .barcode-code { font-family: 'Courier New', monospace; font-size: 24px; padding: 10px; background: #f0f0f0; }
+                        .instructions { margin-top: 30px; font-size: 14px; color: #666; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Saarcade Spezial-Barcodes</h1>
+            `;
+            
+            barcodes.forEach(barcode => {
+                printContent += `
+                    <div class="barcode-item">
+                        <div class="barcode-label">${barcode.label}</div>
+                        <div class="barcode-code">${barcode.code}</div>
+                    </div>
+                `;
+            });
+            
+            printContent += `
+                    <div class="instructions">
+                        <h3>Anleitung:</h3>
+                        <p>• Diese Codes ausdrucken und neben das Kassen-Tablet legen</p>
+                        <p>• CHECKOUT: Schalten für Kassenabschluss</p>
+                        <p>• ABBRECHEN: Warenkorb leeren ohne zu buchen</p>
+                        <p>• RESET: Komplette Kassen-Session zurücksetzen</p>
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            printWindow.print();
         }
 
         // ============ HELPER FUNCTIONS ============
@@ -789,12 +1605,12 @@
 
         function getCategoryText(category) {
             const categories = {
-                bier: '🍺 Bier',
-                softdrinks: '🥤 Softdrinks',
-                schnaps: '🥃 Spirituosen',
-                snacks: '🍿 Snacks',
-                heissgetraenke: '☕ Heißgetränke',
-                sonstiges: '📦 Sonstiges'
+                bier: '🍺',
+                softdrinks: '🥤',
+                schnaps: '🥃',
+                snacks: '🍿',
+                heissgetraenke: '☕',
+                sonstiges: '📦'
             };
             return categories[category] || category;
         }
@@ -818,7 +1634,7 @@
                 case 'products':
                     data = products;
                     filename = 'produkte.csv';
-                    fields = ['name', 'category', 'member_price', 'guest_price', 'stock', 'available'];
+                    fields = ['name', 'category', 'member_price', 'guest_price', 'stock', 'available', 'barcode'];
                     break;
                 case 'transactions':
                     data = transactions;
@@ -836,7 +1652,7 @@
             
             const csv = convertToCSV(data, fields);
             downloadCSV(csv, filename);
-            showAlert(`${type} erfolgreich als CSV exportiert`, 'success');
+            showAlert(`${data.length} ${type} erfolgreich als CSV exportiert`, 'success');
         }
 
         function convertToCSV(data, fields) {
@@ -884,7 +1700,7 @@
             const msgId = `SAARCADE${Date.now()}`;
             const creationDate = new Date().toISOString();
             const dueDate = new Date();
-            dueDate.setDate(dueDate.getDate() + 5); // 5 Tage Vorlauf
+            dueDate.setDate(dueDate.getDate() + 5);
             const dueDateStr = dueDate.toISOString().split('T')[0];
             
             let xml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -897,79 +1713,24 @@
             <CtrlSum>${totalAmount.toFixed(2)}</CtrlSum>
             <InitgPty>
                 <Nm>Saarcade e.V.</Nm>
-                <Id>
-                    <OrgId>
-                        <Othr>
-                            <Id>DE98ZZZ09999999999</Id>
-                        </Othr>
-                    </OrgId>
-                </Id>
             </InitgPty>
         </GrpHdr>
         <PmtInf>
             <PmtInfId>PMTINF-${Date.now()}</PmtInfId>
             <PmtMtd>DD</PmtMtd>
-            <NbOfTxs>${users.length}</NbOfTxs>
-            <CtrlSum>${totalAmount.toFixed(2)}</CtrlSum>
-            <PmtTpInf>
-                <SvcLvl>
-                    <Cd>SEPA</Cd>
-                </SvcLvl>
-                <LclInstrm>
-                    <Cd>CORE</Cd>
-                </LclInstrm>
-                <SeqTp>RCUR</SeqTp>
-            </PmtTpInf>
             <ReqdColltnDt>${dueDateStr}</ReqdColltnDt>
             <Cdtr>
                 <Nm>Saarcade e.V.</Nm>
-            </Cdtr>
-            <CdtrAcct>
-                <Id>
-                    <IBAN>DE89370400440532013000</IBAN>
-                </Id>
-            </CdtrAcct>
-            <CdtrAgt>
-                <FinInstnId>
-                    <BIC>COBADEFFXXX</BIC>
-                </FinInstnId>
-            </CdtrAgt>
-            <CdtrSchmeId>
-                <Id>
-                    <PrvtId>
-                        <Othr>
-                            <Id>DE98ZZZ09999999999</Id>
-                            <SchmeNm>
-                                <Prtry>SEPA</Prtry>
-                            </SchmeNm>
-                        </Othr>
-                    </PrvtId>
-                </Id>
-            </CdtrSchmeId>`;
+            </Cdtr>`;
             
             users.forEach((user, index) => {
                 const amount = Math.abs(user.balance);
-                const endToEndId = `TXN-${Date.now()}-${(index + 1).toString().padStart(3, '0')}`;
-                
                 xml += `
             <DrctDbtTxInf>
                 <PmtId>
-                    <EndToEndId>${endToEndId}</EndToEndId>
+                    <EndToEndId>TXN-${Date.now()}-${index + 1}</EndToEndId>
                 </PmtId>
                 <InstdAmt Ccy="EUR">${amount.toFixed(2)}</InstdAmt>
-                <DrctDbtTx>
-                    <MndtRltdInf>
-                        <MndtId>SEPA-${user.id.toString().padStart(3, '0')}</MndtId>
-                        <DtOfSgntr>2024-01-01</DtOfSgntr>
-                    </MndtRltdInf>
-                </DrctDbtTx>
-                <DbtrAgt>
-                    <FinInstnId>
-                        <Othr>
-                            <Id>NOTPROVIDED</Id>
-                        </Othr>
-                    </FinInstnId>
-                </DbtrAgt>
                 <Dbtr>
                     <Nm>${user.first_name} ${user.last_name}</Nm>
                 </Dbtr>
@@ -995,17 +1756,12 @@
         // ============ INITIALIZATION ============
         
         document.addEventListener('DOMContentLoaded', async function() {
-            console.log('🚀 Admin-Dashboard mit API-Integration startet...');
+            console.log('🚀 Admin-Dashboard mit verbesserter UI startet...');
             
             try {
-                // API-Verbindung testen
-                await apiCall('/api/dashboard');
-                
-                // Initial Dashboard laden
                 await loadDashboard();
-                
-                // Initial Mitglieder laden
                 await loadUsers();
+                loadSpecialBarcodes();
                 
                 console.log('✅ Admin-Dashboard erfolgreich initialisiert');
                 showAlert('Dashboard erfolgreich geladen', 'success');
@@ -1015,6 +1771,13 @@
                 showAlert('Fehler beim Laden des Dashboards. Prüfe die API-Verbindung.', 'error');
             }
         });
+
+        // Modal schließen bei Klick außerhalb
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
     </script>
 </body>
 </html>
