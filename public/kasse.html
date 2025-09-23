@@ -16,25 +16,37 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
 
         .header {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
             box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
         }
 
-        .scanner-area {
+        .header h1 {
+            text-align: center;
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 2em;
+        }
+
+        .header-grid {
             display: grid;
-            grid-template-columns: 1fr 250px;
+            grid-template-columns: 1fr 300px;
             gap: 20px;
-            align-items: center;
-            margin-bottom: 20px;
+            align-items: start;
+        }
+
+        .scanner-area {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
 
         .input-container {
@@ -43,10 +55,10 @@
 
         #barcodeInput {
             width: 100%;
-            padding: 20px 25px;
-            font-size: 1.4em;
-            border: 4px solid #667eea;
-            border-radius: 12px;
+            padding: 12px 20px;
+            font-size: 1.2em;
+            border: 3px solid #667eea;
+            border-radius: 8px;
             outline: none;
             font-family: 'Courier New', monospace;
             font-weight: 600;
@@ -56,17 +68,18 @@
 
         #barcodeInput:focus {
             border-color: #38a169;
-            box-shadow: 0 0 0 4px rgba(56, 161, 105, 0.2);
+            box-shadow: 0 0 0 3px rgba(56, 161, 105, 0.2);
             background: white;
         }
 
         .scanner-status {
             background: #e2e8f0;
             color: #4a5568;
-            padding: 15px;
-            border-radius: 10px;
+            padding: 8px 12px;
+            border-radius: 6px;
             text-align: center;
-            margin-bottom: 10px;
+            font-size: 0.9em;
+            font-weight: 600;
         }
 
         .scanner-status.user-mode {
@@ -82,8 +95,8 @@
         .user-info {
             background: linear-gradient(135deg, #a0aec0, #718096);
             color: white;
-            padding: 15px;
-            border-radius: 10px;
+            padding: 12px;
+            border-radius: 8px;
             text-align: center;
         }
 
@@ -93,12 +106,12 @@
 
         .user-name {
             font-weight: bold;
-            font-size: 1.2em;
-            margin-bottom: 8px;
+            font-size: 1.1em;
+            margin-bottom: 4px;
         }
 
         .user-balance {
-            font-size: 1.4em;
+            font-size: 1.2em;
             font-weight: bold;
         }
 
@@ -461,38 +474,45 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1 style="text-align: center; color: #2d3748; margin-bottom: 20px;">🎮 Saarcade Kassensystem</h1>
+            <h1>🎮 Saarcade Kassensystem</h1>
             
-            <div class="offline-indicator" id="offlineIndicator">
-                ⚠️ Keine Verbindung zur Datenbank - Offline-Modus
-            </div>
-            
-            <div class="status-message" id="statusMessage"></div>
-            
-            <div class="scanner-area">
-                <div class="input-container">
+            <div class="header-grid">
+                <div class="scanner-area">
                     <div class="scanner-status" id="scannerStatus">
                         🔍 Bereit für Barcode-Scanner
                     </div>
-                    <input type="text" id="barcodeInput" placeholder="Barcode scannen oder Name eingeben..." autocomplete="off" autofocus>
-                    <div class="dropdown" id="userDropdown" style="display: none;"></div>
+                    <div class="input-container">
+                        <input type="text" id="barcodeInput" placeholder="Barcode scannen oder Name eingeben..." autocomplete="off" autofocus>
+                        <div class="dropdown" id="userDropdown" style="display: none;"></div>
+                    </div>
                 </div>
                 
-                <div class="user-info" id="userInfo">
-                    <div class="user-name">Kein Benutzer</div>
-                    <div class="user-balance">Bitte scannen</div>
+                <div class="user-info-section">
+                    <div class="status-messages">
+                        <div class="offline-indicator" id="offlineIndicator">
+                            ⚠️ Keine Verbindung zur Datenbank
+                        </div>
+                        <div class="status-message" id="statusMessage"></div>
+                    </div>
+                    
+                    <div class="user-info" id="userInfo">
+                        <div class="user-name">Kein Benutzer</div>
+                        <div class="user-balance">Bitte scannen</div>
+                    </div>
                 </div>
             </div>
 
             <div class="workflow-help">
-                <div class="workflow-step active" id="step1">
-                    1️⃣ Mitglied scannen oder Namen eingeben
-                </div>
-                <div class="workflow-step" id="step2">
-                    2️⃣ Getränke scannen oder klicken (mehrere möglich)
-                </div>
-                <div class="workflow-step" id="step3">
-                    3️⃣ CHECKOUT-Barcode scannen oder manuell buchen
+                <div class="workflow-steps">
+                    <div class="workflow-step active" id="step1">
+                        1️⃣ Mitglied scannen/eingeben
+                    </div>
+                    <div class="workflow-step" id="step2">
+                        2️⃣ Getränke scannen/klicken
+                    </div>
+                    <div class="workflow-step" id="step3">
+                        3️⃣ CHECKOUT scannen/buchen
+                    </div>
                 </div>
             </div>
         </div>
