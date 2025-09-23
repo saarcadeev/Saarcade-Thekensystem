@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎮 Saarcade Kasse - Hybrid Scanner/Touch</title>
+    <title>🎮 Saarcade Kasse - Tablet Optimiert</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -12,14 +12,15 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             color: #333;
-            padding: 20px;
+            padding: 15px;
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
         }
 
+        /* Optimierte Header-Struktur */
         .header {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -32,9 +33,40 @@
         .header h1 {
             text-align: center;
             color: #2d3748;
-            margin-bottom: 15px;
-            font-size: 2em;
+            margin-bottom: 10px;
+            font-size: 1.8em;
         }
+
+        /* Status-Messages direkt unter dem Titel */
+        .status-messages {
+            margin-bottom: 15px;
+        }
+
+        .offline-indicator {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+            display: none;
+        }
+
+        .status-message {
+            padding: 10px 16px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-weight: 600;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            text-align: center;
+        }
+
+        .status-message.show { opacity: 1; }
+        .status-message.success { background: #c6f6d5; color: #1a202c; border-left: 4px solid #38a169; }
+        .status-message.error { background: #fed7d7; color: #1a202c; border-left: 4px solid #e53e3e; }
+        .status-message.info { background: #bee3f8; color: #1a202c; border-left: 4px solid #3182ce; }
+        .status-message.loading { background: #faf5ff; color: #1a202c; border-left: 4px solid #9f7aea; }
 
         .header-grid {
             display: grid;
@@ -46,7 +78,7 @@
         .scanner-area {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
         }
 
         .input-container {
@@ -56,7 +88,7 @@
         #barcodeInput {
             width: 100%;
             padding: 12px 20px;
-            font-size: 1.2em;
+            font-size: 1.1em;
             border: 3px solid #667eea;
             border-radius: 8px;
             outline: none;
@@ -173,41 +205,13 @@
             color: #666;
         }
 
-        .status-message {
-            padding: 12px 20px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-weight: 600;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .status-message.show { opacity: 1; }
-        .status-message.success { background: #c6f6d5; color: #1a202c; border-left: 4px solid #38a169; }
-        .status-message.error { background: #fed7d7; color: #1a202c; border-left: 4px solid #e53e3e; }
-        .status-message.info { background: #bee3f8; color: #1a202c; border-left: 4px solid #3182ce; }
-        .status-message.loading { background: #faf5ff; color: #1a202c; border-left: 4px solid #9f7aea; }
-
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 400px;
-            gap: 20px;
-        }
-
-        .products-section {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
-        }
-
+        /* Kompakte Workflow-Hilfe */
         .workflow-help {
             background: #f0f8ff;
             border: 2px dashed #667eea;
             border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
+            padding: 12px;
+            margin-bottom: 15px;
             text-align: center;
         }
 
@@ -215,35 +219,53 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            margin: 10px 0;
-            font-size: 1.1em;
+            gap: 8px;
+            margin: 8px 0;
+            font-size: 1em;
         }
 
         .workflow-step.active {
             background: #667eea;
             color: white;
-            padding: 10px 15px;
+            padding: 8px 12px;
             border-radius: 8px;
             font-weight: bold;
         }
 
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 15px;
+            height: calc(100vh - 200px);
+        }
+
+        .products-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
         .category-filters {
             display: flex;
-            gap: 8px;
-            margin-bottom: 20px;
+            gap: 6px;
+            margin-bottom: 15px;
             flex-wrap: wrap;
         }
 
         .category-btn {
-            padding: 8px 16px;
+            padding: 6px 12px;
             border: 2px solid #e2e8f0;
             background: white;
-            border-radius: 8px;
+            border-radius: 6px;
             cursor: pointer;
             font-weight: 600;
             transition: all 0.3s ease;
-            font-size: 0.9em;
+            font-size: 0.85em;
         }
 
         .category-btn.active {
@@ -259,20 +281,22 @@
 
         .products-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 12px;
-            margin-top: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 5px;
         }
 
         .product-card {
             background: #f7fafc;
             border: 2px solid #e2e8f0;
             border-radius: 10px;
-            padding: 12px;
+            padding: 10px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
-            min-height: 140px;
+            min-height: 120px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -297,53 +321,57 @@
         }
 
         .product-image {
-            width: 80px;
-            height: 80px;
+            width: 60px;
+            height: 60px;
             border-radius: 8px;
             object-fit: cover;
-            margin: 0 auto 8px;
+            margin: 0 auto 6px;
             background: #e2e8f0;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2em;
+            font-size: 1.8em;
         }
 
         .product-name {
             font-weight: bold;
-            margin-bottom: 5px;
-            font-size: 0.85em;
+            margin-bottom: 4px;
+            font-size: 0.8em;
             line-height: 1.2;
         }
 
         .product-price {
             color: #667eea;
             font-weight: bold;
-            font-size: 1em;
+            font-size: 0.9em;
         }
 
         .cart-section {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 15px;
-            padding: 20px;
+            padding: 15px;
             box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            display: flex;
+            flex-direction: column;
         }
 
         .cart-items {
-            max-height: 350px;
+            flex: 1;
             overflow-y: auto;
-            margin: 15px 0;
+            margin: 10px 0;
+            max-height: 400px;
         }
 
         .cart-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px;
+            padding: 10px;
             background: #f7fafc;
             border-radius: 8px;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
+            font-size: 0.9em;
         }
 
         .cart-item.just-added {
@@ -355,13 +383,13 @@
         .cart-total {
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
-            padding: 20px;
+            padding: 15px;
             border-radius: 10px;
             text-align: center;
             cursor: pointer;
-            font-size: 1.3em;
+            font-size: 1.2em;
             font-weight: bold;
-            margin-top: 15px;
+            margin-top: 10px;
             transition: all 0.3s ease;
         }
 
@@ -385,13 +413,13 @@
             background: #667eea;
             color: white;
             border: none;
-            padding: 12px 18px;
+            padding: 10px 15px;
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
-            margin: 5px;
+            margin: 3px;
             transition: all 0.3s ease;
-            font-size: 0.9em;
+            font-size: 0.85em;
         }
 
         .btn:hover {
@@ -421,53 +449,53 @@
             background: #2f855a;
         }
 
-        .special-barcodes {
-            background: #fff3cd;
-            border: 2px solid #ffc107;
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 20px;
-        }
-
-        .special-barcodes h4 {
-            color: #856404;
-            margin-bottom: 10px;
-        }
-
-        .barcode-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #ffeaa7;
-        }
-
-        .barcode-item:last-child {
-            border-bottom: none;
-        }
-
-        .offline-indicator {
-            background: #fed7d7;
-            color: #c53030;
-            padding: 8px 15px;
-            border-radius: 8px;
-            font-size: 0.9em;
-            margin-bottom: 15px;
-            display: none;
+        /* Tablet-spezifische Anpassungen */
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr 320px;
+                gap: 12px;
+            }
+            
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
         }
 
         @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
             .main-content {
                 grid-template-columns: 1fr;
+                height: auto;
             }
-            .scanner-area {
+            
+            .header-grid {
                 grid-template-columns: 1fr;
+                gap: 10px;
             }
+            
             .products-grid {
-                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
             }
+            
             .category-filters {
                 justify-content: center;
             }
+        }
+
+        /* Loading und No-Content States */
+        #loadingMessage, #noUserMessage {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+        }
+
+        #loadingMessage div:first-child,
+        #noUserMessage div:first-child {
+            font-size: 2.5em;
+            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -475,6 +503,14 @@
     <div class="container">
         <div class="header">
             <h1>🎮 Saarcade Kassensystem</h1>
+            
+            <!-- Status-Messages direkt unter dem Titel -->
+            <div class="status-messages">
+                <div class="offline-indicator" id="offlineIndicator">
+                    ⚠️ Keine Verbindung zur Datenbank
+                </div>
+                <div class="status-message" id="statusMessage"></div>
+            </div>
             
             <div class="header-grid">
                 <div class="scanner-area">
@@ -487,23 +523,14 @@
                     </div>
                 </div>
                 
-                <div class="user-info-section">
-                    <div class="status-messages">
-                        <div class="offline-indicator" id="offlineIndicator">
-                            ⚠️ Keine Verbindung zur Datenbank
-                        </div>
-                        <div class="status-message" id="statusMessage"></div>
-                    </div>
-                    
-                    <div class="user-info" id="userInfo">
-                        <div class="user-name">Kein Benutzer</div>
-                        <div class="user-balance">Bitte scannen</div>
-                    </div>
+                <div class="user-info" id="userInfo">
+                    <div class="user-name">Kein Benutzer</div>
+                    <div class="user-balance">Bitte scannen</div>
                 </div>
             </div>
 
             <div class="workflow-help">
-                <div style="display: flex; justify-content: space-between; gap: 8px; flex-direction: row;">
+                <div style="display: flex; justify-content: space-between; gap: 6px;">
                     <div style="flex: 1; text-align: center; padding: 6px 8px; border-radius: 6px; font-size: 0.85em; font-weight: 600; background: #667eea; color: white; transition: all 0.3s ease;" id="step1">
                         1️⃣ Mitglied scannen
                     </div>
@@ -519,7 +546,7 @@
 
         <div class="main-content">
             <div class="products-section">
-                <h2>Produkte</h2>
+                <h2 style="margin-bottom: 10px;">Produkte</h2>
                 
                 <!-- Kategorie-Filter -->
                 <div class="category-filters" id="categoryFilters">
@@ -529,38 +556,21 @@
                     <button class="category-btn" data-category="schnaps">🥃 Spirituosen</button>
                     <button class="category-btn" data-category="snacks">🍿 Snacks</button>
                     <button class="category-btn" data-category="heissgetraenke">☕ Heißgetränke</button>
-                    <button class="category-btn" data-category="sonstiges">📋 Sonstiges</button>
                 </div>
                 
-                <div id="loadingMessage" style="text-align: center; padding: 40px; color: #666;">
-                    <div style="font-size: 3em; margin-bottom: 15px;">⏳</div>
+                <div id="loadingMessage">
+                    <div>⏳</div>
                     <h3>Lade Produkte...</h3>
                 </div>
                 
-                <div id="noUserMessage" style="display: none; text-align: center; padding: 40px; color: #666;">
-                    <div style="font-size: 3em; margin-bottom: 15px;">👤</div>
+                <div id="noUserMessage" style="display: none;">
+                    <div>👤</div>
                     <h3>Bitte zuerst Mitglied auswählen</h3>
                     <p>Mitgliedsausweis scannen oder Namen eingeben</p>
                 </div>
                 
                 <div class="products-grid" id="productsGrid" style="display: none;">
                     <!-- Produkte werden hier eingefügt -->
-                </div>
-
-                <div class="special-barcodes">
-                    <h4>📱 Spezielle Barcodes</h4>
-                    <div class="barcode-item">
-                        <span><strong>CHECKOUT</strong></span>
-                        <code id="checkoutBarcodeDisplay">CHECKOUT123</code>
-                    </div>
-                    <div class="barcode-item">
-                        <span><strong>Abbrechen</strong></span>
-                        <code id="cancelBarcodeDisplay">CANCEL123</code>
-                    </div>
-                    <div class="barcode-item">
-                        <span><strong>Admin-Reset</strong></span>
-                        <code id="resetBarcodeDisplay">RESET123</code>
-                    </div>
                 </div>
             </div>
 
@@ -575,7 +585,7 @@
                 
                 <div id="cartTotal" style="display: none;"></div>
                 
-                <div style="margin-top: 15px;">
+                <div style="margin-top: 10px;">
                     <button class="btn btn-danger" onclick="clearCart()" id="clearBtn" disabled>🗑️ Leeren</button>
                     <button class="btn btn-success" onclick="manualCheckout()" id="manualCheckoutBtn" disabled>💳 Manuell buchen</button>
                     <button class="btn" onclick="resetSession()">🔄 Reset</button>
@@ -713,10 +723,6 @@
                 if (settings.cancel_barcode) specialBarcodes.cancel = settings.cancel_barcode;
                 if (settings.reset_barcode) specialBarcodes.reset = settings.reset_barcode;
                 
-                document.getElementById('checkoutBarcodeDisplay').textContent = specialBarcodes.checkout;
-                document.getElementById('cancelBarcodeDisplay').textContent = specialBarcodes.cancel;
-                document.getElementById('resetBarcodeDisplay').textContent = specialBarcodes.reset;
-                
                 console.log('Spezial-Barcodes geladen:', specialBarcodes);
             } catch (error) {
                 console.error('Fehler beim Laden der Einstellungen:', error);
@@ -790,7 +796,7 @@
 
             userInfoEl.className = `user-info ${currentUser.role}`;
             userInfoEl.innerHTML = `
-                <div class="user-name">${currentUser.full_name}</div>
+                <div class="user-name">${currentUser.first_name} ${currentUser.last_name}</div>
                 <div class="user-balance">${currentUser.balance.toFixed(2)}€</div>
             `;
         }
@@ -831,7 +837,7 @@
 
             if (products.length === 0) {
                 noUserMsg.innerHTML = `
-                    <div style="font-size: 3em; margin-bottom: 15px;">📦</div>
+                    <div>📦</div>
                     <h3>Keine Produkte verfügbar</h3>
                     <p>Prüfen Sie die Datenbankverbindung</p>
                 `;
@@ -847,10 +853,10 @@
             
             if (filteredProducts.length === 0) {
                 productsGrid.innerHTML = `
-                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #666;">
-                        <div style="font-size: 3em; margin-bottom: 15px;">🔍</div>
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: #666;">
+                        <div style="font-size: 2.5em; margin-bottom: 10px;">🔍</div>
                         <h3>Keine Produkte in dieser Kategorie</h3>
-                        <p>Wähle eine andere Kategorie oder "Alle"</p>
+                        <p>Wähle eine andere Kategorie</p>
                     </div>
                 `;
                 return;
@@ -921,8 +927,8 @@
             cartTotalEl.innerHTML = `
                 <div class="cart-total${processingClass}">
                     <div>Gesamt: ${total.toFixed(2)}€</div>
-                    <div style="font-size: 0.9em; margin-top: 8px;">Neuer Saldo: ${newBalance.toFixed(2)}€</div>
-                    <div style="font-size: 0.8em; margin-top: 8px;">
+                    <div style="font-size: 0.9em; margin-top: 6px;">Neuer Saldo: ${newBalance.toFixed(2)}€</div>
+                    <div style="font-size: 0.8em; margin-top: 6px;">
                         ${isProcessing ? '⏳ Verarbeite...' : '📱 Scan CHECKOUT oder klick hier'}
                     </div>
                 </div>
@@ -938,7 +944,7 @@
         
         function selectUser(user) {
             currentUser = user;
-            showStatus(`${user.full_name} ausgewählt! Jetzt Getränke wählen.`, 'success');
+            showStatus(`${user.first_name} ${user.last_name} ausgewählt! Jetzt Getränke wählen.`, 'success');
             updateUserInfo();
             updateProductsView();
             setScannerMode('product');
@@ -953,7 +959,7 @@
 
             const filtered = users.filter(user => 
                 user.barcode.toLowerCase().includes(query.toLowerCase()) ||
-                user.full_name.toLowerCase().includes(query.toLowerCase()) ||
+                `${user.first_name} ${user.last_name}`.toLowerCase().includes(query.toLowerCase()) ||
                 user.first_name.toLowerCase().includes(query.toLowerCase()) ||
                 user.last_name.toLowerCase().includes(query.toLowerCase())
             );
@@ -973,7 +979,7 @@
                 <div class="dropdown-item" onclick='selectUserFromDropdown(${JSON.stringify(user)})'>
                     <div class="dropdown-avatar">${user.first_name.charAt(0)}</div>
                     <div class="dropdown-info">
-                        <div class="dropdown-name">${getRoleIcon(user.role)} ${user.full_name}</div>
+                        <div class="dropdown-name">${getRoleIcon(user.role)} ${user.first_name} ${user.last_name}</div>
                         <div class="dropdown-details">${getRoleText(user.role)} • ${user.balance.toFixed(2)}€</div>
                     </div>
                 </div>
@@ -1083,7 +1089,7 @@
                 
                 const transactionData = {
                     userId: currentUser.id,
-                    userName: currentUser.full_name,
+                    userName: `${currentUser.first_name} ${currentUser.last_name}`,
                     items: items,
                     total: total,
                     paymentMethod: 'balance'
@@ -1269,7 +1275,7 @@
             updateProductsView();
             updateCartView();
             
-            console.log('🎮 Saarcade Kasse mit Hybrid Scanner/Touch-Bedienung bereit!');
+            console.log('🎮 Saarcade Kasse optimiert für Tablet-Nutzung bereit!');
         });
 
         window.addEventListener('error', function(e) {
