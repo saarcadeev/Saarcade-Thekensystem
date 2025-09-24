@@ -72,18 +72,32 @@
 
         .header-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr 250px;
+            grid-template-columns: 1fr 250px;
             gap: 15px;
             align-items: stretch;
         }
 
-        .scanner-area {
+        .scanner-pin-area {
             display: flex;
             flex-direction: column;
             gap: 10px;
         }
 
-        .pin-area {
+        .scanner-row {
+            display: flex;
+            gap: 10px;
+            align-items: stretch;
+        }
+
+        .scanner-input-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .pin-button-container {
+            width: 120px;
             display: flex;
             flex-direction: column;
             gap: 10px;
@@ -171,7 +185,7 @@
             border-radius: 8px;
             max-height: 300px;
             overflow-y: auto;
-            z-index: 1000;
+            z-index: 2000;
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
             margin-top: 5px;
         }
@@ -306,13 +320,13 @@
 
         .products-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            grid-template-rows: repeat(3, 1fr);
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(2, 1fr);
             gap: 15px;
             flex: 1;
             overflow-y: auto;
             padding: 10px;
-            max-height: 600px;
+            max-height: 400px;
         }
 
         .product-card {
@@ -630,23 +644,23 @@
             </div>
             
             <div class="header-grid">
-                <div class="scanner-area">
+                <div class="scanner-pin-area">
                     <div class="scanner-status" id="scannerStatus">
                         🔍 Bereit für Barcode-Scanner
                     </div>
-                    <div class="input-container">
-                        <input type="text" id="barcodeInput" placeholder="Barcode scannen oder Name eingeben..." autocomplete="off" autofocus style="width: 70%;">
-                        <div class="dropdown" id="userDropdown" style="display: none;"></div>
+                    <div class="scanner-row">
+                        <div class="scanner-input-container">
+                            <div class="input-container">
+                                <input type="text" id="barcodeInput" placeholder="Barcode scannen oder Name eingeben..." autocomplete="off" autofocus>
+                                <div class="dropdown" id="userDropdown" style="display: none;"></div>
+                            </div>
+                        </div>
+                        <div class="pin-button-container">
+                            <button class="btn" id="pinChangeBtn" onclick="openPinModal()" style="width: 100%; font-size: 0.8em;">
+                                🔐 PIN
+                            </button>
+                        </div>
                     </div>
-                </div>
-                
-                <div class="pin-area">
-                    <div style="padding: 8px 12px; background: #f7fafc; border-radius: 6px; text-align: center; font-size: 0.9em; font-weight: 600; color: #4a5568;">
-                        PIN-Verwaltung
-                    </div>
-                    <button class="btn" id="pinChangeBtn" onclick="openPinModal()" style="width: 100%;">
-                        🔐 PIN ändern
-                    </button>
                 </div>
                 
                 <div class="user-info-section">
@@ -714,9 +728,9 @@
                 
                 <div id="cartTotal" style="display: none;"></div>
                 
-                <div style="margin-top: 10px;">
-                    <button class="btn btn-danger" onclick="clearCart()" id="clearBtn" disabled>🗑️ Leeren</button>
-                    <button class="btn" onclick="resetSession()">🔄 Reset</button>
+                <div style="margin-top: 10px; display: flex; gap: 10px;">
+                    <button class="btn btn-danger" onclick="clearCart()" id="clearBtn" disabled style="flex: 1;">🗑️ Leeren</button>
+                    <button class="btn" onclick="resetSession()" style="flex: 1;">🔄 Reset</button>
                 </div>
             </div>
         </div>
@@ -1169,6 +1183,13 @@
             }
             
             modal.style.display = 'block';
+            
+            // Fokus korrekt setzen nach kurzer Verzögerung
+            setTimeout(() => {
+                if (currentUser) {
+                    document.getElementById('newPin').focus();
+                }
+            }, 150);
         }
         
         function closeModal(modalId) {
