@@ -476,6 +476,14 @@
             background: #2f855a;
         }
 
+        .btn-secondary {
+            background: #a0aec0;
+        }
+
+        .btn-secondary:hover {
+            background: #718096;
+        }
+
         /* Tablet-spezifische Anpassungen */
         @media (max-width: 1024px) {
             .main-content {
@@ -1139,29 +1147,29 @@
 
         // ============ PIN SYSTEM FUNCTIONS ============
         
-function openPinModal() {
-    const modal = document.getElementById('pinModal');
-    const userInfo = document.getElementById('pinUserInfo');
-    const form = document.getElementById('pinForm');
-    
-    if (!currentUser) {
-        userInfo.innerHTML = '<strong>Bitte zuerst Benutzer auswählen</strong>';
-        form.style.display = 'none';
-    } else {
-        userInfo.innerHTML = `
-            <strong>${currentUser.first_name} ${currentUser.last_name}</strong><br>
-            <small>Aktuelle PIN: ${currentUser.user_pin ? '****' : 'Nicht gesetzt'}</small>
-        `;
-        
-        form.style.display = 'block';
-        document.getElementById('newPin').value = '';
-        document.getElementById('confirmPin').value = '';
-        document.getElementById('pinForNameSearch').checked = currentUser.pin_require_for_name_search || false;
-        document.getElementById('pinForBarcode').checked = currentUser.pin_require_for_barcode || false;
-    }
-    
-    modal.style.display = 'block';
-}
+        function openPinModal() {
+            const modal = document.getElementById('pinModal');
+            const userInfo = document.getElementById('pinUserInfo');
+            const form = document.getElementById('pinForm');
+            
+            if (!currentUser) {
+                userInfo.innerHTML = '<strong>Bitte zuerst Benutzer auswählen</strong>';
+                form.style.display = 'none';
+            } else {
+                userInfo.innerHTML = `
+                    <strong>${currentUser.first_name} ${currentUser.last_name}</strong><br>
+                    <small>Aktuelle PIN: ${currentUser.user_pin ? '****' : 'Nicht gesetzt'}</small>
+                `;
+                
+                form.style.display = 'block';
+                document.getElementById('newPin').value = '';
+                document.getElementById('confirmPin').value = '';
+                document.getElementById('pinForNameSearch').checked = currentUser.pin_require_for_name_search || false;
+                document.getElementById('pinForBarcode').checked = currentUser.pin_require_for_barcode || false;
+            }
+            
+            modal.style.display = 'block';
+        }
         
         function closeModal(modalId) {
             document.getElementById(modalId).style.display = 'none';
@@ -1171,86 +1179,76 @@ function openPinModal() {
             }
         }
 
- async function savePinSettings() {
-    if (!currentUser) {
-        showStatus('Bitte zuerst Benutzer auswählen', 'error');
-        return;
-    }
-
-    const newPin = document.getElementById('newPin').value;
-    const confirmPin = document.getElementById('confirmPin').value;
-    const pinForNameSearch = document.getElementById('pinForNameSearch').checked;
-    const pinForBarcode = document.getElementById('pinForBarcode').checked;
-
-    if (newPin && newPin !== confirmPin) {
-        showStatus('PINs stimmen nicht überein', 'error');
-        return;
-    }
-
-    if (newPin && (newPin.length !== 4 || !/^\d{4}$/.test(newPin))) {
-        showStatus('PIN muss genau 4 Ziffern enthalten', 'error');
-        return;
-    }
-
-    try {
-        const updateData = {
-            ...currentUser,
-            user_pin: newPin || null,
-            pin_require_for_name_search: pinForNameSearch,
-            pin_require_for_barcode: pinForBarcode
-        };
-
-        const updatedUser = await apiCall(`/api/users/${currentUser.id}`, {
-            method: 'PUT',
-            body: JSON.stringify(updateData)
-        });
-
-        currentUser.user_pin = updateData.user_pin;
-        currentUser.pin_require_for_name_search = updateData.pin_require_for_name_search;
-        currentUser.pin_require_for_barcode = updateData.pin_require_for_barcode;
-        
-        showStatus('PIN-Einstellungen gespeichert', 'success');
-        closeModal('pinModal');
-        
-    } catch (error) {
-        showStatus('Fehler beim Speichern der PIN-Einstellungen', 'error');
-        console.error('PIN save error:', error);
-    }
-}
-
-            // PIN-Einstellungen speichern
-            if (!userPinSettings[currentUser.id]) {
-                userPinSettings[currentUser.id] = {};
+        async function savePinSettings() {
+            if (!currentUser) {
+                showStatus('Bitte zuerst Benutzer auswählen', 'error');
+                return;
             }
 
-            if (newPin) {
-                userPinSettings[currentUser.id].pin = newPin;
-            }
-            
-            userPinSettings[currentUser.id].requireForNameSearch = pinForNameSearch;
-            userPinSettings[currentUser.id].requireForBarcode = pinForBarcode;
+            const newPin = document.getElementById('newPin').value;
+            const confirmPin = document.getElementById('confirmPin').value;
+            const pinForNameSearch = document.getElementById('pinForNameSearch').checked;
+            const pinForBarcode = document.getElementById('pinForBarcode').checked;
 
-            savePinSettingsToStorage();
-            
-            showStatus('PIN-Einstellungen gespeichert', 'success');
-            closeModal('pinModal');
+            if (newPin && newPin !== confirmPin) {
+                showStatus('PINs stimmen nicht überein', 'error');
+                return;
+            }
+
+            if (newPin && (newPin.length !== 4 || !/^\d{4}$/.test(newPin))) {
+                showStatus('PIN muss genau 4 Ziffern enthalten', 'error');
+                return;
+            }
+
+            try {
+                const updateData = {
+                    ...currentUser,
+                    user_pin: newPin || null,
+                    pin_require_for_name_search: pinForNameSearch,
+                    pin_require_for_barcode: pinForBarcode
+                };
+
+                const updatedUser = await apiCall(`/api/users/${currentUser.id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(updateData)
+                });
+
+                // Update currentUser mit den neuen Daten
+                currentUser.user_pin = updateData.user_pin;
+                currentUser.pin_require_for_name_search = updateData.pin_require_for_name_search;
+                currentUser.pin_require_for_barcode = updateData.pin_require_for_barcode;
+                
+                // Update auch das users Array für konsistente Daten
+                const userIndex = users.findIndex(u => u.id === currentUser.id);
+                if (userIndex !== -1) {
+                    users[userIndex] = { ...users[userIndex], ...updateData };
+                }
+                
+                showStatus('PIN-Einstellungen gespeichert', 'success');
+                closeModal('pinModal');
+                
+            } catch (error) {
+                showStatus('Fehler beim Speichern der PIN-Einstellungen', 'error');
+                console.error('PIN save error:', error);
+            }
         }
 
-    function requiresPinCheck(user, isFromBarcode = false) {
-    if (!user.user_pin) {
-        return false;
-    }
-    
-    if (isFromBarcode && user.pin_require_for_barcode) {
-        return true;
-    }
-    
-    if (!isFromBarcode && user.pin_require_for_name_search) {
-        return true;
-    }
-    
-    return false;
-}
+        function requiresPinCheck(user, isFromBarcode = false) {
+            if (!user.user_pin) {
+                return false;
+            }
+            
+            if (isFromBarcode && user.pin_require_for_barcode) {
+                return true;
+            }
+            
+            if (!isFromBarcode && user.pin_require_for_name_search) {
+                return true;
+            }
+            
+            return false;
+        }
+
         function promptForPin(user, isFromBarcode = false) {
             pendingUserForPin = user;
             const modal = document.getElementById('pinInputModal');
@@ -1268,27 +1266,27 @@ function openPinModal() {
             setTimeout(() => pinInput.focus(), 100);
         }
 
-   function validatePin() {
-    if (!pendingUserForPin) return;
-    
-    const enteredPin = document.getElementById('pinInput').value;
-    
-    if (!pendingUserForPin.user_pin) {
-        showStatus('Keine PIN für diesen Benutzer gesetzt', 'error');
-        closeModal('pinInputModal');
-        return;
-    }
-    
-    if (enteredPin === pendingUserForPin.user_pin) {
-        showStatus('PIN korrekt - Benutzer ausgewählt', 'success');
-        selectUser(pendingUserForPin);
-        closeModal('pinInputModal');
-    } else {
-        showStatus('Falsche PIN', 'error');
-        document.getElementById('pinInput').value = '';
-        document.getElementById('pinInput').focus();
-    }
-}
+        function validatePin() {
+            if (!pendingUserForPin) return;
+            
+            const enteredPin = document.getElementById('pinInput').value;
+            
+            if (!pendingUserForPin.user_pin) {
+                showStatus('Keine PIN für diesen Benutzer gesetzt', 'error');
+                closeModal('pinInputModal');
+                return;
+            }
+            
+            if (enteredPin === pendingUserForPin.user_pin) {
+                showStatus('PIN korrekt - Benutzer ausgewählt', 'success');
+                selectUser(pendingUserForPin, true); // skipPinCheck = true
+                closeModal('pinInputModal');
+            } else {
+                showStatus('Falsche PIN', 'error');
+                document.getElementById('pinInput').value = '';
+                document.getElementById('pinInput').focus();
+            }
+        }
 
         // ============ USER FUNCTIONS ============
         
