@@ -1087,13 +1087,11 @@
             const cartItemsEl = document.getElementById('cartItems');
             const cartTotalEl = document.getElementById('cartTotal');
             const clearBtn = document.getElementById('clearBtn');
-            const manualBtn = document.getElementById('manualCheckoutBtn');
             
             if (cart.length === 0) {
                 cartItemsEl.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">Warenkorb ist leer</div>';
                 cartTotalEl.style.display = 'none';
                 clearBtn.disabled = true;
-                manualBtn.disabled = true;
                 updateWorkflowSteps();
                 return;
             }
