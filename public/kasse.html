@@ -35,13 +35,13 @@
         .header h1 {
             text-align: center;
             color: #2d3748;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
             font-size: 1.8em;
         }
 
-        /* Status-Messages direkt unter dem Titel */
+        /* Kompaktere Status-Messages */
         .status-messages {
-            margin-bottom: 15px;
+            margin-bottom: 5px;
         }
 
         .offline-indicator {
@@ -70,43 +70,69 @@
         .status-message.info { background: #bee3f8; color: #1a202c; border-left: 4px solid #3182ce; }
         .status-message.loading { background: #faf5ff; color: #1a202c; border-left: 4px solid #9f7aea; }
 
-        .header-grid {
+        .header-main {
             display: grid;
-            grid-template-columns: 1fr 250px;
+            grid-template-columns: 1fr auto 150px;
             gap: 15px;
-            align-items: stretch;
+            align-items: start;
+            margin-bottom: 8px;
         }
 
         .scanner-pin-area {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
         }
 
-        .scanner-row {
+        .scanner-status-row {
             display: flex;
-            gap: 10px;
-            align-items: stretch;
+            gap: 15px;
+            align-items: center;
         }
 
-        .scanner-input-container {
+        .scanner-status {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 0.9em;
+            font-weight: 600;
+            flex: 0 0 auto;
+        }
+
+        .scanner-status.user-mode {
+            background: linear-gradient(135deg, #ed8936, #dd6b20);
+            color: white;
+        }
+
+        .status-messages-inline {
             flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+            min-width: 0;
         }
 
-        .pin-button-container {
-            width: 120px;
+        .workflow-steps {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 4px;
+            justify-content: space-between;
+            height: 100%;
         }
 
-        .user-info-section {
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
+        .workflow-step {
+            padding: 6px 8px;
+            border-radius: 6px;
+            font-size: 0.8em;
+            font-weight: 600;
+            background: #e2e8f0;
+            color: #4a5568;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .workflow-step.active {
+            background: #667eea;
+            color: white;
         }
 
         .input-container {
@@ -233,31 +259,30 @@
             color: #666;
         }
 
-        /* Kompakte Workflow-Hilfe */
-        .workflow-help {
-            background: #f0f8ff;
-            border: 2px dashed #667eea;
-            border-radius: 10px;
-            padding: 12px;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-
-        .workflow-step {
+        .scanner-row {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            margin: 8px 0;
-            font-size: 1em;
+            gap: 10px;
+            align-items: stretch;
         }
 
-        .workflow-step.active {
-            background: #667eea;
-            color: white;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-weight: bold;
+        .scanner-input-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .pin-button-container {
+            width: 120px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .user-info-section {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
         }
 
         .main-content {
@@ -635,18 +660,18 @@
         <div class="header">
             <h1>🎮 Saarcade Kassensystem</h1>
             
-            <!-- Status-Messages direkt unter dem Titel -->
-            <div class="status-messages">
-                <div class="offline-indicator" id="offlineIndicator">
-                    ⚠️ Keine Verbindung zur Datenbank
-                </div>
-                <div class="status-message" id="statusMessage"></div>
-            </div>
-            
-            <div class="header-grid">
+            <div class="header-main">
                 <div class="scanner-pin-area">
-                    <div class="scanner-status" id="scannerStatus">
-                        🔍 Bereit für Barcode-Scanner
+                    <div class="scanner-status-row">
+                        <div class="scanner-status" id="scannerStatus">
+                            🔍 Bereit für Barcode-Scanner
+                        </div>
+                        <div class="status-messages-inline">
+                            <div class="offline-indicator" id="offlineIndicator" style="display: none;">
+                                ⚠️ Keine Verbindung zur Datenbank
+                            </div>
+                            <div class="status-message" id="statusMessage"></div>
+                        </div>
                     </div>
                     <div class="scanner-row">
                         <div class="scanner-input-container">
@@ -669,19 +694,11 @@
                         <div class="user-balance">Bitte scannen</div>
                     </div>
                 </div>
-            </div>
-
-            <div class="workflow-help">
-                <div style="display: flex; justify-content: space-between; gap: 6px;">
-                    <div style="flex: 1; text-align: center; padding: 6px 8px; border-radius: 6px; font-size: 0.85em; font-weight: 600; background: #667eea; color: white; transition: all 0.3s ease;" id="step1">
-                        1️⃣ Mitglied scannen
-                    </div>
-                    <div style="flex: 1; text-align: center; padding: 6px 8px; border-radius: 6px; font-size: 0.85em; font-weight: 600; background: #e2e8f0; color: #4a5568; transition: all 0.3s ease;" id="step2">
-                        2️⃣ Getränke wählen
-                    </div>
-                    <div style="flex: 1; text-align: center; padding: 6px 8px; border-radius: 6px; font-size: 0.85em; font-weight: 600; background: #e2e8f0; color: #4a5568; transition: all 0.3s ease;" id="step3">
-                        3️⃣ Checkout
-                    </div>
+                
+                <div class="workflow-steps">
+                    <div class="workflow-step" id="step1">1️⃣ Mitglied</div>
+                    <div class="workflow-step" id="step2">2️⃣ Getränke</div>
+                    <div class="workflow-step" id="step3">3️⃣ Checkout</div>
                 </div>
             </div>
         </div>
