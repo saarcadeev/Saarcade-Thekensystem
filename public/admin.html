@@ -890,6 +890,7 @@
         let sepaUsers = [];
         let selectedUsers = [];
         let selectedProducts = [];
+        let currentProductImage = null; // Neue globale Variable
         let specialBarcodes = {
             checkout: 'CHECKOUT123',
             cancel: 'CANCEL123',
@@ -1314,6 +1315,7 @@
                     
                     // Foto anzeigen falls vorhanden
                     if (product.image_url) {
+                        currentProductImage = product.image_url;  // Diese Zeile hinzufügen
                         showPhotoPreview(product.image_url);
                     }
                 }
@@ -1390,6 +1392,7 @@
                 min_stock: parseInt(document.getElementById('productMinStock').value) || 0,
                 barcode: document.getElementById('productBarcode').value.trim() || null,
                 available: document.getElementById('productAvailable').checked
+                image_url: currentProductImage || null  // Diese Zeile hinzufügen
             };
             
             if (!productData.name || productData.member_price <= 0 || productData.guest_price <= 0) {
@@ -1482,26 +1485,27 @@
 
         // ============ PHOTO UPLOAD FUNCTIONS ============
         
-        function handlePhotoUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            
-            if (file.size > 2 * 1024 * 1024) {
-                showAlert('Datei zu groß. Maximum 2MB erlaubt.', 'error');
-                return;
-            }
-            
-            if (!file.type.startsWith('image/')) {
-                showAlert('Nur Bilddateien erlaubt.', 'error');
-                return;
-            }
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                showPhotoPreview(e.target.result);
-            };
-            reader.readAsDataURL(file);
-        }
+ function handlePhotoUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    if (file.size > 2 * 1024 * 1024) {
+        showAlert('Datei zu groß. Maximum 2MB erlaubt.', 'error');
+        return;
+    }
+    
+    if (!file.type.startsWith('image/')) {
+        showAlert('Nur Bilddateien erlaubt.', 'error');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        currentProductImage = e.target.result; // Diese Zeile hinzufügen
+        showPhotoPreview(currentProductImage);  // war e.target.result
+    };
+    reader.readAsDataURL(file);
+}
 
         function showPhotoPreview(imageSrc) {
             const preview = document.getElementById('photoPreview');
@@ -1509,6 +1513,7 @@
         }
 
         function resetPhotoPreview() {
+            currentProductImage = null; // Diese Zeile hinzufügen
             const preview = document.getElementById('photoPreview');
             preview.innerHTML = `
                 <p>📷 Klicken um Foto hochzuladen</p>
