@@ -1585,21 +1585,21 @@ function handlePhotoUpload(event) {
             });
         }
 
-        async function loadSpecialBarcodes() {
-            try {
-                const settings = await apiCall('/api/settings');
-                
-                document.getElementById('checkoutBarcode').value = settings.checkout_barcode || 'CHECKOUT123';
-                document.getElementById('cancelBarcode').value = settings.cancel_barcode || 'CANCEL123';
-                document.getElementById('resetBarcode').value = settings.reset_barcode || 'RESET123';
-            } catch (error) {
-                console.error('Settings load error:', error);
-                // Fallback auf Standard-Werte
-                document.getElementById('checkoutBarcode').value = 'CHECKOUT123';
-                document.getElementById('cancelBarcode').value = 'CANCEL123';
-                document.getElementById('resetBarcode').value = 'RESET123';
-            }
-        }
+async function loadSpecialBarcodes() {
+    try {
+        const settings = await apiCall('/api/settings');
+        
+        document.getElementById('checkoutBarcode').value = settings.checkout_barcode || 'CHECKOUT123';
+        document.getElementById('cancelBarcode').value = settings.cancel_barcode || 'CANCEL123';
+        document.getElementById('resetBarcode').value = settings.reset_barcode || 'RESET123';
+    } catch (error) {
+        console.warn('Settings konnten nicht geladen werden (Tabelle existiert möglicherweise nicht):', error);
+        // Fallback auf Standard-Werte
+        document.getElementById('checkoutBarcode').value = 'CHECKOUT123';
+        document.getElementById('cancelBarcode').value = 'CANCEL123';
+        document.getElementById('resetBarcode').value = 'RESET123';
+    }
+}
 
         function printBarcodes() {
             const barcodes = [
