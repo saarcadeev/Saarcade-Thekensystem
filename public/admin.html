@@ -1592,8 +1592,10 @@ async function loadSpecialBarcodes() {
         document.getElementById('checkoutBarcode').value = settings.checkout_barcode || 'CHECKOUT123';
         document.getElementById('cancelBarcode').value = settings.cancel_barcode || 'CANCEL123';
         document.getElementById('resetBarcode').value = settings.reset_barcode || 'RESET123';
+        
+        console.log('Settings erfolgreich geladen');
     } catch (error) {
-        console.warn('Settings konnten nicht geladen werden (Tabelle existiert möglicherweise nicht):', error);
+        console.warn('Settings konnten nicht geladen werden:', error);
         // Fallback auf Standard-Werte
         document.getElementById('checkoutBarcode').value = 'CHECKOUT123';
         document.getElementById('cancelBarcode').value = 'CANCEL123';
