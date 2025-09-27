@@ -283,21 +283,19 @@ module.exports = async (req, res) => {
             }
 
             // Produkt erstellen
-  // Produkt erstellen
-            const { data, error } = await supabase
-                .from('products')
-                .insert([{
-                    name: productData.name,
-                    category: productData.category || 'sonstiges',
-                    image: productData.image || '📦',
-                    image_url: productData.image_url || null,
-                    member_price: productData.member_price,
-                    guest_price: productData.guest_price,
-                    stock: productData.stock || 0,
-                    min_stock: productData.min_stock || 5,
-                    barcode: productData.barcode || null,
-                    available: productData.available !== false
-                }])
+const { data, error } = await supabase
+    .from('products')
+    .insert([{
+        name: productData.name,
+        category: productData.category || 'sonstiges',
+        image: productData.image || '📦',
+        member_price: productData.member_price,
+        guest_price: productData.guest_price,
+        stock: productData.stock || 0,
+        min_stock: productData.min_stock || 5,
+        barcode: productData.barcode || null,
+        available: productData.available !== false
+    }])
                 .select()
                 .single();
             
@@ -305,6 +303,21 @@ module.exports = async (req, res) => {
             return res.status(201).json(data);
         }
 
+// Produkt aktualisieren
+const { data, error } = await supabase
+    .from('products')
+    .update({
+        name: productData.name,
+        category: productData.category,
+        image: productData.image,
+        member_price: productData.member_price,
+        guest_price: productData.guest_price,
+        stock: productData.stock,
+        min_stock: productData.min_stock,
+        barcode: productData.barcode,
+        available: productData.available
+    })
+        
         // PUT /products/{id} - Produkt bearbeiten
         if (pathParts[0] === 'products' && pathParts[1] && method === 'PUT') {
             const productId = parseInt(pathParts[1]);
