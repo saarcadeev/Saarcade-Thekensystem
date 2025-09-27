@@ -211,7 +211,7 @@
             border-radius: 8px;
             max-height: 300px;
             overflow-y: auto;
-            z-index: 2000;
+            z-index: 9999;
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
             margin-top: 5px;
         }
@@ -1200,14 +1200,18 @@
             }
             
             modal.style.display = 'block';
-            
-            // Fokus korrekt setzen nach kurzer Verzögerung
-            setTimeout(() => {
-                if (currentUser) {
-                    document.getElementById('newPin').focus();
-                }
-            }, 150);
-        }
+               
+    // Ersetze die letzte setTimeout-Sektion mit:
+    if (currentUser) {
+        setTimeout(() => {
+            const pinField = document.getElementById('newPin');
+            if (pinField) {
+                pinField.focus();
+                pinField.select();
+            }
+        }, 300);  // war 150
+    }
+}
         
         function closeModal(modalId) {
             document.getElementById(modalId).style.display = 'none';
@@ -1301,9 +1305,13 @@
             pinInput.value = '';
             modal.style.display = 'block';
             
-            setTimeout(() => pinInput.focus(), 100);
-        }
-
+      // Ersetze die letzte setTimeout-Sektion mit:
+    setTimeout(() => {
+        pinInput.focus();
+        pinInput.select();  // neu hinzugefügt
+    }, 300);  // war 100
+}
+        
         function validatePin() {
             if (!pendingUserForPin) return;
             
