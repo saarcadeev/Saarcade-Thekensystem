@@ -1079,26 +1079,38 @@
             }
         }
 
-        async function loadProducts() {
-            try {
-                const loadBtn = document.getElementById('loadProductsBtn');
-                loadBtn.disabled = true;
-                loadBtn.textContent = '⏳ Lade...';
-                
-                products = await apiCall('/api/products');
-                renderProducts();
-                showAlert(`${products.length} Produkte erfolgreich geladen`, 'success');
-                
-            } catch (error) {
-                console.error('Fehler beim Laden der Produkte:', error);
-                showAlert('Fehler beim Laden der Produktdaten', 'error');
-            } finally {
-                const loadBtn = document.getElementById('loadProductsBtn');
-                loadBtn.disabled = false;
-                loadBtn.textContent = '🔄 Neu laden';
-            }
-        }
-
+async function loadProducts() {
+    try {
+        const loadBtn = document.getElementById('loadProductsBtn');
+        loadBtn.disabled = true;
+        loadBtn.textContent = '⏳ Lade...';
+        
+        products = await apiCall('/api/products');
+        console.log('=== LOAD PRODUCTS DEBUG ===');
+        console.log('Anzahl Produkte:', products.length);
+        
+        // Debug: Zeige erste 3 Produkte mit ihren image_url Feldern
+        products.slice(0, 3).forEach((product, index) => {
+            console.log(`Produkt ${index + 1}:`, {
+                id: product.id,
+                name: product.name,
+                image: product.image,
+                image_url: product.image_url ? 'VORHANDEN (' + product.image_url.substring(0, 50) + '...)' : 'NICHT VORHANDEN'
+            });
+        });
+        
+        renderProducts();
+        showAlert(`${products.length} Produkte erfolgreich geladen`, 'success');
+        
+    } catch (error) {
+        console.error('Fehler beim Laden der Produkte:', error);
+        showAlert('Fehler beim Laden der Produktdaten', 'error');
+    } finally {
+        const loadBtn = document.getElementById('loadProductsBtn');
+        loadBtn.disabled = false;
+        loadBtn.textContent = '🔄 Neu laden';
+    }
+}
         async function loadTransactions() {
             try {
                 const loadBtn = document.getElementById('loadTransactionsBtn');
@@ -1307,46 +1319,54 @@
             modal.style.display = 'block';
         }
 
-        function openProductModal(productId = null) {
-            const modal = document.getElementById('productModal');
-            const title = document.getElementById('productModalTitle');
-            const form = document.getElementById('productForm');
+function openProductModal(productId = null) {
+    const modal = document.getElementById('productModal');
+    const title = document.getElementById('productModalTitle');
+    const form = document.getElementById('productForm');
+    
+    form.reset();
+    document.getElementById('productId').value = '';
+    resetPhotoPreview();
+    
+    if (productId) {
+        const product = products.find(p => p.id === productId);
+        if (product) {
+            console.log('=== OPEN PRODUCT MODAL DEBUG ===');
+            console.log('Produkt:', product.name);
+            console.log('product.image_url:', product.image_url ? 'VORHANDEN' : 'NICHT VORHANDEN');
             
-            form.reset();
-            document.getElementById('productId').value = '';
-            resetPhotoPreview();
+            title.textContent = 'Produkt bearbeiten';
+            document.getElementById('productId').value = product.id;
+            document.getElementById('productName').value = product.name;
+            document.getElementById('productCategory').value = product.category;
+            document.getElementById('productEmoji').value = product.image || '';
+            document.getElementById('productMemberPrice').value = product.member_price.toFixed(2);
+            document.getElementById('productGuestPrice').value = product.guest_price.toFixed(2);
+            document.getElementById('productStock').value = product.stock;
+            document.getElementById('productMinStock').value = product.min_stock || 5;
+            document.getElementById('productBarcode').value = product.barcode || '';
+            document.getElementById('productAvailable').checked = product.available;
             
-            if (productId) {
-                const product = products.find(p => p.id === productId);
-                if (product) {
-                    title.textContent = 'Produkt bearbeiten';
-                    document.getElementById('productId').value = product.id;
-                    document.getElementById('productName').value = product.name;
-                    document.getElementById('productCategory').value = product.category;
-                    document.getElementById('productEmoji').value = product.image || '';
-                    document.getElementById('productMemberPrice').value = product.member_price.toFixed(2);
-                    document.getElementById('productGuestPrice').value = product.guest_price.toFixed(2);
-                    document.getElementById('productStock').value = product.stock;
-                    document.getElementById('productMinStock').value = product.min_stock || 5;
-                    document.getElementById('productBarcode').value = product.barcode || '';
-                    document.getElementById('productAvailable').checked = product.available;
-                    
-                    // Foto anzeigen falls vorhanden
-                    if (product.image_url) {
-                        currentProductImage = product.image_url;  // Diese Zeile hinzufügen
-                        showPhotoPreview(product.image_url);
-                    }
-                }
+            // Foto anzeigen falls vorhanden
+            if (product.image_url) {
+                console.log('Setze currentProductImage von Datenbank');
+                currentProductImage = product.image_url;
+                showPhotoPreview(product.image_url);
             } else {
-                title.textContent = 'Neues Produkt hinzufügen';
-                document.getElementById('productStock').value = '0';
-                document.getElementById('productMinStock').value = '5';
-                document.getElementById('productAvailable').checked = true;
+                console.log('Kein image_url in Datenbank gefunden');
+                currentProductImage = null;
             }
-            
-            modal.style.display = 'block';
         }
-
+    } else {
+        title.textContent = 'Neues Produkt hinzufügen';
+        document.getElementById('productStock').value = '0';
+        document.getElementById('productMinStock').value = '5';
+        document.getElementById('productAvailable').checked = true;
+        currentProductImage = null;
+    }
+    
+    modal.style.display = 'block';
+}
         function closeModal(modalId) {
             document.getElementById(modalId).style.display = 'none';
         }
@@ -1413,37 +1433,49 @@ async function saveProduct() {
         image_url: currentProductImage || null
     };
     
+    // Debug-Ausgaben
+    console.log('=== SAVE PRODUCT DEBUG ===');
+    console.log('currentProductImage:', currentProductImage ? 'VORHANDEN (' + currentProductImage.substring(0, 50) + '...)' : 'NULL');
+    console.log('productData.image_url:', productData.image_url ? 'VORHANDEN' : 'NULL');
+    console.log('productId:', productId);
+    
     if (!productData.name || productData.member_price <= 0 || productData.guest_price <= 0) {
         showAlert('Bitte alle Pflichtfelder korrekt ausfüllen', 'error');
         return;
     }
     
     try {
+        let result;
         if (productId) {
-            await apiCall(`/api/products/${productId}`, {
+            console.log('UPDATE Produkt ID:', productId);
+            result = await apiCall(`/api/products/${productId}`, {
                 method: 'PUT',
                 body: JSON.stringify(productData)
             });
-            showAlert('Produkt erfolgreich aktualisiert - Modal bleibt offen', 'success');
+            console.log('UPDATE Antwort:', result);
+            showAlert('Produkt erfolgreich aktualisiert', 'success');
         } else {
-            const savedProduct = await apiCall('/api/products', {
+            console.log('CREATE neues Produkt');
+            result = await apiCall('/api/products', {
                 method: 'POST',
                 body: JSON.stringify(productData)
             });
-            showAlert('Neues Produkt erfolgreich hinzugefügt - Modal bleibt offen', 'success');
+            console.log('CREATE Antwort:', result);
+            showAlert('Neues Produkt erfolgreich hinzugefügt', 'success');
             
-            // Bei neuem Produkt: ID setzen damit weitere Änderungen Updates werden
-            document.getElementById('productId').value = savedProduct.id;
+            // Bei neuem Produkt: ID setzen
+            document.getElementById('productId').value = result.id;
             document.getElementById('productModalTitle').textContent = 'Produkt bearbeiten';
         }
         
-        // Modal NICHT schließen, nur Daten neu laden
-        loadProducts();
+        // Produkte neu laden und debuggen
+        console.log('Lade Produkte neu...');
+        await loadProducts();
         loadDashboard();
         
     } catch (error) {
+        console.error('SAVE ERROR:', error);
         showAlert('Fehler beim Speichern des Produkts', 'error');
-        console.error('Save product error:', error);
     }
 }
 
