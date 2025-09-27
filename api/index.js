@@ -260,130 +260,115 @@ module.exports = async (req, res) => {
             return res.status(200).json(data);
         }
 
-        // POST /products - Neues Produkt erstellen
-        if (path === '/products' && method === 'POST') {
-            const productData = req.body;
-            
-            // Validierung
-            if (!productData.name || !productData.member_price || !productData.guest_price) {
-                return res.status(400).json({ error: 'Pflichtfelder fehlen: name, member_price, guest_price' });
-            }
+// POST /products - Neues Produkt erstellen
+if (path === '/products' && method === 'POST') {
+    const productData = req.body;
+    
+    // Validierung
+    if (!productData.name || !productData.member_price || !productData.guest_price) {
+        return res.status(400).json({ error: 'Pflichtfelder fehlen: name, member_price, guest_price' });
+    }
 
-            // Barcode-Eindeutigkeit prüfen (falls angegeben)
-            if (productData.barcode) {
-                const { data: existingProduct } = await supabase
-                    .from('products')
-                    .select('id')
-                    .eq('barcode', productData.barcode)
-                    .single();
+    // Barcode-Eindeutigkeit prüfen (falls angegeben)
+    if (productData.barcode) {
+        const { data: existingProduct } = await supabase
+            .from('products')
+            .select('id')
+            .eq('barcode', productData.barcode)
+            .single();
 
-                if (existingProduct) {
-                    return res.status(400).json({ error: 'Barcode bereits vergeben' });
-                }
-            }
-
-            // Produkt erstellen
-const { data, error } = await supabase
-    .from('products')
-    .insert([{
-        name: productData.name,
-        category: productData.category || 'sonstiges',
-        image: productData.image || '📦',
-        member_price: productData.member_price,
-        guest_price: productData.guest_price,
-        stock: productData.stock || 0,
-        min_stock: productData.min_stock || 5,
-        barcode: productData.barcode || null,
-        available: productData.available !== false
-    }])
-                .select()
-                .single();
-            
-            if (error) throw error;
-            return res.status(201).json(data);
+        if (existingProduct) {
+            return res.status(400).json({ error: 'Barcode bereits vergeben' });
         }
+    }
 
-// Produkt aktualisieren
-const { data, error } = await supabase
-    .from('products')
-    .update({
-        name: productData.name,
-        category: productData.category,
-        image: productData.image,
-        member_price: productData.member_price,
-        guest_price: productData.guest_price,
-        stock: productData.stock,
-        min_stock: productData.min_stock,
-        barcode: productData.barcode,
-        available: productData.available
-    })
-        
-        // PUT /products/{id} - Produkt bearbeiten
-        if (pathParts[0] === 'products' && pathParts[1] && method === 'PUT') {
-            const productId = parseInt(pathParts[1]);
-            const productData = req.body;
-            
-            if (isNaN(productId)) {
-                return res.status(400).json({ error: 'Ungültige Produkt-ID' });
-            }
+    // Produkt erstellen
+    const { data, error } = await supabase
+        .from('products')
+        .insert([{
+            name: productData.name,
+            category: productData.category || 'sonstiges',
+            image: productData.image || '📦',
+            member_price: productData.member_price,
+            guest_price: productData.guest_price,
+            stock: productData.stock || 0,
+            min_stock: productData.min_stock || 5,
+            barcode: productData.barcode || null,
+            available: productData.available !== false
+        }])
+        .select()
+        .single();
+    
+    if (error) throw error;
+    return res.status(201).json(data);
+}
 
-            // Barcode-Eindeutigkeit prüfen (ausgenommen aktuelles Produkt)
-            if (productData.barcode) {
-                const { data: existingProduct } = await supabase
-                    .from('products')
-                    .select('id')
-                    .eq('barcode', productData.barcode)
-                    .neq('id', productId)
-                    .single();
+// PUT /products/{id} - Produkt bearbeiten
+if (pathParts[0] === 'products' && pathParts[1] && method === 'PUT') {
+    const productId = parseInt(pathParts[1]);
+    const productData = req.body;
+    
+    if (isNaN(productId)) {
+        return res.status(400).json({ error: 'Ungültige Produkt-ID' });
+    }
 
-                if (existingProduct) {
-                    return res.status(400).json({ error: 'Barcode bereits vergeben' });
-                }
-            }
+    // Barcode-Eindeutigkeit prüfen (ausgenommen aktuelles Produkt)
+    if (productData.barcode) {
+        const { data: existingProduct } = await supabase
+            .from('products')
+            .select('id')
+            .eq('barcode', productData.barcode)
+            .neq('id', productId)
+            .single();
 
-            const { data, error } = await supabase
-                .from('products')
-                .update({
-                    name: productData.name,
-                    category: productData.category,
-                    image: productData.image,
-                    member_price: productData.member_price,
-                    guest_price: productData.guest_price,
-                    stock: productData.stock,
-                    min_stock: productData.min_stock,
-                    barcode: productData.barcode,
-                    available: productData.available
-                })
-                .eq('id', productId)
-                .select()
-                .single();
-            
-            if (error) {
-                if (error.code === 'PGRST116') {
-                    return res.status(404).json({ error: 'Produkt nicht gefunden' });
-                }
-                throw error;
-            }
-            
-            return res.status(200).json(data);
+        if (existingProduct) {
+            return res.status(400).json({ error: 'Barcode bereits vergeben' });
         }
+    }
 
-        // DELETE /products/{id} - Produkt löschen
-        if (pathParts[0] === 'products' && pathParts[1] && method === 'DELETE') {
-            const productId = parseInt(pathParts[1]);
-            
-            if (isNaN(productId)) {
-                return res.status(400).json({ error: 'Ungültige Produkt-ID' });
-            }
-
-            const { error } = await supabase
-                .from('products')
-                .delete()
-                .eq('id', productId);
-            
-            if (error) throw error;
-            return res.status(200).json({ message: 'Produkt erfolgreich gelöscht' });
+    const { data, error } = await supabase
+        .from('products')
+        .update({
+            name: productData.name,
+            category: productData.category,
+            image: productData.image,
+            member_price: productData.member_price,
+            guest_price: productData.guest_price,
+            stock: productData.stock,
+            min_stock: productData.min_stock,
+            barcode: productData.barcode,
+            available: productData.available
+        })
+        .eq('id', productId)
+        .select()
+        .single();
+    
+    if (error) {
+        if (error.code === 'PGRST116') {
+            return res.status(404).json({ error: 'Produkt nicht gefunden' });
         }
+        throw error;
+    }
+    
+    return res.status(200).json(data);
+}
+
+// DELETE /products/{id} - Produkt löschen
+if (pathParts[0] === 'products' && pathParts[1] && method === 'DELETE') {
+    const productId = parseInt(pathParts[1]);
+    
+    if (isNaN(productId)) {
+        return res.status(400).json({ error: 'Ungültige Produkt-ID' });
+    }
+
+    const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', productId);
+    
+    if (error) throw error;
+    return res.status(200).json({ message: 'Produkt erfolgreich gelöscht' });
+}
 
         // ============ TRANSACTIONS ENDPUNKTE ============
         
