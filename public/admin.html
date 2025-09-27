@@ -1529,7 +1529,7 @@ async function saveProduct() {
 
         // ============ PHOTO UPLOAD FUNCTIONS ============
         
-function handlePhotoUpload(event) {
+function function handlePhotoUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
     
@@ -1543,27 +1543,60 @@ function handlePhotoUpload(event) {
         return;
     }
     
+    // Bild komprimieren
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    img.onload = function() {
+        // Maximale Größe festlegen
+        const maxWidth = 400;
+        const maxHeight = 400;
+        
+        let { width, height } = img;
+        
+        // Proportionen beibehalten und verkleinern falls nötig
+        if (width > height) {
+            if (width > maxWidth) {
+                height = (height * maxWidth) / width;
+                width = maxWidth;
+            }
+        } else {
+            if (height > maxHeight) {
+                width = (width * maxHeight) / height;
+                height = maxHeight;
+            }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Bild auf Canvas zeichnen
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Als komprimiertes Base64 exportieren
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7); // 70% Qualität
+        
+        console.log('Original Größe:', file.size, 'bytes');
+        console.log('Komprimierte Base64 Größe:', compressedBase64.length, 'characters');
+        
+        currentProductImage = compressedBase64;
+        showPhotoPreview(compressedBase64);
+        
+        showAlert('Bild erfolgreich hochgeladen und komprimiert', 'success');
+    };
+    
+    img.onerror = function() {
+        showAlert('Fehler beim Laden des Bildes', 'error');
+    };
+    
+    // FileReader zum Laden des Bildes
     const reader = new FileReader();
     reader.onload = function(e) {
-        currentProductImage = e.target.result;
-        showPhotoPreview(currentProductImage);
+        img.src = e.target.result;
     };
     reader.readAsDataURL(file);
 }
-
-        function showPhotoPreview(imageSrc) {
-            const preview = document.getElementById('photoPreview');
-            preview.innerHTML = `<img src="${imageSrc}" class="photo-preview" alt="Produktfoto">`;
-        }
-
-        function resetPhotoPreview() {
-            currentProductImage = null; // Diese Zeile hinzufügen
-            const preview = document.getElementById('photoPreview');
-            preview.innerHTML = `
-                <p>📷 Klicken um Foto hochzuladen</p>
-                <p style="font-size: 0.8em; color: #666;">JPG, PNG bis 2MB</p>
-            `;
-        }
 
         // ============ BARCODE FUNCTIONS ============
         
