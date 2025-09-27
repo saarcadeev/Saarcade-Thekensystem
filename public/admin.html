@@ -1380,52 +1380,50 @@
             }
         }
 
-        async function saveProduct() {
-            const productId = document.getElementById('productId').value;
-            const productData = {
-                name: document.getElementById('productName').value.trim(),
-                category: document.getElementById('productCategory').value,
-                image: document.getElementById('productEmoji').value.trim() || '📦',
-                member_price: parseFloat(document.getElementById('productMemberPrice').value) || 0,
-                guest_price: parseFloat(document.getElementById('productGuestPrice').value) || 0,
-                stock: parseInt(document.getElementById('productStock').value) || 0,
-                min_stock: parseInt(document.getElementById('productMinStock').value) || 0,
-                barcode: document.getElementById('productBarcode').value.trim() || null,
-                available: document.getElementById('productAvailable').checked
-                image_url: currentProductImage || null  // Diese Zeile hinzufügen
-            };
-            
-            if (!productData.name || productData.member_price <= 0 || productData.guest_price <= 0) {
-                showAlert('Bitte alle Pflichtfelder korrekt ausfüllen', 'error');
-                return;
-            }
-            
-            try {
-                if (productId) {
-                    // Update existierendes Produkt
-                    await apiCall(`/api/products/${productId}`, {
-                        method: 'PUT',
-                        body: JSON.stringify(productData)
-                    });
-                    showAlert('Produkt erfolgreich aktualisiert', 'success');
-                } else {
-                    // Neues Produkt
-                    await apiCall('/api/products', {
-                        method: 'POST',
-                        body: JSON.stringify(productData)
-                    });
-                    showAlert('Neues Produkt erfolgreich hinzugefügt', 'success');
-                }
-                
-                closeModal('productModal');
-                loadProducts();
-                loadDashboard();
-                
-            } catch (error) {
-                showAlert('Fehler beim Speichern des Produkts', 'error');
-                console.error('Save product error:', error);
-            }
+async function saveProduct() {
+    const productId = document.getElementById('productId').value;
+    const productData = {
+        name: document.getElementById('productName').value.trim(),
+        category: document.getElementById('productCategory').value,
+        image: document.getElementById('productEmoji').value.trim() || '📦',
+        member_price: parseFloat(document.getElementById('productMemberPrice').value) || 0,
+        guest_price: parseFloat(document.getElementById('productGuestPrice').value) || 0,
+        stock: parseInt(document.getElementById('productStock').value) || 0,
+        min_stock: parseInt(document.getElementById('productMinStock').value) || 0,
+        barcode: document.getElementById('productBarcode').value.trim() || null,
+        available: document.getElementById('productAvailable').checked,
+        image_url: currentProductImage || null
+    };
+    
+    if (!productData.name || productData.member_price <= 0 || productData.guest_price <= 0) {
+        showAlert('Bitte alle Pflichtfelder korrekt ausfüllen', 'error');
+        return;
+    }
+    
+    try {
+        if (productId) {
+            await apiCall(`/api/products/${productId}`, {
+                method: 'PUT',
+                body: JSON.stringify(productData)
+            });
+            showAlert('Produkt erfolgreich aktualisiert', 'success');
+        } else {
+            await apiCall('/api/products', {
+                method: 'POST',
+                body: JSON.stringify(productData)
+            });
+            showAlert('Neues Produkt erfolgreich hinzugefügt', 'success');
         }
+        
+        closeModal('productModal');
+        loadProducts();
+        loadDashboard();
+        
+    } catch (error) {
+        showAlert('Fehler beim Speichern des Produkts', 'error');
+        console.error('Save product error:', error);
+    }
+}
 
         // ============ EDIT/DELETE FUNCTIONS ============
         
