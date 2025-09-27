@@ -1185,58 +1185,54 @@ async function loadProducts() {
             }).join('');
         }
 
-        function renderProducts() {
-            const tbody = document.querySelector('#productTable tbody');
-            selectedProducts = [];
-            updateSelectionInfo('products');
-            
-            if (products.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px; color: #666;">Keine Produktdaten verfügbar</td></tr>';
-                return;
-            }
-            
-            tbody.innerHTML = products.map(product => {
-                const stockColor = product.stock > 0 ? '#38a169' : '#e53e3e';
-                const availableIcon = product.available ? '✅' : '❌';
-
-                // Produktfoto-Status für neue Spalte
-                let photoStatus = '❌ Kein Foto';
-                let photoHtml = '';
-                if (product.image_url) {
-                photoStatus = '✅ Foto vorhanden';
-                photoHtml = `<img src="${product.image_url}" style="width: 40px; height: 40px; border-radius: 4px; object-fit: cover;" alt="${product.name}">`;
-                }
- 
-                // Verbesserte Produktbild-Logik für Icon-Spalte
-                let imageHtml;
-                if (product.image_url) {
-                    imageHtml = `<img src="${product.image_url}" style="width: 30px; height: 30px; border-radius: 4px; object-fit: cover;" alt="${product.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                               <div class="product-image" style="display: none;">${product.image || '📦'}</div>`;
-                } else if (product.image) {
-                    imageHtml = `<div class="product-image">${product.image}</div>`;
-                } else {
-                    imageHtml = `<div class="product-image">📦</div>`;
-                }
-                
-     return `
-        <tr>
-            <td class="checkbox-cell">
-                <input type="checkbox" value="${product.id}" onchange="toggleRowSelection(this, 'products')">
-            </td>
-            <td style="text-align: center;">
-                ${photoHtml ? photoHtml : photoStatus}
-            </td>
-            <td style="text-align: center;">${imageHtml}</td>
-            <td>${product.name}</td>
-            <td>${getCategoryText(product.category)}</td>
-            <td>${product.member_price.toFixed(2)}€</td>
-            <td>${product.guest_price.toFixed(2)}€</td>
-            <td style="color: ${stockColor}; font-weight: bold;">${product.stock}</td>
-            <td><code style="font-size: 0.8em;">${product.barcode || '-'}</code></td>
-        </tr>
-    `;
-}).join('');
+function renderProducts() {
+    const tbody = document.querySelector('#productTable tbody');
+    selectedProducts = [];
+    updateSelectionInfo('products');
+    
+    if (products.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 30px; color: #666;">Keine Produktdaten verfügbar</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = products.map(product => {
+        const stockColor = product.stock > 0 ? '#38a169' : '#e53e3e';
+        
+        // Produktfoto-Status
+        let photoStatus = '❌ Kein Foto';
+        let photoHtml = '';
+        let imageHtml;
+        
+        if (product.image && product.image.startsWith('data:image/')) {
+            // Base64-Bild vorhanden
+            photoStatus = '✅ Foto vorhanden';
+            photoHtml = `<img src="${product.image}" style="width: 40px; height: 40px; border-radius: 4px; object-fit: cover;" alt="${product.name}">`;
+            imageHtml = `<img src="${product.image}" style="width: 30px; height: 30px; border-radius: 4px; object-fit: cover;" alt="${product.name}">`;
+        } else {
+            // Emoji verwenden
+            const emoji = product.image || '📦';
+            imageHtml = `<div style="font-size: 1.5em;">${emoji}</div>`;
         }
+        
+        return `
+            <tr>
+                <td class="checkbox-cell">
+                    <input type="checkbox" value="${product.id}" onchange="toggleRowSelection(this, 'products')">
+                </td>
+                <td style="text-align: center;">
+                    ${photoHtml || photoStatus}
+                </td>
+                <td style="text-align: center;">${imageHtml}</td>
+                <td>${product.name}</td>
+                <td>${getCategoryText(product.category)}</td>
+                <td>${product.member_price.toFixed(2)}€</td>
+                <td>${product.guest_price.toFixed(2)}€</td>
+                <td style="color: ${stockColor}; font-weight: bold;">${product.stock}</td>
+                <td><code style="font-size: 0.8em;">${product.barcode || '-'}</code></td>
+            </tr>
+        `;
+    }).join('');
+}
 
         function renderTransactions() {
             const tbody = document.querySelector('#transactionTable tbody');
@@ -1333,13 +1329,12 @@ function openProductModal(productId = null) {
         if (product) {
             console.log('=== OPEN PRODUCT MODAL DEBUG ===');
             console.log('Produkt:', product.name);
-            console.log('product.image_url:', product.image_url ? 'VORHANDEN' : 'NICHT VORHANDEN');
+            console.log('product.image:', product.image ? product.image.substring(0, 50) + '...' : 'KEIN IMAGE');
             
             title.textContent = 'Produkt bearbeiten';
             document.getElementById('productId').value = product.id;
             document.getElementById('productName').value = product.name;
             document.getElementById('productCategory').value = product.category;
-            document.getElementById('productEmoji').value = product.image || '';
             document.getElementById('productMemberPrice').value = product.member_price.toFixed(2);
             document.getElementById('productGuestPrice').value = product.guest_price.toFixed(2);
             document.getElementById('productStock').value = product.stock;
@@ -1347,13 +1342,15 @@ function openProductModal(productId = null) {
             document.getElementById('productBarcode').value = product.barcode || '';
             document.getElementById('productAvailable').checked = product.available;
             
-            // Foto anzeigen falls vorhanden
-            if (product.image_url) {
-                console.log('Setze currentProductImage von Datenbank');
-                currentProductImage = product.image_url;
-                showPhotoPreview(product.image_url);
+            // Prüfen ob image ein Base64-Bild oder Emoji ist
+            if (product.image && product.image.startsWith('data:image/')) {
+                console.log('Base64-Bild gefunden, lade in Modal');
+                currentProductImage = product.image;
+                showPhotoPreview(product.image);
+                document.getElementById('productEmoji').value = ''; // Emoji-Feld leeren
             } else {
-                console.log('Kein image_url in Datenbank gefunden');
+                console.log('Emoji gefunden:', product.image);
+                document.getElementById('productEmoji').value = product.image || '';
                 currentProductImage = null;
             }
         }
@@ -1367,6 +1364,8 @@ function openProductModal(productId = null) {
     
     modal.style.display = 'block';
 }
+
+        
         function closeModal(modalId) {
             document.getElementById(modalId).style.display = 'none';
         }
@@ -1423,21 +1422,21 @@ async function saveProduct() {
     const productData = {
         name: document.getElementById('productName').value.trim(),
         category: document.getElementById('productCategory').value,
-        image: document.getElementById('productEmoji').value.trim() || '📦',
+        image: currentProductImage || document.getElementById('productEmoji').value.trim() || '📦', // Foto hat Vorrang
         member_price: parseFloat(document.getElementById('productMemberPrice').value) || 0,
         guest_price: parseFloat(document.getElementById('productGuestPrice').value) || 0,
         stock: parseInt(document.getElementById('productStock').value) || 0,
         min_stock: parseInt(document.getElementById('productMinStock').value) || 0,
         barcode: document.getElementById('productBarcode').value.trim() || null,
-        available: document.getElementById('productAvailable').checked,
-        image_url: currentProductImage || null
+        available: document.getElementById('productAvailable').checked
+        // image_url entfernt - wir nutzen das image Feld
     };
     
     // Debug-Ausgaben
     console.log('=== SAVE PRODUCT DEBUG ===');
-    console.log('currentProductImage:', currentProductImage ? 'VORHANDEN (' + currentProductImage.substring(0, 50) + '...)' : 'NULL');
-    console.log('productData.image_url:', productData.image_url ? 'VORHANDEN' : 'NULL');
-    console.log('productId:', productId);
+    console.log('currentProductImage:', currentProductImage ? 'FOTO VORHANDEN' : 'NULL');
+    console.log('emoji:', document.getElementById('productEmoji').value);
+    console.log('final image:', productData.image.substring(0, 50) + (productData.image.length > 50 ? '...' : ''));
     
     if (!productData.name || productData.member_price <= 0 || productData.guest_price <= 0) {
         showAlert('Bitte alle Pflichtfelder korrekt ausfüllen', 'error');
@@ -1447,29 +1446,22 @@ async function saveProduct() {
     try {
         let result;
         if (productId) {
-            console.log('UPDATE Produkt ID:', productId);
             result = await apiCall(`/api/products/${productId}`, {
                 method: 'PUT',
                 body: JSON.stringify(productData)
             });
-            console.log('UPDATE Antwort:', result);
             showAlert('Produkt erfolgreich aktualisiert', 'success');
         } else {
-            console.log('CREATE neues Produkt');
             result = await apiCall('/api/products', {
                 method: 'POST',
                 body: JSON.stringify(productData)
             });
-            console.log('CREATE Antwort:', result);
             showAlert('Neues Produkt erfolgreich hinzugefügt', 'success');
             
-            // Bei neuem Produkt: ID setzen
             document.getElementById('productId').value = result.id;
             document.getElementById('productModalTitle').textContent = 'Produkt bearbeiten';
         }
         
-        // Produkte neu laden und debuggen
-        console.log('Lade Produkte neu...');
         await loadProducts();
         loadDashboard();
         
