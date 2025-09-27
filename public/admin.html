@@ -559,6 +559,7 @@
                                 <th class="checkbox-cell">
                                     <input type="checkbox" id="selectAllProducts" onchange="toggleSelectAll('products')">
                                 </th>
+                                <th>Produktfoto</th>
                                 <th>Bild</th>
                                 <th>Produkt</th>
                                 <th>Kategorie</th>
@@ -868,14 +869,17 @@
                         </label>
                     </div>
                     
-                    <div style="text-align: right; margin-top: 20px;">
-                        <button type="button" class="btn btn-secondary" onclick="closeModal('productModal')">
-                            Abbrechen
-                        </button>
-                        <button type="button" class="btn btn-success" onclick="saveProduct()">
-                            💾 Speichern
-                        </button>
-                    </div>
+<div style="text-align: right; margin-top: 20px;">
+    <button type="button" class="btn btn-secondary" onclick="closeModal('productModal')">
+        Schließen
+    </button>
+    <button type="button" class="btn btn-success" onclick="saveProduct()">
+        💾 Speichern & offen lassen
+    </button>
+    <button type="button" class="btn btn-success" onclick="saveAndClose()">
+        💾 Speichern & schließen
+    </button>
+</div>
                 </form>
             </div>
         </div>
@@ -1182,30 +1186,44 @@
             tbody.innerHTML = products.map(product => {
                 const stockColor = product.stock > 0 ? '#38a169' : '#e53e3e';
                 const availableIcon = product.available ? '✅' : '❌';
-                
-                // Produktbild anzeigen
-                let imageHtml = '📦';
+
+                // Produktfoto-Status für neue Spalte
+                let photoStatus = '❌ Kein Foto';
+                let photoHtml = '';
                 if (product.image_url) {
-                    imageHtml = `<img src="${product.image_url}" style="width: 30px; height: 30px; border-radius: 4px; object-fit: cover;" alt="${product.name}">`;
+                photoStatus = '✅ Foto vorhanden';
+                photoHtml = `<img src="${product.image_url}" style="width: 40px; height: 40px; border-radius: 4px; object-fit: cover;" alt="${product.name}">`;
+                }
+ 
+                // Verbesserte Produktbild-Logik für Icon-Spalte
+                let imageHtml;
+                if (product.image_url) {
+                    imageHtml = `<img src="${product.image_url}" style="width: 30px; height: 30px; border-radius: 4px; object-fit: cover;" alt="${product.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                               <div class="product-image" style="display: none;">${product.image || '📦'}</div>`;
                 } else if (product.image) {
-                    imageHtml = product.image;
+                    imageHtml = `<div class="product-image">${product.image}</div>`;
+                } else {
+                    imageHtml = `<div class="product-image">📦</div>`;
                 }
                 
-                return `
-                    <tr>
-                        <td class="checkbox-cell">
-                            <input type="checkbox" value="${product.id}" onchange="toggleRowSelection(this, 'products')">
-                        </td>
-                        <td style="text-align: center;">${imageHtml}</td>
-                        <td>${product.name}</td>
-                        <td>${getCategoryText(product.category)}</td>
-                        <td>${product.member_price.toFixed(2)}€</td>
-                        <td>${product.guest_price.toFixed(2)}€</td>
-                        <td style="color: ${stockColor}; font-weight: bold;">${product.stock}</td>
-                        <td><code style="font-size: 0.8em;">${product.barcode || '-'}</code></td>
-                    </tr>
-                `;
-            }).join('');
+     return `
+        <tr>
+            <td class="checkbox-cell">
+                <input type="checkbox" value="${product.id}" onchange="toggleRowSelection(this, 'products')">
+            </td>
+            <td style="text-align: center;">
+                ${photoHtml ? photoHtml : photoStatus}
+            </td>
+            <td style="text-align: center;">${imageHtml}</td>
+            <td>${product.name}</td>
+            <td>${getCategoryText(product.category)}</td>
+            <td>${product.member_price.toFixed(2)}€</td>
+            <td>${product.guest_price.toFixed(2)}€</td>
+            <td style="color: ${stockColor}; font-weight: bold;">${product.stock}</td>
+            <td><code style="font-size: 0.8em;">${product.barcode || '-'}</code></td>
+        </tr>
+    `;
+}).join('');
         }
 
         function renderTransactions() {
@@ -1406,16 +1424,20 @@ async function saveProduct() {
                 method: 'PUT',
                 body: JSON.stringify(productData)
             });
-            showAlert('Produkt erfolgreich aktualisiert', 'success');
+            showAlert('Produkt erfolgreich aktualisiert - Modal bleibt offen', 'success');
         } else {
-            await apiCall('/api/products', {
+            const savedProduct = await apiCall('/api/products', {
                 method: 'POST',
                 body: JSON.stringify(productData)
             });
-            showAlert('Neues Produkt erfolgreich hinzugefügt', 'success');
+            showAlert('Neues Produkt erfolgreich hinzugefügt - Modal bleibt offen', 'success');
+            
+            // Bei neuem Produkt: ID setzen damit weitere Änderungen Updates werden
+            document.getElementById('productId').value = savedProduct.id;
+            document.getElementById('productModalTitle').textContent = 'Produkt bearbeiten';
         }
         
-        closeModal('productModal');
+        // Modal NICHT schließen, nur Daten neu laden
         loadProducts();
         loadDashboard();
         
@@ -1766,7 +1788,13 @@ function handlePhotoUpload(event) {
             
             return xml;
         }
-
+        
+async function saveAndClose() {
+    await saveProduct();
+    setTimeout(() => {
+        closeModal('productModal');
+    }, 1000); // 1 Sekunde warten, damit User die Erfolgsmeldung sehen kann
+}
         // ============ INITIALIZATION ============
         
         document.addEventListener('DOMContentLoaded', async function() {
