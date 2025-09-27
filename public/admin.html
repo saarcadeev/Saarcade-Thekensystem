@@ -1485,7 +1485,7 @@
 
         // ============ PHOTO UPLOAD FUNCTIONS ============
         
- function handlePhotoUpload(event) {
+function handlePhotoUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
     
@@ -1501,8 +1501,8 @@
     
     const reader = new FileReader();
     reader.onload = function(e) {
-        currentProductImage = e.target.result; // Diese Zeile hinzufügen
-        showPhotoPreview(currentProductImage);  // war e.target.result
+        currentProductImage = e.target.result;
+        showPhotoPreview(currentProductImage);
     };
     reader.readAsDataURL(file);
 }
