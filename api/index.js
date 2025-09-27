@@ -283,12 +283,14 @@ module.exports = async (req, res) => {
             }
 
             // Produkt erstellen
+  // Produkt erstellen
             const { data, error } = await supabase
                 .from('products')
                 .insert([{
                     name: productData.name,
                     category: productData.category || 'sonstiges',
                     image: productData.image || '📦',
+                    image_url: productData.image_url || null,
                     member_price: productData.member_price,
                     guest_price: productData.guest_price,
                     stock: productData.stock || 0,
