@@ -137,6 +137,7 @@
 
         .input-container {
             position: relative;
+            z-index: 10000;
         }
 
         #barcodeInput {
@@ -1818,6 +1819,11 @@ function updateCartView() {
             document.getElementById('barcodeInput').focus();
         }
 
+    function isAnyModalOpen() {
+    const modals = document.querySelectorAll('.modal');
+    return Array.from(modals).some(modal => modal.style.display === 'block');
+}
+        
         // ============ BARCODE SCANNER LOGIC ============
         
         async function handleBarcodeInput(barcode) {
@@ -1907,7 +1913,7 @@ function updateCartView() {
         }
 
         // ============ EVENT LISTENERS ============
-        
+
         document.addEventListener('DOMContentLoaded', async function() {
             const barcodeInput = document.getElementById('barcodeInput');
             
@@ -1943,12 +1949,15 @@ function updateCartView() {
                     }
                 }
             });
-
-            barcodeInput.addEventListener('blur', function() {
-                setTimeout(() => {
-                    this.focus();
-                }, 100);
-            });
+            
+           barcodeInput.addEventListener('blur', function() {
+    // Nur fokussieren wenn kein Modal geöffnet ist
+    if (!isAnyModalOpen()) {
+        setTimeout(() => {
+            this.focus();
+        }, 100);
+    }
+});
 
             // PIN-Eingabe Event-Listener
             const pinInput = document.getElementById('pinInput');
@@ -1969,14 +1978,18 @@ function updateCartView() {
                 });
             });
 
-            document.addEventListener('click', function(e) {
-                if (!e.target.closest('.input-container') && e.target.id !== 'barcodeInput') {
-                    hideDropdown();
-                    setTimeout(() => {
-                        barcodeInput.focus();
-                    }, 100);
-                }
-            });
+      document.addEventListener('click', function(e) {
+    // Nur fokussieren wenn kein Modal geöffnet ist und nicht auf ein Input-Element geklickt wurde
+    if (!e.target.closest('.input-container') && 
+        e.target.id !== 'barcodeInput' && 
+        !isAnyModalOpen() &&
+        !e.target.closest('.modal')) {
+        hideDropdown();
+        setTimeout(() => {
+            barcodeInput.focus();
+        }, 100);
+    }
+});
 
             setScannerMode('user');
             updateUserInfo();
