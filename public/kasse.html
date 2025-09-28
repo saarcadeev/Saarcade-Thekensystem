@@ -30,6 +30,8 @@
             padding: 15px;
             margin-bottom: 10px;
             box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            position: relative;
+            z-index: 1000; /* Neuer hoher z-index */
         }
 
         .header h1 {
@@ -137,7 +139,7 @@
 
         .input-container {
             position: relative;
-            z-index: 10000;
+            z-index: 1001;
         }
 
         #barcodeInput {
@@ -212,7 +214,7 @@
             border-radius: 8px;
             max-height: 300px;
             overflow-y: auto;
-            z-index: 10001;
+            z-index: 1002;
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
             margin-top: 5px;
         }
