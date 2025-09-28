@@ -212,7 +212,7 @@
             border-radius: 8px;
             max-height: 300px;
             overflow-y: auto;
-            z-index: 9999;
+            z-index: 10001;
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
             margin-top: 5px;
         }
@@ -295,13 +295,15 @@
 
         .products-section {
             background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
+            /* backdrop-filter: blur(10px); <- temporär entfernen zum Testen */
             border-radius: 15px;
             padding: 15px;
             box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            position: relative; /* Hinzufügen */
+            z-index: 1; /* Niedrigerer Wert als Dropdown */
         }
 
         .products-header {
