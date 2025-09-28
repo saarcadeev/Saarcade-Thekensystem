@@ -306,6 +306,16 @@
             flex-direction: column;
             position: relative; /* Hinzufügen */
             z-index: 1; /* Niedrigerer Wert als Dropdown */
+            background-image: url('/saarcade-logo.png');
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-size: contain;
+            opacity: 0.1; /* Dezent im Hintergrund */
+        }
+
+        /* Logo ausblenden wenn Produkte sichtbar sind */
+        .products-section:has(.products-grid[style*="display: grid"]) {
+            background-image: none;
         }
 
         .products-header {
