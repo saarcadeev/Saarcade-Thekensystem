@@ -837,74 +837,141 @@
 
         // ============ PHOTO UPLOAD UI FUNCTIONS ============
         
-        function triggerFileInput() {
-            document.getElementById('photoInput').click();
+  function triggerFileInput() {
+    try {
+        const fileInput = document.getElementById('photoInput');
+        if (fileInput) {
+            fileInput.click();
+        } else {
+            console.error('Photo input not found');
         }
+    } catch (error) {
+        console.error('Error triggering file input:', error);
+    }
+}
+// GLOBALE ERROR HANDLER VERBESSERT
+window.addEventListener('error', function(e) {
+    console.error('Global JavaScript error:', e.error);
+    
+    // Spezielle Behandlung für Modal-Fehler
+    if (e.error && e.error.message && e.error.message.includes('placeholder')) {
+        console.warn('Photo placeholder error detected - this is handled gracefully');
+        return; // Diese Fehler nicht mehr anzeigen
+    }
+    
+    if (e.error && e.error.message && e.error.message.includes('JSON')) {
+        showAlert('Datenfehler aufgetreten - Seite neu laden empfohlen', 'error');
+    }
+});
+   async function handlePhotoUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // Validierung
+    if (file.size > 2 * 1024 * 1024) {
+        showAlert('Datei zu groß. Maximum 2MB erlaubt.', 'error');
+        return;
+    }
+    
+    if (!file.type.startsWith('image/')) {
+        showAlert('Nur Bilddateien erlaubt.', 'error');
+        return;
+    }
 
-        async function handlePhotoUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            
-            // Validierung
-            if (file.size > 2 * 1024 * 1024) {
-                showAlert('Datei zu groß. Maximum 2MB erlaubt.', 'error');
-                return;
-            }
-            
-            if (!file.type.startsWith('image/')) {
-                showAlert('Nur Bilddateien erlaubt.', 'error');
-                return;
-            }
-
-            // Vorschau sofort anzeigen
-            const reader = new FileReader();
-            reader.onload = function(e) {
+    try {
+        // Vorschau sofort anzeigen
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
                 showPhotoPreview(e.target.result);
-            };
-            reader.readAsDataURL(file);
-
-            // File für späteren Upload speichern
-            currentImageFile = file;
-            uploadedImageUrl = null;
-        }
-
-        function showPhotoPreview(imageSrc, isUploaded = false) {
-            const container = document.getElementById('photoPreviewContainer');
-            const actions = document.getElementById('photoActions');
-            const placeholder = document.getElementById('photoPlaceholder');
-            
-            container.innerHTML = `
-                <img src="${imageSrc}" class="photo-preview" alt="Produktfoto">
-            `;
-            
-            container.classList.add('has-image');
-            placeholder.style.display = 'none';
-            actions.style.display = 'block';
-
-            if (isUploaded) {
-                uploadedImageUrl = imageSrc;
+                console.log('✅ Image preview loaded successfully');
+            } catch (error) {
+                console.error('Error showing preview:', error);
+                showAlert('Fehler beim Anzeigen der Bildvorschau', 'error');
             }
-        }
+        };
+        reader.onerror = function() {
+            showAlert('Fehler beim Lesen der Bilddatei', 'error');
+        };
+        reader.readAsDataURL(file);
 
-        function removePhoto() {
-            const container = document.getElementById('photoPreviewContainer');
-            const actions = document.getElementById('photoActions');
-            const placeholder = document.getElementById('photoPlaceholder');
-            
-            container.innerHTML = '';
-            container.classList.remove('has-image');
-            placeholder.style.display = 'block';
-            actions.style.display = 'none';
-            
-            // Reset file input und gespeicherte Daten
-            document.getElementById('photoInput').value = '';
-            currentImageFile = null;
-            uploadedImageUrl = null;
-        }
+        // File für späteren Upload speichern
+        currentImageFile = file;
+        uploadedImageUrl = null;
+        
+    } catch (error) {
+        console.error('Error in handlePhotoUpload:', error);
+        showAlert('Fehler beim Verarbeiten des Bildes', 'error');
+    }
+}
 
-        function resetPhotoPreview() {
-            removePhoto();
-        }
+     function showPhotoPreview(imageSrc, isUploaded = false) {
+    const container = document.getElementById('photoPreviewContainer');
+    const actions = document.getElementById('photoActions');
+    
+    if (!container) {
+        console.error('Photo preview container not found');
+        return;
+    }
+    
+    // KORREKT: Ersetze den Inhalt mit Bild UND behalte Struktur
+    container.innerHTML = `
+        <img src="${imageSrc}" class="photo-preview" alt="Produktfoto">
+        <div id="photoPlaceholder" style="display: none;">
+            <p style="margin: 10px 0;">📷 Klicken oder Bild hierher ziehen</p>
+            <p style="font-size: 0.8em; color: #666;">JPG, PNG bis 2MB</p>
+        </div>
+    `;
+    
+    container.classList.add('has-image');
+    
+    if (actions) {
+        actions.style.display = 'block';
+    }
+
+    if (isUploaded) {
+        uploadedImageUrl = imageSrc;
+    }
+    
+    console.log('✅ Photo preview shown successfully');
+}
+    function removePhoto() {
+    const container = document.getElementById('photoPreviewContainer');
+    const actions = document.getElementById('photoActions');
+    
+    if (!container) {
+        console.error('Photo preview container not found');
+        return;
+    }
+    
+    // KORREKT: Setze zurück auf Placeholder-Zustand
+    container.innerHTML = `
+        <div id="photoPlaceholder">
+            <p style="margin: 10px 0;">📷 Klicken oder Bild hierher ziehen</p>
+            <p style="font-size: 0.8em; color: #666;">JPG, PNG bis 2MB</p>
+        </div>
+    `;
+    
+    container.classList.remove('has-image');
+    
+    if (actions) {
+        actions.style.display = 'none';
+    }
+    
+    // Reset file input und gespeicherte Daten
+    const photoInput = document.getElementById('photoInput');
+    if (photoInput) {
+        photoInput.value = '';
+    }
+    
+    currentImageFile = null;
+    uploadedImageUrl = null;
+    
+    console.log('✅ Photo removed successfully');
+}
+     function resetPhotoPreview() {
+    removePhoto();
+}
 
         // ============ UI FUNCTIONS ============
         
@@ -946,8 +1013,7 @@
                 }
             }, 4000);
         }
-
-        // ============ TAB NAVIGATION ============
+       // ============ TAB NAVIGATION ============
         function showTab(tabName) {
             document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -1151,55 +1217,129 @@
 
         // ============ MODAL FUNCTIONS ============
         
-        function openProductModal(productId = null) {
-            const modal = document.getElementById('productModal');
-            const title = document.getElementById('productModalTitle');
-            const form = document.getElementById('productForm');
-            
-            form.reset();
-            document.getElementById('productId').value = '';
-            document.getElementById('currentImageUrl').value = '';
-            document.getElementById('currentImagePath').value = '';
+   function openProductModal(productId = null) {
+    try {
+        const modal = document.getElementById('productModal');
+        const title = document.getElementById('productModalTitle');
+        const form = document.getElementById('productForm');
+        
+        if (!modal || !title || !form) {
+            console.error('Modal-Elemente nicht gefunden');
+            showAlert('Fehler: Modal nicht verfügbar', 'error');
+            return;
+        }
+        
+        // Form zurücksetzen
+        form.reset();
+        document.getElementById('productId').value = '';
+        document.getElementById('currentImageUrl').value = '';
+        document.getElementById('currentImagePath').value = '';
+        
+        // SICHERE Photo Preview Reset
+        try {
             resetPhotoPreview();
-            
-            if (productId) {
-                const product = products.find(p => p.id === productId);
-                if (product) {
-                    title.textContent = 'Produkt bearbeiten';
-                    document.getElementById('productId').value = product.id;
-                    document.getElementById('productName').value = product.name;
-                    document.getElementById('productCategory').value = product.category;
-                    document.getElementById('productEmoji').value = product.image || '';
-                    document.getElementById('productMemberPrice').value = product.member_price.toFixed(2);
-                    document.getElementById('productGuestPrice').value = product.guest_price.toFixed(2);
-                    document.getElementById('productStock').value = product.stock;
-                    document.getElementById('productMinStock').value = product.min_stock || 5;
-                    document.getElementById('productBarcode').value = product.barcode || '';
-                    document.getElementById('productAvailable').checked = product.available;
-                    
-                    // Vorhandenes Bild anzeigen
-                    if (product.image_url) {
+        } catch (resetError) {
+            console.warn('Photo reset warning:', resetError);
+            // Fallback: Manuell zurücksetzen
+            const container = document.getElementById('photoPreviewContainer');
+            if (container) {
+                container.innerHTML = `
+                    <div id="photoPlaceholder">
+                        <p style="margin: 10px 0;">📷 Klicken oder Bild hierher ziehen</p>
+                        <p style="font-size: 0.8em; color: #666;">JPG, PNG bis 2MB</p>
+                    </div>
+                `;
+                container.classList.remove('has-image');
+            }
+        }
+        
+        if (productId) {
+            const product = products.find(p => p.id === productId);
+            if (product) {
+                title.textContent = 'Produkt bearbeiten';
+                
+                // Sichere Wertzuweisung
+                document.getElementById('productId').value = product.id || '';
+                document.getElementById('productName').value = product.name || '';
+                document.getElementById('productCategory').value = product.category || 'sonstiges';
+                document.getElementById('productEmoji').value = product.image || '';
+                document.getElementById('productMemberPrice').value = (product.member_price || 0).toFixed(2);
+                document.getElementById('productGuestPrice').value = (product.guest_price || 0).toFixed(2);
+                document.getElementById('productStock').value = product.stock || 0;
+                document.getElementById('productMinStock').value = product.min_stock || 5;
+                document.getElementById('productBarcode').value = product.barcode || '';
+                document.getElementById('productAvailable').checked = product.available !== false;
+                
+                // Vorhandenes Bild anzeigen mit Fehlerbehandlung
+                if (product.image_url && typeof product.image_url === 'string') {
+                    try {
                         document.getElementById('currentImageUrl').value = product.image_url;
                         document.getElementById('currentImagePath').value = product.image_file_path || '';
-                        showPhotoPreview(product.image_url, true);
+                        
+                        // Bild laden und anzeigen
+                        const img = new Image();
+                        img.onload = function() {
+                            try {
+                                showPhotoPreview(product.image_url, true);
+                            } catch (showError) {
+                                console.warn('Error showing existing image:', showError);
+                            }
+                        };
+                        img.onerror = function() {
+                            console.warn('Existing image could not be loaded:', product.image_url);
+                        };
+                        img.src = product.image_url;
+                        
+                    } catch (imageError) {
+                        console.warn('Fehler beim Verarbeiten des Produktbildes:', imageError);
                     }
                 }
             } else {
-                title.textContent = 'Neues Produkt hinzufügen';
-                document.getElementById('productStock').value = '0';
-                document.getElementById('productMinStock').value = '5';
-                document.getElementById('productAvailable').checked = true;
+                console.error('Produkt nicht gefunden:', productId);
+                showAlert('Produkt nicht gefunden', 'error');
+                return;
             }
-            
-            modal.style.display = 'block';
+        } else {
+            title.textContent = 'Neues Produkt hinzufügen';
+            document.getElementById('productStock').value = '0';
+            document.getElementById('productMinStock').value = '5';
+            document.getElementById('productAvailable').checked = true;
         }
+        
+        modal.style.display = 'block';
+        
+        // Focus auf erstes Eingabefeld
+        setTimeout(() => {
+            const firstInput = form.querySelector('input[type="text"]');
+            if (firstInput) {
+                firstInput.focus();
+            }
+        }, 150);
+        
+        console.log('✅ Product modal opened successfully');
+        
+    } catch (error) {
+        console.error('❌ Fehler beim Öffnen des Produkt-Modals:', error);
+        showAlert('Fehler beim Öffnen des Bearbeiten-Dialogs', 'error');
+    }
+}
 
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-            // Reset image upload state
-            currentImageFile = null;
-            uploadedImageUrl = null;
+  function closeModal(modalId) {
+    try {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'none';
         }
+        
+        // Reset image upload state
+        currentImageFile = null;
+        uploadedImageUrl = null;
+        
+        console.log('✅ Modal closed successfully');
+    } catch (error) {
+        console.error('Error closing modal:', error);
+    }
+}
 
         // ============ SAVE FUNCTIONS ============
         
@@ -1397,6 +1537,25 @@
                 event.target.style.display = 'none';
             }
         }
+     // HIER die Debug-Funktion einfügen:
+        function debugPhotoSystem() {
+            console.log('=== PHOTO SYSTEM DEBUG ===');
+            console.log('photoPreviewContainer exists:', !!document.getElementById('photoPreviewContainer'));
+            console.log('photoActions exists:', !!document.getElementById('photoActions'));
+            console.log('photoInput exists:', !!document.getElementById('photoInput'));
+            console.log('currentImageFile:', currentImageFile);
+            console.log('uploadedImageUrl:', uploadedImageUrl);
+            
+            const container = document.getElementById('photoPreviewContainer');
+            if (container) {
+                console.log('Container innerHTML:', container.innerHTML);
+                console.log('Container has-image class:', container.classList.contains('has-image'));
+            }
+        }
+
+        // Mache Debug-Funktion global verfügbar
+        window.debugPhotoSystem = debugPhotoSystem;
+
     </script>
 </body>
 </html>
