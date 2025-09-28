@@ -345,19 +345,19 @@
 
         .products-grid {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            grid-template-rows: repeat(2, 1fr);
-            gap: 15px;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 12px;
             flex: 1;
             overflow-y: auto;
             padding: 10px;
-            max-height: 400px;
+            max-height: 500px;
         }
 
         .product-card {
             background: #f7fafc;
             border: 2px solid #e2e8f0;
-            border-radius: 12px;
+            border-radius: 10px;
             padding: 15px;
             text-align: center;
             cursor: pointer;
@@ -389,14 +389,16 @@
         .product-image {
             width: 100px;
             height: 100px;
-            border-radius: 10px;
+            border-radius: 90px;
             object-fit: cover;
             margin: 0 auto 10px;
             background: #e2e8f0;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 3em;
+            font-size: 2.5em;
+            overflow: hidden;
+            position: relative;
         }
 
         .product-name {
@@ -674,6 +676,7 @@ const additionalCSS = `
     height: 100%;
     object-fit: cover;
     border-radius: 10px;
+    display: block;
 }
 
 .product-image-fallback {
@@ -704,7 +707,7 @@ const additionalCSS = `
     .product-image {
         width: 80px;
         height: 80px;
-        font-size: 2.5em;
+        font-size: 2.2em;
     }
 }
 
@@ -1122,34 +1125,86 @@ function createProductCard(product) {
 
 // Lazy Loading Implementation
 function initLazyLoading() {
-    const imageContainers = document.querySelectorAll('.product-image[data-image-url]');
+    // Intersection Observer für bessere Performance bei vielen Bildern
+    if (!('IntersectionObserver' in window)) {
+        console.log('Intersection Observer nicht verfügbar');
+        return;
+    }
+
+    const imageContainers = document.querySelectorAll('.product-image img[data-src]');
+    
+    if (imageContainers.length === 0) {
+        return; // Keine Lazy-Load Bilder gefunden
+    }
     
     const imageObserver = new IntersectionObserver((entries, observer) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                const container = entry.target;
-                const imageUrl = container.dataset.imageUrl;
-                const fallback = container.dataset.fallback;
+                const img = entry.target;
+                const dataSrc = img.getAttribute('data-src');
                 
-                const img = new Image();
-                img.onload = () => {
-                    container.innerHTML = `<img src="${imageUrl}" alt="Produktbild" style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px;">`;
-                    container.classList.remove('loading');
-                };
-                img.onerror = () => {
-                    container.innerHTML = fallback;
-                    container.classList.remove('loading');
-                    container.classList.add('product-image-fallback');
-                };
-                img.src = imageUrl;
-                
-                observer.unobserve(container);
+                if (dataSrc) {
+                    img.src = dataSrc;
+                    img.removeAttribute('data-src');
+                    observer.unobserve(img);
+                }
             }
+        });
+    }, {
+        rootMargin: '50px' // Lade Bilder 50px bevor sie sichtbar werden
+    });
+    
+    imageContainers.forEach(img => imageObserver.observe(img));
+}
+
+        // ============ CSS-STYLE HINZUFÜGEN ============
+function addImprovedStyles() {
+    const style = document.createElement('style');
+    style.textContent = correctedCSS;
+    document.head.appendChild(style);
+    console.log('✅ Verbesserte Styles für 15 Produkte geladen');
+}
+
+// ============ ERWEITERTE PRODUKTVORSCHAU-FUNKTIONEN ============
+
+function previewMoreProducts() {
+    // Falls mehr als 15 Produkte vorhanden sind, zeige Scrollbar
+    const productsGrid = document.getElementById('productsGrid');
+    if (productsGrid && productsGrid.children.length > 15) {
+        productsGrid.style.overflowY = 'auto';
+        console.log(`📊 ${productsGrid.children.length} Produkte geladen - Scrolling aktiviert`);
+    }
+}
+
+// ============ DEBUGGING FÜR BILDANZEIGE ============
+
+function debugImageDisplay() {
+    console.log('=== IMAGE DISPLAY DEBUG ===');
+    
+    const images = document.querySelectorAll('.product-image img');
+    const fallbacks = document.querySelectorAll('[id^="fallback-"]');
+    
+    console.log(`Gefundene Bilder: ${images.length}`);
+    console.log(`Gefundene Fallbacks: ${fallbacks.length}`);
+    
+    images.forEach((img, index) => {
+        console.log(`Bild ${index + 1}:`, {
+            src: img.src,
+            displayed: img.style.display !== 'none',
+            loaded: img.complete && img.naturalHeight !== 0
         });
     });
     
-    imageContainers.forEach(container => imageObserver.observe(container));
+    fallbacks.forEach((fallback, index) => {
+        console.log(`Fallback ${index + 1}:`, {
+            displayed: fallback.style.display !== 'none',
+            content: fallback.textContent
+        });
+    });
 }
+
+// Global verfügbar machen
+window.debugImageDisplay = debugImageDisplay;
         
         // ============ UI FUNCTIONS ============
         
@@ -1208,7 +1263,10 @@ function initLazyLoading() {
             return productsToFilter.filter(product => product.category === currentCategory);
         }
 
-     function updateProductsView() {
+// ============ KORRIGIERTE updateProductsView FUNKTION ============
+// Diese Funktion ERSETZT die bestehende in kasse.html
+
+function updateProductsView() {
     const loadingMsg = document.getElementById('loadingMessage');
     const noUserMsg = document.getElementById('noUserMessage');
     const productsGrid = document.getElementById('productsGrid');
@@ -1251,29 +1309,32 @@ function initLazyLoading() {
     productsGrid.innerHTML = filteredProducts.map(product => {
         const price = currentUser.role === 'member' ? product.member_price : product.guest_price;
         
-        // VERBESSERTE PRODUKTBILD-LOGIK
+        // KORREKTE PRODUKTBILD-LOGIK - nur ein sichtbares Element
         let imageHtml;
         if (product.image_url) {
-            // Primär: Hochgeladenes Bild verwenden
+            // Wenn URL vorhanden: Bild versuchen zu laden, Icon als verstecktes Fallback
+            const fallbackEmoji = product.image || '📦';
             imageHtml = `
-                <img src="${product.image_url}" 
-                     class="product-image" 
-                     alt="${product.name}" 
-                     onload="this.style.display='flex'" 
-                     onerror="handleImageError(this, '${product.image || '📦'}')"
-                     style="display: none;">
-                <div class="product-image product-image-fallback" style="display: flex;">
+                <div class="product-image" id="img-container-${product.id}">
+                    <img src="${product.image_url}" 
+                         alt="${product.name}" 
+                         onload="showImageSuccess(${product.id})"
+                         onerror="showImageFallback(${product.id}, '${fallbackEmoji}')"
+                         style="display: block;">
+                    <div id="fallback-${product.id}" style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; font-size: 2.5em;">
+                        ${fallbackEmoji}
+                    </div>
+                </div>
+            `;
+        } else {
+            // Wenn keine URL: nur Icon anzeigen
+            imageHtml = `
+                <div class="product-image">
                     ${product.image || '📦'}
                 </div>
             `;
-        } else if (product.image) {
-            // Sekundär: Emoji/Icon verwenden
-            imageHtml = `<div class="product-image">${product.image}</div>`;
-        } else {
-            // Fallback: Standard-Icon
-            imageHtml = `<div class="product-image">📦</div>`;
         }
-        setTimeout(initLazyLoading, 100);
+        
         return `
             <div class="product-card" onclick="addToCart(${product.id})" data-product-id="${product.id}">
                 ${imageHtml}
@@ -1282,8 +1343,37 @@ function initLazyLoading() {
             </div>
         `;
     }).join('');
+    
+    // Lazy Loading nach dem Rendern initialisieren
+    setTimeout(() => {
+        initLazyLoading();
+    }, 100);
 }
 
+        // ============ NEUE HILFSFUNKTIONEN FÜR BILDANZEIGE ============
+
+function showImageSuccess(productId) {
+    // Bild erfolgreich geladen - Fallback bleibt versteckt
+    console.log(`✅ Produktbild ${productId} erfolgreich geladen`);
+}
+
+function showImageFallback(productId, fallbackEmoji) {
+    // Bild konnte nicht geladen werden - zeige Fallback
+    const img = document.querySelector(`#img-container-${productId} img`);
+    const fallback = document.getElementById(`fallback-${productId}`);
+    
+    if (img) {
+        img.style.display = 'none';
+    }
+    
+    if (fallback) {
+        fallback.style.display = 'flex';
+        fallback.textContent = fallbackEmoji;
+    }
+    
+    console.warn(`⚠️ Produktbild ${productId} nicht ladbar, zeige Fallback: ${fallbackEmoji}`);
+}
+    
 function handleImageError(imgElement, fallbackEmoji) {
     // Verstecke das kaputte Bild
     imgElement.style.display = 'none';
@@ -1320,22 +1410,25 @@ function updateCartView() {
         const itemTotal = price * item.quantity;
         total += itemTotal;
         
-        // VERBESSERTE PRODUKTBILD-ANZEIGE IM WARENKORB
+        // KORREKTE PRODUKTBILD-ANZEIGE IM WARENKORB - nur ein Element sichtbar
         let productIcon;
         if (product.image_url) {
-            productIcon = `<img src="${product.image_url}" 
-                               style="width: 20px; height: 20px; border-radius: 3px; object-fit: cover; margin-right: 5px;"
-                               onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';"
-                               alt="${product.name}">
-                          <span style="display: none;">${product.image || '📦'}</span>`;
+            productIcon = `
+                <img src="${product.image_url}" 
+                     style="width: 20px; height: 20px; border-radius: 3px; object-fit: cover; margin-right: 5px; vertical-align: middle;"
+                     onload="this.style.display='inline'; this.nextElementSibling.style.display='none';"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';"
+                     alt="${product.name}">
+                <span class="cart-fallback-icon" style="margin-right: 5px;">${product.image || '📦'}</span>
+            `;
         } else {
-            productIcon = product.image || '📦';
+            productIcon = `<span style="margin-right: 5px;">${product.image || '📦'}</span>`;
         }
         
         return `
             <div class="cart-item ${item.justAdded ? 'just-added' : ''}">
                 <div>
-                    <strong>${productIcon} ${product.name}</strong><br>
+                    <strong>${productIcon}${product.name}</strong><br>
                     <small>${item.quantity}x ${price.toFixed(2)}€ = ${itemTotal.toFixed(2)}€</small>
                 </div>
                 <button class="btn btn-danger" onclick="removeFromCart(${index})" style="padding: 5px 8px;">−</button>
@@ -1343,28 +1436,30 @@ function updateCartView() {
         `;
     }).join('');
 
-            setTimeout(() => {
-                cart.forEach(item => delete item.justAdded);
-                updateCartView();
-            }, 1000);
+    // Animation für neue Items
+    setTimeout(() => {
+        cart.forEach(item => delete item.justAdded);
+        document.querySelectorAll('.cart-item.just-added').forEach(item => {
+            item.classList.remove('just-added');
+        });
+    }, 1000);
 
-            const newBalance = currentUser.balance - total;
-            const processingClass = isProcessing ? ' processing' : '';
-            cartTotalEl.innerHTML = `
-                <div class="cart-total${processingClass}">
-                    <div>Gesamt: ${total.toFixed(2)}€</div>
-                    <div style="font-size: 0.9em; margin-top: 6px;">Neuer Saldo: ${newBalance.toFixed(2)}€</div>
-                    <div style="font-size: 0.8em; margin-top: 6px;">
-                        ${isProcessing ? '⏳ Verarbeite...' : '📱 Scan CHECKOUT oder klick hier'}
-                    </div>
-                </div>
-            `;
-            cartTotalEl.style.display = 'block';
-            cartTotalEl.onclick = isProcessing ? null : checkout;
-            clearBtn.disabled = false;
-            updateWorkflowSteps();
-        }
-
+    const newBalance = currentUser.balance - total;
+    const processingClass = isProcessing ? ' processing' : '';
+    cartTotalEl.innerHTML = `
+        <div class="cart-total${processingClass}">
+            <div>Gesamt: ${total.toFixed(2)}€</div>
+            <div style="font-size: 0.9em; margin-top: 6px;">Neuer Saldo: ${newBalance.toFixed(2)}€</div>
+            <div style="font-size: 0.8em; margin-top: 6px;">
+                ${isProcessing ? '⏳ Verarbeite...' : '📱 Scan CHECKOUT oder klick hier'}
+            </div>
+        </div>
+    `;
+    cartTotalEl.style.display = 'block';
+    cartTotalEl.onclick = isProcessing ? null : checkout;
+    clearBtn.disabled = false;
+    updateWorkflowSteps();
+}
         // ============ PIN SYSTEM FUNCTIONS ============
         
         function openPinModal() {
