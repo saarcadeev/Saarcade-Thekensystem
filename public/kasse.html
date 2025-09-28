@@ -653,6 +653,70 @@
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
+const additionalCSS = `
+/* Verbesserte Produktbild-Styles */
+.product-image {
+    width: 100px;
+    height: 100px;
+    border-radius: 10px;
+    object-fit: cover;
+    margin: 0 auto 10px;
+    background: #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3em;
+    transition: all 0.3s ease;
+}
+
+.product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.product-image-fallback {
+    border: 2px dashed #cbd5e0;
+    background: #f7fafc;
+    color: #666;
+}
+
+.product-card:hover .product-image {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Lade-Animation für Bilder */
+.product-image.loading {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Responsive Bildanzeige */
+@media (max-width: 768px) {
+    .product-image {
+        width: 80px;
+        height: 80px;
+        font-size: 2.5em;
+    }
+}
+
+@media (max-width: 480px) {
+    .product-image {
+        width: 60px;
+        height: 60px;
+        font-size: 2em;
+    }
+}
+`;
+        
     </style>
 </head>
 <body>
@@ -900,6 +964,31 @@
         }
 
         // ============ API FUNCTIONS ============
+
+async function preloadProductImages(products) {
+    const imagePromises = products
+        .filter(product => product.image_url)
+        .map(product => {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => resolve({ id: product.id, success: true });
+                img.onerror = () => resolve({ id: product.id, success: false });
+                img.src = product.image_url;
+                
+                // Timeout nach 5 Sekunden
+                setTimeout(() => resolve({ id: product.id, success: false }), 5000);
+            });
+        });
+    
+    const results = await Promise.all(imagePromises);
+    const failedImages = results.filter(result => !result.success);
+    
+    if (failedImages.length > 0) {
+        console.warn(`${failedImages.length} Produktbilder konnten nicht geladen werden`);
+    }
+    
+    return results;
+}
         
         async function apiCall(endpoint, options = {}) {
             try {
@@ -939,17 +1028,24 @@
             }
         }
 
-        async function loadProducts() {
-            try {
-                products = await apiCall('/api/products');
-                console.log(`✅ ${products.length} Produkte geladen`);
-                updateProductsView();
-            } catch (error) {
-                console.error('Fehler beim Laden der Produkte:', error);
-                products = [];
-                updateProductsView();
-            }
+ async function loadProducts() {
+    try {
+        products = await apiCall('/api/products');
+        console.log(`✅ ${products.length} Produkte geladen`);
+        
+        // Bilder vorladen für bessere Performance
+        if (products.length > 0) {
+            showStatus('Lade Produktbilder...', 'loading');
+            await preloadProductImages(products);
         }
+        
+        updateProductsView();
+    } catch (error) {
+        console.error('Fehler beim Laden der Produkte:', error);
+        products = [];
+        updateProductsView();
+    }
+}
 
         async function loadSettings() {
             try {
@@ -1000,6 +1096,61 @@
             }
         }
 
+function createProductCard(product) {
+    const price = currentUser.role === 'member' ? product.member_price : product.guest_price;
+    
+    let imageHtml;
+    if (product.image_url) {
+        // Lazy Loading für bessere Performance
+        imageHtml = `
+            <div class="product-image loading" data-image-url="${product.image_url}" data-fallback="${product.image || '📦'}">
+                <div class="image-placeholder">${product.image || '📦'}</div>
+            </div>
+        `;
+    } else {
+        imageHtml = `<div class="product-image">${product.image || '📦'}</div>`;
+    }
+    
+    return `
+        <div class="product-card" onclick="addToCart(${product.id})" data-product-id="${product.id}">
+            ${imageHtml}
+            <div class="product-name">${product.name}</div>
+            <div class="product-price">${price.toFixed(2)}€</div>
+        </div>
+    `;
+}
+
+// Lazy Loading Implementation
+function initLazyLoading() {
+    const imageContainers = document.querySelectorAll('.product-image[data-image-url]');
+    
+    const imageObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const container = entry.target;
+                const imageUrl = container.dataset.imageUrl;
+                const fallback = container.dataset.fallback;
+                
+                const img = new Image();
+                img.onload = () => {
+                    container.innerHTML = `<img src="${imageUrl}" alt="Produktbild" style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px;">`;
+                    container.classList.remove('loading');
+                };
+                img.onerror = () => {
+                    container.innerHTML = fallback;
+                    container.classList.remove('loading');
+                    container.classList.add('product-image-fallback');
+                };
+                img.src = imageUrl;
+                
+                observer.unobserve(container);
+            }
+        });
+    });
+    
+    imageContainers.forEach(container => imageObserver.observe(container));
+}
+        
         // ============ UI FUNCTIONS ============
         
         function showStatus(message, type = 'info') {
@@ -1057,102 +1208,140 @@
             return productsToFilter.filter(product => product.category === currentCategory);
         }
 
-        function updateProductsView() {
-            const loadingMsg = document.getElementById('loadingMessage');
-            const noUserMsg = document.getElementById('noUserMessage');
-            const productsGrid = document.getElementById('productsGrid');
-            
-            loadingMsg.style.display = 'none';
-            
-            if (!currentUser) {
-                noUserMsg.style.display = 'block';
-                productsGrid.style.display = 'none';
-                return;
-            }
+     function updateProductsView() {
+    const loadingMsg = document.getElementById('loadingMessage');
+    const noUserMsg = document.getElementById('noUserMessage');
+    const productsGrid = document.getElementById('productsGrid');
+    
+    loadingMsg.style.display = 'none';
+    
+    if (!currentUser) {
+        noUserMsg.style.display = 'block';
+        productsGrid.style.display = 'none';
+        return;
+    }
 
-            if (products.length === 0) {
-                noUserMsg.innerHTML = `
-                    <div>📦</div>
-                    <h3>Keine Produkte verfügbar</h3>
-                    <p>Prüfen Sie die Datenbankverbindung</p>
-                `;
-                noUserMsg.style.display = 'block';
-                productsGrid.style.display = 'none';
-                return;
-            }
+    if (products.length === 0) {
+        noUserMsg.innerHTML = `
+            <div>📦</div>
+            <h3>Keine Produkte verfügbar</h3>
+            <p>Prüfen Sie die Datenbankverbindung</p>
+        `;
+        noUserMsg.style.display = 'block';
+        productsGrid.style.display = 'none';
+        return;
+    }
 
-            noUserMsg.style.display = 'none';
-            productsGrid.style.display = 'grid';
-            
-            const filteredProducts = filterProductsByCategory(products.filter(p => p.available));
-            
-            if (filteredProducts.length === 0) {
-                productsGrid.innerHTML = `
-                    <div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: #666;">
-                        <div style="font-size: 2.5em; margin-bottom: 10px;">🔍</div>
-                        <h3>Keine Produkte in dieser Kategorie</h3>
-                        <p>Wähle eine andere Kategorie</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            productsGrid.innerHTML = filteredProducts.map(product => {
-                const price = currentUser.role === 'member' ? product.member_price : product.guest_price;
-                
-                // Verbesserte Produktbild-Logik: Zuerst image_url, dann image aus DB, dann Fallback
-                let imageHtml;
-                if (product.image_url) {
-                    imageHtml = `<img src="${product.image_url}" class="product-image" alt="${product.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                <div class="product-image" style="display: none;">${product.image || '📦'}</div>`;
-                } else if (product.image) {
-                    imageHtml = `<div class="product-image">${product.image}</div>`;
-                } else {
-                    imageHtml = `<div class="product-image">📦</div>`;
-                }
-                
-                return `
-                    <div class="product-card" onclick="addToCart(${product.id})" data-product-id="${product.id}">
-                        ${imageHtml}
-                        <div class="product-name">${product.name}</div>
-                        <div class="product-price">${price.toFixed(2)}€</div>
-                    </div>
-                `;
-            }).join('');
+    noUserMsg.style.display = 'none';
+    productsGrid.style.display = 'grid';
+    
+    const filteredProducts = filterProductsByCategory(products.filter(p => p.available));
+    
+    if (filteredProducts.length === 0) {
+        productsGrid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: #666;">
+                <div style="font-size: 2.5em; margin-bottom: 10px;">🔍</div>
+                <h3>Keine Produkte in dieser Kategorie</h3>
+                <p>Wähle eine andere Kategorie</p>
+            </div>
+        `;
+        return;
+    }
+    
+    productsGrid.innerHTML = filteredProducts.map(product => {
+        const price = currentUser.role === 'member' ? product.member_price : product.guest_price;
+        
+        // VERBESSERTE PRODUKTBILD-LOGIK
+        let imageHtml;
+        if (product.image_url) {
+            // Primär: Hochgeladenes Bild verwenden
+            imageHtml = `
+                <img src="${product.image_url}" 
+                     class="product-image" 
+                     alt="${product.name}" 
+                     onload="this.style.display='flex'" 
+                     onerror="handleImageError(this, '${product.image || '📦'}')"
+                     style="display: none;">
+                <div class="product-image product-image-fallback" style="display: flex;">
+                    ${product.image || '📦'}
+                </div>
+            `;
+        } else if (product.image) {
+            // Sekundär: Emoji/Icon verwenden
+            imageHtml = `<div class="product-image">${product.image}</div>`;
+        } else {
+            // Fallback: Standard-Icon
+            imageHtml = `<div class="product-image">📦</div>`;
         }
+        setTimeout(initLazyLoading, 100);
+        return `
+            <div class="product-card" onclick="addToCart(${product.id})" data-product-id="${product.id}">
+                ${imageHtml}
+                <div class="product-name">${product.name}</div>
+                <div class="product-price">${price.toFixed(2)}€</div>
+            </div>
+        `;
+    }).join('');
+}
 
-        function updateCartView() {
-            const cartItemsEl = document.getElementById('cartItems');
-            const cartTotalEl = document.getElementById('cartTotal');
-            const clearBtn = document.getElementById('clearBtn');
-            
-            if (cart.length === 0) {
-                cartItemsEl.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">Warenkorb ist leer</div>';
-                cartTotalEl.style.display = 'none';
-                clearBtn.disabled = true;
-                updateWorkflowSteps();
-                return;
-            }
+function handleImageError(imgElement, fallbackEmoji) {
+    // Verstecke das kaputte Bild
+    imgElement.style.display = 'none';
+    
+    // Zeige das Fallback-Element
+    const fallbackElement = imgElement.nextElementSibling;
+    if (fallbackElement && fallbackElement.classList.contains('product-image-fallback')) {
+        fallbackElement.style.display = 'flex';
+        fallbackElement.textContent = fallbackEmoji;
+    }
+    
+    console.warn('Produktbild konnte nicht geladen werden:', imgElement.src);
+}
+        
+function updateCartView() {
+    const cartItemsEl = document.getElementById('cartItems');
+    const cartTotalEl = document.getElementById('cartTotal');
+    const clearBtn = document.getElementById('clearBtn');
+    
+    if (cart.length === 0) {
+        cartItemsEl.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">Warenkorb ist leer</div>';
+        cartTotalEl.style.display = 'none';
+        clearBtn.disabled = true;
+        updateWorkflowSteps();
+        return;
+    }
 
-            let total = 0;
-            cartItemsEl.innerHTML = cart.map((item, index) => {
-                const product = products.find(p => p.id === item.productId);
-                if (!product) return '';
-                
-                const price = currentUser.role === 'member' ? product.member_price : product.guest_price;
-                const itemTotal = price * item.quantity;
-                total += itemTotal;
-                
-                return `
-                    <div class="cart-item ${item.justAdded ? 'just-added' : ''}">
-                        <div>
-                            <strong>${product.image || '📦'} ${product.name}</strong><br>
-                            <small>${item.quantity}x ${price.toFixed(2)}€ = ${itemTotal.toFixed(2)}€</small>
-                        </div>
-                        <button class="btn btn-danger" onclick="removeFromCart(${index})" style="padding: 5px 8px;">−</button>
-                    </div>
-                `;
-            }).join('');
+    let total = 0;
+    cartItemsEl.innerHTML = cart.map((item, index) => {
+        const product = products.find(p => p.id === item.productId);
+        if (!product) return '';
+        
+        const price = currentUser.role === 'member' ? product.member_price : product.guest_price;
+        const itemTotal = price * item.quantity;
+        total += itemTotal;
+        
+        // VERBESSERTE PRODUKTBILD-ANZEIGE IM WARENKORB
+        let productIcon;
+        if (product.image_url) {
+            productIcon = `<img src="${product.image_url}" 
+                               style="width: 20px; height: 20px; border-radius: 3px; object-fit: cover; margin-right: 5px;"
+                               onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';"
+                               alt="${product.name}">
+                          <span style="display: none;">${product.image || '📦'}</span>`;
+        } else {
+            productIcon = product.image || '📦';
+        }
+        
+        return `
+            <div class="cart-item ${item.justAdded ? 'just-added' : ''}">
+                <div>
+                    <strong>${productIcon} ${product.name}</strong><br>
+                    <small>${item.quantity}x ${price.toFixed(2)}€ = ${itemTotal.toFixed(2)}€</small>
+                </div>
+                <button class="btn btn-danger" onclick="removeFromCart(${index})" style="padding: 5px 8px;">−</button>
+            </div>
+        `;
+    }).join('');
 
             setTimeout(() => {
                 cart.forEach(item => delete item.justAdded);
