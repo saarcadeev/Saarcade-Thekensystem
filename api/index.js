@@ -239,6 +239,9 @@ module.exports = async (req, res) => {
                     sepa_active: userData.sepa_active || false,
                     email: userData.email || null,
                     iban: userData.iban || null
+                    user_pin: null,                        // Keine PIN
+                    pin_require_for_name_search: false,    // Keine PIN-Abfrage
+                    pin_require_for_barcode: false         // Keine PIN-Abfrage
                 }])
                 .select()
                 .single();
@@ -281,6 +284,9 @@ module.exports = async (req, res) => {
                     sepa_active: userData.sepa_active,
                     email: userData.email,
                     iban: userData.iban
+                    user_pin: userData.user_pin,
+                    pin_require_for_name_search: userData.pin_require_for_name_search,
+                    pin_require_for_barcode: userData.pin_require_for_barcode
                 })
                 .eq('id', userId)
                 .select()
