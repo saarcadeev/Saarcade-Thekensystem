@@ -1,6 +1,6 @@
 // ====================================================================
-// SAARCADE KASSENSYSTEM - VOLLSTÄNDIGE API MIT CRUD-OPERATIONEN
-// Erweiterte Version mit allen Endpunkten für Admin-Dashboard
+// SAARCADE KASSENSYSTEM - ERWEITERTE API MIT BILDUPLOAD
+// Neue Version mit Supabase Storage Integration
 // ====================================================================
 
 const { createClient } = require('@supabase/supabase-js');
@@ -25,6 +25,20 @@ const corsHeaders = {
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Content-Type': 'application/json'
 };
+
+// Hilfsfunktion für Base64 zu Buffer Konvertierung
+function base64ToBuffer(base64String) {
+    // Entferne Data URL Prefix falls vorhanden
+    const base64Data = base64String.replace(/^data:image\/[a-z]+;base64,/, '');
+    return Buffer.from(base64Data, 'base64');
+}
+
+// Hilfsfunktion für Dateiname generierung
+function generateFileName(originalName, productId) {
+    const timestamp = Date.now();
+    const extension = originalName ? originalName.split('.').pop() : 'jpg';
+    return `product_${productId}_${timestamp}.${extension}`;
+}
 
 // Haupthandler für alle API-Requests
 module.exports = async (req, res) => {
@@ -54,8 +68,81 @@ module.exports = async (req, res) => {
                 status: 'ok',
                 timestamp: new Date().toISOString(),
                 database: 'connected',
-                version: '2.0.0'
+                version: '2.1.0-with-images'
             });
+        }
+
+        // ============ NEUER IMAGE UPLOAD ENDPUNKT ============
+        if (path === '/upload-image' && method === 'POST') {
+            try {
+                const { image, fileName, productId } = req.body;
+                
+                if (!image) {
+                    return res.status(400).json({ error: 'Kein Bild bereitgestellt' });
+                }
+
+                // Konvertiere Base64 zu Buffer
+                const imageBuffer = base64ToBuffer(image);
+                
+                // Generiere eindeutigen Dateinamen
+                const uniqueFileName = generateFileName(fileName, productId || 'temp');
+                const filePath = `product-images/${uniqueFileName}`;
+
+                // Upload zu Supabase Storage
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('product-images')
+                    .upload(filePath, imageBuffer, {
+                        contentType: 'image/jpeg',
+                        upsert: true
+                    });
+
+                if (uploadError) {
+                    console.error('Upload Error:', uploadError);
+                    return res.status(500).json({ error: 'Fehler beim Hochladen des Bildes' });
+                }
+
+                // Generiere öffentliche URL
+                const { data: urlData } = supabase.storage
+                    .from('product-images')
+                    .getPublicUrl(filePath);
+
+                return res.status(200).json({
+                    success: true,
+                    imageUrl: urlData.publicUrl,
+                    fileName: uniqueFileName,
+                    filePath: filePath
+                });
+
+            } catch (error) {
+                console.error('Image upload error:', error);
+                return res.status(500).json({ error: 'Interner Fehler beim Bildupload' });
+            }
+        }
+
+        // ============ IMAGE DELETE ENDPUNKT ============
+        if (pathParts[0] === 'delete-image' && method === 'DELETE') {
+            try {
+                const { filePath } = req.body;
+                
+                if (!filePath) {
+                    return res.status(400).json({ error: 'Kein Dateipfad angegeben' });
+                }
+
+                const { error: deleteError } = await supabase.storage
+                    .from('product-images')
+                    .remove([filePath]);
+
+                if (deleteError) {
+                    console.error('Delete Error:', deleteError);
+                    return res.status(500).json({ error: 'Fehler beim Löschen des Bildes' });
+                }
+
+                return res.status(200).json({ success: true });
+
+            } catch (error) {
+                console.error('Image delete error:', error);
+                return res.status(500).json({ error: 'Interner Fehler beim Löschen' });
+            }
         }
 
         // ============ DASHBOARD ============
@@ -226,7 +313,7 @@ module.exports = async (req, res) => {
             return res.status(200).json({ message: 'Benutzer erfolgreich gelöscht' });
         }
 
-        // ============ PRODUCTS ENDPUNKTE ============
+        // ============ PRODUCTS ENDPUNKTE (ERWEITERT) ============
         
         // GET /products - Alle Produkte
         if (path === '/products' && method === 'GET') {
@@ -260,115 +347,155 @@ module.exports = async (req, res) => {
             return res.status(200).json(data);
         }
 
-// POST /products - Neues Produkt erstellen
-if (path === '/products' && method === 'POST') {
-    const productData = req.body;
-    
-    // Validierung
-    if (!productData.name || !productData.member_price || !productData.guest_price) {
-        return res.status(400).json({ error: 'Pflichtfelder fehlen: name, member_price, guest_price' });
-    }
+        // POST /products - Neues Produkt erstellen (MIT BILDUPLOAD)
+        if (path === '/products' && method === 'POST') {
+            const productData = req.body;
+            
+            // Validierung
+            if (!productData.name || !productData.member_price || !productData.guest_price) {
+                return res.status(400).json({ error: 'Pflichtfelder fehlen: name, member_price, guest_price' });
+            }
 
-    // Barcode-Eindeutigkeit prüfen (falls angegeben)
-    if (productData.barcode) {
-        const { data: existingProduct } = await supabase
-            .from('products')
-            .select('id')
-            .eq('barcode', productData.barcode)
-            .single();
+            // Barcode-Eindeutigkeit prüfen (falls angegeben)
+            if (productData.barcode) {
+                const { data: existingProduct } = await supabase
+                    .from('products')
+                    .select('id')
+                    .eq('barcode', productData.barcode)
+                    .single();
 
-        if (existingProduct) {
-            return res.status(400).json({ error: 'Barcode bereits vergeben' });
+                if (existingProduct) {
+                    return res.status(400).json({ error: 'Barcode bereits vergeben' });
+                }
+            }
+
+            // Produkt erstellen
+            const { data, error } = await supabase
+                .from('products')
+                .insert([{
+                    name: productData.name,
+                    category: productData.category || 'sonstiges',
+                    image: productData.image || '📦',
+                    member_price: productData.member_price,
+                    guest_price: productData.guest_price,
+                    stock: productData.stock || 0,
+                    min_stock: productData.min_stock || 5,
+                    barcode: productData.barcode || null,
+                    available: productData.available !== false,
+                    image_url: productData.image_url || null,
+                    image_file_path: productData.image_file_path || null
+                }])
+                .select()
+                .single();
+            
+            if (error) throw error;
+            return res.status(201).json(data);
         }
-    }
 
-    // Produkt erstellen
-    const { data, error } = await supabase
-        .from('products')
-        .insert([{
-            name: productData.name,
-            category: productData.category || 'sonstiges',
-            image: productData.image || '📦',
-            member_price: productData.member_price,
-            guest_price: productData.guest_price,
-            stock: productData.stock || 0,
-            min_stock: productData.min_stock || 5,
-            barcode: productData.barcode || null,
-            available: productData.available !== false
-        }])
-        .select()
-        .single();
-    
-    if (error) throw error;
-    return res.status(201).json(data);
-}
+        // PUT /products/{id} - Produkt bearbeiten (MIT BILDUPLOAD)
+        if (pathParts[0] === 'products' && pathParts[1] && method === 'PUT') {
+            const productId = parseInt(pathParts[1]);
+            const productData = req.body;
+            
+            if (isNaN(productId)) {
+                return res.status(400).json({ error: 'Ungültige Produkt-ID' });
+            }
 
-// PUT /products/{id} - Produkt bearbeiten
-if (pathParts[0] === 'products' && pathParts[1] && method === 'PUT') {
-    const productId = parseInt(pathParts[1]);
-    const productData = req.body;
-    
-    if (isNaN(productId)) {
-        return res.status(400).json({ error: 'Ungültige Produkt-ID' });
-    }
+            // Barcode-Eindeutigkeit prüfen (ausgenommen aktuelles Produkt)
+            if (productData.barcode) {
+                const { data: existingProduct } = await supabase
+                    .from('products')
+                    .select('id')
+                    .eq('barcode', productData.barcode)
+                    .neq('id', productId)
+                    .single();
 
-    // Barcode-Eindeutigkeit prüfen (ausgenommen aktuelles Produkt)
-    if (productData.barcode) {
-        const { data: existingProduct } = await supabase
-            .from('products')
-            .select('id')
-            .eq('barcode', productData.barcode)
-            .neq('id', productId)
-            .single();
+                if (existingProduct) {
+                    return res.status(400).json({ error: 'Barcode bereits vergeben' });
+                }
+            }
 
-        if (existingProduct) {
-            return res.status(400).json({ error: 'Barcode bereits vergeben' });
+            // Altes Bild löschen wenn neues hochgeladen wird
+            if (productData.image_url && productData.deleteOldImage) {
+                try {
+                    const { data: oldProduct } = await supabase
+                        .from('products')
+                        .select('image_file_path')
+                        .eq('id', productId)
+                        .single();
+
+                    if (oldProduct && oldProduct.image_file_path) {
+                        await supabase.storage
+                            .from('product-images')
+                            .remove([oldProduct.image_file_path]);
+                    }
+                } catch (deleteError) {
+                    console.warn('Could not delete old image:', deleteError);
+                }
+            }
+
+            const { data, error } = await supabase
+                .from('products')
+                .update({
+                    name: productData.name,
+                    category: productData.category,
+                    image: productData.image,
+                    member_price: productData.member_price,
+                    guest_price: productData.guest_price,
+                    stock: productData.stock,
+                    min_stock: productData.min_stock,
+                    barcode: productData.barcode,
+                    available: productData.available,
+                    image_url: productData.image_url,
+                    image_file_path: productData.image_file_path
+                })
+                .eq('id', productId)
+                .select()
+                .single();
+            
+            if (error) {
+                if (error.code === 'PGRST116') {
+                    return res.status(404).json({ error: 'Produkt nicht gefunden' });
+                }
+                throw error;
+            }
+            
+            return res.status(200).json(data);
         }
-    }
 
-    const { data, error } = await supabase
-        .from('products')
-        .update({
-            name: productData.name,
-            category: productData.category,
-            image: productData.image,
-            member_price: productData.member_price,
-            guest_price: productData.guest_price,
-            stock: productData.stock,
-            min_stock: productData.min_stock,
-            barcode: productData.barcode,
-            available: productData.available
-        })
-        .eq('id', productId)
-        .select()
-        .single();
-    
-    if (error) {
-        if (error.code === 'PGRST116') {
-            return res.status(404).json({ error: 'Produkt nicht gefunden' });
+        // DELETE /products/{id} - Produkt löschen (MIT BILDLÖSCHUNG)
+        if (pathParts[0] === 'products' && pathParts[1] && method === 'DELETE') {
+            const productId = parseInt(pathParts[1]);
+            
+            if (isNaN(productId)) {
+                return res.status(400).json({ error: 'Ungültige Produkt-ID' });
+            }
+
+            // Produktbild löschen
+            try {
+                const { data: product } = await supabase
+                    .from('products')
+                    .select('image_file_path')
+                    .eq('id', productId)
+                    .single();
+
+                if (product && product.image_file_path) {
+                    await supabase.storage
+                        .from('product-images')
+                        .remove([product.image_file_path]);
+                }
+            } catch (deleteError) {
+                console.warn('Could not delete product image:', deleteError);
+            }
+
+            const { error } = await supabase
+                .from('products')
+                .delete()
+                .eq('id', productId);
+            
+            if (error) throw error;
+            return res.status(200).json({ message: 'Produkt erfolgreich gelöscht' });
         }
-        throw error;
-    }
-    
-    return res.status(200).json(data);
-}
-
-// DELETE /products/{id} - Produkt löschen
-if (pathParts[0] === 'products' && pathParts[1] && method === 'DELETE') {
-    const productId = parseInt(pathParts[1]);
-    
-    if (isNaN(productId)) {
-        return res.status(400).json({ error: 'Ungültige Produkt-ID' });
-    }
-
-    const { error } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', productId);
-    
-    if (error) throw error;
-    return res.status(200).json({ message: 'Produkt erfolgreich gelöscht' });
-}
 
         // ============ TRANSACTIONS ENDPUNKTE ============
         
