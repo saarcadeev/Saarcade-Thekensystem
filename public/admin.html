@@ -1689,8 +1689,13 @@ async function deleteSelectedProducts() {
                 document.getElementById('productGuestPrice').value = (product.guest_price || 0).toFixed(2);
                 document.getElementById('productStock').value = product.stock || 0;
                 document.getElementById('productMinStock').value = product.min_stock || 5;
-                document.getElementById('productBarcode').value = product.barcode || '';
                 document.getElementById('productAvailable').checked = product.available !== false;
+
+                // Multi-Barcode Support mit Fallback
+            const barcodesValue = product.barcodes 
+                ? (Array.isArray(product.barcodes) ? product.barcodes : [product.barcodes]) 
+                : (product.barcode ? [product.barcode] : []);
+                document.getElementById('productBarcodes').value = barcodesValue.join('\n');
                 
                 // Vorhandenes Bild anzeigen mit Fehlerbehandlung
                 if (product.image_url && typeof product.image_url === 'string') {
