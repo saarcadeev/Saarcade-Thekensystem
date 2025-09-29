@@ -742,48 +742,47 @@ const additionalCSS = `
         <div class="header">
             <h1>🎮 Saarcade Kassensystem</h1>
             
-            <div class="header-main">
-                <div class="scanner-pin-area">
-                    <div class="scanner-status-row">
-                        <div class="scanner-status" id="scannerStatus">
-                            🔍 Bereit für Barcode-Scanner
-                        </div>
-                        <div class="status-messages-inline">
-                            <div class="offline-indicator" id="offlineIndicator" style="display: none;">
-                                ⚠️ Keine Verbindung zur Datenbank
-                            </div>
-                            <div class="status-message" id="statusMessage"></div>
-                        </div>
-                    </div>
-                    <div class="scanner-row">
-                        <div class="scanner-input-container">
-                            <div class="input-container">
-                                <input type="text" id="barcodeInput" placeholder="Barcode scannen oder Name eingeben..." autocomplete="off" autofocus>
-                                <div class="dropdown" id="userDropdown" style="display: none;"></div>
-                            </div>
-                        </div>
-                        <div class="pin-button-container">
-                            <button class="btn" id="pinChangeBtn" onclick="openPinModal()" style="width: 100%; font-size: 0.8em;">
-                                🔐 PIN
-                            </button>
-                        </div>
-                    </div>
+           <div class="header-main">
+    <div class="scanner-pin-area">
+        <div class="scanner-status-row">
+            <div class="pin-button-container-left">
+                <button class="btn" id="pinChangeBtn" onclick="openPinModal()">
+                    🔒 PIN
+                </button>
+            </div>
+            <div class="scanner-status" id="scannerStatus">
+                🔍 Bereit für Barcode-Scanner
+            </div>
+            <div class="status-messages-inline">
+                <div class="offline-indicator" id="offlineIndicator" style="display: none;">
+                    ⚠️ Keine Verbindung zur Datenbank
                 </div>
-                
-                <div class="user-info-section">
-                    <div class="user-info" id="userInfo">
-                        <div class="user-name">Kein Benutzer</div>
-                        <div class="user-balance">Bitte scannen</div>
-                    </div>
-                </div>
-                
-                <div class="workflow-steps">
-                    <div class="workflow-step" id="step1">1️⃣ Mitglied</div>
-                    <div class="workflow-step" id="step2">2️⃣ Getränke</div>
-                    <div class="workflow-step" id="step3">3️⃣ Checkout</div>
+                <div class="status-message" id="statusMessage"></div>
+            </div>
+        </div>
+        <div class="scanner-row">
+            <div class="scanner-input-container">
+                <div class="input-container">
+                    <input type="text" id="barcodeInput" placeholder="Barcode scannen oder Name eingeben..." autocomplete="off" autofocus>
+                    <div class="dropdown" id="userDropdown" style="display: none;"></div>
                 </div>
             </div>
         </div>
+    </div>
+    
+    <div class="user-info-section">
+        <div class="user-info" id="userInfo">
+            <div class="user-name">Kein Benutzer</div>
+            <div class="user-balance">Bitte scannen</div>
+        </div>
+    </div>
+    
+    <div class="workflow-steps">
+        <div class="workflow-step" id="step1">1️⃣ Mitglied</div>
+        <div class="workflow-step" id="step2">2️⃣ Getränke</div>
+        <div class="workflow-step" id="step3">3️⃣ Checkout</div>
+    </div>
+</div>
 
         <div class="main-content">
             <div class="products-section">
