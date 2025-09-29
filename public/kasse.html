@@ -275,12 +275,14 @@
             gap: 10px;
         }
 
-        .pin-button-container {
-            width: 140px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
+.pin-button-container {
+    flex: 0 0 auto;
+}
+
+.pin-button-container .btn {
+    white-space: nowrap;
+    min-width: 140px;
+}
 
         .user-info-section {
             display: flex;
@@ -745,6 +747,11 @@ const additionalCSS = `
             <div class="header-main">
                 <div class="scanner-pin-area">
                     <div class="scanner-status-row">
+                       <div class="pin-button-container">
+                            <button class="btn" id="pinChangeBtn" onclick="openPinModal()" style="width: 100%; font-size: 0.8em;">
+                                🔐 PIN
+                            </button>
+                        </div>
                         <div class="scanner-status" id="scannerStatus">
                             🔍 Bereit für Barcode-Scanner
                         </div>
@@ -761,11 +768,6 @@ const additionalCSS = `
                                 <input type="text" id="barcodeInput" placeholder="Barcode scannen oder Name eingeben..." autocomplete="off" autofocus>
                                 <div class="dropdown" id="userDropdown" style="display: none;"></div>
                             </div>
-                        </div>
-                        <div class="pin-button-container">
-                            <button class="btn" id="pinChangeBtn" onclick="openPinModal()" style="width: 100%; font-size: 0.8em;">
-                                🔐 PIN
-                            </button>
                         </div>
                     </div>
                 </div>
