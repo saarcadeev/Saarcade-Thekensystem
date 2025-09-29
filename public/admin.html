@@ -1773,6 +1773,11 @@ async function deleteSelectedProducts() {
         async function saveProduct() {
             const saveBtn = document.getElementById('saveProductBtn');
             const productId = document.getElementById('productId').value;
+
+            const barcodes = document.getElementById('productBarcodes').value
+                .split('\n')
+                .map(b => b.trim())
+                .filter(b => b.length > 0);
             
             const productData = {
                 name: document.getElementById('productName').value.trim(),
@@ -1782,7 +1787,7 @@ async function deleteSelectedProducts() {
                 guest_price: parseFloat(document.getElementById('productGuestPrice').value) || 0,
                 stock: parseInt(document.getElementById('productStock').value) || 0,
                 min_stock: parseInt(document.getElementById('productMinStock').value) || 0,
-                barcode: document.getElementById('productBarcode').value.trim() || null,
+                barcodes: barcodes, //array statt String
                 available: document.getElementById('productAvailable').checked
             };
             
