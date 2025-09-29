@@ -1886,7 +1886,7 @@ function updateCartView() {
                             selectUser(user, true); // PIN-Check überspringen da schon geprüft
                         }
                     } else {
-                        const localUser = users.find(u => u.barcode === trimmedBarcode);
+                        const localUser = users.find(u => u.barcodes && u.barcodes.includes(trimmedBarcode));
                         if (localUser) {
                             // PIN-Prüfung für lokalen Benutzer
                             if (requiresPinCheck(localUser, true)) {
@@ -1918,7 +1918,7 @@ function updateCartView() {
                     if (product) {
                         addToCart(product.id, true);
                     } else {
-                        const localProduct = products.find(p => p.barcode === trimmedBarcode);
+                        const localProduct = products.find(p => p.barcodes && p.barcodes.includes(trimmedBarcode));
                         if (localProduct) {
                             addToCart(localProduct.id, true);
                         } else {
