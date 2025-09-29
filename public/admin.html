@@ -725,10 +725,10 @@
                         </div>
                     </div>
                     
-                    <div class="form-group">
-                        <label>Barcode (optional)</label>
-                        <input type="text" id="productBarcode">
-                    </div>
+                <div class="form-group">
+                    <label>Barcodes (optional, mit Enter trennen)</label>
+                    <textarea id="productBarcodes" rows="3" placeholder="4000417025001&#10;5000112637447"></textarea>
+                </div>
                     
                     <div class="form-group">
                         <label>
@@ -750,6 +750,82 @@
         </div>
     </div>
 
+<!-- User Modal -->
+<div id="userModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="userModalTitle">Mitglied bearbeiten</h3>
+            <span class="close" onclick="closeModal('userModal')">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="userForm">
+                <input type="hidden" id="userId" value="">
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Vorname *</label>
+                        <input type="text" id="userFirstName" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Nachname *</label>
+                        <input type="text" id="userLastName" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Barcodes * (mit Enter trennen)</label>
+                    <textarea id="userBarcodes" rows="3" placeholder="SAAR001&#10;ALT123" required></textarea>
+                    <small style="color: #666;">Jeder Barcode in eine neue Zeile</small>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Rolle</label>
+                        <select id="userRole">
+                            <option value="member">👥 Mitglied</option>
+                            <option value="guest">👤 Gast</option>
+                            <option value="bartender">🍺 Barkeeper</option>
+                            <option value="admin">⚙️ Administrator</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Saldo (€)</label>
+                        <input type="number" id="userBalance" step="0.01" value="0">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>E-Mail</label>
+                    <input type="email" id="userEmail">
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="userSepaActive">
+                        SEPA-Lastschrift aktiv
+                    </label>
+                </div>
+                
+                <div class="form-group" id="ibanGroup" style="display: none;">
+                    <label>IBAN</label>
+                    <input type="text" id="userIban" placeholder="DE89 3704 0044 0532 0130 00">
+                </div>
+                
+                <div style="text-align: right; margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('userModal')">
+                        Abbrechen
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="saveUser()" id="saveUserBtn">
+                        💾 Speichern
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+    
     <script>
         // ============ GLOBALE VARIABLEN ============
         let apiConnected = false;
@@ -1100,6 +1176,146 @@ window.addEventListener('error', function(e) {
             }
         }
 
+function openUserModal(userId = null) {
+    const modal = document.getElementById('userModal');
+    const title = document.getElementById('userModalTitle');
+    const form = document.getElementById('userForm');
+    
+    form.reset();
+    document.getElementById('userId').value = '';
+    
+    if (userId) {
+        const user = users.find(u => u.id === userId);
+        if (user) {
+            title.textContent = 'Mitglied bearbeiten';
+            
+            document.getElementById('userId').value = user.id;
+            document.getElementById('userFirstName').value = user.first_name;
+            document.getElementById('userLastName').value = user.last_name;
+            document.getElementById('userBarcodes').value = (user.barcodes || []).join('\n');
+            document.getElementById('userRole').value = user.role;
+            document.getElementById('userBalance').value = user.balance.toFixed(2);
+            document.getElementById('userEmail').value = user.email || '';
+            document.getElementById('userSepaActive').checked = user.sepa_active || false;
+            document.getElementById('userIban').value = user.iban || '';
+            
+            toggleIbanField();
+        }
+    } else {
+        title.textContent = 'Neues Mitglied hinzufügen';
+        document.getElementById('userBalance').value = '0.00';
+        document.getElementById('userRole').value = 'member';
+    }
+    
+    modal.style.display = 'block';
+    
+    setTimeout(() => {
+        document.getElementById('userFirstName').focus();
+    }, 150);
+}
+
+function editSelectedUser() {
+    if (selectedUsers.length !== 1) return;
+    openUserModal(selectedUsers[0]);
+}
+
+async function saveUser() {
+    const saveBtn = document.getElementById('saveUserBtn');
+    const userId = document.getElementById('userId').value;
+    
+    const barcodes = document.getElementById('userBarcodes').value
+        .split('\n')
+        .map(b => b.trim().toUpperCase())
+        .filter(b => b.length > 0);
+    
+    const userData = {
+        first_name: document.getElementById('userFirstName').value.trim(),
+        last_name: document.getElementById('userLastName').value.trim(),
+        barcodes: barcodes,
+        role: document.getElementById('userRole').value,
+        balance: parseFloat(document.getElementById('userBalance').value) || 0,
+        email: document.getElementById('userEmail').value.trim() || null,
+        sepa_active: document.getElementById('userSepaActive').checked,
+        iban: document.getElementById('userIban').value.trim() || null
+    };
+    
+    if (!userData.first_name || !userData.last_name || barcodes.length === 0) {
+        showAlert('Bitte alle Pflichtfelder ausfüllen (mind. 1 Barcode)', 'error');
+        return;
+    }
+    
+    try {
+        saveBtn.disabled = true;
+        saveBtn.textContent = '⏳ Speichere...';
+        
+        if (userId) {
+            await apiCall(`/api/users/${userId}`, {
+                method: 'PUT',
+                body: JSON.stringify(userData)
+            });
+            showAlert('Mitglied erfolgreich aktualisiert', 'success');
+        } else {
+            await apiCall('/api/users', {
+                method: 'POST',
+                body: JSON.stringify(userData)
+            });
+            showAlert('Neues Mitglied erfolgreich hinzugefügt', 'success');
+        }
+        
+        closeModal('userModal');
+        loadUsers();
+        loadDashboard();
+        
+    } catch (error) {
+        showAlert(error.message || 'Fehler beim Speichern des Mitglieds', 'error');
+        console.error('Save user error:', error);
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = '💾 Speichern';
+    }
+}
+
+async function deleteSelectedUsers() {
+    if (selectedUsers.length === 0) return;
+    
+    const userNames = selectedUsers.map(id => {
+        const user = users.find(u => u.id === id);
+        return user ? `${user.first_name} ${user.last_name}` : 'Unbekannt';
+    }).join(', ');
+    
+    if (confirm(`Möchten Sie diese ${selectedUsers.length} Mitglieder wirklich löschen?\n\n${userNames}\n\nDiese Aktion kann nicht rückgängig gemacht werden.`)) {
+        try {
+            for (const userId of selectedUsers) {
+                await apiCall(`/api/users/${userId}`, { method: 'DELETE' });
+            }
+            showAlert(`${selectedUsers.length} Mitglieder erfolgreich gelöscht`, 'success');
+            loadUsers();
+            loadDashboard();
+        } catch (error) {
+            showAlert('Fehler beim Löschen der Mitglieder', 'error');
+        }
+    }
+}
+
+function toggleIbanField() {
+    const sepaCheckbox = document.getElementById('userSepaActive');
+    const ibanGroup = document.getElementById('ibanGroup');
+    
+    if (sepaCheckbox.checked) {
+        ibanGroup.style.display = 'block';
+    } else {
+        ibanGroup.style.display = 'none';
+    }
+}
+
+// Event Listener für SEPA-Checkbox
+document.addEventListener('DOMContentLoaded', function() {
+    const sepaCheckbox = document.getElementById('userSepaActive');
+    if (sepaCheckbox) {
+        sepaCheckbox.addEventListener('change', toggleIbanField);
+    }
+});
+        
         async function loadUsers() {
             try {
                 const loadBtn = document.getElementById('loadUsersBtn');
@@ -1142,36 +1358,36 @@ window.addEventListener('error', function(e) {
 
         // ============ RENDER FUNCTIONS ============
         
-        function renderUsers() {
-            const tbody = document.querySelector('#userTable tbody');
-            selectedUsers = [];
-            updateSelectionInfo('users');
-            
-            if (users.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px; color: #666;">Keine Mitgliederdaten verfügbar</td></tr>';
-                return;
-            }
-            
-            tbody.innerHTML = users.map(user => {
-                const balanceColor = user.balance >= 0 ? '#38a169' : '#e53e3e';
-                const roleIcon = getRoleIcon(user.role);
-                const sepaStatus = user.sepa_active ? '✅' : '❌';
-                
-                return `
-                    <tr>
-                        <td class="checkbox-cell">
-                            <input type="checkbox" value="${user.id}" onchange="toggleRowSelection(this, 'users')">
-                        </td>
-                        <td>${user.first_name} ${user.last_name}</td>
-                        <td>${roleIcon} ${getRoleText(user.role)}</td>
-                        <td><code style="font-size: 0.8em;">${user.barcode}</code></td>
-                        <td style="color: ${balanceColor}; font-weight: bold;">${user.balance.toFixed(2)}€</td>
-                        <td>${sepaStatus}</td>
-                        <td style="font-size: 0.8em;">${user.email || '-'}</td>
-                    </tr>
-                `;
-            }).join('');
-        }
+  function renderUsers() {
+    const tbody = document.querySelector('#userTable tbody');
+    selectedUsers = [];
+    updateSelectionInfo('users');
+    
+    if (users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px; color: #666;">Keine Mitgliederdaten verfügbar</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = users.map(user => {
+        const balanceColor = user.balance >= 0 ? '#38a169' : '#e53e3e';
+        const roleIcon = getRoleIcon(user.role);
+        const sepaStatus = user.sepa_active ? '✅' : '❌';
+        
+        return `
+            <tr>
+                <td class="checkbox-cell">
+                    <input type="checkbox" value="${user.id}" onchange="toggleRowSelection(this, 'users')">
+                </td>
+                <td>${user.first_name} ${user.last_name}</td>
+                <td>${roleIcon} ${getRoleText(user.role)}</td>
+                <td><code style="font-size: 0.8em;">${user.barcodes ? user.barcodes.join(', ') : '-'}</code></td>
+                <td style="color: ${balanceColor}; font-weight: bold;">${user.balance.toFixed(2)}€</td>
+                <td>${sepaStatus}</td>
+                <td style="font-size: 0.8em;">${user.email || '-'}</td>
+            </tr>
+        `;
+    }).join('');
+}
 
         function renderProducts() {
             const tbody = document.querySelector('#productTable tbody');
@@ -1209,7 +1425,7 @@ window.addEventListener('error', function(e) {
                         <td>${product.member_price.toFixed(2)}€</td>
                         <td>${product.guest_price.toFixed(2)}€</td>
                         <td style="color: ${stockColor}; font-weight: bold;">${product.stock}</td>
-                        <td><code style="font-size: 0.8em;">${product.barcode || '-'}</code></td>
+                        <td><code style="font-size: 0.8em;">${product.barcodes ? product.barcodes.join(', ') : '-'}</code></td>
                     </tr>
                 `;
             }).join('');
