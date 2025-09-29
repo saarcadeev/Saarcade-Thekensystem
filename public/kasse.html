@@ -18,10 +18,8 @@
         .container {
             max-width: 1920px;
             margin: 0 auto;
-            height: auto;
-            min-height: 100vh;
-            overflow: visible;
-            padding-bottom: 15px;
+            height: 1080px;
+            overflow: hidden;
         }
 
         /* Optimierte Header-Struktur */
@@ -30,7 +28,7 @@
             backdrop-filter: blur(10px);
             border-radius: 12px;
             padding: 15px;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
             position: relative;
             z-index: 1000; /* Neuer hoher z-index */
@@ -59,14 +57,13 @@
         }
 
         .status-message {
-            padding: 8px 12px;
+            padding: 10px 16px;
             border-radius: 8px;
-            margin-bottom: 0;
+            margin-bottom: 8px;
             font-weight: 600;
             opacity: 0;
             transition: opacity 0.3s ease;
             text-align: center;
-            font-size: 0.85em;
         }
 
         .status-message.show { opacity: 1; }
@@ -79,7 +76,7 @@
             display: grid;
             grid-template-columns: 1fr auto 150px;
             gap: 15px;
-            align-items: stretch;
+            align-items: start;
             margin-bottom: 8px;
         }
 
@@ -91,7 +88,7 @@
 
         .scanner-status-row {
             display: flex;
-            gap: 10px;
+            gap: 15px;
             align-items: center;
         }
 
@@ -104,7 +101,6 @@
             font-size: 0.9em;
             font-weight: 600;
             flex: 0 0 auto;
-            min-width: 280px;
         }
 
         .scanner-status.user-mode {
@@ -134,10 +130,6 @@
             color: #4a5568;
             text-align: center;
             transition: all 0.3s ease;
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
         .workflow-step.active {
@@ -195,10 +187,6 @@
             padding: 12px;
             border-radius: 8px;
             text-align: center;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
         }
 
         .user-info.member { background: linear-gradient(135deg, #48bb78, #38a169); }
@@ -287,25 +275,17 @@
             gap: 10px;
         }
 
-        .pin-button-container-left {
-            flex: 0 0 auto;
+        .pin-button-container {
+            width: 120px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
-        .pin-button-container-left .btn {
-            padding: 8px 12px;
-            font-size: 0.85em;
-            white-space: nowrap;
-            min-width: 140px;
-        }
-
-        .products-section, .cart-section {
-            margin-top: 0;  /* stelle sicher, dass kein negativer Wert da ist */
-        }
-        
         .user-info-section {
             display: flex;
             flex-direction: column;
-            justify-content: stretch;
+            justify-content: flex-end;
         }
 
         .main-content {
@@ -313,7 +293,6 @@
             grid-template-columns: 1fr 350px;
             gap: 15px;
             height: calc(100vh - 250px);
-            margin-top: 0;
         }
 
         .products-section {
@@ -763,47 +742,48 @@ const additionalCSS = `
         <div class="header">
             <h1>🎮 Saarcade Kassensystem</h1>
             
-<div class="header-main">
-    <div class="scanner-pin-area">
-        <div class="scanner-status-row">
-            <div class="pin-button-container-left">
-                <button class="btn" id="pinChangeBtn" onclick="openPinModal()">
-                    🔒 PIN
-                </button>
-            </div>
-            <div class="scanner-status" id="scannerStatus">
-                🔍 Bereit für Barcode-Scanner
-            </div>
-            <div class="status-messages-inline">
-                <div class="offline-indicator" id="offlineIndicator" style="display: none;">
-                    ⚠️ Keine Verbindung zur Datenbank
+            <div class="header-main">
+                <div class="scanner-pin-area">
+                    <div class="scanner-status-row">
+                        <div class="scanner-status" id="scannerStatus">
+                            🔍 Bereit für Barcode-Scanner
+                        </div>
+                        <div class="status-messages-inline">
+                            <div class="offline-indicator" id="offlineIndicator" style="display: none;">
+                                ⚠️ Keine Verbindung zur Datenbank
+                            </div>
+                            <div class="status-message" id="statusMessage"></div>
+                        </div>
+                    </div>
+                    <div class="scanner-row">
+                        <div class="scanner-input-container">
+                            <div class="input-container">
+                                <input type="text" id="barcodeInput" placeholder="Barcode scannen oder Name eingeben..." autocomplete="off" autofocus>
+                                <div class="dropdown" id="userDropdown" style="display: none;"></div>
+                            </div>
+                        </div>
+                        <div class="pin-button-container">
+                            <button class="btn" id="pinChangeBtn" onclick="openPinModal()" style="width: 100%; font-size: 0.8em;">
+                                🔐 PIN
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div class="status-message" id="statusMessage"></div>
-            </div>
-        </div>
-        <div class="scanner-row">
-            <div class="scanner-input-container">
-                <div class="input-container">
-                    <input type="text" id="barcodeInput" placeholder="Barcode scannen oder Name eingeben..." autocomplete="off" autofocus>
-                    <div class="dropdown" id="userDropdown" style="display: none;"></div>
+                
+                <div class="user-info-section">
+                    <div class="user-info" id="userInfo">
+                        <div class="user-name">Kein Benutzer</div>
+                        <div class="user-balance">Bitte scannen</div>
+                    </div>
+                </div>
+                
+                <div class="workflow-steps">
+                    <div class="workflow-step" id="step1">1️⃣ Mitglied</div>
+                    <div class="workflow-step" id="step2">2️⃣ Getränke</div>
+                    <div class="workflow-step" id="step3">3️⃣ Checkout</div>
                 </div>
             </div>
         </div>
-    </div>
-    
-    <div class="user-info-section">
-        <div class="user-info" id="userInfo">
-            <div class="user-name">Kein Benutzer</div>
-            <div class="user-balance">Bitte scannen</div>
-        </div>
-    </div>
-    
-    <div class="workflow-steps">
-        <div class="workflow-step" id="step1">1️⃣ Mitglied</div>
-        <div class="workflow-step" id="step2">2️⃣ Getränke</div>
-        <div class="workflow-step" id="step3">3️⃣ Checkout</div>
-    </div>
-</div>
 
         <div class="main-content">
             <div class="products-section">
