@@ -1356,6 +1356,212 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
+// ============ PRODUCT MODAL FUNCTIONS ============
+
+function openProductModal(productId = null) {
+    try {
+        const modal = document.getElementById('productModal');
+        const title = document.getElementById('productModalTitle');
+        const form = document.getElementById('productForm');
+        
+        if (!modal || !title || !form) {
+            console.error('Modal-Elemente nicht gefunden');
+            showAlert('Fehler: Modal nicht verfügbar', 'error');
+            return;
+        }
+        
+        form.reset();
+        document.getElementById('productId').value = '';
+        document.getElementById('currentImageUrl').value = '';
+        document.getElementById('currentImagePath').value = '';
+        
+        try {
+            resetPhotoPreview();
+        } catch (resetError) {
+            console.warn('Photo reset warning:', resetError);
+            const container = document.getElementById('photoPreviewContainer');
+            if (container) {
+                container.innerHTML = `
+                    <div id="photoPlaceholder">
+                        <p style="margin: 10px 0;">📷 Klicken oder Bild hierher ziehen</p>
+                        <p style="font-size: 0.8em; color: #666;">JPG, PNG bis 2MB</p>
+                    </div>
+                `;
+                container.classList.remove('has-image');
+            }
+        }
+        
+        if (productId) {
+            const product = products.find(p => p.id === productId);
+            if (product) {
+                title.textContent = 'Produkt bearbeiten';
+                
+                document.getElementById('productId').value = product.id || '';
+                document.getElementById('productName').value = product.name || '';
+                document.getElementById('productCategory').value = product.category || 'sonstiges';
+                document.getElementById('productEmoji').value = product.image || '';
+                document.getElementById('productMemberPrice').value = (product.member_price || 0).toFixed(2);
+                document.getElementById('productGuestPrice').value = (product.guest_price || 0).toFixed(2);
+                document.getElementById('productStock').value = product.stock || 0;
+                document.getElementById('productMinStock').value = product.min_stock || 5;
+                
+                // Multi-Barcode Support mit Fallback
+                const barcodesValue = product.barcodes 
+                    ? (Array.isArray(product.barcodes) ? product.barcodes : [product.barcodes]) 
+                    : (product.barcode ? [product.barcode] : []);
+                document.getElementById('productBarcodes').value = barcodesValue.join('\n');
+                
+                document.getElementById('productAvailable').checked = product.available !== false;
+                
+                if (product.image_url && typeof product.image_url === 'string') {
+                    try {
+                        document.getElementById('currentImageUrl').value = product.image_url;
+                        document.getElementById('currentImagePath').value = product.image_file_path || '';
+                        
+                        const img = new Image();
+                        img.onload = function() {
+                            try {
+                                showPhotoPreview(product.image_url, true);
+                            } catch (showError) {
+                                console.warn('Error showing existing image:', showError);
+                            }
+                        };
+                        img.onerror = function() {
+                            console.warn('Existing image could not be loaded:', product.image_url);
+                        };
+                        img.src = product.image_url;
+                        
+                    } catch (imageError) {
+                        console.warn('Fehler beim Verarbeiten des Produktbildes:', imageError);
+                    }
+                }
+            } else {
+                console.error('Produkt nicht gefunden:', productId);
+                showAlert('Produkt nicht gefunden', 'error');
+                return;
+            }
+        } else {
+            title.textContent = 'Neues Produkt hinzufügen';
+            document.getElementById('productStock').value = '0';
+            document.getElementById('productMinStock').value = '5';
+            document.getElementById('productAvailable').checked = true;
+        }
+        
+        modal.style.display = 'block';
+        
+        setTimeout(() => {
+            const firstInput = form.querySelector('input[type="text"]');
+            if (firstInput) {
+                firstInput.focus();
+            }
+        }, 150);
+        
+        console.log('✅ Product modal opened successfully');
+        
+    } catch (error) {
+        console.error('❌ Fehler beim Öffnen des Produkt-Modals:', error);
+        showAlert('Fehler beim Öffnen des Bearbeiten-Dialogs', 'error');
+    }
+}
+
+function editSelectedProduct() {
+    if (selectedProducts.length !== 1) return;
+    openProductModal(selectedProducts[0]);
+}
+
+async function saveProduct() {
+    const saveBtn = document.getElementById('saveProductBtn');
+    const productId = document.getElementById('productId').value;
+    
+    const barcodes = document.getElementById('productBarcodes').value
+        .split('\n')
+        .map(b => b.trim())
+        .filter(b => b.length > 0);
+    
+    const productData = {
+        name: document.getElementById('productName').value.trim(),
+        category: document.getElementById('productCategory').value,
+        image: document.getElementById('productEmoji').value.trim() || '📦',
+        member_price: parseFloat(document.getElementById('productMemberPrice').value) || 0,
+        guest_price: parseFloat(document.getElementById('productGuestPrice').value) || 0,
+        stock: parseInt(document.getElementById('productStock').value) || 0,
+        min_stock: parseInt(document.getElementById('productMinStock').value) || 0,
+        barcodes: barcodes,
+        available: document.getElementById('productAvailable').checked
+    };
+    
+    if (!productData.name || productData.member_price <= 0 || productData.guest_price <= 0) {
+        showAlert('Bitte alle Pflichtfelder korrekt ausfüllen', 'error');
+        return;
+    }
+
+    try {
+        saveBtn.disabled = true;
+        saveBtn.textContent = '⏳ Speichere...';
+
+        if (currentImageFile) {
+            showAlert('Lade Produktbild hoch...', 'info');
+            const uploadResult = await uploadImageToAPI(currentImageFile, productId || 'new');
+            productData.image_url = uploadResult.imageUrl;
+            productData.image_file_path = uploadResult.filePath;
+            
+            if (productId && document.getElementById('currentImagePath').value) {
+                productData.deleteOldImage = true;
+            }
+        } else if (uploadedImageUrl) {
+            productData.image_url = uploadedImageUrl;
+            productData.image_file_path = document.getElementById('currentImagePath').value;
+        }
+        
+        if (productId) {
+            await apiCall(`/api/products/${productId}`, {
+                method: 'PUT',
+                body: JSON.stringify(productData)
+            });
+            showAlert('Produkt erfolgreich aktualisiert', 'success');
+        } else {
+            await apiCall('/api/products', {
+                method: 'POST',
+                body: JSON.stringify(productData)
+            });
+            showAlert('Neues Produkt erfolgreich hinzugefügt', 'success');
+        }
+        
+        closeModal('productModal');
+        loadProducts();
+        loadDashboard();
+        
+    } catch (error) {
+        showAlert('Fehler beim Speichern des Produkts', 'error');
+        console.error('Save product error:', error);
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = '💾 Speichern';
+    }
+}
+
+async function deleteSelectedProducts() {
+    if (selectedProducts.length === 0) return;
+    
+    const productNames = selectedProducts.map(id => {
+        const product = products.find(p => p.id === id);
+        return product ? product.name : 'Unbekannt';
+    }).join(', ');
+    
+    if (confirm(`Möchten Sie diese ${selectedProducts.length} Produkte wirklich löschen?\n\n${productNames}\n\nDiese Aktion kann nicht rückgängig gemacht werden.`)) {
+        try {
+            for (const productId of selectedProducts) {
+                await apiCall(`/api/products/${productId}`, { method: 'DELETE' });
+            }
+            showAlert(`${selectedProducts.length} Produkte erfolgreich gelöscht`, 'success');
+            loadProducts();
+            loadDashboard();
+        } catch (error) {
+            showAlert('Fehler beim Löschen der Produkte', 'error');
+        }
+    }
+}
+        
         // ============ RENDER FUNCTIONS ============
         
   function renderUsers() {
