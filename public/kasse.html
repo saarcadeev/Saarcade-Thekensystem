@@ -1656,18 +1656,27 @@ function updateCartView() {
             hideDropdown();
         }
 
-        async function searchUsers(query) {
-            if (!query || query.length < 2) {
-                hideDropdown();
-                return;
-            }
+async function searchUsers(query) {
+    if (!query || query.length < 2) {
+        hideDropdown();
+        return;
+    }
 
-            const filtered = users.filter(user => 
-                user.barcode.toLowerCase().includes(query.toLowerCase()) ||
-                `${user.first_name} ${user.last_name}`.toLowerCase().includes(query.toLowerCase()) ||
-                user.first_name.toLowerCase().includes(query.toLowerCase()) ||
-                user.last_name.toLowerCase().includes(query.toLowerCase())
-            );
+    const filtered = users.filter(user => {
+        const queryLower = query.toLowerCase();
+        
+        // Suche in Barcodes (Array-Support mit Fallback)
+        const barcodeMatch = user.barcodes 
+            ? user.barcodes.some(bc => bc.toLowerCase().includes(queryLower))
+            : (user.barcode && user.barcode.toLowerCase().includes(queryLower));
+        
+        // Suche in Namen
+        const nameMatch = `${user.first_name} ${user.last_name}`.toLowerCase().includes(queryLower) ||
+                         user.first_name.toLowerCase().includes(queryLower) ||
+                         user.last_name.toLowerCase().includes(queryLower);
+        
+        return barcodeMatch || nameMatch;
+    });
 
             if (filtered.length === 0) {
                 hideDropdown();
