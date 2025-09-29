@@ -187,120 +187,123 @@ module.exports = async (req, res) => {
             return res.status(200).json(data || []);
         }
 
-        // GET /users/{barcode} - Benutzer per Barcode
-        if (pathParts[0] === 'users' && pathParts[1] && method === 'GET') {
-            const barcode = pathParts[1].toUpperCase();
-            
-            const { data, error } = await supabase
-                .from('users')
-                .select('*')
-                .eq('barcode', barcode)
-                .single();
-            
-            if (error) {
-                if (error.code === 'PGRST116') {
-                    return res.status(404).json({ error: 'Benutzer nicht gefunden' });
-                }
-                throw error;
-            }
-            
-            return res.status(200).json(data);
+// GET /users/{barcode} - Benutzer per Barcode
+if (pathParts[0] === 'users' && pathParts[1] && method === 'GET') {
+    const barcode = pathParts[1].toUpperCase();
+    
+    const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .contains('barcodes', [barcode])
+        .single();
+    
+    if (error) {
+        if (error.code === 'PGRST116') {
+            return res.status(404).json({ error: 'Benutzer nicht gefunden' });
         }
+        throw error;
+    }
+    
+    return res.status(200).json(data);
+}
 
-        // POST /users - Neuen Benutzer erstellen
-        if (path === '/users' && method === 'POST') {
-            const userData = req.body;
-            
-            // Validierung
-            if (!userData.first_name || !userData.last_name || !userData.barcode) {
-                return res.status(400).json({ error: 'Pflichtfelder fehlen: first_name, last_name, barcode' });
-            }
+// POST /users - Neuen Benutzer erstellen
+if (path === '/users' && method === 'POST') {
+    const userData = req.body;
+    
+    if (!userData.first_name || !userData.last_name || !userData.barcodes || userData.barcodes.length === 0) {
+        return res.status(400).json({ error: 'Pflichtfelder fehlen: first_name, last_name, barcodes' });
+    }
 
-            // Barcode-Eindeutigkeit prüfen
+    // Barcode-Eindeutigkeit prüfen für alle Barcodes
+    for (const barcode of userData.barcodes) {
+        const { data: existingUser } = await supabase
+            .from('users')
+            .select('id')
+            .contains('barcodes', [barcode])
+            .single();
+
+        if (existingUser) {
+            return res.status(400).json({ error: `Barcode ${barcode} bereits vergeben` });
+        }
+    }
+
+    const { data, error } = await supabase
+        .from('users')
+        .insert([{
+            first_name: userData.first_name,
+            last_name: userData.last_name,
+            role: userData.role || 'member',
+            barcodes: userData.barcodes,  // Array
+            balance: userData.balance || 0,
+            sepa_active: userData.sepa_active || false,
+            email: userData.email || null,
+            iban: userData.iban || null,
+            user_pin: null,
+            pin_require_for_name_search: false,
+            pin_require_for_barcode: false
+        }])
+        .select()
+        .single();
+    
+    if (error) throw error;
+    return res.status(201).json(data);
+}
+
+// PUT /users/{id} - Benutzer bearbeiten
+if (pathParts[0] === 'users' && pathParts[1] && method === 'PUT') {
+    const userId = parseInt(pathParts[1]);
+    const userData = req.body;
+    
+    if (isNaN(userId)) {
+        return res.status(400).json({ error: 'Ungültige Benutzer-ID' });
+    }
+
+    // Barcode-Eindeutigkeit prüfen (ausgenommen aktueller Benutzer)
+    if (userData.barcodes && userData.barcodes.length > 0) {
+        for (const barcode of userData.barcodes) {
             const { data: existingUser } = await supabase
                 .from('users')
                 .select('id')
-                .eq('barcode', userData.barcode)
+                .contains('barcodes', [barcode])
+                .neq('id', userId)
                 .single();
 
             if (existingUser) {
-                return res.status(400).json({ error: 'Barcode bereits vergeben' });
+                return res.status(400).json({ error: `Barcode ${barcode} bereits vergeben` });
             }
-
-            // Benutzer erstellen
-            const { data, error } = await supabase
-                .from('users')
-                .insert([{
-                    first_name: userData.first_name,
-                    last_name: userData.last_name,
-                    role: userData.role || 'member',
-                    barcode: userData.barcode,
-                    balance: userData.balance || 0,
-                    sepa_active: userData.sepa_active || false,
-                    email: userData.email || null,
-                    iban: userData.iban || null,
-                    user_pin: null,                        // Keine PIN
-                    pin_require_for_name_search: false,    // Keine PIN-Abfrage
-                    pin_require_for_barcode: false         // Keine PIN-Abfrage
-                }])
-                .select()
-                .single();
-            
-            if (error) throw error;
-            return res.status(201).json(data);
         }
+    }
 
-        // PUT /users/{id} - Benutzer bearbeiten
-        if (pathParts[0] === 'users' && pathParts[1] && method === 'PUT') {
-            const userId = parseInt(pathParts[1]);
-            const userData = req.body;
-            
-            if (isNaN(userId)) {
-                return res.status(400).json({ error: 'Ungültige Benutzer-ID' });
-            }
-
-            // Barcode-Eindeutigkeit prüfen (ausgenommen aktueller Benutzer)
-            if (userData.barcode) {
-                const { data: existingUser } = await supabase
-                    .from('users')
-                    .select('id')
-                    .eq('barcode', userData.barcode)
-                    .neq('id', userId)
-                    .single();
-
-                if (existingUser) {
-                    return res.status(400).json({ error: 'Barcode bereits vergeben' });
-                }
-            }
-
-            const { data, error } = await supabase
-                .from('users')
-                .update({
-                    first_name: userData.first_name,
-                    last_name: userData.last_name,
-                    role: userData.role,
-                    barcode: userData.barcode,
-                    balance: userData.balance,
-                    sepa_active: userData.sepa_active,
-                    email: userData.email,
-                    iban: userData.iban,
-                    user_pin: userData.user_pin,
-                    pin_require_for_name_search: userData.pin_require_for_name_search,
-                    pin_require_for_barcode: userData.pin_require_for_barcode
-                })
-                .eq('id', userId)
-                .select()
-                .single();
-            
-            if (error) {
-                if (error.code === 'PGRST116') {
-                    return res.status(404).json({ error: 'Benutzer nicht gefunden' });
-                }
-                throw error;
-            }
-            
-            return res.status(200).json(data);
+    const { data, error } = await supabase
+        .from('users')
+        .update({
+            first_name: userData.first_name,
+            last_name: userData.last_name,
+            role: userData.role,
+            barcodes: userData.barcodes,  // Array
+            balance: userData.balance,
+            sepa_active: userData.sepa_active,
+            email: userData.email,
+            iban: userData.iban,
+            user_pin: userData.user_pin,
+            pin_require_for_name_search: userData.pin_require_for_name_search,
+            pin_require_for_barcode: userData.pin_require_for_barcode
+        })
+        .eq('id', userId)
+        .select()
+        .single();
+    
+    if (error) {
+        if (error.code === 'PGRST116') {
+            return res.status(404).json({ error: 'Benutzer nicht gefunden' });
         }
+        throw error;
+    }
+    
+    return res.status(200).json(data);
+}
+
 
         // DELETE /users/{id} - Benutzer löschen
         if (pathParts[0] === 'users' && pathParts[1] && method === 'DELETE') {
@@ -332,142 +335,126 @@ module.exports = async (req, res) => {
             return res.status(200).json(data || []);
         }
 
-        // GET /products/barcode/{barcode} - Produkt per Barcode
-        if (pathParts[0] === 'products' && pathParts[1] === 'barcode' && pathParts[2] && method === 'GET') {
-            const barcode = pathParts[2];
-            
-            const { data, error } = await supabase
-                .from('products')
-                .select('*')
-                .eq('barcode', barcode)
-                .eq('available', true)
-                .single();
-            
-            if (error) {
-                if (error.code === 'PGRST116') {
-                    return res.status(404).json({ error: 'Produkt nicht gefunden' });
-                }
-                throw error;
-            }
-            
-            return res.status(200).json(data);
+// GET /products/barcode/{barcode} - Produkt per Barcode
+if (pathParts[0] === 'products' && pathParts[1] === 'barcode' && pathParts[2] && method === 'GET') {
+    const barcode = pathParts[2];
+    
+    const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .contains('barcodes', [barcode])
+        .eq('available', true)
+        .single();
+    
+    if (error) {
+        if (error.code === 'PGRST116') {
+            return res.status(404).json({ error: 'Produkt nicht gefunden' });
         }
+        throw error;
+    }
+    
+    return res.status(200).json(data);
+}
 
-        // POST /products - Neues Produkt erstellen (MIT BILDUPLOAD)
-        if (path === '/products' && method === 'POST') {
-            const productData = req.body;
-            
-            // Validierung
-            if (!productData.name || !productData.member_price || !productData.guest_price) {
-                return res.status(400).json({ error: 'Pflichtfelder fehlen: name, member_price, guest_price' });
-            }
+// POST /products - Neues Produkt erstellen
+if (path === '/products' && method === 'POST') {
+    const productData = req.body;
+    
+    if (!productData.name || !productData.member_price || !productData.guest_price) {
+        return res.status(400).json({ error: 'Pflichtfelder fehlen: name, member_price, guest_price' });
+    }
 
-            // Barcode-Eindeutigkeit prüfen (falls angegeben)
-            if (productData.barcode) {
-                const { data: existingProduct } = await supabase
-                    .from('products')
-                    .select('id')
-                    .eq('barcode', productData.barcode)
-                    .single();
-
-                if (existingProduct) {
-                    return res.status(400).json({ error: 'Barcode bereits vergeben' });
-                }
-            }
-
-            // Produkt erstellen
-            const { data, error } = await supabase
+    // Barcode-Eindeutigkeit prüfen (falls angegeben)
+    if (productData.barcodes && productData.barcodes.length > 0) {
+        for (const barcode of productData.barcodes) {
+            const { data: existingProduct } = await supabase
                 .from('products')
-                .insert([{
-                    name: productData.name,
-                    category: productData.category || 'sonstiges',
-                    image: productData.image || '📦',
-                    member_price: productData.member_price,
-                    guest_price: productData.guest_price,
-                    stock: productData.stock || 0,
-                    min_stock: productData.min_stock || 5,
-                    barcode: productData.barcode || null,
-                    available: productData.available !== false,
-                    image_url: productData.image_url || null,
-                    image_file_path: productData.image_file_path || null
-                }])
-                .select()
+                .select('id')
+                .contains('barcodes', [barcode])
                 .single();
-            
-            if (error) throw error;
-            return res.status(201).json(data);
+
+            if (existingProduct) {
+                return res.status(400).json({ error: `Barcode ${barcode} bereits vergeben` });
+            }
         }
+    }
 
-        // PUT /products/{id} - Produkt bearbeiten (MIT BILDUPLOAD)
-        if (pathParts[0] === 'products' && pathParts[1] && method === 'PUT') {
-            const productId = parseInt(pathParts[1]);
-            const productData = req.body;
-            
-            if (isNaN(productId)) {
-                return res.status(400).json({ error: 'Ungültige Produkt-ID' });
-            }
+    const { data, error } = await supabase
+        .from('products')
+        .insert([{
+            name: productData.name,
+            category: productData.category || 'sonstiges',
+            image: productData.image || '📦',
+            member_price: productData.member_price,
+            guest_price: productData.guest_price,
+            stock: productData.stock || 0,
+            min_stock: productData.min_stock || 5,
+            barcodes: productData.barcodes || [],  // Array
+            available: productData.available !== false,
+            image_url: productData.image_url || null,
+            image_file_path: productData.image_file_path || null
+        }])
+        .select()
+        .single();
+    
+    if (error) throw error;
+    return res.status(201).json(data);
+}
 
-            // Barcode-Eindeutigkeit prüfen (ausgenommen aktuelles Produkt)
-            if (productData.barcode) {
-                const { data: existingProduct } = await supabase
-                    .from('products')
-                    .select('id')
-                    .eq('barcode', productData.barcode)
-                    .neq('id', productId)
-                    .single();
+// PUT /products/{id} - Produkt bearbeiten
+if (pathParts[0] === 'products' && pathParts[1] && method === 'PUT') {
+    const productId = parseInt(pathParts[1]);
+    const productData = req.body;
+    
+    if (isNaN(productId)) {
+        return res.status(400).json({ error: 'Ungültige Produkt-ID' });
+    }
 
-                if (existingProduct) {
-                    return res.status(400).json({ error: 'Barcode bereits vergeben' });
-                }
-            }
-
-            // Altes Bild löschen wenn neues hochgeladen wird
-            if (productData.image_url && productData.deleteOldImage) {
-                try {
-                    const { data: oldProduct } = await supabase
-                        .from('products')
-                        .select('image_file_path')
-                        .eq('id', productId)
-                        .single();
-
-                    if (oldProduct && oldProduct.image_file_path) {
-                        await supabase.storage
-                            .from('product-images')
-                            .remove([oldProduct.image_file_path]);
-                    }
-                } catch (deleteError) {
-                    console.warn('Could not delete old image:', deleteError);
-                }
-            }
-
-            const { data, error } = await supabase
+    // Barcode-Eindeutigkeit prüfen (ausgenommen aktuelles Produkt)
+    if (productData.barcodes && productData.barcodes.length > 0) {
+        for (const barcode of productData.barcodes) {
+            const { data: existingProduct } = await supabase
                 .from('products')
-                .update({
-                    name: productData.name,
-                    category: productData.category,
-                    image: productData.image,
-                    member_price: productData.member_price,
-                    guest_price: productData.guest_price,
-                    stock: productData.stock,
-                    min_stock: productData.min_stock,
-                    barcode: productData.barcode,
-                    available: productData.available,
-                    image_url: productData.image_url,
-                    image_file_path: productData.image_file_path
-                })
-                .eq('id', productId)
-                .select()
+                .select('id')
+                .contains('barcodes', [barcode])
+                .neq('id', productId)
                 .single();
-            
-            if (error) {
-                if (error.code === 'PGRST116') {
-                    return res.status(404).json({ error: 'Produkt nicht gefunden' });
-                }
-                throw error;
+
+            if (existingProduct) {
+                return res.status(400).json({ error: `Barcode ${barcode} bereits vergeben` });
             }
-            
-            return res.status(200).json(data);
         }
+    }
+
+    // Rest wie vorher, nur barcodes statt barcode
+    const { data, error } = await supabase
+        .from('products')
+        .update({
+            name: productData.name,
+            category: productData.category,
+            image: productData.image,
+            member_price: productData.member_price,
+            guest_price: productData.guest_price,
+            stock: productData.stock,
+            min_stock: productData.min_stock,
+            barcodes: productData.barcodes,  // Array
+            available: productData.available,
+            image_url: productData.image_url,
+            image_file_path: productData.image_file_path
+        })
+        .eq('id', productId)
+        .select()
+        .single();
+    
+    if (error) {
+        if (error.code === 'PGRST116') {
+            return res.status(404).json({ error: 'Produkt nicht gefunden' });
+        }
+        throw error;
+    }
+    
+    return res.status(200).json(data);
+}
 
         // DELETE /products/{id} - Produkt löschen (MIT BILDLÖSCHUNG)
         if (pathParts[0] === 'products' && pathParts[1] && method === 'DELETE') {
