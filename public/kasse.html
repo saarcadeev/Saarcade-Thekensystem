@@ -34,7 +34,6 @@
             box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
             position: relative;
             z-index: 1000; /* Neuer hoher z-index */
-            border: 3px solid red;
         }
 
         .header h1 {
@@ -299,6 +298,10 @@
             min-width: 140px;
         }
 
+        .products-section, .cart-section {
+            margin-top: 0;  /* stelle sicher, dass kein negativer Wert da ist */
+        }
+        
         .user-info-section {
             display: flex;
             flex-direction: column;
