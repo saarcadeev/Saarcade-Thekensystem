@@ -620,28 +620,133 @@
             </div>
         </div>
 
-        <!-- Weitere Tabs (verkürzt für Beispiel) -->
-        <div id="transactions" class="tab-content">
-            <div class="section">
-                <h2>💰 Transaktionsverlauf</h2>
-                <p>Transaktions-Tab hier...</p>
-            </div>
-        </div>
-
-        <div id="barcodes" class="tab-content">
-            <div class="section">
-                <h2>🏷️ Barcode-Verwaltung</h2>
-                <p>Barcode-Tab hier...</p>
-            </div>
-        </div>
-
-        <div id="sepa" class="tab-content">
-            <div class="section">
-                <h2>💳 SEPA-Lastschriften</h2>
-                <p>SEPA-Tab hier...</p>
-            </div>
+<!-- ============================================ -->
+<!-- TAB 1: TRANSAKTIONEN -->
+<!-- ============================================ -->
+<div class="section">
+    <h2>💰 Transaktionsverlauf</h2>
+    
+    <div class="toolbar">
+        <button class="btn" onclick="loadTransactions()">🔄 Neu laden</button>
+        <button class="btn btn-success" onclick="exportTransactions()">📊 CSV Export</button>
+        <select id="transactionFilter" onchange="filterTransactions()">
+            <option value="all">Alle Transaktionen</option>
+            <option value="today">Heute</option>
+            <option value="week">Diese Woche</option>
+            <option value="month">Dieser Monat</option>
+        </select>
+    </div>
+    
+    <table class="data-table" id="transactionTable">
+        <thead>
+            <tr>
+                <th>Datum/Zeit</th>
+                <th>Mitglied</th>
+                <th>Produkt</th>
+                <th>Menge</th>
+                <th>Preis</th>
+                <th>Gesamt</th>
+                <th>Zahlungsart</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 30px; color: #666;">
+                    Klicke "Neu laden" um Transaktionen zu laden
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <div id="transactionSummary" style="margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 6px; display: none;">
+        <strong>Zusammenfassung:</strong>
+        <div style="margin-top: 10px;">
+            <span id="transactionCount">0</span> Transaktionen | 
+            Gesamtumsatz: <span id="totalRevenue">0.00</span>€
         </div>
     </div>
+</div>
+
+<!-- ============================================ -->
+<!-- TAB 2: BARCODE-VERWALTUNG -->
+<!-- ============================================ -->
+<div class="section">
+    <h2>🏷️ Spezial-Barcode Verwaltung</h2>
+    <p>Hier kannst du die speziellen System-Barcodes für das Kassensystem konfigurieren.</p>
+    
+    <form id="barcodeForm" style="max-width: 600px; margin-top: 20px;">
+        <div class="form-group">
+            <label>🛒 Checkout-Barcode</label>
+            <input type="text" id="checkoutBarcode" placeholder="CHECKOUT123" value="CHECKOUT123">
+            <small style="color: #666;">Dieser Barcode schließt den Kaufvorgang ab</small>
+        </div>
+        
+        <div class="form-group">
+            <label>❌ Abbruch-Barcode</label>
+            <input type="text" id="cancelBarcode" placeholder="CANCEL123" value="CANCEL123">
+            <small style="color: #666;">Leert den Warenkorb</small>
+        </div>
+        
+        <div class="form-group">
+            <label>🔄 Reset-Barcode</label>
+            <input type="text" id="resetBarcode" placeholder="RESET123" value="RESET123">
+            <small style="color: #666;">Beendet die komplette Session und kehrt zur Startseite zurück</small>
+        </div>
+        
+        <button type="button" class="btn btn-success" onclick="saveBarcodeSettings()">
+            💾 Barcode-Einstellungen speichern
+        </button>
+    </form>
+    
+    <div style="margin-top: 30px; padding: 15px; background: #e6f3ff; border-left: 4px solid #3182ce; border-radius: 4px;">
+        <strong>💡 Tipp:</strong> Drucke diese Barcodes aus und platziere sie an der Kasse für schnellen Zugriff.
+    </div>
+</div>
+
+<!-- ============================================ -->
+<!-- TAB 3: SEPA-LASTSCHRIFTEN -->
+<!-- ============================================ -->
+<div class="section">
+    <h2>💳 SEPA-Lastschrift Export</h2>
+    <p>Mitglieder mit negativem Saldo und aktivem SEPA-Mandat für Lastschrifteinzug.</p>
+    
+    <div class="toolbar">
+        <button class="btn" onclick="loadSepaUsers()">🔄 Neu laden</button>
+        <button class="btn btn-success" onclick="exportSepaXML()">📄 SEPA XML Export</button>
+        <button class="btn btn-success" onclick="exportSepaCSV()">📊 CSV Export</button>
+    </div>
+    
+    <table class="data-table" id="sepaTable">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>E-Mail</th>
+                <th>IBAN</th>
+                <th>Negativer Saldo</th>
+                <th>Einzugsbetrag</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 30px; color: #666;">
+                    Klicke "Neu laden" um SEPA-fähige Mitglieder zu laden
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <div id="sepaSummary" style="margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 6px; display: none;">
+        <strong>Zusammenfassung:</strong>
+        <div style="margin-top: 10px;">
+            <span id="sepaCount">0</span> Mitglieder | 
+            Gesamteinzug: <span id="sepaTotal">0.00</span>€
+        </div>
+    </div>
+    
+    <div style="margin-top: 20px; padding: 15px; background: #fff5e6; border-left: 4px solid #ed8936; border-radius: 4px;">
+        <strong>⚠️ Wichtig:</strong> Nach dem SEPA-Export müssen die Salden der Mitglieder manuell im Admin-Bereich aktualisiert werden.
+    </div>
+</div>
 
     <!-- Product Modal mit Bildupload -->
     <div id="productModal" class="modal">
@@ -835,6 +940,8 @@
         let selectedProducts = [];
         let currentImageFile = null;
         let uploadedImageUrl = null;
+        let transactions = [];
+        let allTransactions = [];
 
         // ============ API FUNCTIONS ============
         
@@ -1985,6 +2092,299 @@ async function deleteSelectedProducts() {
             }
         }
 
+async function loadTransactions() {
+    try {
+        const response = await fetch('/api/transactions');
+        const data = await response.json();
+        allTransactions = data;
+        transactions = data;
+        renderTransactions();
+        updateTransactionSummary();
+    } catch (error) {
+        console.error('Fehler beim Laden der Transaktionen:', error);
+        alert('Fehler beim Laden der Transaktionen');
+    }
+}
+
+function renderTransactions() {
+    const tbody = document.querySelector('#transactionTable tbody');
+    
+    if (transactions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px; color: #666;">Keine Transaktionen gefunden</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = transactions.map(t => {
+        const date = new Date(t.created_at);
+        const formattedDate = date.toLocaleDateString('de-DE');
+        const formattedTime = date.toLocaleTimeString('de-DE');
+        
+        return `
+            <tr>
+                <td>${formattedDate}<br><small>${formattedTime}</small></td>
+                <td>${t.user_name}</td>
+                <td>${t.product_name}</td>
+                <td>${t.quantity}</td>
+                <td>${t.price.toFixed(2)}€</td>
+                <td><strong>${t.total.toFixed(2)}€</strong></td>
+                <td>${t.payment_method === 'balance' ? 'Saldo' : t.payment_method}</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function filterTransactions() {
+    const filter = document.getElementById('transactionFilter').value;
+    const now = new Date();
+    
+    if (filter === 'all') {
+        transactions = allTransactions;
+    } else if (filter === 'today') {
+        const today = now.toISOString().split('T')[0];
+        transactions = allTransactions.filter(t => t.created_at.startsWith(today));
+    } else if (filter === 'week') {
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        transactions = allTransactions.filter(t => new Date(t.created_at) >= weekAgo);
+    } else if (filter === 'month') {
+        const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        transactions = allTransactions.filter(t => new Date(t.created_at) >= monthAgo);
+    }
+    
+    renderTransactions();
+    updateTransactionSummary();
+}
+
+function updateTransactionSummary() {
+    const summary = document.getElementById('transactionSummary');
+    const totalRevenue = transactions.reduce((sum, t) => sum + t.total, 0);
+    
+    document.getElementById('transactionCount').textContent = transactions.length;
+    document.getElementById('totalRevenue').textContent = totalRevenue.toFixed(2);
+    
+    summary.style.display = 'block';
+}
+
+function exportTransactions() {
+    if (transactions.length === 0) {
+        alert('Keine Transaktionen zum Exportieren');
+        return;
+    }
+    
+    const csv = [
+        ['Datum', 'Zeit', 'Mitglied', 'Produkt', 'Menge', 'Preis', 'Gesamt', 'Zahlungsart'].join(';'),
+        ...transactions.map(t => {
+            const date = new Date(t.created_at);
+            return [
+                date.toLocaleDateString('de-DE'),
+                date.toLocaleTimeString('de-DE'),
+                t.user_name,
+                t.product_name,
+                t.quantity,
+                t.price.toFixed(2),
+                t.total.toFixed(2),
+                t.payment_method
+            ].join(';');
+        })
+    ].join('\n');
+    
+    downloadFile(csv, 'transaktionen.csv', 'text/csv');
+}
+
+// ============ BARCODES ============
+
+async function loadBarcodeSettings() {
+    try {
+        const response = await fetch('/api/settings');
+        const settings = await response.json();
+        
+        if (settings.checkout_barcode) {
+            document.getElementById('checkoutBarcode').value = settings.checkout_barcode;
+        }
+        if (settings.cancel_barcode) {
+            document.getElementById('cancelBarcode').value = settings.cancel_barcode;
+        }
+        if (settings.reset_barcode) {
+            document.getElementById('resetBarcode').value = settings.reset_barcode;
+        }
+    } catch (error) {
+        console.log('Keine gespeicherten Barcode-Einstellungen gefunden');
+    }
+}
+
+async function saveBarcodeSettings() {
+    const settings = {
+        checkout_barcode: document.getElementById('checkoutBarcode').value,
+        cancel_barcode: document.getElementById('cancelBarcode').value,
+        reset_barcode: document.getElementById('resetBarcode').value
+    };
+    
+    try {
+        await fetch('/api/settings', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(settings)
+        });
+        
+        alert('✅ Barcode-Einstellungen erfolgreich gespeichert!');
+    } catch (error) {
+        console.error('Fehler beim Speichern:', error);
+        alert('❌ Fehler beim Speichern der Einstellungen');
+    }
+}
+
+// ============ SEPA ============
+
+let sepaUsers = [];
+
+async function loadSepaUsers() {
+    try {
+        const response = await fetch('/api/sepa-users');
+        sepaUsers = await response.json();
+        renderSepaUsers();
+        updateSepaSummary();
+    } catch (error) {
+        console.error('Fehler beim Laden der SEPA-Benutzer:', error);
+        alert('Fehler beim Laden der SEPA-Benutzer');
+    }
+}
+
+function renderSepaUsers() {
+    const tbody = document.querySelector('#sepaTable tbody');
+    
+    if (sepaUsers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 30px; color: #666;">Keine SEPA-fähigen Mitglieder mit negativem Saldo gefunden</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = sepaUsers.map(user => `
+        <tr>
+            <td>${user.first_name} ${user.last_name}</td>
+            <td>${user.email || '-'}</td>
+            <td><code>${user.iban}</code></td>
+            <td style="color: #e53e3e; font-weight: bold;">${user.balance.toFixed(2)}€</td>
+            <td style="color: #38a169; font-weight: bold;">${user.debit_amount.toFixed(2)}€</td>
+        </tr>
+    `).join('');
+}
+
+function updateSepaSummary() {
+    const summary = document.getElementById('sepaSummary');
+    const total = sepaUsers.reduce((sum, u) => sum + u.debit_amount, 0);
+    
+    document.getElementById('sepaCount').textContent = sepaUsers.length;
+    document.getElementById('sepaTotal').textContent = total.toFixed(2);
+    
+    summary.style.display = 'block';
+}
+
+function exportSepaCSV() {
+    if (sepaUsers.length === 0) {
+        alert('Keine SEPA-Daten zum Exportieren');
+        return;
+    }
+    
+    const csv = [
+        ['Name', 'Vorname', 'E-Mail', 'IBAN', 'Betrag'].join(';'),
+        ...sepaUsers.map(u => [
+            u.last_name,
+            u.first_name,
+            u.email || '',
+            u.iban,
+            u.debit_amount.toFixed(2)
+        ].join(';'))
+    ].join('\n');
+    
+    downloadFile(csv, 'sepa_lastschriften.csv', 'text/csv');
+}
+
+function exportSepaXML() {
+    if (sepaUsers.length === 0) {
+        alert('Keine SEPA-Daten zum Exportieren');
+        return;
+    }
+    
+    const now = new Date();
+    const msgId = `SAARCADE-${now.getTime()}`;
+    const totalAmount = sepaUsers.reduce((sum, u) => sum + u.debit_amount, 0).toFixed(2);
+    
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.008.001.02">
+    <CstmrDrctDbtInitn>
+        <GrpHdr>
+            <MsgId>${msgId}</MsgId>
+            <CreDtTm>${now.toISOString()}</CreDtTm>
+            <NbOfTxs>${sepaUsers.length}</NbOfTxs>
+            <CtrlSum>${totalAmount}</CtrlSum>
+            <InitgPty>
+                <Nm>Saarcade e.V.</Nm>
+            </InitgPty>
+        </GrpHdr>
+        <PmtInf>
+            <PmtInfId>PMT-${now.getTime()}</PmtInfId>
+            <PmtMtd>DD</PmtMtd>
+            <NbOfTxs>${sepaUsers.length}</NbOfTxs>
+            <CtrlSum>${totalAmount}</CtrlSum>
+            <ReqdColltnDt>${now.toISOString().split('T')[0]}</ReqdColltnDt>
+            <Cdtr>
+                <Nm>Saarcade e.V.</Nm>
+            </Cdtr>
+            <CdtrAcct>
+                <Id>
+                    <IBAN>DE89370400440532013000</IBAN>
+                </Id>
+            </CdtrAcct>
+`;
+
+    sepaUsers.forEach((user, index) => {
+        xml += `
+            <DrctDbtTxInf>
+                <PmtId>
+                    <EndToEndId>NOTPROVIDED</EndToEndId>
+                </PmtId>
+                <InstdAmt Ccy="EUR">${user.debit_amount.toFixed(2)}</InstdAmt>
+                <Dbtr>
+                    <Nm>${user.first_name} ${user.last_name}</Nm>
+                </Dbtr>
+                <DbtrAcct>
+                    <Id>
+                        <IBAN>${user.iban}</IBAN>
+                    </Id>
+                </DbtrAcct>
+                <RmtInf>
+                    <Ustrd>Saarcade Getraenkeabrechnung</Ustrd>
+                </RmtInf>
+            </DrctDbtTxInf>
+`;
+    });
+
+    xml += `
+        </PmtInf>
+    </CstmrDrctDbtInitn>
+</Document>`;
+
+    downloadFile(xml, 'sepa_lastschrift.xml', 'application/xml');
+}
+
+// ============ HELPER FUNCTIONS ============
+
+function downloadFile(content, filename, type) {
+    const blob = new Blob([content], { type });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+
+// Beim Laden der Seite
+window.addEventListener('DOMContentLoaded', function() {
+    loadBarcodeSettings();
+    console.log('✅ Admin-Tabs geladen');
+});
+        
         // Mache Debug-Funktion global verfügbar
         window.debugPhotoSystem = debugPhotoSystem;
 
