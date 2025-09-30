@@ -299,7 +299,6 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Modal Styles */
         .modal {
             display: none;
             position: fixed;
@@ -387,7 +386,6 @@
             gap: 15px;
         }
 
-        /* Verbesserte Photo Upload Styles */
         .photo-upload {
             border: 2px dashed #667eea;
             border-radius: 8px;
@@ -620,135 +618,136 @@
             </div>
         </div>
 
-<!-- ============================================ -->
-<!-- TAB 1: TRANSAKTIONEN -->
-<!-- ============================================ -->
-<div class="section">
-    <h2>💰 Transaktionsverlauf</h2>
-    
-    <div class="toolbar">
-        <button class="btn" onclick="loadTransactions()">🔄 Neu laden</button>
-        <button class="btn btn-success" onclick="exportTransactions()">📊 CSV Export</button>
-        <select id="transactionFilter" onchange="filterTransactions()">
-            <option value="all">Alle Transaktionen</option>
-            <option value="today">Heute</option>
-            <option value="week">Diese Woche</option>
-            <option value="month">Dieser Monat</option>
-        </select>
-    </div>
-    
-    <table class="data-table" id="transactionTable">
-        <thead>
-            <tr>
-                <th>Datum/Zeit</th>
-                <th>Mitglied</th>
-                <th>Produkt</th>
-                <th>Menge</th>
-                <th>Preis</th>
-                <th>Gesamt</th>
-                <th>Zahlungsart</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td colspan="7" style="text-align: center; padding: 30px; color: #666;">
-                    Klicke "Neu laden" um Transaktionen zu laden
-                </td>
-            </tr>
-        </tbody>
-    </table>
-    
-    <div id="transactionSummary" style="margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 6px; display: none;">
-        <strong>Zusammenfassung:</strong>
-        <div style="margin-top: 10px;">
-            <span id="transactionCount">0</span> Transaktionen | 
-            Gesamtumsatz: <span id="totalRevenue">0.00</span>€
+        <!-- Transaktionen Tab -->
+        <div id="transactions" class="tab-content">
+            <div class="section">
+                <h2>💰 Transaktionsverlauf</h2>
+                
+                <div class="toolbar">
+                    <button class="btn" onclick="loadTransactions()">🔄 Neu laden</button>
+                    <button class="btn btn-success" onclick="exportTransactions()">📊 CSV Export</button>
+                    <select id="transactionFilter" onchange="filterTransactions()" style="padding: 10px; border-radius: 6px; border: 2px solid #e2e8f0;">
+                        <option value="all">Alle Transaktionen</option>
+                        <option value="today">Heute</option>
+                        <option value="week">Diese Woche</option>
+                        <option value="month">Dieser Monat</option>
+                    </select>
+                </div>
+                
+                <table class="data-table" id="transactionTable">
+                    <thead>
+                        <tr>
+                            <th>Datum/Zeit</th>
+                            <th>Mitglied</th>
+                            <th>Produkt</th>
+                            <th>Menge</th>
+                            <th>Preis</th>
+                            <th>Gesamt</th>
+                            <th>Zahlungsart</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 30px; color: #666;">
+                                Klicke "Neu laden" um Transaktionen zu laden
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div id="transactionSummary" style="margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 6px; display: none;">
+                    <strong>Zusammenfassung:</strong>
+                    <div style="margin-top: 10px;">
+                        <span id="transactionCountSpan">0</span> Transaktionen | 
+                        Gesamtumsatz: <span id="totalRevenue">0.00</span>€
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
-</div>
 
-<!-- ============================================ -->
-<!-- TAB 2: BARCODE-VERWALTUNG -->
-<!-- ============================================ -->
-<div class="section">
-    <h2>🏷️ Spezial-Barcode Verwaltung</h2>
-    <p>Hier kannst du die speziellen System-Barcodes für das Kassensystem konfigurieren.</p>
-    
-    <form id="barcodeForm" style="max-width: 600px; margin-top: 20px;">
-        <div class="form-group">
-            <label>🛒 Checkout-Barcode</label>
-            <input type="text" id="checkoutBarcode" placeholder="CHECKOUT123" value="CHECKOUT123">
-            <small style="color: #666;">Dieser Barcode schließt den Kaufvorgang ab</small>
+        <!-- Barcodes Tab -->
+        <div id="barcodes" class="tab-content">
+            <div class="section">
+                <h2>🏷️ Spezial-Barcode Verwaltung</h2>
+                <p>Hier kannst du die speziellen System-Barcodes für das Kassensystem konfigurieren.</p>
+                
+                <form id="barcodeForm" style="max-width: 600px; margin-top: 20px;">
+                    <div class="form-group">
+                        <label>🛒 Checkout-Barcode</label>
+                        <input type="text" id="checkoutBarcode" placeholder="CHECKOUT123" value="CHECKOUT123">
+                        <small style="color: #666;">Dieser Barcode schließt den Kaufvorgang ab</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>❌ Abbruch-Barcode</label>
+                        <input type="text" id="cancelBarcode" placeholder="CANCEL123" value="CANCEL123">
+                        <small style="color: #666;">Leert den Warenkorb</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>🔄 Reset-Barcode</label>
+                        <input type="text" id="resetBarcode" placeholder="RESET123" value="RESET123">
+                        <small style="color: #666;">Beendet die komplette Session und kehrt zur Startseite zurück</small>
+                    </div>
+                    
+                    <button type="button" class="btn btn-success" onclick="saveBarcodeSettings()">
+                        💾 Barcode-Einstellungen speichern
+                    </button>
+                </form>
+                
+                <div style="margin-top: 30px; padding: 15px; background: #e6f3ff; border-left: 4px solid #3182ce; border-radius: 4px;">
+                    <strong>💡 Tipp:</strong> Drucke diese Barcodes aus und platziere sie an der Kasse für schnellen Zugriff.
+                </div>
+            </div>
         </div>
-        
-        <div class="form-group">
-            <label>❌ Abbruch-Barcode</label>
-            <input type="text" id="cancelBarcode" placeholder="CANCEL123" value="CANCEL123">
-            <small style="color: #666;">Leert den Warenkorb</small>
-        </div>
-        
-        <div class="form-group">
-            <label>🔄 Reset-Barcode</label>
-            <input type="text" id="resetBarcode" placeholder="RESET123" value="RESET123">
-            <small style="color: #666;">Beendet die komplette Session und kehrt zur Startseite zurück</small>
-        </div>
-        
-        <button type="button" class="btn btn-success" onclick="saveBarcodeSettings()">
-            💾 Barcode-Einstellungen speichern
-        </button>
-    </form>
-    
-    <div style="margin-top: 30px; padding: 15px; background: #e6f3ff; border-left: 4px solid #3182ce; border-radius: 4px;">
-        <strong>💡 Tipp:</strong> Drucke diese Barcodes aus und platziere sie an der Kasse für schnellen Zugriff.
-    </div>
-</div>
 
-<!-- ============================================ -->
-<!-- TAB 3: SEPA-LASTSCHRIFTEN -->
-<!-- ============================================ -->
-<div class="section">
-    <h2>💳 SEPA-Lastschrift Export</h2>
-    <p>Mitglieder mit negativem Saldo und aktivem SEPA-Mandat für Lastschrifteinzug.</p>
-    
-    <div class="toolbar">
-        <button class="btn" onclick="loadSepaUsers()">🔄 Neu laden</button>
-        <button class="btn btn-success" onclick="exportSepaXML()">📄 SEPA XML Export</button>
-        <button class="btn btn-success" onclick="exportSepaCSV()">📊 CSV Export</button>
-    </div>
-    
-    <table class="data-table" id="sepaTable">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>E-Mail</th>
-                <th>IBAN</th>
-                <th>Negativer Saldo</th>
-                <th>Einzugsbetrag</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td colspan="5" style="text-align: center; padding: 30px; color: #666;">
-                    Klicke "Neu laden" um SEPA-fähige Mitglieder zu laden
-                </td>
-            </tr>
-        </tbody>
-    </table>
-    
-    <div id="sepaSummary" style="margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 6px; display: none;">
-        <strong>Zusammenfassung:</strong>
-        <div style="margin-top: 10px;">
-            <span id="sepaCount">0</span> Mitglieder | 
-            Gesamteinzug: <span id="sepaTotal">0.00</span>€
+        <!-- SEPA Tab -->
+        <div id="sepa" class="tab-content">
+            <div class="section">
+                <h2>💳 SEPA-Lastschrift Export</h2>
+                <p>Mitglieder mit negativem Saldo und aktivem SEPA-Mandat für Lastschrifteinzug.</p>
+                
+                <div class="toolbar">
+                    <button class="btn" onclick="loadSepaUsers()">🔄 Neu laden</button>
+                    <button class="btn btn-success" onclick="exportSepaXML()">📄 SEPA XML Export</button>
+                    <button class="btn btn-success" onclick="exportSepaCSV()">📊 CSV Export</button>
+                </div>
+                
+                <table class="data-table" id="sepaTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>E-Mail</th>
+                            <th>IBAN</th>
+                            <th>Negativer Saldo</th>
+                            <th>Einzugsbetrag</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 30px; color: #666;">
+                                Klicke "Neu laden" um SEPA-fähige Mitglieder zu laden
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div id="sepaSummary" style="margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 6px; display: none;">
+                    <strong>Zusammenfassung:</strong>
+                    <div style="margin-top: 10px;">
+                        <span id="sepaCount">0</span> Mitglieder | 
+                        Gesamteinzug: <span id="sepaTotal">0.00</span>€
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; padding: 15px; background: #fff5e6; border-left: 4px solid #ed8936; border-radius: 4px;">
+                    <strong>⚠️ Wichtig:</strong> Nach dem SEPA-Export müssen die Salden der Mitglieder manuell im Admin-Bereich aktualisiert werden.
+                </div>
+            </div>
         </div>
     </div>
-    
-    <div style="margin-top: 20px; padding: 15px; background: #fff5e6; border-left: 4px solid #ed8936; border-radius: 4px;">
-        <strong>⚠️ Wichtig:</strong> Nach dem SEPA-Export müssen die Salden der Mitglieder manuell im Admin-Bereich aktualisiert werden.
-    </div>
-</div>
 
-    <!-- Product Modal mit Bildupload -->
+    <!-- Product Modal -->
     <div id="productModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -830,10 +829,10 @@
                         </div>
                     </div>
                     
-                <div class="form-group">
-                    <label>Barcodes (optional, mit Enter trennen)</label>
-                    <textarea id="productBarcodes" rows="3" placeholder="4000417025001&#10;5000112637447"></textarea>
-                </div>
+                    <div class="form-group">
+                        <label>Barcodes (optional, mit Enter trennen)</label>
+                        <textarea id="productBarcodes" rows="3" placeholder="4000417025001&#10;5000112637447"></textarea>
+                    </div>
                     
                     <div class="form-group">
                         <label>
@@ -855,81 +854,81 @@
         </div>
     </div>
 
-<!-- User Modal -->
-<div id="userModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3 id="userModalTitle">Mitglied bearbeiten</h3>
-            <span class="close" onclick="closeModal('userModal')">&times;</span>
-        </div>
-        <div class="modal-body">
-            <form id="userForm">
-                <input type="hidden" id="userId" value="">
-                
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Vorname *</label>
-                        <input type="text" id="userFirstName" required>
+    <!-- User Modal -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="userModalTitle">Mitglied bearbeiten</h3>
+                <span class="close" onclick="closeModal('userModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="userForm">
+                    <input type="hidden" id="userId" value="">
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Vorname *</label>
+                            <input type="text" id="userFirstName" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Nachname *</label>
+                            <input type="text" id="userLastName" required>
+                        </div>
                     </div>
                     
                     <div class="form-group">
-                        <label>Nachname *</label>
-                        <input type="text" id="userLastName" required>
+                        <label>Barcodes * (mit Enter trennen)</label>
+                        <textarea id="userBarcodes" rows="3" placeholder="SAAR001&#10;ALT123" required></textarea>
+                        <small style="color: #666;">Jeder Barcode in eine neue Zeile</small>
                     </div>
-                </div>
-                
-                <div class="form-group">
-                    <label>Barcodes * (mit Enter trennen)</label>
-                    <textarea id="userBarcodes" rows="3" placeholder="SAAR001&#10;ALT123" required></textarea>
-                    <small style="color: #666;">Jeder Barcode in eine neue Zeile</small>
-                </div>
-                
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Rolle</label>
-                        <select id="userRole">
-                            <option value="member">👥 Mitglied</option>
-                            <option value="guest">👤 Gast</option>
-                            <option value="bartender">🍺 Barkeeper</option>
-                            <option value="admin">⚙️ Administrator</option>
-                        </select>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Rolle</label>
+                            <select id="userRole">
+                                <option value="member">👥 Mitglied</option>
+                                <option value="guest">👤 Gast</option>
+                                <option value="bartender">🍺 Barkeeper</option>
+                                <option value="admin">⚙️ Administrator</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Saldo (€)</label>
+                            <input type="number" id="userBalance" step="0.01" value="0">
+                        </div>
                     </div>
                     
                     <div class="form-group">
-                        <label>Saldo (€)</label>
-                        <input type="number" id="userBalance" step="0.01" value="0">
+                        <label>E-Mail</label>
+                        <input type="email" id="userEmail">
                     </div>
-                </div>
-                
-                <div class="form-group">
-                    <label>E-Mail</label>
-                    <input type="email" id="userEmail">
-                </div>
-                
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="userSepaActive">
-                        SEPA-Lastschrift aktiv
-                    </label>
-                </div>
-                
-                <div class="form-group" id="ibanGroup" style="display: none;">
-                    <label>IBAN</label>
-                    <input type="text" id="userIban" placeholder="DE89 3704 0044 0532 0130 00">
-                </div>
-                
-                <div style="text-align: right; margin-top: 20px;">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('userModal')">
-                        Abbrechen
-                    </button>
-                    <button type="button" class="btn btn-success" onclick="saveUser()" id="saveUserBtn">
-                        💾 Speichern
-                    </button>
-                </div>
-            </form>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="userSepaActive">
+                            SEPA-Lastschrift aktiv
+                        </label>
+                    </div>
+                    
+                    <div class="form-group" id="ibanGroup" style="display: none;">
+                        <label>IBAN</label>
+                        <input type="text" id="userIban" placeholder="DE89 3704 0044 0532 0130 00">
+                    </div>
+                    
+                    <div style="text-align: right; margin-top: 20px;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('userModal')">
+                            Abbrechen
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="saveUser()" id="saveUserBtn">
+                            💾 Speichern
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
-</div>
     
     <script>
         // ============ GLOBALE VARIABLEN ============
@@ -942,6 +941,7 @@
         let uploadedImageUrl = null;
         let transactions = [];
         let allTransactions = [];
+        let sepaUsers = [];
 
         // ============ API FUNCTIONS ============
         
@@ -977,7 +977,6 @@
         
         async function uploadImageToAPI(imageFile, productId) {
             try {
-                // Konvertiere File zu Base64
                 const base64 = await fileToBase64(imageFile);
                 
                 const uploadData = {
@@ -1020,141 +1019,137 @@
 
         // ============ PHOTO UPLOAD UI FUNCTIONS ============
         
-  function triggerFileInput() {
-    try {
-        const fileInput = document.getElementById('photoInput');
-        if (fileInput) {
-            fileInput.click();
-        } else {
-            console.error('Photo input not found');
-        }
-    } catch (error) {
-        console.error('Error triggering file input:', error);
-    }
-}
-// GLOBALE ERROR HANDLER VERBESSERT
-window.addEventListener('error', function(e) {
-    console.error('Global JavaScript error:', e.error);
-    
-    // Spezielle Behandlung für Modal-Fehler
-    if (e.error && e.error.message && e.error.message.includes('placeholder')) {
-        console.warn('Photo placeholder error detected - this is handled gracefully');
-        return; // Diese Fehler nicht mehr anzeigen
-    }
-    
-    if (e.error && e.error.message && e.error.message.includes('JSON')) {
-        showAlert('Datenfehler aufgetreten - Seite neu laden empfohlen', 'error');
-    }
-});
-   async function handlePhotoUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    // Validierung
-    if (file.size > 2 * 1024 * 1024) {
-        showAlert('Datei zu groß. Maximum 2MB erlaubt.', 'error');
-        return;
-    }
-    
-    if (!file.type.startsWith('image/')) {
-        showAlert('Nur Bilddateien erlaubt.', 'error');
-        return;
-    }
-
-    try {
-        // Vorschau sofort anzeigen
-        const reader = new FileReader();
-        reader.onload = function(e) {
+        function triggerFileInput() {
             try {
-                showPhotoPreview(e.target.result);
-                console.log('✅ Image preview loaded successfully');
+                const fileInput = document.getElementById('photoInput');
+                if (fileInput) {
+                    fileInput.click();
+                } else {
+                    console.error('Photo input not found');
+                }
             } catch (error) {
-                console.error('Error showing preview:', error);
-                showAlert('Fehler beim Anzeigen der Bildvorschau', 'error');
+                console.error('Error triggering file input:', error);
             }
-        };
-        reader.onerror = function() {
-            showAlert('Fehler beim Lesen der Bilddatei', 'error');
-        };
-        reader.readAsDataURL(file);
+        }
 
-        // File für späteren Upload speichern
-        currentImageFile = file;
-        uploadedImageUrl = null;
-        
-    } catch (error) {
-        console.error('Error in handlePhotoUpload:', error);
-        showAlert('Fehler beim Verarbeiten des Bildes', 'error');
-    }
-}
+        window.addEventListener('error', function(e) {
+            console.error('Global JavaScript error:', e.error);
+            
+            if (e.error && e.error.message && e.error.message.includes('placeholder')) {
+                console.warn('Photo placeholder error detected - this is handled gracefully');
+                return;
+            }
+            
+            if (e.error && e.error.message && e.error.message.includes('JSON')) {
+                showAlert('Datenfehler aufgetreten - Seite neu laden empfohlen', 'error');
+            }
+        });
 
-     function showPhotoPreview(imageSrc, isUploaded = false) {
-    const container = document.getElementById('photoPreviewContainer');
-    const actions = document.getElementById('photoActions');
-    
-    if (!container) {
-        console.error('Photo preview container not found');
-        return;
-    }
-    
-    // KORREKT: Ersetze den Inhalt mit Bild UND behalte Struktur
-    container.innerHTML = `
-        <img src="${imageSrc}" class="photo-preview" alt="Produktfoto">
-        <div id="photoPlaceholder" style="display: none;">
-            <p style="margin: 10px 0;">📷 Klicken oder Bild hierher ziehen</p>
-            <p style="font-size: 0.8em; color: #666;">JPG, PNG bis 2MB</p>
-        </div>
-    `;
-    
-    container.classList.add('has-image');
-    
-    if (actions) {
-        actions.style.display = 'block';
-    }
+        async function handlePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (file.size > 2 * 1024 * 1024) {
+                showAlert('Datei zu groß. Maximum 2MB erlaubt.', 'error');
+                return;
+            }
+            
+            if (!file.type.startsWith('image/')) {
+                showAlert('Nur Bilddateien erlaubt.', 'error');
+                return;
+            }
 
-    if (isUploaded) {
-        uploadedImageUrl = imageSrc;
-    }
-    
-    console.log('✅ Photo preview shown successfully');
-}
-    function removePhoto() {
-    const container = document.getElementById('photoPreviewContainer');
-    const actions = document.getElementById('photoActions');
-    
-    if (!container) {
-        console.error('Photo preview container not found');
-        return;
-    }
-    
-    // KORREKT: Setze zurück auf Placeholder-Zustand
-    container.innerHTML = `
-        <div id="photoPlaceholder">
-            <p style="margin: 10px 0;">📷 Klicken oder Bild hierher ziehen</p>
-            <p style="font-size: 0.8em; color: #666;">JPG, PNG bis 2MB</p>
-        </div>
-    `;
-    
-    container.classList.remove('has-image');
-    
-    if (actions) {
-        actions.style.display = 'none';
-    }
-    
-    // Reset file input und gespeicherte Daten
-    const photoInput = document.getElementById('photoInput');
-    if (photoInput) {
-        photoInput.value = '';
-    }
-    
-    currentImageFile = null;
-    uploadedImageUrl = null;
-    
-    console.log('✅ Photo removed successfully');
-}
-     function resetPhotoPreview() {
-    removePhoto();
-}
+            try {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        showPhotoPreview(e.target.result);
+                        console.log('✅ Image preview loaded successfully');
+                    } catch (error) {
+                        console.error('Error showing preview:', error);
+                        showAlert('Fehler beim Anzeigen der Bildvorschau', 'error');
+                    }
+                };
+                reader.onerror = function() {
+                    showAlert('Fehler beim Lesen der Bilddatei', 'error');
+                };
+                reader.readAsDataURL(file);
+
+                currentImageFile = file;
+                uploadedImageUrl = null;
+                
+            } catch (error) {
+                console.error('Error in handlePhotoUpload:', error);
+                showAlert('Fehler beim Verarbeiten des Bildes', 'error');
+            }
+        }
+
+        function showPhotoPreview(imageSrc, isUploaded = false) {
+            const container = document.getElementById('photoPreviewContainer');
+            const actions = document.getElementById('photoActions');
+            
+            if (!container) {
+                console.error('Photo preview container not found');
+                return;
+            }
+            
+            container.innerHTML = `
+                <img src="${imageSrc}" class="photo-preview" alt="Produktfoto">
+                <div id="photoPlaceholder" style="display: none;">
+                    <p style="margin: 10px 0;">📷 Klicken oder Bild hierher ziehen</p>
+                    <p style="font-size: 0.8em; color: #666;">JPG, PNG bis 2MB</p>
+                </div>
+            `;
+            
+            container.classList.add('has-image');
+            
+            if (actions) {
+                actions.style.display = 'block';
+            }
+
+            if (isUploaded) {
+                uploadedImageUrl = imageSrc;
+            }
+            
+            console.log('✅ Photo preview shown successfully');
+        }
+
+        function removePhoto() {
+            const container = document.getElementById('photoPreviewContainer');
+            const actions = document.getElementById('photoActions');
+            
+            if (!container) {
+                console.error('Photo preview container not found');
+                return;
+            }
+            
+            container.innerHTML = `
+                <div id="photoPlaceholder">
+                    <p style="margin: 10px 0;">📷 Klicken oder Bild hierher ziehen</p>
+                    <p style="font-size: 0.8em; color: #666;">JPG, PNG bis 2MB</p>
+                </div>
+            `;
+            
+            container.classList.remove('has-image');
+            
+            if (actions) {
+                actions.style.display = 'none';
+            }
+            
+            const photoInput = document.getElementById('photoInput');
+            if (photoInput) {
+                photoInput.value = '';
+            }
+            
+            currentImageFile = null;
+            uploadedImageUrl = null;
+            
+            console.log('✅ Photo removed successfully');
+        }
+
+        function resetPhotoPreview() {
+            removePhoto();
+        }
 
         // ============ UI FUNCTIONS ============
         
@@ -1196,7 +1191,8 @@ window.addEventListener('error', function(e) {
                 }
             }, 4000);
         }
-       // ============ TAB NAVIGATION ============
+
+        // ============ TAB NAVIGATION ============
         function showTab(tabName) {
             document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -1283,145 +1279,139 @@ window.addEventListener('error', function(e) {
             }
         }
 
-function openUserModal(userId = null) {
-    const modal = document.getElementById('userModal');
-    const title = document.getElementById('userModalTitle');
-    const form = document.getElementById('userForm');
-    
-    form.reset();
-    document.getElementById('userId').value = '';
-    
-    if (userId) {
-        const user = users.find(u => u.id === userId);
-        if (user) {
-            title.textContent = 'Mitglied bearbeiten';
+        // ============ USER FUNCTIONS ============
+
+        function openUserModal(userId = null) {
+            const modal = document.getElementById('userModal');
+            const title = document.getElementById('userModalTitle');
+            const form = document.getElementById('userForm');
             
-            document.getElementById('userId').value = user.id;
-            document.getElementById('userFirstName').value = user.first_name;
-            document.getElementById('userLastName').value = user.last_name;
-            document.getElementById('userBarcodes').value = (user.barcodes || []).join('\n');
-            document.getElementById('userRole').value = user.role;
-            document.getElementById('userBalance').value = user.balance.toFixed(2);
-            document.getElementById('userEmail').value = user.email || '';
-            document.getElementById('userSepaActive').checked = user.sepa_active || false;
-            document.getElementById('userIban').value = user.iban || '';
+            form.reset();
+            document.getElementById('userId').value = '';
             
-            toggleIbanField();
-        }
-    } else {
-        title.textContent = 'Neues Mitglied hinzufügen';
-        document.getElementById('userBalance').value = '0.00';
-        document.getElementById('userRole').value = 'member';
-    }
-    
-    modal.style.display = 'block';
-    
-    setTimeout(() => {
-        document.getElementById('userFirstName').focus();
-    }, 150);
-}
-
-function editSelectedUser() {
-    if (selectedUsers.length !== 1) return;
-    openUserModal(selectedUsers[0]);
-}
-
-async function saveUser() {
-    const saveBtn = document.getElementById('saveUserBtn');
-    const userId = document.getElementById('userId').value;
-    
-    const barcodes = document.getElementById('userBarcodes').value
-        .split('\n')
-        .map(b => b.trim().toUpperCase())
-        .filter(b => b.length > 0);
-    
-    const userData = {
-        first_name: document.getElementById('userFirstName').value.trim(),
-        last_name: document.getElementById('userLastName').value.trim(),
-        barcodes: barcodes,
-        role: document.getElementById('userRole').value,
-        balance: parseFloat(document.getElementById('userBalance').value) || 0,
-        email: document.getElementById('userEmail').value.trim() || null,
-        sepa_active: document.getElementById('userSepaActive').checked,
-        iban: document.getElementById('userIban').value.trim() || null
-    };
-    
-    if (!userData.first_name || !userData.last_name || barcodes.length === 0) {
-        showAlert('Bitte alle Pflichtfelder ausfüllen (mind. 1 Barcode)', 'error');
-        return;
-    }
-    
-    try {
-        saveBtn.disabled = true;
-        saveBtn.textContent = '⏳ Speichere...';
-        
-        if (userId) {
-            await apiCall(`/api/users/${userId}`, {
-                method: 'PUT',
-                body: JSON.stringify(userData)
-            });
-            showAlert('Mitglied erfolgreich aktualisiert', 'success');
-        } else {
-            await apiCall('/api/users', {
-                method: 'POST',
-                body: JSON.stringify(userData)
-            });
-            showAlert('Neues Mitglied erfolgreich hinzugefügt', 'success');
-        }
-        
-        closeModal('userModal');
-        loadUsers();
-        loadDashboard();
-        
-    } catch (error) {
-        showAlert(error.message || 'Fehler beim Speichern des Mitglieds', 'error');
-        console.error('Save user error:', error);
-    } finally {
-        saveBtn.disabled = false;
-        saveBtn.textContent = '💾 Speichern';
-    }
-}
-
-async function deleteSelectedUsers() {
-    if (selectedUsers.length === 0) return;
-    
-    const userNames = selectedUsers.map(id => {
-        const user = users.find(u => u.id === id);
-        return user ? `${user.first_name} ${user.last_name}` : 'Unbekannt';
-    }).join(', ');
-    
-    if (confirm(`Möchten Sie diese ${selectedUsers.length} Mitglieder wirklich löschen?\n\n${userNames}\n\nDiese Aktion kann nicht rückgängig gemacht werden.`)) {
-        try {
-            for (const userId of selectedUsers) {
-                await apiCall(`/api/users/${userId}`, { method: 'DELETE' });
+            if (userId) {
+                const user = users.find(u => u.id === userId);
+                if (user) {
+                    title.textContent = 'Mitglied bearbeiten';
+                    
+                    document.getElementById('userId').value = user.id;
+                    document.getElementById('userFirstName').value = user.first_name;
+                    document.getElementById('userLastName').value = user.last_name;
+                    document.getElementById('userBarcodes').value = (user.barcodes || []).join('\n');
+                    document.getElementById('userRole').value = user.role;
+                    document.getElementById('userBalance').value = user.balance.toFixed(2);
+                    document.getElementById('userEmail').value = user.email || '';
+                    document.getElementById('userSepaActive').checked = user.sepa_active || false;
+                    document.getElementById('userIban').value = user.iban || '';
+                    
+                    toggleIbanField();
+                }
+            } else {
+                title.textContent = 'Neues Mitglied hinzufügen';
+                document.getElementById('userBalance').value = '0.00';
+                document.getElementById('userRole').value = 'member';
             }
-            showAlert(`${selectedUsers.length} Mitglieder erfolgreich gelöscht`, 'success');
-            loadUsers();
-            loadDashboard();
-        } catch (error) {
-            showAlert('Fehler beim Löschen der Mitglieder', 'error');
+            
+            modal.style.display = 'block';
+            
+            setTimeout(() => {
+                document.getElementById('userFirstName').focus();
+            }, 150);
         }
-    }
-}
 
-function toggleIbanField() {
-    const sepaCheckbox = document.getElementById('userSepaActive');
-    const ibanGroup = document.getElementById('ibanGroup');
-    
-    if (sepaCheckbox.checked) {
-        ibanGroup.style.display = 'block';
-    } else {
-        ibanGroup.style.display = 'none';
-    }
-}
+        function editSelectedUser() {
+            if (selectedUsers.length !== 1) return;
+            openUserModal(selectedUsers[0]);
+        }
 
-// Event Listener für SEPA-Checkbox
-document.addEventListener('DOMContentLoaded', function() {
-    const sepaCheckbox = document.getElementById('userSepaActive');
-    if (sepaCheckbox) {
-        sepaCheckbox.addEventListener('change', toggleIbanField);
-    }
-});
+        async function saveUser() {
+            const saveBtn = document.getElementById('saveUserBtn');
+            const userId = document.getElementById('userId').value;
+            
+            const barcodes = document.getElementById('userBarcodes').value
+                .split('\n')
+                .map(b => b.trim().toUpperCase())
+                .filter(b => b.length > 0);
+            
+            const userData = {
+                first_name: document.getElementById('userFirstName').value.trim(),
+                last_name: document.getElementById('userLastName').value.trim(),
+                barcodes: barcodes,
+                role: document.getElementById('userRole').value,
+                balance: parseFloat(document.getElementById('userBalance').value) || 0,
+                email: document.getElementById('userEmail').value.trim() || null,
+                sepa_active: document.getElementById('userSepaActive').checked,
+                iban: document.getElementById('userIban').value.trim() || null
+            };
+            
+            if (!userData.first_name || !userData.last_name || barcodes.length === 0) {
+                showAlert('Bitte alle Pflichtfelder ausfüllen (mind. 1 Barcode)', 'error');
+                return;
+            }
+            
+            try {
+                saveBtn.disabled = true;
+                saveBtn.textContent = '⏳ Speichere...';
+                
+                if (userId) {
+                    await apiCall(`/api/users/${userId}`, {
+                        method: 'PUT',
+                        body: JSON.stringify(userData)
+                    });
+                    showAlert('Mitglied erfolgreich aktualisiert', 'success');
+                } else {
+                    await apiCall('/api/users', {
+                        method: 'POST',
+                        body: JSON.stringify(userData)
+                    });
+                    showAlert('Neues Mitglied erfolgreich hinzugefügt', 'success');
+                }
+                
+                closeModal('userModal');
+                loadUsers();
+                loadDashboard();
+                
+            } catch (error) {
+                showAlert(error.message || 'Fehler beim Speichern des Mitglieds', 'error');
+                console.error('Save user error:', error);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = '💾 Speichern';
+            }
+        }
+
+        async function deleteSelectedUsers() {
+            if (selectedUsers.length === 0) return;
+            
+            const userNames = selectedUsers.map(id => {
+                const user = users.find(u => u.id === id);
+                return user ? `${user.first_name} ${user.last_name}` : 'Unbekannt';
+            }).join(', ');
+            
+            if (confirm(`Möchten Sie diese ${selectedUsers.length} Mitglieder wirklich löschen?\n\n${userNames}\n\nDiese Aktion kann nicht rückgängig gemacht werden.`)) {
+                try {
+                    for (const userId of selectedUsers) {
+                        await apiCall(`/api/users/${userId}`, { method: 'DELETE' });
+                    }
+                    showAlert(`${selectedUsers.length} Mitglieder erfolgreich gelöscht`, 'success');
+                    loadUsers();
+                    loadDashboard();
+                } catch (error) {
+                    showAlert('Fehler beim Löschen der Mitglieder', 'error');
+                }
+            }
+        }
+
+        function toggleIbanField() {
+            const sepaCheckbox = document.getElementById('userSepaActive');
+            const ibanGroup = document.getElementById('ibanGroup');
+            
+            if (sepaCheckbox.checked) {
+                ibanGroup.style.display = 'block';
+            } else {
+                ibanGroup.style.display = 'none';
+            }
+        }
         
         async function loadUsers() {
             try {
@@ -1443,6 +1433,39 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
+        function renderUsers() {
+            const tbody = document.querySelector('#userTable tbody');
+            selectedUsers = [];
+            updateSelectionInfo('users');
+            
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px; color: #666;">Keine Mitgliederdaten verfügbar</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = users.map(user => {
+                const balanceColor = user.balance >= 0 ? '#38a169' : '#e53e3e';
+                const roleIcon = getRoleIcon(user.role);
+                const sepaStatus = user.sepa_active ? '✅' : '❌';
+                
+                return `
+                    <tr>
+                        <td class="checkbox-cell">
+                            <input type="checkbox" value="${user.id}" onchange="toggleRowSelection(this, 'users')">
+                        </td>
+                        <td>${user.first_name} ${user.last_name}</td>
+                        <td>${roleIcon} ${getRoleText(user.role)}</td>
+                        <td><code style="font-size: 0.8em;">${user.barcodes ? user.barcodes.join(', ') : '-'}</code></td>
+                        <td style="color: ${balanceColor}; font-weight: bold;">${user.balance.toFixed(2)}€</td>
+                        <td>${sepaStatus}</td>
+                        <td style="font-size: 0.8em;">${user.email || '-'}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // ============ PRODUCT FUNCTIONS ============
+
         async function loadProducts() {
             try {
                 const loadBtn = document.getElementById('loadProductsBtn');
@@ -1463,245 +1486,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-// ============ PRODUCT MODAL FUNCTIONS ============
-
-function openProductModal(productId = null) {
-    try {
-        const modal = document.getElementById('productModal');
-        const title = document.getElementById('productModalTitle');
-        const form = document.getElementById('productForm');
-        
-        if (!modal || !title || !form) {
-            console.error('Modal-Elemente nicht gefunden');
-            showAlert('Fehler: Modal nicht verfügbar', 'error');
-            return;
-        }
-        
-        form.reset();
-        document.getElementById('productId').value = '';
-        document.getElementById('currentImageUrl').value = '';
-        document.getElementById('currentImagePath').value = '';
-        
-        try {
-            resetPhotoPreview();
-        } catch (resetError) {
-            console.warn('Photo reset warning:', resetError);
-            const container = document.getElementById('photoPreviewContainer');
-            if (container) {
-                container.innerHTML = `
-                    <div id="photoPlaceholder">
-                        <p style="margin: 10px 0;">📷 Klicken oder Bild hierher ziehen</p>
-                        <p style="font-size: 0.8em; color: #666;">JPG, PNG bis 2MB</p>
-                    </div>
-                `;
-                container.classList.remove('has-image');
-            }
-        }
-        
-        if (productId) {
-            const product = products.find(p => p.id === productId);
-            if (product) {
-                title.textContent = 'Produkt bearbeiten';
-                
-                document.getElementById('productId').value = product.id || '';
-                document.getElementById('productName').value = product.name || '';
-                document.getElementById('productCategory').value = product.category || 'sonstiges';
-                document.getElementById('productEmoji').value = product.image || '';
-                document.getElementById('productMemberPrice').value = (product.member_price || 0).toFixed(2);
-                document.getElementById('productGuestPrice').value = (product.guest_price || 0).toFixed(2);
-                document.getElementById('productStock').value = product.stock || 0;
-                document.getElementById('productMinStock').value = product.min_stock || 5;
-                
-                // Multi-Barcode Support mit Fallback
-                const barcodesValue = product.barcodes 
-                    ? (Array.isArray(product.barcodes) ? product.barcodes : [product.barcodes]) 
-                    : (product.barcode ? [product.barcode] : []);
-                document.getElementById('productBarcodes').value = barcodesValue.join('\n');
-                
-                document.getElementById('productAvailable').checked = product.available !== false;
-                
-                if (product.image_url && typeof product.image_url === 'string') {
-                    try {
-                        document.getElementById('currentImageUrl').value = product.image_url;
-                        document.getElementById('currentImagePath').value = product.image_file_path || '';
-                        
-                        const img = new Image();
-                        img.onload = function() {
-                            try {
-                                showPhotoPreview(product.image_url, true);
-                            } catch (showError) {
-                                console.warn('Error showing existing image:', showError);
-                            }
-                        };
-                        img.onerror = function() {
-                            console.warn('Existing image could not be loaded:', product.image_url);
-                        };
-                        img.src = product.image_url;
-                        
-                    } catch (imageError) {
-                        console.warn('Fehler beim Verarbeiten des Produktbildes:', imageError);
-                    }
-                }
-            } else {
-                console.error('Produkt nicht gefunden:', productId);
-                showAlert('Produkt nicht gefunden', 'error');
-                return;
-            }
-        } else {
-            title.textContent = 'Neues Produkt hinzufügen';
-            document.getElementById('productStock').value = '0';
-            document.getElementById('productMinStock').value = '5';
-            document.getElementById('productAvailable').checked = true;
-        }
-        
-        modal.style.display = 'block';
-        
-        setTimeout(() => {
-            const firstInput = form.querySelector('input[type="text"]');
-            if (firstInput) {
-                firstInput.focus();
-            }
-        }, 150);
-        
-        console.log('✅ Product modal opened successfully');
-        
-    } catch (error) {
-        console.error('❌ Fehler beim Öffnen des Produkt-Modals:', error);
-        showAlert('Fehler beim Öffnen des Bearbeiten-Dialogs', 'error');
-    }
-}
-
-function editSelectedProduct() {
-    if (selectedProducts.length !== 1) return;
-    openProductModal(selectedProducts[0]);
-}
-
-async function saveProduct() {
-    const saveBtn = document.getElementById('saveProductBtn');
-    const productId = document.getElementById('productId').value;
-    
-    const barcodes = document.getElementById('productBarcodes').value
-        .split('\n')
-        .map(b => b.trim())
-        .filter(b => b.length > 0);
-    
-    const productData = {
-        name: document.getElementById('productName').value.trim(),
-        category: document.getElementById('productCategory').value,
-        image: document.getElementById('productEmoji').value.trim() || '📦',
-        member_price: parseFloat(document.getElementById('productMemberPrice').value) || 0,
-        guest_price: parseFloat(document.getElementById('productGuestPrice').value) || 0,
-        stock: parseInt(document.getElementById('productStock').value) || 0,
-        min_stock: parseInt(document.getElementById('productMinStock').value) || 0,
-        barcodes: barcodes,
-        available: document.getElementById('productAvailable').checked
-    };
-    
-    if (!productData.name || productData.member_price <= 0 || productData.guest_price <= 0) {
-        showAlert('Bitte alle Pflichtfelder korrekt ausfüllen', 'error');
-        return;
-    }
-
-    try {
-        saveBtn.disabled = true;
-        saveBtn.textContent = '⏳ Speichere...';
-
-        if (currentImageFile) {
-            showAlert('Lade Produktbild hoch...', 'info');
-            const uploadResult = await uploadImageToAPI(currentImageFile, productId || 'new');
-            productData.image_url = uploadResult.imageUrl;
-            productData.image_file_path = uploadResult.filePath;
-            
-            if (productId && document.getElementById('currentImagePath').value) {
-                productData.deleteOldImage = true;
-            }
-        } else if (uploadedImageUrl) {
-            productData.image_url = uploadedImageUrl;
-            productData.image_file_path = document.getElementById('currentImagePath').value;
-        }
-        
-        if (productId) {
-            await apiCall(`/api/products/${productId}`, {
-                method: 'PUT',
-                body: JSON.stringify(productData)
-            });
-            showAlert('Produkt erfolgreich aktualisiert', 'success');
-        } else {
-            await apiCall('/api/products', {
-                method: 'POST',
-                body: JSON.stringify(productData)
-            });
-            showAlert('Neues Produkt erfolgreich hinzugefügt', 'success');
-        }
-        
-        closeModal('productModal');
-        loadProducts();
-        loadDashboard();
-        
-    } catch (error) {
-        showAlert('Fehler beim Speichern des Produkts', 'error');
-        console.error('Save product error:', error);
-    } finally {
-        saveBtn.disabled = false;
-        saveBtn.textContent = '💾 Speichern';
-    }
-}
-
-async function deleteSelectedProducts() {
-    if (selectedProducts.length === 0) return;
-    
-    const productNames = selectedProducts.map(id => {
-        const product = products.find(p => p.id === id);
-        return product ? product.name : 'Unbekannt';
-    }).join(', ');
-    
-    if (confirm(`Möchten Sie diese ${selectedProducts.length} Produkte wirklich löschen?\n\n${productNames}\n\nDiese Aktion kann nicht rückgängig gemacht werden.`)) {
-        try {
-            for (const productId of selectedProducts) {
-                await apiCall(`/api/products/${productId}`, { method: 'DELETE' });
-            }
-            showAlert(`${selectedProducts.length} Produkte erfolgreich gelöscht`, 'success');
-            loadProducts();
-            loadDashboard();
-        } catch (error) {
-            showAlert('Fehler beim Löschen der Produkte', 'error');
-        }
-    }
-}
-        
-        // ============ RENDER FUNCTIONS ============
-        
-  function renderUsers() {
-    const tbody = document.querySelector('#userTable tbody');
-    selectedUsers = [];
-    updateSelectionInfo('users');
-    
-    if (users.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px; color: #666;">Keine Mitgliederdaten verfügbar</td></tr>';
-        return;
-    }
-    
-    tbody.innerHTML = users.map(user => {
-        const balanceColor = user.balance >= 0 ? '#38a169' : '#e53e3e';
-        const roleIcon = getRoleIcon(user.role);
-        const sepaStatus = user.sepa_active ? '✅' : '❌';
-        
-        return `
-            <tr>
-                <td class="checkbox-cell">
-                    <input type="checkbox" value="${user.id}" onchange="toggleRowSelection(this, 'users')">
-                </td>
-                <td>${user.first_name} ${user.last_name}</td>
-                <td>${roleIcon} ${getRoleText(user.role)}</td>
-                <td><code style="font-size: 0.8em;">${user.barcodes ? user.barcodes.join(', ') : '-'}</code></td>
-                <td style="color: ${balanceColor}; font-weight: bold;">${user.balance.toFixed(2)}€</td>
-                <td>${sepaStatus}</td>
-                <td style="font-size: 0.8em;">${user.email || '-'}</td>
-            </tr>
-        `;
-    }).join('');
-}
-
         function renderProducts() {
             const tbody = document.querySelector('#productTable tbody');
             selectedProducts = [];
@@ -1715,7 +1499,6 @@ async function deleteSelectedProducts() {
             tbody.innerHTML = products.map(product => {
                 const stockColor = product.stock > 0 ? '#38a169' : '#e53e3e';
                 
-                // Verbesserte Produktbild-Anzeige
                 let imageHtml;
                 if (product.image_url) {
                     imageHtml = `<img src="${product.image_url}" class="product-image-preview" alt="${product.name}" 
@@ -1744,143 +1527,120 @@ async function deleteSelectedProducts() {
             }).join('');
         }
 
-        // ============ MODAL FUNCTIONS ============
-        
-   function openProductModal(productId = null) {
-    try {
-        const modal = document.getElementById('productModal');
-        const title = document.getElementById('productModalTitle');
-        const form = document.getElementById('productForm');
-        
-        if (!modal || !title || !form) {
-            console.error('Modal-Elemente nicht gefunden');
-            showAlert('Fehler: Modal nicht verfügbar', 'error');
-            return;
-        }
-        
-        // Form zurücksetzen
-        form.reset();
-        document.getElementById('productId').value = '';
-        document.getElementById('currentImageUrl').value = '';
-        document.getElementById('currentImagePath').value = '';
-        
-        // SICHERE Photo Preview Reset
-        try {
-            resetPhotoPreview();
-        } catch (resetError) {
-            console.warn('Photo reset warning:', resetError);
-            // Fallback: Manuell zurücksetzen
-            const container = document.getElementById('photoPreviewContainer');
-            if (container) {
-                container.innerHTML = `
-                    <div id="photoPlaceholder">
-                        <p style="margin: 10px 0;">📷 Klicken oder Bild hierher ziehen</p>
-                        <p style="font-size: 0.8em; color: #666;">JPG, PNG bis 2MB</p>
-                    </div>
-                `;
-                container.classList.remove('has-image');
-            }
-        }
-        
-        if (productId) {
-            const product = products.find(p => p.id === productId);
-            if (product) {
-                title.textContent = 'Produkt bearbeiten';
+        function openProductModal(productId = null) {
+            try {
+                const modal = document.getElementById('productModal');
+                const title = document.getElementById('productModalTitle');
+                const form = document.getElementById('productForm');
                 
-                // Sichere Wertzuweisung
-                document.getElementById('productId').value = product.id || '';
-                document.getElementById('productName').value = product.name || '';
-                document.getElementById('productCategory').value = product.category || 'sonstiges';
-                document.getElementById('productEmoji').value = product.image || '';
-                document.getElementById('productMemberPrice').value = (product.member_price || 0).toFixed(2);
-                document.getElementById('productGuestPrice').value = (product.guest_price || 0).toFixed(2);
-                document.getElementById('productStock').value = product.stock || 0;
-                document.getElementById('productMinStock').value = product.min_stock || 5;
-                document.getElementById('productAvailable').checked = product.available !== false;
-
-                // Multi-Barcode Support mit Fallback
-            const barcodesValue = product.barcodes 
-                ? (Array.isArray(product.barcodes) ? product.barcodes : [product.barcodes]) 
-                : (product.barcode ? [product.barcode] : []);
-                document.getElementById('productBarcodes').value = barcodesValue.join('\n');
+                if (!modal || !title || !form) {
+                    console.error('Modal-Elemente nicht gefunden');
+                    showAlert('Fehler: Modal nicht verfügbar', 'error');
+                    return;
+                }
                 
-                // Vorhandenes Bild anzeigen mit Fehlerbehandlung
-                if (product.image_url && typeof product.image_url === 'string') {
-                    try {
-                        document.getElementById('currentImageUrl').value = product.image_url;
-                        document.getElementById('currentImagePath').value = product.image_file_path || '';
-                        
-                        // Bild laden und anzeigen
-                        const img = new Image();
-                        img.onload = function() {
-                            try {
-                                showPhotoPreview(product.image_url, true);
-                            } catch (showError) {
-                                console.warn('Error showing existing image:', showError);
-                            }
-                        };
-                        img.onerror = function() {
-                            console.warn('Existing image could not be loaded:', product.image_url);
-                        };
-                        img.src = product.image_url;
-                        
-                    } catch (imageError) {
-                        console.warn('Fehler beim Verarbeiten des Produktbildes:', imageError);
+                form.reset();
+                document.getElementById('productId').value = '';
+                document.getElementById('currentImageUrl').value = '';
+                document.getElementById('currentImagePath').value = '';
+                
+                try {
+                    resetPhotoPreview();
+                } catch (resetError) {
+                    console.warn('Photo reset warning:', resetError);
+                    const container = document.getElementById('photoPreviewContainer');
+                    if (container) {
+                        container.innerHTML = `
+                            <div id="photoPlaceholder">
+                                <p style="margin: 10px 0;">📷 Klicken oder Bild hierher ziehen</p>
+                                <p style="font-size: 0.8em; color: #666;">JPG, PNG bis 2MB</p>
+                            </div>
+                        `;
+                        container.classList.remove('has-image');
                     }
                 }
-            } else {
-                console.error('Produkt nicht gefunden:', productId);
-                showAlert('Produkt nicht gefunden', 'error');
-                return;
+                
+                if (productId) {
+                    const product = products.find(p => p.id === productId);
+                    if (product) {
+                        title.textContent = 'Produkt bearbeiten';
+                        
+                        document.getElementById('productId').value = product.id || '';
+                        document.getElementById('productName').value = product.name || '';
+                        document.getElementById('productCategory').value = product.category || 'sonstiges';
+                        document.getElementById('productEmoji').value = product.image || '';
+                        document.getElementById('productMemberPrice').value = (product.member_price || 0).toFixed(2);
+                        document.getElementById('productGuestPrice').value = (product.guest_price || 0).toFixed(2);
+                        document.getElementById('productStock').value = product.stock || 0;
+                        document.getElementById('productMinStock').value = product.min_stock || 5;
+                        
+                        const barcodesValue = product.barcodes 
+                            ? (Array.isArray(product.barcodes) ? product.barcodes : [product.barcodes]) 
+                            : (product.barcode ? [product.barcode] : []);
+                        document.getElementById('productBarcodes').value = barcodesValue.join('\n');
+                        
+                        document.getElementById('productAvailable').checked = product.available !== false;
+                        
+                        if (product.image_url && typeof product.image_url === 'string') {
+                            try {
+                                document.getElementById('currentImageUrl').value = product.image_url;
+                                document.getElementById('currentImagePath').value = product.image_file_path || '';
+                                
+                                const img = new Image();
+                                img.onload = function() {
+                                    try {
+                                        showPhotoPreview(product.image_url, true);
+                                    } catch (showError) {
+                                        console.warn('Error showing existing image:', showError);
+                                    }
+                                };
+                                img.onerror = function() {
+                                    console.warn('Existing image could not be loaded:', product.image_url);
+                                };
+                                img.src = product.image_url;
+                                
+                            } catch (imageError) {
+                                console.warn('Fehler beim Verarbeiten des Produktbildes:', imageError);
+                            }
+                        }
+                    } else {
+                        console.error('Produkt nicht gefunden:', productId);
+                        showAlert('Produkt nicht gefunden', 'error');
+                        return;
+                    }
+                } else {
+                    title.textContent = 'Neues Produkt hinzufügen';
+                    document.getElementById('productStock').value = '0';
+                    document.getElementById('productMinStock').value = '5';
+                    document.getElementById('productAvailable').checked = true;
+                }
+                
+                modal.style.display = 'block';
+                
+                setTimeout(() => {
+                    const firstInput = form.querySelector('input[type="text"]');
+                    if (firstInput) {
+                        firstInput.focus();
+                    }
+                }, 150);
+                
+                console.log('✅ Product modal opened successfully');
+                
+            } catch (error) {
+                console.error('❌ Fehler beim Öffnen des Produkt-Modals:', error);
+                showAlert('Fehler beim Öffnen des Bearbeiten-Dialogs', 'error');
             }
-        } else {
-            title.textContent = 'Neues Produkt hinzufügen';
-            document.getElementById('productStock').value = '0';
-            document.getElementById('productMinStock').value = '5';
-            document.getElementById('productAvailable').checked = true;
         }
-        
-        modal.style.display = 'block';
-        
-        // Focus auf erstes Eingabefeld
-        setTimeout(() => {
-            const firstInput = form.querySelector('input[type="text"]');
-            if (firstInput) {
-                firstInput.focus();
-            }
-        }, 150);
-        
-        console.log('✅ Product modal opened successfully');
-        
-    } catch (error) {
-        console.error('❌ Fehler beim Öffnen des Produkt-Modals:', error);
-        showAlert('Fehler beim Öffnen des Bearbeiten-Dialogs', 'error');
-    }
-}
 
-  function closeModal(modalId) {
-    try {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.style.display = 'none';
+        function editSelectedProduct() {
+            if (selectedProducts.length !== 1) return;
+            openProductModal(selectedProducts[0]);
         }
-        
-        // Reset image upload state
-        currentImageFile = null;
-        uploadedImageUrl = null;
-        
-        console.log('✅ Modal closed successfully');
-    } catch (error) {
-        console.error('Error closing modal:', error);
-    }
-}
 
-        // ============ SAVE FUNCTIONS ============
-        
         async function saveProduct() {
             const saveBtn = document.getElementById('saveProductBtn');
             const productId = document.getElementById('productId').value;
-
+            
             const barcodes = document.getElementById('productBarcodes').value
                 .split('\n')
                 .map(b => b.trim())
@@ -1894,7 +1654,7 @@ async function deleteSelectedProducts() {
                 guest_price: parseFloat(document.getElementById('productGuestPrice').value) || 0,
                 stock: parseInt(document.getElementById('productStock').value) || 0,
                 min_stock: parseInt(document.getElementById('productMinStock').value) || 0,
-                barcodes: barcodes, //array statt String
+                barcodes: barcodes,
                 available: document.getElementById('productAvailable').checked
             };
             
@@ -1907,32 +1667,27 @@ async function deleteSelectedProducts() {
                 saveBtn.disabled = true;
                 saveBtn.textContent = '⏳ Speichere...';
 
-                // Bild hochladen falls vorhanden
                 if (currentImageFile) {
                     showAlert('Lade Produktbild hoch...', 'info');
                     const uploadResult = await uploadImageToAPI(currentImageFile, productId || 'new');
                     productData.image_url = uploadResult.imageUrl;
                     productData.image_file_path = uploadResult.filePath;
                     
-                    // Altes Bild löschen markieren
                     if (productId && document.getElementById('currentImagePath').value) {
                         productData.deleteOldImage = true;
                     }
                 } else if (uploadedImageUrl) {
-                    // Bereits hochgeladenes Bild behalten
                     productData.image_url = uploadedImageUrl;
                     productData.image_file_path = document.getElementById('currentImagePath').value;
                 }
                 
                 if (productId) {
-                    // Update existierendes Produkt
                     await apiCall(`/api/products/${productId}`, {
                         method: 'PUT',
                         body: JSON.stringify(productData)
                     });
                     showAlert('Produkt erfolgreich aktualisiert', 'success');
                 } else {
-                    // Neues Produkt
                     await apiCall('/api/products', {
                         method: 'POST',
                         body: JSON.stringify(productData)
@@ -1951,13 +1706,6 @@ async function deleteSelectedProducts() {
                 saveBtn.disabled = false;
                 saveBtn.textContent = '💾 Speichern';
             }
-        }
-
-        // ============ EDIT/DELETE FUNCTIONS ============
-        
-        function editSelectedProduct() {
-            if (selectedProducts.length !== 1) return;
-            openProductModal(selectedProducts[0]);
         }
 
         async function deleteSelectedProducts() {
@@ -1982,6 +1730,279 @@ async function deleteSelectedProducts() {
             }
         }
 
+        // ============ TRANSACTIONS FUNCTIONS ============
+
+        async function loadTransactions() {
+            try {
+                const response = await fetch('/api/transactions');
+                const data = await response.json();
+                allTransactions = data;
+                transactions = data;
+                renderTransactions();
+                updateTransactionSummary();
+            } catch (error) {
+                console.error('Fehler beim Laden der Transaktionen:', error);
+                alert('Fehler beim Laden der Transaktionen');
+            }
+        }
+
+        function renderTransactions() {
+            const tbody = document.querySelector('#transactionTable tbody');
+            
+            if (transactions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px; color: #666;">Keine Transaktionen gefunden</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = transactions.map(t => {
+                const date = new Date(t.created_at);
+                const formattedDate = date.toLocaleDateString('de-DE');
+                const formattedTime = date.toLocaleTimeString('de-DE');
+                
+                return `
+                    <tr>
+                        <td>${formattedDate}<br><small>${formattedTime}</small></td>
+                        <td>${t.user_name}</td>
+                        <td>${t.product_name}</td>
+                        <td>${t.quantity}</td>
+                        <td>${t.price.toFixed(2)}€</td>
+                        <td><strong>${t.total.toFixed(2)}€</strong></td>
+                        <td>${t.payment_method === 'balance' ? 'Saldo' : t.payment_method}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function filterTransactions() {
+            const filter = document.getElementById('transactionFilter').value;
+            const now = new Date();
+            
+            if (filter === 'all') {
+                transactions = allTransactions;
+            } else if (filter === 'today') {
+                const today = now.toISOString().split('T')[0];
+                transactions = allTransactions.filter(t => t.created_at.startsWith(today));
+            } else if (filter === 'week') {
+                const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                transactions = allTransactions.filter(t => new Date(t.created_at) >= weekAgo);
+            } else if (filter === 'month') {
+                const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                transactions = allTransactions.filter(t => new Date(t.created_at) >= monthAgo);
+            }
+            
+            renderTransactions();
+            updateTransactionSummary();
+        }
+
+        function updateTransactionSummary() {
+            const summary = document.getElementById('transactionSummary');
+            const totalRevenue = transactions.reduce((sum, t) => sum + t.total, 0);
+            
+            document.getElementById('transactionCountSpan').textContent = transactions.length;
+            document.getElementById('totalRevenue').textContent = totalRevenue.toFixed(2);
+            
+            summary.style.display = 'block';
+        }
+
+        function exportTransactions() {
+            if (transactions.length === 0) {
+                alert('Keine Transaktionen zum Exportieren');
+                return;
+            }
+            
+            const csv = [
+                ['Datum', 'Zeit', 'Mitglied', 'Produkt', 'Menge', 'Preis', 'Gesamt', 'Zahlungsart'].join(';'),
+                ...transactions.map(t => {
+                    const date = new Date(t.created_at);
+                    return [
+                        date.toLocaleDateString('de-DE'),
+                        date.toLocaleTimeString('de-DE'),
+                        t.user_name,
+                        t.product_name,
+                        t.quantity,
+                        t.price.toFixed(2),
+                        t.total.toFixed(2),
+                        t.payment_method
+                    ].join(';');
+                })
+            ].join('\n');
+            
+            downloadFile(csv, 'transaktionen.csv', 'text/csv');
+        }
+
+        // ============ BARCODES FUNCTIONS ============
+
+        async function loadBarcodeSettings() {
+            try {
+                const response = await fetch('/api/settings');
+                const settings = await response.json();
+                
+                if (settings.checkout_barcode) {
+                    document.getElementById('checkoutBarcode').value = settings.checkout_barcode;
+                }
+                if (settings.cancel_barcode) {
+                    document.getElementById('cancelBarcode').value = settings.cancel_barcode;
+                }
+                if (settings.reset_barcode) {
+                    document.getElementById('resetBarcode').value = settings.reset_barcode;
+                }
+            } catch (error) {
+                console.log('Keine gespeicherten Barcode-Einstellungen gefunden');
+            }
+        }
+
+        async function saveBarcodeSettings() {
+            const settings = {
+                checkout_barcode: document.getElementById('checkoutBarcode').value,
+                cancel_barcode: document.getElementById('cancelBarcode').value,
+                reset_barcode: document.getElementById('resetBarcode').value
+            };
+            
+            try {
+                await fetch('/api/settings', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings)
+                });
+                
+                alert('✅ Barcode-Einstellungen erfolgreich gespeichert!');
+            } catch (error) {
+                console.error('Fehler beim Speichern:', error);
+                alert('❌ Fehler beim Speichern der Einstellungen');
+            }
+        }
+
+        // ============ SEPA FUNCTIONS ============
+
+        async function loadSepaUsers() {
+            try {
+                const response = await fetch('/api/sepa-users');
+                sepaUsers = await response.json();
+                renderSepaUsers();
+                updateSepaSummary();
+            } catch (error) {
+                console.error('Fehler beim Laden der SEPA-Benutzer:', error);
+                alert('Fehler beim Laden der SEPA-Benutzer');
+            }
+        }
+
+        function renderSepaUsers() {
+            const tbody = document.querySelector('#sepaTable tbody');
+            
+            if (sepaUsers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 30px; color: #666;">Keine SEPA-fähigen Mitglieder mit negativem Saldo gefunden</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = sepaUsers.map(user => `
+                <tr>
+                    <td>${user.first_name} ${user.last_name}</td>
+                    <td>${user.email || '-'}</td>
+                    <td><code>${user.iban}</code></td>
+                    <td style="color: #e53e3e; font-weight: bold;">${user.balance.toFixed(2)}€</td>
+                    <td style="color: #38a169; font-weight: bold;">${user.debit_amount.toFixed(2)}€</td>
+                </tr>
+            `).join('');
+        }
+
+        function updateSepaSummary() {
+            const summary = document.getElementById('sepaSummary');
+            const total = sepaUsers.reduce((sum, u) => sum + u.debit_amount, 0);
+            
+            document.getElementById('sepaCount').textContent = sepaUsers.length;
+            document.getElementById('sepaTotal').textContent = total.toFixed(2);
+            
+            summary.style.display = 'block';
+        }
+
+        function exportSepaCSV() {
+            if (sepaUsers.length === 0) {
+                alert('Keine SEPA-Daten zum Exportieren');
+                return;
+            }
+            
+            const csv = [
+                ['Name', 'Vorname', 'E-Mail', 'IBAN', 'Betrag'].join(';'),
+                ...sepaUsers.map(u => [
+                    u.last_name,
+                    u.first_name,
+                    u.email || '',
+                    u.iban,
+                    u.debit_amount.toFixed(2)
+                ].join(';'))
+            ].join('\n');
+            
+            downloadFile(csv, 'sepa_lastschriften.csv', 'text/csv');
+        }
+
+        function exportSepaXML() {
+            if (sepaUsers.length === 0) {
+                alert('Keine SEPA-Daten zum Exportieren');
+                return;
+            }
+            
+            const now = new Date();
+            const msgId = `SAARCADE-${now.getTime()}`;
+            const totalAmount = sepaUsers.reduce((sum, u) => sum + u.debit_amount, 0).toFixed(2);
+            
+            let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.008.001.02">
+    <CstmrDrctDbtInitn>
+        <GrpHdr>
+            <MsgId>${msgId}</MsgId>
+            <CreDtTm>${now.toISOString()}</CreDtTm>
+            <NbOfTxs>${sepaUsers.length}</NbOfTxs>
+            <CtrlSum>${totalAmount}</CtrlSum>
+            <InitgPty>
+                <Nm>Saarcade e.V.</Nm>
+            </InitgPty>
+        </GrpHdr>
+        <PmtInf>
+            <PmtInfId>PMT-${now.getTime()}</PmtInfId>
+            <PmtMtd>DD</PmtMtd>
+            <NbOfTxs>${sepaUsers.length}</NbOfTxs>
+            <CtrlSum>${totalAmount}</CtrlSum>
+            <ReqdColltnDt>${now.toISOString().split('T')[0]}</ReqdColltnDt>
+            <Cdtr>
+                <Nm>Saarcade e.V.</Nm>
+            </Cdtr>
+            <CdtrAcct>
+                <Id>
+                    <IBAN>DE89370400440532013000</IBAN>
+                </Id>
+            </CdtrAcct>
+`;
+
+            sepaUsers.forEach((user) => {
+                xml += `
+            <DrctDbtTxInf>
+                <PmtId>
+                    <EndToEndId>NOTPROVIDED</EndToEndId>
+                </PmtId>
+                <InstdAmt Ccy="EUR">${user.debit_amount.toFixed(2)}</InstdAmt>
+                <Dbtr>
+                    <Nm>${user.first_name} ${user.last_name}</Nm>
+                </Dbtr>
+                <DbtrAcct>
+                    <Id>
+                        <IBAN>${user.iban}</IBAN>
+                    </Id>
+                </DbtrAcct>
+                <RmtInf>
+                    <Ustrd>Saarcade Getraenkeabrechnung</Ustrd>
+                </RmtInf>
+            </DrctDbtTxInf>
+`;
+            });
+
+            xml += `
+        </PmtInf>
+    </CstmrDrctDbtInitn>
+</Document>`;
+
+            downloadFile(xml, 'sepa_lastschrift.xml', 'application/xml');
+        }
+
         // ============ HELPER FUNCTIONS ============
         
         function getRoleIcon(role) {
@@ -2004,6 +2025,34 @@ async function deleteSelectedProducts() {
                 sonstiges: '📦'
             };
             return categories[category] || category;
+        }
+
+        function closeModal(modalId) {
+            try {
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.style.display = 'none';
+                }
+                
+                currentImageFile = null;
+                uploadedImageUrl = null;
+                
+                console.log('✅ Modal closed successfully');
+            } catch (error) {
+                console.error('Error closing modal:', error);
+            }
+        }
+
+        function downloadFile(content, filename, type) {
+            const blob = new Blob([content], { type });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
         }
 
         // ============ DRAG & DROP ============
@@ -2057,9 +2106,15 @@ async function deleteSelectedProducts() {
             
             try {
                 await loadDashboard();
-                await loadProducts(); // Produkte zuerst laden da das der aktive Tab ist
+                await loadProducts();
                 
                 initDragAndDrop();
+                loadBarcodeSettings();
+                
+                const sepaCheckbox = document.getElementById('userSepaActive');
+                if (sepaCheckbox) {
+                    sepaCheckbox.addEventListener('change', toggleIbanField);
+                }
                 
                 console.log('✅ Admin-Dashboard erfolgreich initialisiert');
                 showAlert('Dashboard mit Bildupload-Funktion geladen', 'success');
@@ -2070,324 +2125,11 @@ async function deleteSelectedProducts() {
             }
         });
 
-        // Modal schließen bei Klick außerhalb
         window.onclick = function(event) {
             if (event.target.classList.contains('modal')) {
                 event.target.style.display = 'none';
             }
         }
-     // HIER die Debug-Funktion einfügen:
-        function debugPhotoSystem() {
-            console.log('=== PHOTO SYSTEM DEBUG ===');
-            console.log('photoPreviewContainer exists:', !!document.getElementById('photoPreviewContainer'));
-            console.log('photoActions exists:', !!document.getElementById('photoActions'));
-            console.log('photoInput exists:', !!document.getElementById('photoInput'));
-            console.log('currentImageFile:', currentImageFile);
-            console.log('uploadedImageUrl:', uploadedImageUrl);
-            
-            const container = document.getElementById('photoPreviewContainer');
-            if (container) {
-                console.log('Container innerHTML:', container.innerHTML);
-                console.log('Container has-image class:', container.classList.contains('has-image'));
-            }
-        }
-
-async function loadTransactions() {
-    try {
-        const response = await fetch('/api/transactions');
-        const data = await response.json();
-        allTransactions = data;
-        transactions = data;
-        renderTransactions();
-        updateTransactionSummary();
-    } catch (error) {
-        console.error('Fehler beim Laden der Transaktionen:', error);
-        alert('Fehler beim Laden der Transaktionen');
-    }
-}
-
-function renderTransactions() {
-    const tbody = document.querySelector('#transactionTable tbody');
-    
-    if (transactions.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px; color: #666;">Keine Transaktionen gefunden</td></tr>';
-        return;
-    }
-    
-    tbody.innerHTML = transactions.map(t => {
-        const date = new Date(t.created_at);
-        const formattedDate = date.toLocaleDateString('de-DE');
-        const formattedTime = date.toLocaleTimeString('de-DE');
-        
-        return `
-            <tr>
-                <td>${formattedDate}<br><small>${formattedTime}</small></td>
-                <td>${t.user_name}</td>
-                <td>${t.product_name}</td>
-                <td>${t.quantity}</td>
-                <td>${t.price.toFixed(2)}€</td>
-                <td><strong>${t.total.toFixed(2)}€</strong></td>
-                <td>${t.payment_method === 'balance' ? 'Saldo' : t.payment_method}</td>
-            </tr>
-        `;
-    }).join('');
-}
-
-function filterTransactions() {
-    const filter = document.getElementById('transactionFilter').value;
-    const now = new Date();
-    
-    if (filter === 'all') {
-        transactions = allTransactions;
-    } else if (filter === 'today') {
-        const today = now.toISOString().split('T')[0];
-        transactions = allTransactions.filter(t => t.created_at.startsWith(today));
-    } else if (filter === 'week') {
-        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        transactions = allTransactions.filter(t => new Date(t.created_at) >= weekAgo);
-    } else if (filter === 'month') {
-        const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        transactions = allTransactions.filter(t => new Date(t.created_at) >= monthAgo);
-    }
-    
-    renderTransactions();
-    updateTransactionSummary();
-}
-
-function updateTransactionSummary() {
-    const summary = document.getElementById('transactionSummary');
-    const totalRevenue = transactions.reduce((sum, t) => sum + t.total, 0);
-    
-    document.getElementById('transactionCount').textContent = transactions.length;
-    document.getElementById('totalRevenue').textContent = totalRevenue.toFixed(2);
-    
-    summary.style.display = 'block';
-}
-
-function exportTransactions() {
-    if (transactions.length === 0) {
-        alert('Keine Transaktionen zum Exportieren');
-        return;
-    }
-    
-    const csv = [
-        ['Datum', 'Zeit', 'Mitglied', 'Produkt', 'Menge', 'Preis', 'Gesamt', 'Zahlungsart'].join(';'),
-        ...transactions.map(t => {
-            const date = new Date(t.created_at);
-            return [
-                date.toLocaleDateString('de-DE'),
-                date.toLocaleTimeString('de-DE'),
-                t.user_name,
-                t.product_name,
-                t.quantity,
-                t.price.toFixed(2),
-                t.total.toFixed(2),
-                t.payment_method
-            ].join(';');
-        })
-    ].join('\n');
-    
-    downloadFile(csv, 'transaktionen.csv', 'text/csv');
-}
-
-// ============ BARCODES ============
-
-async function loadBarcodeSettings() {
-    try {
-        const response = await fetch('/api/settings');
-        const settings = await response.json();
-        
-        if (settings.checkout_barcode) {
-            document.getElementById('checkoutBarcode').value = settings.checkout_barcode;
-        }
-        if (settings.cancel_barcode) {
-            document.getElementById('cancelBarcode').value = settings.cancel_barcode;
-        }
-        if (settings.reset_barcode) {
-            document.getElementById('resetBarcode').value = settings.reset_barcode;
-        }
-    } catch (error) {
-        console.log('Keine gespeicherten Barcode-Einstellungen gefunden');
-    }
-}
-
-async function saveBarcodeSettings() {
-    const settings = {
-        checkout_barcode: document.getElementById('checkoutBarcode').value,
-        cancel_barcode: document.getElementById('cancelBarcode').value,
-        reset_barcode: document.getElementById('resetBarcode').value
-    };
-    
-    try {
-        await fetch('/api/settings', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(settings)
-        });
-        
-        alert('✅ Barcode-Einstellungen erfolgreich gespeichert!');
-    } catch (error) {
-        console.error('Fehler beim Speichern:', error);
-        alert('❌ Fehler beim Speichern der Einstellungen');
-    }
-}
-
-// ============ SEPA ============
-
-let sepaUsers = [];
-
-async function loadSepaUsers() {
-    try {
-        const response = await fetch('/api/sepa-users');
-        sepaUsers = await response.json();
-        renderSepaUsers();
-        updateSepaSummary();
-    } catch (error) {
-        console.error('Fehler beim Laden der SEPA-Benutzer:', error);
-        alert('Fehler beim Laden der SEPA-Benutzer');
-    }
-}
-
-function renderSepaUsers() {
-    const tbody = document.querySelector('#sepaTable tbody');
-    
-    if (sepaUsers.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 30px; color: #666;">Keine SEPA-fähigen Mitglieder mit negativem Saldo gefunden</td></tr>';
-        return;
-    }
-    
-    tbody.innerHTML = sepaUsers.map(user => `
-        <tr>
-            <td>${user.first_name} ${user.last_name}</td>
-            <td>${user.email || '-'}</td>
-            <td><code>${user.iban}</code></td>
-            <td style="color: #e53e3e; font-weight: bold;">${user.balance.toFixed(2)}€</td>
-            <td style="color: #38a169; font-weight: bold;">${user.debit_amount.toFixed(2)}€</td>
-        </tr>
-    `).join('');
-}
-
-function updateSepaSummary() {
-    const summary = document.getElementById('sepaSummary');
-    const total = sepaUsers.reduce((sum, u) => sum + u.debit_amount, 0);
-    
-    document.getElementById('sepaCount').textContent = sepaUsers.length;
-    document.getElementById('sepaTotal').textContent = total.toFixed(2);
-    
-    summary.style.display = 'block';
-}
-
-function exportSepaCSV() {
-    if (sepaUsers.length === 0) {
-        alert('Keine SEPA-Daten zum Exportieren');
-        return;
-    }
-    
-    const csv = [
-        ['Name', 'Vorname', 'E-Mail', 'IBAN', 'Betrag'].join(';'),
-        ...sepaUsers.map(u => [
-            u.last_name,
-            u.first_name,
-            u.email || '',
-            u.iban,
-            u.debit_amount.toFixed(2)
-        ].join(';'))
-    ].join('\n');
-    
-    downloadFile(csv, 'sepa_lastschriften.csv', 'text/csv');
-}
-
-function exportSepaXML() {
-    if (sepaUsers.length === 0) {
-        alert('Keine SEPA-Daten zum Exportieren');
-        return;
-    }
-    
-    const now = new Date();
-    const msgId = `SAARCADE-${now.getTime()}`;
-    const totalAmount = sepaUsers.reduce((sum, u) => sum + u.debit_amount, 0).toFixed(2);
-    
-    let xml = `<?xml version="1.0" encoding="UTF-8"?>
-<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.008.001.02">
-    <CstmrDrctDbtInitn>
-        <GrpHdr>
-            <MsgId>${msgId}</MsgId>
-            <CreDtTm>${now.toISOString()}</CreDtTm>
-            <NbOfTxs>${sepaUsers.length}</NbOfTxs>
-            <CtrlSum>${totalAmount}</CtrlSum>
-            <InitgPty>
-                <Nm>Saarcade e.V.</Nm>
-            </InitgPty>
-        </GrpHdr>
-        <PmtInf>
-            <PmtInfId>PMT-${now.getTime()}</PmtInfId>
-            <PmtMtd>DD</PmtMtd>
-            <NbOfTxs>${sepaUsers.length}</NbOfTxs>
-            <CtrlSum>${totalAmount}</CtrlSum>
-            <ReqdColltnDt>${now.toISOString().split('T')[0]}</ReqdColltnDt>
-            <Cdtr>
-                <Nm>Saarcade e.V.</Nm>
-            </Cdtr>
-            <CdtrAcct>
-                <Id>
-                    <IBAN>DE89370400440532013000</IBAN>
-                </Id>
-            </CdtrAcct>
-`;
-
-    sepaUsers.forEach((user, index) => {
-        xml += `
-            <DrctDbtTxInf>
-                <PmtId>
-                    <EndToEndId>NOTPROVIDED</EndToEndId>
-                </PmtId>
-                <InstdAmt Ccy="EUR">${user.debit_amount.toFixed(2)}</InstdAmt>
-                <Dbtr>
-                    <Nm>${user.first_name} ${user.last_name}</Nm>
-                </Dbtr>
-                <DbtrAcct>
-                    <Id>
-                        <IBAN>${user.iban}</IBAN>
-                    </Id>
-                </DbtrAcct>
-                <RmtInf>
-                    <Ustrd>Saarcade Getraenkeabrechnung</Ustrd>
-                </RmtInf>
-            </DrctDbtTxInf>
-`;
-    });
-
-    xml += `
-        </PmtInf>
-    </CstmrDrctDbtInitn>
-</Document>`;
-
-    downloadFile(xml, 'sepa_lastschrift.xml', 'application/xml');
-}
-
-// ============ HELPER FUNCTIONS ============
-
-function downloadFile(content, filename, type) {
-    const blob = new Blob([content], { type });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-}
-
-// Beim Laden der Seite
-window.addEventListener('DOMContentLoaded', function() {
-    loadBarcodeSettings();
-    console.log('✅ Admin-Tabs geladen');
-});
-        
-        // Mache Debug-Funktion global verfügbar
-        window.debugPhotoSystem = debugPhotoSystem;
-
     </script>
 </body>
 </html>
