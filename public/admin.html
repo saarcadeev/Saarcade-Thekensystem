@@ -518,7 +518,7 @@
             <button class="tab active" onclick="showTab('products')">📦 Produkte</button>
             <button class="tab" onclick="showTab('transactions')">💰 Transaktionen</button>
             <button class="tab" onclick="showTab('settings')">⚙️ Einstellungen</button>
-            <button class="tab" onclick="showTab('sepa')">💳 SEPA</button>
+            <button class="tab" onclick="showTab('billing')">📋 Abrechnung</button>
         </div>
 
         <!-- Mitglieder Tab -->
@@ -739,6 +739,11 @@
                         </select>
                         <small style="color: #666;">Standard: RCUR für wiederkehrende monatliche Abbuchungen</small>
                     </div>
+
+                    <div style="margin-top: 25px; padding: 15px; background: #fff5e6; border-left: 4px solid #ed8936; border-radius: 4px;">
+                        <strong>⚠️ Wichtig:</strong> Die Gläubiger-ID kannst du bei der Deutschen Bundesbank beantragen. 
+                        <a href="https://extranet.bundesbank.de/scp/" target="_blank" style="color: #667eea;">Hier geht's zur Beantragung</a>
+                    </div>
                     
                     <button type="button" class="btn btn-success" onclick="saveAllSettings()" style="margin-top: 20px;">
                         💾 Alle Einstellungen speichern
@@ -751,47 +756,86 @@
             </div>
         </div>
 
-        <!-- SEPA Tab -->
-        <div id="sepa" class="tab-content">
+        <!-- Abrechnung Tab (vorher SEPA) -->
+        <div id="billing" class="tab-content">
             <div class="section">
-                <h2>💳 SEPA-Lastschrift Export</h2>
-                <p>Mitglieder mit negativem Saldo und aktivem SEPA-Mandat für Lastschrifteinzug.</p>
+                <h2>📋 Getränke-Abrechnung</h2>
+                <p>Erstelle monatliche Abrechnungen und exportiere SEPA-Lastschriften oder Rechnungslisten.</p>
                 
-                <div class="toolbar">
-                    <button class="btn" onclick="loadSepaUsers()">🔄 Neu laden</button>
-                    <button class="btn btn-success" onclick="exportSepaXML()">📄 SEPA XML Export</button>
-                    <button class="btn btn-success" onclick="exportSepaCSV()">📊 CSV Export</button>
+                <div class="toolbar" style="margin-bottom: 20px;">
+                    <button class="btn btn-success" onclick="createNewBilling()" id="createBillingBtn">
+                        💳 Getränke abrechnen
+                    </button>
+                    <button class="btn btn-secondary" onclick="loadBillingHistory()">
+                        🔄 Abrechnungen neu laden
+                    </button>
                 </div>
-                
-                <table class="data-table" id="sepaTable">
+
+                <!-- Offene Beträge -->
+                <div id="openBalancesSection" style="margin-bottom: 30px;">
+                    <h3 style="margin-bottom: 15px; color: #667eea;">📊 Offene Beträge (nicht abgerechnet)</h3>
+                    <div style="background: #fff5e6; padding: 15px; border-left: 4px solid #ed8936; border-radius: 4px; margin-bottom: 15px;">
+                        <strong>Gesamtsumme nicht abgerechnet:</strong> 
+                        <span id="totalOpenAmount" style="font-size: 1.2em; color: #e53e3e;">0.00€</span> 
+                        (<span id="openUsersCount">0</span> Benutzer)
+                    </div>
+                    
+                    <table class="data-table" id="openBalancesTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Offener Betrag</th>
+                                <th>SEPA</th>
+                                <th>Letzte Transaktion</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="4" style="text-align: center; padding: 30px; color: #666;">
+                                    Keine offenen Beträge
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <hr style="margin: 30px 0; border: none; border-top: 2px solid #e2e8f0;">
+
+                <!-- Abrechnungshistorie -->
+                <h3 style="margin-bottom: 15px; color: #667eea;">📜 Abrechnungshistorie</h3>
+                <table class="data-table" id="billingHistoryTable">
                     <thead>
                         <tr>
-                            <th>Name</th>
-                            <th>E-Mail</th>
-                            <th>IBAN</th>
-                            <th>Negativer Saldo</th>
-                            <th>Einzugsbetrag</th>
+                            <th>Rechnungsnummer</th>
+                            <th>Datum</th>
+                            <th>Gesamtbetrag</th>
+                            <th>SEPA-Nutzer</th>
+                            <th>Nicht-SEPA</th>
+                            <th>Aktionen</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td colspan="5" style="text-align: center; padding: 30px; color: #666;">
-                                Klicke "Neu laden" um SEPA-fähige Mitglieder zu laden
+                            <td colspan="6" style="text-align: center; padding: 30px; color: #666;">
+                                Noch keine Abrechnungen erstellt
                             </td>
                         </tr>
                     </tbody>
                 </table>
-                
-                <div id="sepaSummary" style="margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 6px; display: none;">
-                    <strong>Zusammenfassung:</strong>
-                    <div style="margin-top: 10px;">
-                        <span id="sepaCount">0</span> Mitglieder | 
-                        Gesamteinzug: <span id="sepaTotal">0.00</span>€
-                    </div>
+            </div>
+        </div>
+
+        <!-- Abrechnungs-Details Modal -->
+        <div id="billingDetailsModal" class="modal">
+            <div class="modal-content" style="max-width: 900px;">
+                <div class="modal-header">
+                    <h3 id="billingDetailsTitle">Abrechnungs-Details</h3>
+                    <span class="close" onclick="closeModal('billingDetailsModal')">&times;</span>
                 </div>
-                
-                <div style="margin-top: 20px; padding: 15px; background: #fff5e6; border-left: 4px solid #ed8936; border-radius: 4px;">
-                    <strong>⚠️ Wichtig:</strong> Nach dem SEPA-Export müssen die Salden der Mitglieder manuell im Admin-Bereich aktualisiert werden.
+                <div class="modal-body">
+                    <div id="billingDetailsContent">
+                        <!-- Wird dynamisch gefüllt -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -1958,96 +2002,358 @@
             }
         }
 
-        // ============ SEPA FUNCTIONS ============
+        // ============ BILLING FUNCTIONS (vorher SEPA) ============
 
-        async function loadSepaUsers() {
+        let billings = [];
+        let currentBillingData = null;
+
+        async function loadOpenBalances() {
             try {
-                const response = await fetch('/api/sepa-users');
-                sepaUsers = await response.json();
-                renderSepaUsers();
-                updateSepaSummary();
+                // Lade alle Benutzer
+                const allUsers = await apiCall('/api/users');
+                
+                // Filtere Benutzer mit negativem Saldo
+                const usersWithDebt = allUsers.filter(u => u.balance < 0);
+                
+                const tbody = document.querySelector('#openBalancesTable tbody');
+                
+                if (usersWithDebt.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px; color: #666;">Keine offenen Beträge</td></tr>';
+                    document.getElementById('totalOpenAmount').textContent = '0.00€';
+                    document.getElementById('openUsersCount').textContent = '0';
+                    return;
+                }
+                
+                const totalOpen = usersWithDebt.reduce((sum, u) => sum + Math.abs(u.balance), 0);
+                
+                document.getElementById('totalOpenAmount').textContent = totalOpen.toFixed(2) + '€';
+                document.getElementById('openUsersCount').textContent = usersWithDebt.length;
+                
+                tbody.innerHTML = usersWithDebt.map(user => `
+                    <tr>
+                        <td>${user.first_name} ${user.last_name}</td>
+                        <td style="color: #e53e3e; font-weight: bold;">${Math.abs(user.balance).toFixed(2)}€</td>
+                        <td>${user.sepa_active ? '✅ Ja' : '❌ Nein'}</td>
+                        <td>-</td>
+                    </tr>
+                `).join('');
+                
             } catch (error) {
-                console.error('Fehler beim Laden der SEPA-Benutzer:', error);
-                alert('Fehler beim Laden der SEPA-Benutzer');
+                console.error('Fehler beim Laden der offenen Beträge:', error);
+                showAlert('Fehler beim Laden der offenen Beträge', 'error');
             }
         }
 
-        function renderSepaUsers() {
-            const tbody = document.querySelector('#sepaTable tbody');
-            
-            if (sepaUsers.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 30px; color: #666;">Keine SEPA-fähigen Mitglieder mit negativem Saldo gefunden</td></tr>';
-                return;
-            }
-            
-            tbody.innerHTML = sepaUsers.map(user => `
-                <tr>
-                    <td>${user.first_name} ${user.last_name}</td>
-                    <td>${user.email || '-'}</td>
-                    <td><code>${user.iban}</code></td>
-                    <td style="color: #e53e3e; font-weight: bold;">${user.balance.toFixed(2)}€</td>
-                    <td style="color: #38a169; font-weight: bold;">${user.debit_amount.toFixed(2)}€</td>
-                </tr>
-            `).join('');
-        }
-
-        function updateSepaSummary() {
-            const summary = document.getElementById('sepaSummary');
-            const total = sepaUsers.reduce((sum, u) => sum + u.debit_amount, 0);
-            
-            document.getElementById('sepaCount').textContent = sepaUsers.length;
-            document.getElementById('sepaTotal').textContent = total.toFixed(2);
-            
-            summary.style.display = 'block';
-        }
-
-        function exportSepaCSV() {
-            if (sepaUsers.length === 0) {
-                alert('Keine SEPA-Daten zum Exportieren');
-                return;
-            }
-            
-            const csv = [
-                ['Name', 'Vorname', 'E-Mail', 'IBAN', 'Betrag'].join(';'),
-                ...sepaUsers.map(u => [
-                    u.last_name,
-                    u.first_name,
-                    u.email || '',
-                    u.iban,
-                    u.debit_amount.toFixed(2)
-                ].join(';'))
-            ].join('\n');
-            
-            downloadFile(csv, 'sepa_lastschriften.csv', 'text/csv');
-        }
-
-        async function exportSepaXML() {
-            if (sepaUsers.length === 0) {
-                alert('Keine SEPA-Daten zum Exportieren');
+        async function createNewBilling() {
+            if (!confirm('Möchtest du jetzt eine neue Abrechnung erstellen?\n\nAlle Benutzer mit negativem Saldo werden abgerechnet und ihre Salden auf 0 gesetzt.')) {
                 return;
             }
 
-            // Lade Einstellungen für SEPA-Daten
+            try {
+                showLoading(true);
+                
+                // Lade alle Benutzer mit negativem Saldo
+                const allUsers = await apiCall('/api/users');
+                const usersWithDebt = allUsers.filter(u => u.balance < 0);
+                
+                if (usersWithDebt.length === 0) {
+                    alert('Keine Benutzer mit negativem Saldo gefunden.');
+                    return;
+                }
+                
+                // Teile in SEPA und Nicht-SEPA
+                const sepaUsers = usersWithDebt.filter(u => u.sepa_active && u.iban);
+                const nonSepaUsers = usersWithDebt.filter(u => !u.sepa_active || !u.iban);
+                
+                // Erstelle Rechnungsnummer
+                const now = new Date();
+                const billingNumber = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}-${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+                
+                const totalAmount = usersWithDebt.reduce((sum, u) => sum + Math.abs(u.balance), 0);
+                const sepaAmount = sepaUsers.reduce((sum, u) => sum + Math.abs(u.balance), 0);
+                const nonSepaAmount = nonSepaUsers.reduce((sum, u) => sum + Math.abs(u.balance), 0);
+                
+                // Erstelle Abrechnung in DB
+                const billingData = {
+                    billing_number: billingNumber,
+                    total_amount: totalAmount,
+                    sepa_amount: sepaAmount,
+                    non_sepa_amount: nonSepaAmount,
+                    sepa_user_count: sepaUsers.length,
+                    non_sepa_user_count: nonSepaUsers.length,
+                    status: 'completed'
+                };
+                
+                const billing = await apiCall('/api/billings', {
+                    method: 'POST',
+                    body: JSON.stringify(billingData)
+                });
+                
+                // Markiere alle nicht-abgerechneten Transaktionen dieser Benutzer
+                const userIds = usersWithDebt.map(u => u.id);
+                await apiCall('/api/transactions/mark-billed', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        billing_id: billing.id,
+                        user_ids: userIds
+                    })
+                });
+                
+                // Setze Salden auf 0
+                for (const user of usersWithDebt) {
+                    await apiCall(`/api/users/${user.id}`, {
+                        method: 'PUT',
+                        body: JSON.stringify({
+                            ...user,
+                            balance: 0
+                        })
+                    });
+                }
+                
+                showAlert(`Abrechnung ${billingNumber} erfolgreich erstellt!\n\nSEPA: ${sepaUsers.length} Benutzer (${sepaAmount.toFixed(2)}€)\nNicht-SEPA: ${nonSepaUsers.length} Benutzer (${nonSepaAmount.toFixed(2)}€)`, 'success');
+                
+                // Zeige Details-Dialog
+                showBillingDetails(billing, sepaUsers, nonSepaUsers);
+                
+                // Aktualisiere Ansichten
+                await loadOpenBalances();
+                await loadBillingHistory();
+                await loadDashboard();
+                
+            } catch (error) {
+                console.error('Fehler beim Erstellen der Abrechnung:', error);
+                showAlert('Fehler beim Erstellen der Abrechnung: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function loadBillingHistory() {
+            try {
+                billings = await apiCall('/api/billings');
+                renderBillingHistory();
+            } catch (error) {
+                console.error('Fehler beim Laden der Abrechnungshistorie:', error);
+                showAlert('Fehler beim Laden der Abrechnungshistorie', 'error');
+            }
+        }
+
+        function renderBillingHistory() {
+            const tbody = document.querySelector('#billingHistoryTable tbody');
+            
+            if (billings.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px; color: #666;">Noch keine Abrechnungen erstellt</td></tr>';
+                return;
+            }
+            
+            // Sortiere nach Datum absteigend
+            billings.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            
+            tbody.innerHTML = billings.map(billing => {
+                const date = new Date(billing.created_at);
+                const formattedDate = date.toLocaleDateString('de-DE') + ' ' + date.toLocaleTimeString('de-DE');
+                
+                return `
+                    <tr>
+                        <td><strong>${billing.billing_number}</strong></td>
+                        <td>${formattedDate}</td>
+                        <td><strong>${billing.total_amount.toFixed(2)}€</strong></td>
+                        <td>${billing.sepa_user_count} (${billing.sepa_amount.toFixed(2)}€)</td>
+                        <td>${billing.non_sepa_user_count} (${billing.non_sepa_amount.toFixed(2)}€)</td>
+                        <td>
+                            <button class="btn" onclick="viewBillingDetails(${billing.id})" style="padding: 5px 10px; font-size: 0.8em;">
+                                👁️ Details
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function viewBillingDetails(billingId) {
+            try {
+                showLoading(true);
+                
+                // Lade Abrechnungs-Details
+                const billing = billings.find(b => b.id === billingId);
+                if (!billing) {
+                    showAlert('Abrechnung nicht gefunden', 'error');
+                    return;
+                }
+                
+                // Lade alle Transaktionen dieser Abrechnung
+                const transactions = await apiCall(`/api/billings/${billingId}/transactions`);
+                
+                // Lade alle betroffenen Benutzer
+                const userIds = [...new Set(transactions.map(t => t.user_id))];
+                const usersData = await Promise.all(
+                    userIds.map(id => apiCall(`/api/users/${id}`).catch(() => null))
+                );
+                const usersMap = {};
+                usersData.filter(u => u).forEach(u => usersMap[u.id] = u);
+                
+                // Gruppiere nach SEPA/Nicht-SEPA
+                const sepaUsers = [];
+                const nonSepaUsers = [];
+                
+                userIds.forEach(userId => {
+                    const user = usersMap[userId];
+                    if (!user) return;
+                    
+                    const userTransactions = transactions.filter(t => t.user_id === userId);
+                    const userTotal = userTransactions.reduce((sum, t) => sum + t.total, 0);
+                    
+                    const userData = {
+                        ...user,
+                        billing_amount: userTotal,
+                        transaction_count: userTransactions.length
+                    };
+                    
+                    if (user.sepa_active && user.iban) {
+                        sepaUsers.push(userData);
+                    } else {
+                        nonSepaUsers.push(userData);
+                    }
+                });
+                
+                showBillingDetails(billing, sepaUsers, nonSepaUsers);
+                
+            } catch (error) {
+                console.error('Fehler beim Laden der Details:', error);
+                showAlert('Fehler beim Laden der Abrechnungs-Details', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function showBillingDetails(billing, sepaUsers, nonSepaUsers) {
+            const modal = document.getElementById('billingDetailsModal');
+            const title = document.getElementById('billingDetailsTitle');
+            const content = document.getElementById('billingDetailsContent');
+            
+            title.textContent = `Abrechnung ${billing.billing_number}`;
+            
+            let html = `
+                <div style="margin-bottom: 20px;">
+                    <p><strong>Datum:</strong> ${new Date(billing.created_at).toLocaleString('de-DE')}</p>
+                    <p><strong>Gesamtbetrag:</strong> ${billing.total_amount.toFixed(2)}€</p>
+                    <p><strong>Status:</strong> ${billing.status === 'completed' ? 'Abgeschlossen' : billing.status}</p>
+                </div>
+                
+                <hr style="margin: 20px 0; border: none; border-top: 2px solid #e2e8f0;">
+                
+                <h3 style="color: #38a169; margin-bottom: 15px;">💳 SEPA-Lastschrift (${sepaUsers.length} Benutzer)</h3>
+            `;
+            
+            if (sepaUsers.length > 0) {
+                html += `
+                    <div style="margin-bottom: 15px;">
+                        <button class="btn btn-success" onclick="exportSepaForBilling(${billing.id})">
+                            📄 SEPA-XML exportieren
+                        </button>
+                        <button class="btn btn-success" onclick="exportSepaCSVForBilling(${billing.id})">
+                            📊 CSV exportieren
+                        </button>
+                    </div>
+                    <table class="data-table" style="font-size: 0.85em;">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>IBAN</th>
+                                <th>Betrag</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${sepaUsers.map(u => `
+                                <tr>
+                                    <td>${u.first_name} ${u.last_name}</td>
+                                    <td><code>${u.iban}</code></td>
+                                    <td><strong>${u.billing_amount.toFixed(2)}€</strong></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } else {
+                html += '<p style="color: #666;">Keine SEPA-Nutzer in dieser Abrechnung</p>';
+            }
+            
+            html += `
+                <hr style="margin: 20px 0; border: none; border-top: 2px solid #e2e8f0;">
+                
+                <h3 style="color: #ed8936; margin-bottom: 15px;">📋 Nicht-SEPA (${nonSepaUsers.length} Benutzer)</h3>
+            `;
+            
+            if (nonSepaUsers.length > 0) {
+                html += `
+                    <div style="margin-bottom: 15px;">
+                        <button class="btn btn-warning" onclick="exportNonSepaList(${billing.id})">
+                            📄 Liste exportieren (PDF/Druck)
+                        </button>
+                    </div>
+                    <table class="data-table" style="font-size: 0.85em;">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>E-Mail</th>
+                                <th>Betrag</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${nonSepaUsers.map(u => `
+                                <tr>
+                                    <td>${u.first_name} ${u.last_name}</td>
+                                    <td>${u.email || '-'}</td>
+                                    <td><strong>${u.billing_amount.toFixed(2)}€</strong></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } else {
+                html += '<p style="color: #666;">Keine Nicht-SEPA-Nutzer in dieser Abrechnung</p>';
+            }
+            
+            content.innerHTML = html;
+            
+            // Speichere aktuelle Daten für Export
+            currentBillingData = { billing, sepaUsers, nonSepaUsers };
+            
+            modal.style.display = 'block';
+        }
+
+        async function exportSepaForBilling(billingId) {
+            if (!currentBillingData || !currentBillingData.sepaUsers) {
+                showAlert('Keine SEPA-Daten verfügbar', 'error');
+                return;
+            }
+
+            const { billing, sepaUsers } = currentBillingData;
+
+            if (sepaUsers.length === 0) {
+                alert('Keine SEPA-Benutzer in dieser Abrechnung');
+                return;
+            }
+
+            // Lade SEPA-Einstellungen
             let settings = {};
             try {
                 const response = await fetch('/api/settings');
                 settings = await response.json();
             } catch (error) {
-                alert('⚠️ SEPA-Einstellungen konnten nicht geladen werden.\n\nBitte konfiguriere zuerst die SEPA-Daten im Einstellungen-Tab:\n- Gläubiger-ID\n- Vereins-IBAN\n- Vereinsname');
+                alert('⚠️ SEPA-Einstellungen konnten nicht geladen werden.\n\nBitte konfiguriere zuerst die SEPA-Daten im Einstellungen-Tab.');
                 return;
             }
 
-            // Validierung der Pflichtfelder
             if (!settings.creditor_id || !settings.creditor_iban || !settings.creditor_name) {
-                alert('⚠️ SEPA-Einstellungen unvollständig!\n\nBitte konfiguriere im Einstellungen-Tab:\n- Gläubiger-ID (Creditor ID)\n- Vereins-IBAN\n- Vereinsname\n\nDann erneut exportieren.');
+                alert('⚠️ SEPA-Einstellungen unvollständig! Bitte im Einstellungen-Tab konfigurieren.');
                 return;
             }
             
             const now = new Date();
-            const msgId = `SAARCADE-${now.getTime()}`;
-            const totalAmount = sepaUsers.reduce((sum, u) => sum + u.debit_amount, 0).toFixed(2);
+            const msgId = `${billing.billing_number}`;
+            const totalAmount = sepaUsers.reduce((sum, u) => sum + u.billing_amount, 0).toFixed(2);
             
-            // Einzugsdatum: 5 Werktage in der Zukunft
             const executionDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
             const formattedDate = executionDate.toISOString().split('T')[0];
             
@@ -2067,7 +2373,7 @@
             </InitgPty>
         </GrpHdr>
         <PmtInf>
-            <PmtInfId>PMT-${now.getTime()}</PmtInfId>
+            <PmtInfId>PMT-${billing.billing_number}</PmtInfId>
             <PmtMtd>DD</PmtMtd>
             <NbOfTxs>${sepaUsers.length}</NbOfTxs>
             <CtrlSum>${totalAmount}</CtrlSum>
@@ -2106,8 +2412,8 @@
             </CdtrSchmeId>
 `;
 
-            sepaUsers.forEach((user, index) => {
-                const endToEndId = `${settings.creditor_id}-${user.id}-${now.getTime()}`;
+            sepaUsers.forEach((user) => {
+                const endToEndId = `${billing.billing_number}-${user.id}`;
                 const mandateId = `MANDATE-${user.id}`;
                 
                 xml += `
@@ -2115,7 +2421,7 @@
                 <PmtId>
                     <EndToEndId>${endToEndId}</EndToEndId>
                 </PmtId>
-                <InstdAmt Ccy="EUR">${user.debit_amount.toFixed(2)}</InstdAmt>
+                <InstdAmt Ccy="EUR">${user.billing_amount.toFixed(2)}</InstdAmt>
                 <DrctDbtTx>
                     <MndtRltdInf>
                         <MndtId>${mandateId}</MndtId>
@@ -2138,7 +2444,7 @@
                     </Id>
                 </DbtrAcct>
                 <RmtInf>
-                    <Ustrd>${reference}</Ustrd>
+                    <Ustrd>${reference} - ${billing.billing_number}</Ustrd>
                 </RmtInf>
             </DrctDbtTxInf>
 `;
@@ -2149,8 +2455,69 @@
     </CstmrDrctDbtInitn>
 </Document>`;
 
-            downloadFile(xml, `sepa_lastschrift_${formattedDate}.xml`, 'application/xml');
-            showAlert(`SEPA-XML erfolgreich exportiert für ${sepaUsers.length} Mitglieder (${totalAmount}€)`, 'success');
+            downloadFile(xml, `sepa_${billing.billing_number}.xml`, 'application/xml');
+            showAlert(`SEPA-XML für Abrechnung ${billing.billing_number} exportiert`, 'success');
+        }
+
+        function exportSepaCSVForBilling(billingId) {
+            if (!currentBillingData || !currentBillingData.sepaUsers) {
+                showAlert('Keine SEPA-Daten verfügbar', 'error');
+                return;
+            }
+
+            const { billing, sepaUsers } = currentBillingData;
+            
+            if (sepaUsers.length === 0) {
+                alert('Keine SEPA-Benutzer in dieser Abrechnung');
+                return;
+            }
+            
+            const csv = [
+                ['Rechnungsnummer', 'Name', 'Vorname', 'E-Mail', 'IBAN', 'Betrag'].join(';'),
+                ...sepaUsers.map(u => [
+                    billing.billing_number,
+                    u.last_name,
+                    u.first_name,
+                    u.email || '',
+                    u.iban,
+                    u.billing_amount.toFixed(2)
+                ].join(';'))
+            ].join('\n');
+            
+            downloadFile(csv, `sepa_${billing.billing_number}.csv`, 'text/csv');
+        }
+
+        function exportNonSepaList(billingId) {
+            if (!currentBillingData || !currentBillingData.nonSepaUsers) {
+                showAlert('Keine Nicht-SEPA-Daten verfügbar', 'error');
+                return;
+            }
+
+            const { billing, nonSepaUsers } = currentBillingData;
+            
+            if (nonSepaUsers.length === 0) {
+                alert('Keine Nicht-SEPA-Benutzer in dieser Abrechnung');
+                return;
+            }
+            
+            // Erstelle formatierte Textdatei für Druck
+            let text = `ZAHLUNGSAUFFORDERUNG - ${billing.billing_number}\n`;
+            text += `Datum: ${new Date(billing.created_at).toLocaleDateString('de-DE')}\n`;
+            text += `\n${'='.repeat(60)}\n\n`;
+            text += `Folgende Mitglieder haben offene Beträge zu begleichen:\n\n`;
+            
+            nonSepaUsers.forEach((user, index) => {
+                text += `${index + 1}. ${user.first_name} ${user.last_name}\n`;
+                text += `   E-Mail: ${user.email || 'nicht angegeben'}\n`;
+                text += `   Betrag: ${user.billing_amount.toFixed(2)}€\n\n`;
+            });
+            
+            text += `${'='.repeat(60)}\n`;
+            text += `GESAMT: ${nonSepaUsers.reduce((sum, u) => sum + u.billing_amount, 0).toFixed(2)}€\n`;
+            text += `\nBitte überweisen Sie den Betrag auf das Vereinskonto.\n`;
+            
+            downloadFile(text, `nicht_sepa_${billing.billing_number}.txt`, 'text/plain');
+            showAlert('Liste für Nicht-SEPA-Nutzer exportiert', 'success');
         }
 
         // ============ HELPER FUNCTIONS ============
@@ -2259,7 +2626,9 @@
                 await loadProducts();
                 
                 initDragAndDrop();
-                loadAllSettings(); // Lädt sowohl Barcode- als auch SEPA-Einstellungen
+                loadAllSettings();
+                loadOpenBalances(); // Lade offene Beträge für Abrechnungs-Tab
+                loadBillingHistory(); // Lade Abrechnungshistorie
                 
                 const sepaCheckbox = document.getElementById('userSepaActive');
                 if (sepaCheckbox) {
@@ -2267,7 +2636,7 @@
                 }
                 
                 console.log('✅ Admin-Dashboard erfolgreich initialisiert');
-                showAlert('Dashboard mit Bildupload-Funktion geladen', 'success');
+                showAlert('Dashboard mit Abrechnungs-System geladen', 'success');
                 
             } catch (error) {
                 console.error('❌ Fehler bei der Initialisierung:', error);
