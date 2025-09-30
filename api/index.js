@@ -634,6 +634,64 @@ if (pathParts[0] === 'products' && pathParts[1] && method === 'PUT') {
             }
         }
 
+        // ============ BILLINGS ENDPUNKTE ============
+
+// GET /billings - Alle Abrechnungen
+if (path === '/billings' && method === 'GET') {
+    const { data, error } = await supabase
+        .from('billings')
+        .select('*')
+        .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return res.status(200).json(data || []);
+}
+
+// POST /billings - Neue Abrechnung erstellen
+if (path === '/billings' && method === 'POST') {
+    const billingData = req.body;
+    
+    const { data, error } = await supabase
+        .from('billings')
+        .insert([billingData])
+        .select()
+        .single();
+    
+    if (error) throw error;
+    return res.status(201).json(data);
+}
+
+// GET /billings/{id}/transactions - Transaktionen einer Abrechnung
+if (pathParts[0] === 'billings' && pathParts[1] && pathParts[2] === 'transactions' && method === 'GET') {
+    const billingId = parseInt(pathParts[1]);
+    
+    const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('billing_id', billingId)
+        .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return res.status(200).json(data || []);
+}
+
+// POST /transactions/mark-billed - Transaktionen als abgerechnet markieren
+if (path === '/transactions/mark-billed' && method === 'POST') {
+    const { billing_id, user_ids } = req.body;
+    
+    const { data, error } = await supabase
+        .from('transactions')
+        .update({ 
+            billing_id: billing_id,
+            is_billed: true 
+        })
+        .in('user_id', user_ids)
+        .eq('is_billed', false);
+    
+    if (error) throw error;
+    return res.status(200).json({ message: 'Transaktionen markiert' });
+}
+        
         // ============ SEPA ENDPUNKTE ============
         
         // GET /sepa-users - SEPA-fähige Benutzer
