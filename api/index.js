@@ -714,6 +714,50 @@ if (path === '/transactions/mark-billed' && method === 'POST') {
             return res.status(200).json(sepaUsers);
         }
 
+// GET /users/id/{id} - Benutzer per ID
+if (pathParts[0] === 'users' && pathParts[1] === 'id' && pathParts[2] && method === 'GET') {
+    const userId = parseInt(pathParts[2]);
+    
+    if (isNaN(userId)) {
+        return res.status(400).json({ error: 'Ungültige Benutzer-ID' });
+    }
+    
+    const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+    
+    if (error) {
+        if (error.code === 'PGRST116') {
+            return res.status(404).json({ error: 'Benutzer nicht gefunden' });
+        }
+        throw error;
+    }
+    
+    return res.status(200).json(data);
+}
+
+// GET /users/{barcode} - Benutzer per Barcode
+if (pathParts[0] === 'users' && pathParts[1] && method === 'GET') {
+    const barcode = pathParts[1].toUpperCase();
+    
+    const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .contains('barcodes', [barcode])
+        .single();
+    
+    if (error) {
+        if (error.code === 'PGRST116') {
+            return res.status(404).json({ error: 'Benutzer nicht gefunden' });
+        }
+        throw error;
+    }
+    
+    return res.status(200).json(data);
+}
+        
         // ============ TEST ENDPUNKTE ============
         
         // Debug-Test ohne Supabase
