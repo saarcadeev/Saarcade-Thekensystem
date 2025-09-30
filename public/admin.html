@@ -517,7 +517,7 @@
             <button class="tab" onclick="showTab('users')">👥 Mitglieder</button>
             <button class="tab active" onclick="showTab('products')">📦 Produkte</button>
             <button class="tab" onclick="showTab('transactions')">💰 Transaktionen</button>
-            <button class="tab" onclick="showTab('barcodes')">🏷️ Barcodes</button>
+            <button class="tab" onclick="showTab('settings')">⚙️ Einstellungen</button>
             <button class="tab" onclick="showTab('sepa')">💳 SEPA</button>
         </div>
 
@@ -665,13 +665,15 @@
             </div>
         </div>
 
-        <!-- Barcodes Tab -->
-        <div id="barcodes" class="tab-content">
+        <!-- Einstellungen Tab (vorher Barcodes) -->
+        <div id="settings" class="tab-content">
             <div class="section">
-                <h2>🏷️ Spezial-Barcode Verwaltung</h2>
-                <p>Hier kannst du die speziellen System-Barcodes für das Kassensystem konfigurieren.</p>
+                <h2>⚙️ System-Einstellungen</h2>
                 
-                <form id="barcodeForm" style="max-width: 600px; margin-top: 20px;">
+                <h3 style="margin-top: 25px; margin-bottom: 15px; color: #667eea;">🏷️ Spezial-Barcodes</h3>
+                <p>Konfiguriere die speziellen System-Barcodes für das Kassensystem.</p>
+                
+                <form id="settingsForm" style="max-width: 800px; margin-top: 20px;">
                     <div class="form-group">
                         <label>🛒 Checkout-Barcode</label>
                         <input type="text" id="checkoutBarcode" placeholder="CHECKOUT123" value="CHECKOUT123">
@@ -687,16 +689,69 @@
                     <div class="form-group">
                         <label>🔄 Reset-Barcode</label>
                         <input type="text" id="resetBarcode" placeholder="RESET123" value="RESET123">
-                        <small style="color: #666;">Beendet die komplette Session und kehrt zur Startseite zurück</small>
+                        <small style="color: #666;">Beendet die komplette Session</small>
+                    </div>
+
+                    <hr style="margin: 30px 0; border: none; border-top: 2px solid #e2e8f0;">
+
+                    <h3 style="margin-bottom: 15px; color: #667eea;">💳 SEPA-Lastschrift Einstellungen</h3>
+                    <p style="margin-bottom: 20px;">Diese Daten werden für den SEPA-XML-Export benötigt.</p>
+                    
+                    <div class="form-group">
+                        <label>Vereinsname *</label>
+                        <input type="text" id="creditorName" placeholder="Saarcade e.V." value="Saarcade e.V." required>
+                        <small style="color: #666;">Offizieller Name des Vereins</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Gläubiger-Identifikationsnummer (Creditor ID) *</label>
+                        <input type="text" id="creditorId" placeholder="DE98ZZZ09999999999" required>
+                        <small style="color: #666;">Eindeutige ID für SEPA-Lastschriften (erhältlich bei der Bundesbank)</small>
                     </div>
                     
-                    <button type="button" class="btn btn-success" onclick="saveBarcodeSettings()">
-                        💾 Barcode-Einstellungen speichern
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Vereins-IBAN *</label>
+                            <input type="text" id="creditorIban" placeholder="DE89 3704 0044 0532 0130 00" required>
+                            <small style="color: #666;">IBAN des Vereinskontos</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>BIC (optional)</label>
+                            <input type="text" id="creditorBic" placeholder="COBADEFFXXX">
+                            <small style="color: #666;">Bei deutschen IBANs optional</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Verwendungszweck (Standard)</label>
+                        <input type="text" id="sepaReference" placeholder="Getränkeabrechnung" value="Saarcade Getraenkeabrechnung">
+                        <small style="color: #666;">Wird auf dem Kontoauszug angezeigt</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>SEPA-Sequenztyp</label>
+                        <select id="sepaSequenceType">
+                            <option value="RCUR">RCUR - Wiederkehrende Lastschrift</option>
+                            <option value="FRST">FRST - Erste Lastschrift</option>
+                            <option value="OOFF">OOFF - Einmalige Lastschrift</option>
+                            <option value="FNAL">FNAL - Letzte Lastschrift</option>
+                        </select>
+                        <small style="color: #666;">Standard: RCUR für wiederkehrende monatliche Abbuchungen</small>
+                    </div>
+
+                    <div style="margin-top: 25px; padding: 15px; background: #fff5e6; border-left: 4px solid #ed8936; border-radius: 4px;">
+                        <strong>⚠️ Wichtig:</strong> Die Gläubiger-ID kannst du bei der Deutschen Bundesbank beantragen. 
+                        <a href="https://extranet.bundesbank.de/scp/" target="_blank" style="color: #667eea;">Hier geht's zur Beantragung</a>
+                    </div>
+                    
+                    <button type="button" class="btn btn-success" onclick="saveAllSettings()" style="margin-top: 20px;">
+                        💾 Alle Einstellungen speichern
                     </button>
                 </form>
                 
                 <div style="margin-top: 30px; padding: 15px; background: #e6f3ff; border-left: 4px solid #3182ce; border-radius: 4px;">
-                    <strong>💡 Tipp:</strong> Drucke diese Barcodes aus und platziere sie an der Kasse für schnellen Zugriff.
+                    <strong>💡 Tipp:</strong> Drucke die Spezial-Barcodes aus und platziere sie an der Kasse für schnellen Zugriff.
                 </div>
             </div>
         </div>
@@ -1830,13 +1885,14 @@
             downloadFile(csv, 'transaktionen.csv', 'text/csv');
         }
 
-        // ============ BARCODES FUNCTIONS ============
+        // ============ SETTINGS FUNCTIONS (vorher BARCODES) ============
 
-        async function loadBarcodeSettings() {
+        async function loadAllSettings() {
             try {
                 const response = await fetch('/api/settings');
                 const settings = await response.json();
                 
+                // Barcode-Einstellungen
                 if (settings.checkout_barcode) {
                     document.getElementById('checkoutBarcode').value = settings.checkout_barcode;
                 }
@@ -1846,17 +1902,52 @@
                 if (settings.reset_barcode) {
                     document.getElementById('resetBarcode').value = settings.reset_barcode;
                 }
+
+                // SEPA-Einstellungen
+                if (settings.creditor_name) {
+                    document.getElementById('creditorName').value = settings.creditor_name;
+                }
+                if (settings.creditor_id) {
+                    document.getElementById('creditorId').value = settings.creditor_id;
+                }
+                if (settings.creditor_iban) {
+                    document.getElementById('creditorIban').value = settings.creditor_iban;
+                }
+                if (settings.creditor_bic) {
+                    document.getElementById('creditorBic').value = settings.creditor_bic;
+                }
+                if (settings.sepa_reference) {
+                    document.getElementById('sepaReference').value = settings.sepa_reference;
+                }
+                if (settings.sepa_sequence_type) {
+                    document.getElementById('sepaSequenceType').value = settings.sepa_sequence_type;
+                }
             } catch (error) {
-                console.log('Keine gespeicherten Barcode-Einstellungen gefunden');
+                console.log('Keine gespeicherten Einstellungen gefunden, verwende Standardwerte');
             }
         }
 
-        async function saveBarcodeSettings() {
+        async function saveAllSettings() {
             const settings = {
+                // Barcode-Einstellungen
                 checkout_barcode: document.getElementById('checkoutBarcode').value,
                 cancel_barcode: document.getElementById('cancelBarcode').value,
-                reset_barcode: document.getElementById('resetBarcode').value
+                reset_barcode: document.getElementById('resetBarcode').value,
+                
+                // SEPA-Einstellungen
+                creditor_name: document.getElementById('creditorName').value,
+                creditor_id: document.getElementById('creditorId').value,
+                creditor_iban: document.getElementById('creditorIban').value.replace(/\s/g, ''),
+                creditor_bic: document.getElementById('creditorBic').value,
+                sepa_reference: document.getElementById('sepaReference').value,
+                sepa_sequence_type: document.getElementById('sepaSequenceType').value
             };
+
+            // Validierung der Pflichtfelder
+            if (!settings.creditor_name || !settings.creditor_id || !settings.creditor_iban) {
+                alert('⚠️ Bitte fülle alle SEPA-Pflichtfelder aus:\n- Vereinsname\n- Gläubiger-ID\n- Vereins-IBAN');
+                return;
+            }
             
             try {
                 await fetch('/api/settings', {
@@ -1865,10 +1956,10 @@
                     body: JSON.stringify(settings)
                 });
                 
-                alert('✅ Barcode-Einstellungen erfolgreich gespeichert!');
+                showAlert('Alle Einstellungen erfolgreich gespeichert', 'success');
             } catch (error) {
                 console.error('Fehler beim Speichern:', error);
-                alert('❌ Fehler beim Speichern der Einstellungen');
+                showAlert('Fehler beim Speichern der Einstellungen', 'error');
             }
         }
 
@@ -1935,9 +2026,25 @@
             downloadFile(csv, 'sepa_lastschriften.csv', 'text/csv');
         }
 
-        function exportSepaXML() {
+        async function exportSepaXML() {
             if (sepaUsers.length === 0) {
                 alert('Keine SEPA-Daten zum Exportieren');
+                return;
+            }
+
+            // Lade Einstellungen für SEPA-Daten
+            let settings = {};
+            try {
+                const response = await fetch('/api/settings');
+                settings = await response.json();
+            } catch (error) {
+                alert('⚠️ SEPA-Einstellungen konnten nicht geladen werden.\n\nBitte konfiguriere zuerst die SEPA-Daten im Einstellungen-Tab:\n- Gläubiger-ID\n- Vereins-IBAN\n- Vereinsname');
+                return;
+            }
+
+            // Validierung der Pflichtfelder
+            if (!settings.creditor_id || !settings.creditor_iban || !settings.creditor_name) {
+                alert('⚠️ SEPA-Einstellungen unvollständig!\n\nBitte konfiguriere im Einstellungen-Tab:\n- Gläubiger-ID (Creditor ID)\n- Vereins-IBAN\n- Vereinsname\n\nDann erneut exportieren.');
                 return;
             }
             
@@ -1945,8 +2052,15 @@
             const msgId = `SAARCADE-${now.getTime()}`;
             const totalAmount = sepaUsers.reduce((sum, u) => sum + u.debit_amount, 0).toFixed(2);
             
+            // Einzugsdatum: 5 Werktage in der Zukunft
+            const executionDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+            const formattedDate = executionDate.toISOString().split('T')[0];
+            
+            const sequenceType = settings.sepa_sequence_type || 'RCUR';
+            const reference = settings.sepa_reference || 'Saarcade Getraenkeabrechnung';
+            
             let xml = `<?xml version="1.0" encoding="UTF-8"?>
-<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.008.001.02">
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.008.001.02" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <CstmrDrctDbtInitn>
         <GrpHdr>
             <MsgId>${msgId}</MsgId>
@@ -1954,7 +2068,7 @@
             <NbOfTxs>${sepaUsers.length}</NbOfTxs>
             <CtrlSum>${totalAmount}</CtrlSum>
             <InitgPty>
-                <Nm>Saarcade e.V.</Nm>
+                <Nm>${settings.creditor_name}</Nm>
             </InitgPty>
         </GrpHdr>
         <PmtInf>
@@ -1962,34 +2076,74 @@
             <PmtMtd>DD</PmtMtd>
             <NbOfTxs>${sepaUsers.length}</NbOfTxs>
             <CtrlSum>${totalAmount}</CtrlSum>
-            <ReqdColltnDt>${now.toISOString().split('T')[0]}</ReqdColltnDt>
+            <PmtTpInf>
+                <SvcLvl>
+                    <Cd>SEPA</Cd>
+                </SvcLvl>
+                <LclInstrm>
+                    <Cd>CORE</Cd>
+                </LclInstrm>
+                <SeqTp>${sequenceType}</SeqTp>
+            </PmtTpInf>
+            <ReqdColltnDt>${formattedDate}</ReqdColltnDt>
             <Cdtr>
-                <Nm>Saarcade e.V.</Nm>
+                <Nm>${settings.creditor_name}</Nm>
             </Cdtr>
             <CdtrAcct>
                 <Id>
-                    <IBAN>DE89370400440532013000</IBAN>
+                    <IBAN>${settings.creditor_iban.replace(/\s/g, '')}</IBAN>
                 </Id>
             </CdtrAcct>
+            <CdtrAgt>
+                <FinInstnId>${settings.creditor_bic ? `<BIC>${settings.creditor_bic}</BIC>` : '<Othr><Id>NOTPROVIDED</Id></Othr>'}</FinInstnId>
+            </CdtrAgt>
+            <CdtrSchmeId>
+                <Id>
+                    <PrvtId>
+                        <Othr>
+                            <Id>${settings.creditor_id}</Id>
+                            <SchmeNm>
+                                <Prtry>SEPA</Prtry>
+                            </SchmeNm>
+                        </Othr>
+                    </PrvtId>
+                </Id>
+            </CdtrSchmeId>
 `;
 
-            sepaUsers.forEach((user) => {
+            sepaUsers.forEach((user, index) => {
+                const endToEndId = `${settings.creditor_id}-${user.id}-${now.getTime()}`;
+                const mandateId = `MANDATE-${user.id}`;
+                
                 xml += `
             <DrctDbtTxInf>
                 <PmtId>
-                    <EndToEndId>NOTPROVIDED</EndToEndId>
+                    <EndToEndId>${endToEndId}</EndToEndId>
                 </PmtId>
                 <InstdAmt Ccy="EUR">${user.debit_amount.toFixed(2)}</InstdAmt>
+                <DrctDbtTx>
+                    <MndtRltdInf>
+                        <MndtId>${mandateId}</MndtId>
+                        <DtOfSgntr>2024-01-01</DtOfSgntr>
+                    </MndtRltdInf>
+                </DrctDbtTx>
+                <DbtrAgt>
+                    <FinInstnId>
+                        <Othr>
+                            <Id>NOTPROVIDED</Id>
+                        </Othr>
+                    </FinInstnId>
+                </DbtrAgt>
                 <Dbtr>
                     <Nm>${user.first_name} ${user.last_name}</Nm>
                 </Dbtr>
                 <DbtrAcct>
                     <Id>
-                        <IBAN>${user.iban}</IBAN>
+                        <IBAN>${user.iban.replace(/\s/g, '')}</IBAN>
                     </Id>
                 </DbtrAcct>
                 <RmtInf>
-                    <Ustrd>Saarcade Getraenkeabrechnung</Ustrd>
+                    <Ustrd>${reference}</Ustrd>
                 </RmtInf>
             </DrctDbtTxInf>
 `;
@@ -2000,7 +2154,8 @@
     </CstmrDrctDbtInitn>
 </Document>`;
 
-            downloadFile(xml, 'sepa_lastschrift.xml', 'application/xml');
+            downloadFile(xml, `sepa_lastschrift_${formattedDate}.xml`, 'application/xml');
+            showAlert(`SEPA-XML erfolgreich exportiert für ${sepaUsers.length} Mitglieder (${totalAmount}€)`, 'success');
         }
 
         // ============ HELPER FUNCTIONS ============
@@ -2109,7 +2264,7 @@
                 await loadProducts();
                 
                 initDragAndDrop();
-                loadBarcodeSettings();
+                loadAllSettings(); // Lädt sowohl Barcode- als auch SEPA-Einstellungen
                 
                 const sepaCheckbox = document.getElementById('userSepaActive');
                 if (sepaCheckbox) {
