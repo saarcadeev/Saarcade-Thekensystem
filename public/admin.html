@@ -1619,7 +1619,13 @@ function showUserBillingDetails(user, billingGroups, unbilledTransactions) {
     const content = document.getElementById('billingDetailsContent');
     
     title.textContent = `Abrechnungen von ${user.first_name} ${user.last_name}`;
-    
+    const exportButton = `
+    <div style="margin-top: 10px;">
+        <button class="btn btn-success" onclick="exportUserBillingCSV()" style="font-size: 0.85em;">
+            📊 CSV Export
+        </button>
+    </div>
+`;    
     let html = `
         <div style="margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 8px;">
             <p><strong>Aktueller Saldo:</strong> ${user.balance.toFixed(2)}€</p>
@@ -1724,6 +1730,9 @@ function showUserBillingDetails(user, billingGroups, unbilledTransactions) {
     content.innerHTML = html;
     modal.style.display = 'block';
 }
+    content.innerHTML = html;
+    currentUserBillingData = { user, billingGroups, unbilledTransactions };
+    modal.style.display = 'block';   
         
         // ============ PRODUCT FUNCTIONS ============
 
@@ -2173,6 +2182,7 @@ function showUserBillingDetails(user, billingGroups, unbilledTransactions) {
 
         let billings = [];
         let currentBillingData = null;
+        let currentUserBillingData = null;
 
         async function loadOpenBalances() {
             try {
@@ -2817,6 +2827,56 @@ function showUserBillingDetails(user, billingGroups, unbilledTransactions) {
                 event.target.style.display = 'none';
             }
         }
+        function exportUserBillingCSV() {
+    if (!currentUserBillingData) {
+        showAlert('Keine Daten zum Exportieren', 'error');
+        return;
+    }
+    
+    const { user, billingGroups, unbilledTransactions } = currentUserBillingData;
+    
+    const csv = [
+        ['Mitglied', 'Datum', 'Uhrzeit', 'Produkt', 'Menge', 'Preis', 'Betrag', 'Abrechnung', 'Status'].join(';')
+    ];
+    
+    unbilledTransactions.forEach(t => {
+        const date = new Date(t.created_at);
+        csv.push([
+            `${user.first_name} ${user.last_name}`,
+            date.toLocaleDateString('de-DE'),
+            date.toLocaleTimeString('de-DE'),
+            t.product_name,
+            t.quantity,
+            t.price.toFixed(2),
+            t.total.toFixed(2),
+            '-',
+            'Nicht abgerechnet'
+        ].join(';'));
+    });
+    
+    Object.keys(billingGroups).forEach(billingId => {
+        const transactions = billingGroups[billingId];
+        const billing = billings.find(b => b.id === parseInt(billingId));
+        
+        transactions.forEach(t => {
+            const date = new Date(t.created_at);
+            csv.push([
+                `${user.first_name} ${user.last_name}`,
+                date.toLocaleDateString('de-DE'),
+                date.toLocaleTimeString('de-DE'),
+                t.product_name,
+                t.quantity,
+                t.price.toFixed(2),
+                t.total.toFixed(2),
+                billing ? billing.billing_number : billingId,
+                'Abgerechnet'
+            ].join(';'));
+        });
+    });
+    
+    downloadFile(csv.join('\n'), `abrechnung_${user.first_name}_${user.last_name}.csv`, 'text/csv');
+    showAlert('CSV-Export erfolgreich', 'success');
+}
     </script>
 </body>
 </html>
