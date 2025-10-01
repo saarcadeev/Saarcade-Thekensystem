@@ -1349,12 +1349,20 @@
                 document.getElementById('viewUserBillingsBtn').disabled = count !== 1;
                 // Delete button bei mindestens einem Benutzer
                 document.getElementById('deleteUserBtn').disabled = count === 0;       
-            } else if (type === 'products') {
-                count = selectedProducts.length;
-                buttons = ['editProductBtn', 'deleteProductBtn'];
-                document.getElementById('productSelectionInfo').textContent = `${count} ausgewählt`;
-            }
-            
+  } else if (type === 'products') {
+    count = selectedProducts.length;
+    document.getElementById('productSelectionInfo').textContent = `${count} ausgewählt`;
+    
+    const buttons = ['editProductBtn', 'deleteProductBtn'];
+    buttons.forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btnId.includes('edit')) {
+            btn.disabled = count !== 1;
+        } else {
+            btn.disabled = count === 0;
+        }
+    });
+}            
             buttons.forEach(btnId => {
                 const btn = document.getElementById(btnId);
                 if (btnId.includes('edit')) {
