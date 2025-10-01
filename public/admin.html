@@ -1725,14 +1725,11 @@ function showUserBillingDetails(user, billingGroups, unbilledTransactions) {
                 Noch keine abgerechneten Transaktionen
             </div>
         `;
-    }
-    
-    content.innerHTML = html;
-    modal.style.display = 'block';
 }
     content.innerHTML = html;
     currentUserBillingData = { user, billingGroups, unbilledTransactions };
-    modal.style.display = 'block';   
+    modal.style.display = 'block';
+}
         
         // ============ PRODUCT FUNCTIONS ============
 
