@@ -1343,30 +1343,26 @@ function updateSelectionInfo(type) {
         count = selectedUsers.length;
         document.getElementById('userSelectionInfo').textContent = `${count} ausgewählt`;
         
-        // Edit button nur bei genau einem Benutzer
         document.getElementById('editUserBtn').disabled = count !== 1;
-        // Abrechnungen-Button nur bei genau einem Benutzer
         document.getElementById('viewUserBillingsBtn').disabled = count !== 1;
-        // Delete button bei mindestens einem Benutzer
         document.getElementById('deleteUserBtn').disabled = count === 0;
     } else if (type === 'products') {
         count = selectedProducts.length;
         document.getElementById('productSelectionInfo').textContent = `${count} ausgewählt`;
         
         const buttons = ['editProductBtn', 'deleteProductBtn'];
- 
         buttons.forEach(btnId => {
-                const btn = document.getElementById(btnId);
-                if (btnId.includes('edit')) {
-                    btn.disabled = count !== 1;
-                } else {
-                    btn.disabled = count === 0;
-                }
-            });
-        }
+            const btn = document.getElementById(btnId);
+            if (btnId.includes('edit')) {
+                btn.disabled = count !== 1;
+            } else {
+                btn.disabled = count === 0;
+            }
+        });
+    }
+}
 
-        // ============ DATA LOADING FUNCTIONS ============
-        
+// ============ DATA LOADING FUNCTIONS ============        
         async function loadDashboard() {
             try {
                 const data = await apiCall('/api/dashboard');
