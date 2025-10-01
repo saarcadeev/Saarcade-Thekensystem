@@ -2825,7 +2825,7 @@ let html = exportButton + `
                 event.target.style.display = 'none';
             }
         }
-        function exportUserBillingCSV() {
+function exportUserBillingCSV() {
     if (!currentUserBillingData) {
         showAlert('Keine Daten zum Exportieren', 'error');
         return;
@@ -2833,47 +2833,87 @@ let html = exportButton + `
     
     const { user, billingGroups, unbilledTransactions } = currentUserBillingData;
     
-    const csv = [
-        ['Mitglied', 'Datum', 'Uhrzeit', 'Produkt', 'Menge', 'Preis', 'Betrag', 'Abrechnung', 'Status'].join(';')
+    // Daten als Array sammeln
+    const data = [
+        ['Mitglied', 'Datum', 'Uhrzeit', 'Produkt', 'Menge', 'Preis', 'Betrag', 'Abrechnung', 'Status']
     ];
     
+    // Nicht abgerechnete Transaktionen
     unbilledTransactions.forEach(t => {
         const date = new Date(t.created_at);
-        csv.push([
+        data.push([
             `${user.first_name} ${user.last_name}`,
-            date.toLocaleDateString('de-DE'),
+            date,  // als Date-Objekt für Excel-Formatierung
             date.toLocaleTimeString('de-DE'),
             t.product_name,
             t.quantity,
-            t.price.toFixed(2),
-            t.total.toFixed(2),
+            t.price,  // als Zahl
+            t.total,  // als Zahl
             '-',
             'Nicht abgerechnet'
-        ].join(';'));
+        ]);
     });
     
+    // Abgerechnete Transaktionen
     Object.keys(billingGroups).forEach(billingId => {
         const transactions = billingGroups[billingId];
         const billing = billings.find(b => b.id === parseInt(billingId));
         
         transactions.forEach(t => {
             const date = new Date(t.created_at);
-            csv.push([
+            data.push([
                 `${user.first_name} ${user.last_name}`,
-                date.toLocaleDateString('de-DE'),
+                date,
                 date.toLocaleTimeString('de-DE'),
                 t.product_name,
                 t.quantity,
-                t.price.toFixed(2),
-                t.total.toFixed(2),
+                t.price,
+                t.total,
                 billing ? billing.billing_number : billingId,
                 'Abgerechnet'
-            ].join(';'));
+            ]);
         });
     });
     
-    downloadFile(csv.join('\n'), `abrechnung_${user.first_name}_${user.last_name}.csv`, 'text/csv');
-    showAlert('CSV-Export erfolgreich', 'success');
+    // Excel-Datei erstellen
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    
+    // Spaltenbreiten setzen
+    ws['!cols'] = [
+        { wch: 20 },  // Mitglied
+        { wch: 12 },  // Datum
+        { wch: 10 },  // Uhrzeit
+        { wch: 25 },  // Produkt
+        { wch: 8 },   // Menge
+        { wch: 10 },  // Preis
+        { wch: 10 },  // Betrag
+        { wch: 20 },  // Abrechnung
+        { wch: 18 }   // Status
+    ];
+    
+    // Formatierung anwenden
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    for (let R = 1; R <= range.e.r; ++R) {
+        // Datumsspalte (B) formatieren
+        const dateCell = ws['B' + (R + 1)];
+        if (dateCell && dateCell.t === 'n') {
+            dateCell.z = 'DD.MM.YYYY';
+        }
+        
+        // Preis (F) und Betrag (G) als Währung formatieren
+        ['F', 'G'].forEach(col => {
+            const cell = ws[col + (R + 1)];
+            if (cell && typeof cell.v === 'number') {
+                cell.z = '#,##0.00 "€"';
+            }
+        });
+    }
+    
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Abrechnung');
+    XLSX.writeFile(wb, `abrechnung_${user.first_name}_${user.last_name}.xlsx`);
+    
+    showAlert('Excel-Export erfolgreich', 'success');
 }
     </script>
 </body>
