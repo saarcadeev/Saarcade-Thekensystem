@@ -759,7 +759,7 @@ if (pathParts[0] === 'users' && pathParts[1] === 'id' && pathParts[2] && method 
     
     return res.status(200).json(data);
 }
-
+        
 // GET /users/{barcode} - Benutzer per Barcode
 if (pathParts[0] === 'users' && pathParts[1] && method === 'GET') {
     const barcode = pathParts[1].toUpperCase();
