@@ -533,6 +533,9 @@
                     <button class="btn btn-warning" onclick="editSelectedUser()" id="editUserBtn" disabled>
                         ✏️ Bearbeiten
                     </button>
+                    <button class="btn" onclick="viewUserBillings()" id="viewUserBillingsBtn" disabled>
+                        📋 Abrechnungen anzeigen
+                    </button>
                     <button class="btn btn-danger" onclick="deleteSelectedUsers()" id="deleteUserBtn" disabled>
                         🗑️ Löschen
                     </button>
@@ -1338,8 +1341,15 @@
             
             if (type === 'users') {
                 count = selectedUsers.length;
-                buttons = ['editUserBtn', 'deleteUserBtn'];
                 document.getElementById('userSelectionInfo').textContent = `${count} ausgewählt`;
+    
+                // Edit button nur bei genau einem Benutzer
+                document.getElementById('editUserBtn').disabled = count !== 1;
+                // Abrechnungen-Button nur bei genau einem Benutzer
+                document.getElementById('viewUserBillingsBtn').disabled = count !== 1;
+                // Delete button bei mindestens einem Benutzer
+                document.getElementById('deleteUserBtn').disabled = count === 0;
+            }            
             } else if (type === 'products') {
                 count = selectedProducts.length;
                 buttons = ['editProductBtn', 'deleteProductBtn'];
@@ -1558,6 +1568,168 @@
             }).join('');
         }
 
+// Neue Funktion: Abrechnungen eines bestimmten Mitglieds anzeigen
+async function viewUserBillings() {
+    if (selectedUsers.length !== 1) {
+        showAlert('Bitte genau ein Mitglied auswählen', 'error');
+        return;
+    }
+
+    const userId = selectedUsers[0];
+    const user = users.find(u => u.id === userId);
+    
+    if (!user) {
+        showAlert('Benutzer nicht gefunden', 'error');
+        return;
+    }
+
+    try {
+        showLoading(true);
+        
+        // Lade alle Transaktionen dieses Benutzers
+        const userTransactions = await apiCall(`/api/transactions/user/${userId}`);
+        
+        if (userTransactions.length === 0) {
+            showAlert(`${user.first_name} ${user.last_name} hat noch keine Transaktionen`, 'info');
+            return;
+        }
+        
+        // Gruppiere Transaktionen nach Abrechnungen
+        const billedTransactions = userTransactions.filter(t => t.billing_id);
+        const unbilledTransactions = userTransactions.filter(t => !t.billing_id);
+        
+        // Gruppiere abgerechnete Transaktionen nach billing_id
+        const billingGroups = {};
+        billedTransactions.forEach(t => {
+            if (!billingGroups[t.billing_id]) {
+                billingGroups[t.billing_id] = [];
+            }
+            billingGroups[t.billing_id].push(t);
+        });
+        
+        // Zeige Details in einem Modal
+        showUserBillingDetails(user, billingGroups, unbilledTransactions);
+        
+    } catch (error) {
+        console.error('Fehler beim Laden der Benutzer-Abrechnungen:', error);
+        showAlert('Fehler beim Laden der Abrechnungen', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+function showUserBillingDetails(user, billingGroups, unbilledTransactions) {
+    const modal = document.getElementById('billingDetailsModal');
+    const title = document.getElementById('billingDetailsTitle');
+    const content = document.getElementById('billingDetailsContent');
+    
+    title.textContent = `Abrechnungen von ${user.first_name} ${user.last_name}`;
+    
+    let html = `
+        <div style="margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 8px;">
+            <p><strong>Aktueller Saldo:</strong> ${user.balance.toFixed(2)}€</p>
+            <p><strong>SEPA:</strong> ${user.sepa_active ? '✅ Aktiv' : '❌ Nicht aktiv'}</p>
+        </div>
+    `;
+    
+    // Nicht abgerechnete Transaktionen
+    if (unbilledTransactions.length > 0) {
+        const unbilledTotal = unbilledTransactions.reduce((sum, t) => sum + t.total, 0);
+        html += `
+            <div style="margin-bottom: 20px; background: #fff5e6; padding: 15px; border-radius: 8px; border-left: 4px solid #ed8936;">
+                <h3 style="color: #ed8936; margin-bottom: 10px;">⏳ Noch nicht abgerechnet</h3>
+                <p><strong>Anzahl:</strong> ${unbilledTransactions.length} Transaktionen</p>
+                <p><strong>Betrag:</strong> ${unbilledTotal.toFixed(2)}€</p>
+                <details style="margin-top: 10px;">
+                    <summary style="cursor: pointer; font-weight: 600;">📋 Transaktionen anzeigen</summary>
+                    <table class="data-table" style="font-size: 0.85em; margin-top: 10px;">
+                        <thead>
+                            <tr>
+                                <th>Datum</th>
+                                <th>Produkt</th>
+                                <th>Menge</th>
+                                <th>Betrag</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${unbilledTransactions.map(t => `
+                                <tr>
+                                    <td>${new Date(t.created_at).toLocaleDateString('de-DE')}</td>
+                                    <td>${t.product_name}</td>
+                                    <td>${t.quantity}x</td>
+                                    <td>${t.total.toFixed(2)}€</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </details>
+            </div>
+        `;
+    }
+    
+    // Abgerechnete Transaktionen nach Abrechnung gruppiert
+    const billingIds = Object.keys(billingGroups);
+    if (billingIds.length > 0) {
+        html += `
+            <hr style="margin: 20px 0; border: none; border-top: 2px solid #e2e8f0;">
+            <h3 style="color: #38a169; margin-bottom: 15px;">✅ Abgerechnete Transaktionen</h3>
+        `;
+        
+        billingIds.forEach(billingId => {
+            const transactions = billingGroups[billingId];
+            const billing = billings.find(b => b.id === parseInt(billingId));
+            const billingTotal = transactions.reduce((sum, t) => sum + t.total, 0);
+            
+            html += `
+                <details style="margin-bottom: 15px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <summary style="cursor: pointer; font-weight: 600;">
+                        📋 ${billing ? billing.billing_number : `Abrechnung #${billingId}`} 
+                        - ${billing ? new Date(billing.created_at).toLocaleDateString('de-DE') : ''} 
+                        - ${billingTotal.toFixed(2)}€
+                    </summary>
+                    <table class="data-table" style="font-size: 0.85em; margin-top: 10px;">
+                        <thead>
+                            <tr>
+                                <th>Datum</th>
+                                <th>Produkt</th>
+                                <th>Menge</th>
+                                <th>Preis</th>
+                                <th>Betrag</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${transactions.map(t => `
+                                <tr>
+                                    <td>${new Date(t.created_at).toLocaleDateString('de-DE')}<br>
+                                        <small>${new Date(t.created_at).toLocaleTimeString('de-DE')}</small>
+                                    </td>
+                                    <td>${t.product_name}</td>
+                                    <td>${t.quantity}x</td>
+                                    <td>${t.price.toFixed(2)}€</td>
+                                    <td><strong>${t.total.toFixed(2)}€</strong></td>
+                                </tr>
+                            `).join('')}
+                            <tr style="background: #e6f3ff; font-weight: bold;">
+                                <td colspan="4" style="text-align: right;">Summe:</td>
+                                <td>${billingTotal.toFixed(2)}€</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </details>
+            `;
+        });
+    } else {
+        html += `
+            <div style="text-align: center; padding: 30px; color: #666;">
+                Noch keine abgerechneten Transaktionen
+            </div>
+        `;
+    }
+    
+    content.innerHTML = html;
+    modal.style.display = 'block';
+}
+        
         // ============ PRODUCT FUNCTIONS ============
 
         async function loadProducts() {
@@ -2187,8 +2359,9 @@
                 // Lade alle betroffenen Benutzer
                 const userIds = [...new Set(transactions.map(t => t.user_id))];
                 const usersData = await Promise.all(
-                    userIds.map(id => apiCall(`/api/users/${id}`).catch(() => null))
+                userIds.map(id => apiCall(`/api/users/id/${id}`).catch(() => null))
                 );
+                
                 const usersMap = {};
                 usersData.filter(u => u).forEach(u => usersMap[u.id] = u);
                 
