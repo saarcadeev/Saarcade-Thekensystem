@@ -504,6 +504,24 @@ if (pathParts[0] === 'products' && pathParts[1] && method === 'PUT') {
             return res.status(200).json(data || []);
         }
 
+    // GET /transactions/user/{userId} - Transaktionen eines Benutzers
+    if (pathParts[0] === 'transactions' && pathParts[1] === 'user' && pathParts[2] && method === 'GET') {
+        const userId = parseInt(pathParts[2]);
+        
+        if (isNaN(userId)) {
+            return res.status(400).json({ error: 'Ungültige Benutzer-ID' });
+        }
+        
+        const { data, error } = await supabase
+            .from('transactions')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        return res.status(200).json(data || []);
+    }
+
         // POST /transactions - Neue Transaktion erstellen
         if (path === '/transactions' && method === 'POST') {
             const transactionData = req.body;
