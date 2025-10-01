@@ -1348,8 +1348,7 @@
                 // Abrechnungen-Button nur bei genau einem Benutzer
                 document.getElementById('viewUserBillingsBtn').disabled = count !== 1;
                 // Delete button bei mindestens einem Benutzer
-                document.getElementById('deleteUserBtn').disabled = count === 0;
-            }            
+                document.getElementById('deleteUserBtn').disabled = count === 0;       
             } else if (type === 'products') {
                 count = selectedProducts.length;
                 buttons = ['editProductBtn', 'deleteProductBtn'];
