@@ -215,19 +215,23 @@ if (path === '/users' && method === 'POST') {
         return res.status(400).json({ error: 'Pflichtfelder fehlen: first_name, last_name, barcodes' });
     }
 
-    // Barcode-Eindeutigkeit prüfen für alle Barcodes
-    for (const barcode of userData.barcodes) {
-        const { data: existingUser } = await supabase
-            .from('users')
-            .select('id')
-            .contains('barcodes', [barcode])
-            .single();
+// Barcode-Eindeutigkeit prüfen für alle Barcodes
+for (const barcode of userData.barcodes) {
+    const { data: existingUser, error: checkError } = await supabase
+        .from('users')
+        .select('id')
+        .contains('barcodes', [barcode])
+        .single();
 
-        if (existingUser) {
-            return res.status(400).json({ error: `Barcode ${barcode} bereits vergeben` });
-        }
+    // Ignoriere "nicht gefunden" Fehler, aber werfe andere Fehler
+    if (checkError && checkError.code !== 'PGRST116') {
+        throw checkError;
     }
 
+    if (existingUser) {
+        return res.status(400).json({ error: `Barcode ${barcode} bereits vergeben` });
+    }
+}
     const { data, error } = await supabase
         .from('users')
         .insert([{
