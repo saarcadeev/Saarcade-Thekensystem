@@ -1619,14 +1619,15 @@ function showUserBillingDetails(user, billingGroups, unbilledTransactions) {
     const content = document.getElementById('billingDetailsContent');
     
     title.textContent = `Abrechnungen von ${user.first_name} ${user.last_name}`;
+    // Export-Button
     const exportButton = `
-    <div style="margin-top: 10px;">
-        <button class="btn btn-success" onclick="exportUserBillingCSV()" style="font-size: 0.85em;">
+        <div style="margin-top: 10px;">
+            <button class="btn btn-success" onclick="exportUserBillingCSV()" style="font-size: 0.85em;">
             📊 CSV Export
         </button>
     </div>
 `;    
-    let html = `
+let html = exportButton + `
         <div style="margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 8px;">
             <p><strong>Aktueller Saldo:</strong> ${user.balance.toFixed(2)}€</p>
             <p><strong>SEPA:</strong> ${user.sepa_active ? '✅ Aktiv' : '❌ Nicht aktiv'}</p>
