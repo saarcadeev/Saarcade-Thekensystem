@@ -1336,34 +1336,35 @@
             updateSelectionInfo(type);
         }
 
-        function updateSelectionInfo(type) {
-            let count, buttons;
-            
-            if (type === 'users') {
-                count = selectedUsers.length;
-                document.getElementById('userSelectionInfo').textContent = `${count} ausgewählt`;
+function updateSelectionInfo(type) {
+    let count;
     
-                // Edit button nur bei genau einem Benutzer
-                document.getElementById('editUserBtn').disabled = count !== 1;
-                // Abrechnungen-Button nur bei genau einem Benutzer
-                document.getElementById('viewUserBillingsBtn').disabled = count !== 1;
-                // Delete button bei mindestens einem Benutzer
-                document.getElementById('deleteUserBtn').disabled = count === 0;       
-  } else if (type === 'products') {
-    count = selectedProducts.length;
-    document.getElementById('productSelectionInfo').textContent = `${count} ausgewählt`;
-    
-    const buttons = ['editProductBtn', 'deleteProductBtn'];
-    buttons.forEach(btnId => {
-        const btn = document.getElementById(btnId);
-        if (btnId.includes('edit')) {
-            btn.disabled = count !== 1;
-        } else {
-            btn.disabled = count === 0;
-        }
-    });
-}            
-            buttons.forEach(btnId => {
+    if (type === 'users') {
+        count = selectedUsers.length;
+        document.getElementById('userSelectionInfo').textContent = `${count} ausgewählt`;
+        
+        // Edit button nur bei genau einem Benutzer
+        document.getElementById('editUserBtn').disabled = count !== 1;
+        // Abrechnungen-Button nur bei genau einem Benutzer
+        document.getElementById('viewUserBillingsBtn').disabled = count !== 1;
+        // Delete button bei mindestens einem Benutzer
+        document.getElementById('deleteUserBtn').disabled = count === 0;
+    } else if (type === 'products') {
+        count = selectedProducts.length;
+        document.getElementById('productSelectionInfo').textContent = `${count} ausgewählt`;
+        
+        const buttons = ['editProductBtn', 'deleteProductBtn'];
+        buttons.forEach(btnId => {
+            const btn = document.getElementById(btnId);
+            if (btnId.includes('edit')) {
+                btn.disabled = count !== 1;
+            } else {
+                btn.disabled = count === 0;
+            }
+        });
+    }
+}
+        buttons.forEach(btnId => {
                 const btn = document.getElementById(btnId);
                 if (btnId.includes('edit')) {
                     btn.disabled = count !== 1;
