@@ -1354,16 +1354,7 @@ function updateSelectionInfo(type) {
         document.getElementById('productSelectionInfo').textContent = `${count} ausgewählt`;
         
         const buttons = ['editProductBtn', 'deleteProductBtn'];
-        buttons.forEach(btnId => {
-            const btn = document.getElementById(btnId);
-            if (btnId.includes('edit')) {
-                btn.disabled = count !== 1;
-            } else {
-                btn.disabled = count === 0;
-            }
-        });
-    }
-}
+ 
         buttons.forEach(btnId => {
                 const btn = document.getElementById(btnId);
                 if (btnId.includes('edit')) {
