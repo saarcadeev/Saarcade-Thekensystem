@@ -2574,44 +2574,41 @@ function toggleUserTransactions(elementId) {
             showAlert(`SEPA-XML für Abrechnung ${billing.billing_number} exportiert`, 'success');
         }
 
-        function exportSepaCSVForBilling(billingId) {
-            if (!currentBillingData || !currentBillingData.sepaUsers) {
-                showAlert('Keine SEPA-Daten verfügbar', 'error');
-                return;
-            }
+function exportSepaCSVForBilling(billingId) {
+    if (!currentBillingData || !currentBillingData.sepaUsers) {
+        showAlert('Keine SEPA-Daten verfügbar', 'error');
+        return;
+    }
 
-            const { billing, sepaUsers } = currentBillingData;
+    const { billing, sepaUsers } = currentBillingData;
+    
+    if (sepaUsers.length === 0) {
+        alert('Keine SEPA-Benutzer in dieser Abrechnung');
+        return;
+    }
+    
+    const csv = [
+        ['Rechnungsnummer', 'Name', 'Vorname', 'Nachname', 'E-Mail', 'IBAN', 'Betrag', 'Datum'].join(';'),
+        ...sepaUsers.map(u => {
+            const amount = u.billing_amount || Math.abs(u.balance) || 0;
             
-            if (sepaUsers.length === 0) {
-                alert('Keine SEPA-Benutzer in dieser Abrechnung');
-                return;
-            }
-            
-            const csv = [
-                ['Rechnungsnummer', 'Name', 'Vorname', 'E-Mail', 'IBAN', 'Betrag'].join(';'),
- ${sepaUsers.map((u, index) => {
-    const amount = u.billing_amount || Math.abs(u.balance) || 0;
-    return `
-        <tr>
-            <td>
-                <strong style="cursor: pointer; color: #667eea;" onclick="toggleUserTransactions('sepa-${index}')">
-                    ▶️ ${u.first_name} ${u.last_name}
-                </strong>
-                <div id="sepa-${index}" style="display: none; margin-top: 10px; padding: 10px; background: #f8fafc; border-radius: 4px;">
-                    <strong>Transaktionen:</strong><br>
-                    <small>Anzahl: ${u.transaction_count || 0}</small>
-                </div>
-            </td>
-            <td><code style="font-size: 0.85em;">${u.iban || '-'}</code></td>
-            <td style="font-size: 0.85em;">${u.email || '-'}</td>
-            <td><strong>${amount.toFixed(2)}€</strong></td>
-        </tr>
-    `;
-}).join('')}
-            
-            downloadFile(csv, `sepa_${billing.billing_number}.csv`, 'text/csv');
-        }
-
+            return [
+                billing.billing_number,
+                `${u.first_name} ${u.last_name}`,
+                u.first_name,
+                u.last_name,
+                u.email || '-',
+                u.iban || '-',
+                amount.toFixed(2),
+                new Date(billing.created_at).toLocaleDateString('de-DE')
+            ].join(';');
+        })
+    ].join('\n');
+    
+    downloadFile(csv, `sepa_${billing.billing_number}.csv`, 'text/csv');
+    showAlert('CSV-Export erfolgreich', 'success');
+}
+        
 function exportNonSepaList(billingId) {
     if (!currentBillingData || !currentBillingData.nonSepaUsers) {
         showAlert('Keine Nicht-SEPA-Daten verfügbar', 'error');
