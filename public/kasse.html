@@ -201,14 +201,8 @@
             background: linear-gradient(135deg, #48bb78, #38a169);
             border: 5px solid #e53e3e;
             box-shadow: 0 0 0 2px #fff, 0 0 0 7px #e53e3e;
-            animation: barkeeper-pulse 2s ease-in-out infinite;
         }
 
-        @keyframes barkeeper-pulse {
-            0%, 100% { box-shadow: 0 0 0 2px #fff, 0 0 0 7px #e53e3e; }
-            50% { box-shadow: 0 0 0 2px #fff, 0 0 0 10px #e53e3e; }
-        }
-        
         .user-name {
             font-weight: bold;
             font-size: 1.1em;
@@ -977,6 +971,9 @@ const additionalCSS = `
 
 function updateWorkflowSteps() {
     // Alle Schritte auf inaktiv setzen
+    document.getElementById('step1').textContent = '1️⃣ Mitglied';
+    document.getElementById('step2').textContent = '2️⃣ Getränke';
+    document.getElementById('step3').textContent = '3️⃣ Checkout';
     document.getElementById('step1').style.background = '#e2e8f0';
     document.getElementById('step1').style.color = '#4a5568';
     document.getElementById('step2').style.background = '#e2e8f0';
@@ -1829,6 +1826,12 @@ async function checkout() {
         
         const result = await createTransaction(transactionData);
         currentUser.balance = result.newBalance;
+        
+        // NEU: Aktualisiere auch im users-Array für korrekte Dropdown-Anzeige
+        const userIndex = users.findIndex(u => u.id === currentUser.id);
+        if (userIndex !== -1) {
+            users[userIndex].balance = result.newBalance;
+        }
         
         showStatus(`✅ Kauf über ${total.toFixed(2)}€ abgeschlossen!`, 'success');
         
