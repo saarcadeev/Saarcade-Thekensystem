@@ -1022,7 +1022,22 @@
                         <label>IBAN</label>
                         <input type="text" id="userIban" placeholder="DE89 3704 0044 0532 0130 00">
                     </div>
-                    
+
+                    <div class="form-group" id="pinResetGroup" style="display: none; background: #fff5e6; padding: 15px; border-radius: 8px; border-left: 4px solid #ed8936;">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <span>🔐 PIN-Verwaltung</span>
+                        </label>
+                        <div style="margin-top: 10px;">
+                            <div id="pinStatusText" style="margin-bottom: 10px; color: #666;"></div>
+                            <button type="button" class="btn btn-warning" onclick="resetUserPin()" id="resetPinBtn">
+                                🔓 PIN zurücksetzen
+                            </button>
+                            <small style="display: block; margin-top: 8px; color: #666;">
+                                Setzt die PIN auf null. Der Benutzer kann danach eine neue PIN vergeben.
+                            </small>
+                        </div>
+                    </div>
+
                     <div style="text-align: right; margin-top: 20px;">
                         <button type="button" class="btn btn-secondary" onclick="closeModal('userModal')">
                             Abbrechen
@@ -1411,6 +1426,17 @@ function updateSelectionInfo(type) {
                     document.getElementById('userIban').value = user.iban || '';
                     
                     toggleIbanField();
+
+                    const pinResetGroup = document.getElementById('pinResetGroup');
+                    const pinStatusText = document.getElementById('pinStatusText');
+        
+                    if (user.user_pin) {
+                        pinStatusText.innerHTML = '✅ PIN ist gesetzt (****)';
+                    } else {
+                        pinStatusText.innerHTML = '❌ Keine PIN gesetzt';
+                    }
+                    pinResetGroup.style.display = 'block';
+
                 }
             } else {
                 title.textContent = 'Neues Mitglied hinzufügen';
@@ -3137,6 +3163,58 @@ async function exportUserTransactionsCSV(userId, firstName, lastName) {
                 event.target.style.display = 'none';
             }
         }
+
+async function resetUserPin() {
+    const userId = document.getElementById('userId').value;
+    if (!userId) return;
+    
+    const user = users.find(u => u.id === parseInt(userId));
+    if (!user) return;
+    
+    if (!confirm(`Möchtest du die PIN für ${user.first_name} ${user.last_name} wirklich zurücksetzen?\n\nDer Benutzer muss danach eine neue PIN vergeben.`)) {
+        return;
+    }
+    
+    try {
+        const resetBtn = document.getElementById('resetPinBtn');
+        resetBtn.disabled = true;
+        resetBtn.textContent = '⏳ Setze zurück...';
+        
+        await apiCall(`/api/users/${userId}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                ...user,
+                user_pin: null,
+                pin_require_for_name_search: false,
+                pin_require_for_barcode: false
+            })
+        });
+        
+        // Update lokale Daten
+        user.user_pin = null;
+        user.pin_require_for_name_search = false;
+        user.pin_require_for_barcode = false;
+        
+        const userIndex = users.findIndex(u => u.id === parseInt(userId));
+        if (userIndex !== -1) {
+            users[userIndex] = { ...users[userIndex], ...user };
+        }
+        
+        showAlert('PIN erfolgreich zurückgesetzt', 'success');
+        
+        // UI aktualisieren
+        document.getElementById('pinStatusText').innerHTML = '❌ Keine PIN gesetzt';
+        
+    } catch (error) {
+        showAlert('Fehler beim Zurücksetzen der PIN', 'error');
+        console.error('PIN reset error:', error);
+    } finally {
+        const resetBtn = document.getElementById('resetPinBtn');
+        resetBtn.disabled = false;
+        resetBtn.textContent = '🔓 PIN zurücksetzen';
+    }
+}
+        
     </script>
 </body>
 </html>
