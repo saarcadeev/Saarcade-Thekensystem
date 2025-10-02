@@ -2262,7 +2262,7 @@ Nach der Abrechnung werden die Salden auf 0€ gesetzt.`;
                 // Lade alle betroffenen Benutzer
                 const userIds = [...new Set(transactions.map(t => t.user_id))];
                 const usersData = await Promise.all(
-                    userIds.map(id => apiCall(`/api/users/${id}`).catch(() => null))
+                    userIds.map(id => apiCall(`/api/users/id/${id}`).catch(() => null))
                 );
                 const usersMap = {};
                 usersData.filter(u => u).forEach(u => usersMap[u.id] = u);
