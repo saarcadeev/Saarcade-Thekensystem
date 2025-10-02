@@ -1345,28 +1345,28 @@
             updateSelectionInfo(type);
         }
 
-        function updateSelectionInfo(type) {
-            let count, buttons;
-            
-            if (type === 'users') {
-                count = selectedUsers.length;
-                buttons = ['editUserBtn', 'deleteUserBtn'];
-                document.getElementById('userSelectionInfo').textContent = `${count} ausgewählt`;
-            } else if (type === 'products') {
-                count = selectedProducts.length;
-                buttons = ['editProductBtn', 'deleteProductBtn'];
-                document.getElementById('productSelectionInfo').textContent = `${count} ausgewählt`;
-            }
-            
-            buttons.forEach(btnId => {
-                const btn = document.getElementById(btnId);
-                if (btnId.includes('edit')) {
-                    btn.disabled = count !== 1;
-                } else {
-                    btn.disabled = count === 0;
-                }
-            });
-        }
+function updateSelectionInfo(type) {
+    let count, buttons;
+    
+    if (type === 'users') {
+        count = selectedUsers.length;
+        buttons = ['editUserBtn', 'deleteUserBtn', 'viewUserBillingsBtn'];
+        document.getElementById('userSelectionInfo').textContent = `${count} ausgewählt`;
+        
+        // Bearbeiten und Abrechnungen anzeigen nur bei genau 1 Auswahl
+        document.getElementById('editUserBtn').disabled = count !== 1;
+        document.getElementById('viewUserBillingsBtn').disabled = count !== 1;
+        document.getElementById('deleteUserBtn').disabled = count === 0;
+        
+    } else if (type === 'products') {
+        count = selectedProducts.length;
+        buttons = ['editProductBtn', 'deleteProductBtn'];
+        document.getElementById('productSelectionInfo').textContent = `${count} ausgewählt`;
+        
+        document.getElementById('editProductBtn').disabled = count !== 1;
+        document.getElementById('deleteProductBtn').disabled = count === 0;
+    }
+}
 
         // ============ DATA LOADING FUNCTIONS ============
         
@@ -2216,6 +2216,178 @@ Nach der Abrechnung werden die Salden auf 0€ gesetzt.`;
             }
         }
 
+async function viewUserBillings() {
+    if (selectedUsers.length !== 1) return;
+    
+    try {
+        showLoading(true);
+        
+        const userId = selectedUsers[0];
+        const user = users.find(u => u.id === userId);
+        
+        if (!user) {
+            showAlert('Mitglied nicht gefunden', 'error');
+            return;
+        }
+        
+        // Lade alle Transaktionen des Mitglieds
+        const allTransactions = await apiCall('/api/transactions');
+        const userTransactions = allTransactions.filter(t => t.user_id === userId);
+        
+        if (userTransactions.length === 0) {
+            showAlert(`Keine Transaktionen für ${user.first_name} ${user.last_name} gefunden`, 'info');
+            return;
+        }
+        
+        // Gruppiere nach Abrechnungen
+        const billedTransactions = userTransactions.filter(t => t.billing_id);
+        const unbilledTransactions = userTransactions.filter(t => !t.billing_id);
+        
+        // Gruppiere abgerechnete Transaktionen nach billing_id
+        const billingGroups = {};
+        billedTransactions.forEach(t => {
+            if (!billingGroups[t.billing_id]) {
+                billingGroups[t.billing_id] = [];
+            }
+            billingGroups[t.billing_id].push(t);
+        });
+        
+        // Erstelle Modal-Inhalt
+        showUserBillingHistory(user, billingGroups, unbilledTransactions);
+        
+    } catch (error) {
+        console.error('Fehler beim Laden der Abrechnungen:', error);
+        showAlert('Fehler beim Laden der Abrechnungshistorie', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+function showUserBillingHistory(user, billingGroups, unbilledTransactions) {
+    const modal = document.getElementById('billingDetailsModal');
+    const title = document.getElementById('billingDetailsTitle');
+    const content = document.getElementById('billingDetailsContent');
+    
+    title.textContent = `Abrechnungen: ${user.first_name} ${user.last_name}`;
+    
+    let html = `
+        <div style="margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 8px;">
+            <p><strong>Mitglied:</strong> ${user.first_name} ${user.last_name}</p>
+            <p><strong>Aktueller Saldo:</strong> <span style="color: ${user.balance >= 0 ? '#38a169' : '#e53e3e'}; font-weight: bold;">${user.balance.toFixed(2)}€</span></p>
+            <p><strong>Gesamt Transaktionen:</strong> ${Object.values(billingGroups).flat().length + unbilledTransactions.length}</p>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+            <button class="btn btn-success" onclick="exportUserTransactionsCSV(${user.id}, '${user.first_name}', '${user.last_name}')">
+                📊 Alle Transaktionen als CSV exportieren
+            </button>
+        </div>
+        
+        <hr style="margin: 20px 0; border: none; border-top: 2px solid #e2e8f0;">
+    `;
+    
+    // Nicht abgerechnete Transaktionen
+    if (unbilledTransactions.length > 0) {
+        const unbilledTotal = unbilledTransactions.reduce((sum, t) => sum + t.total, 0);
+        html += `
+            <h3 style="color: #ed8936; margin-bottom: 15px;">⚠️ Noch nicht abgerechnet (${unbilledTransactions.length} Transaktionen - ${unbilledTotal.toFixed(2)}€)</h3>
+            <div style="max-height: 300px; overflow-y: auto; margin-bottom: 20px;">
+                <table class="data-table" style="font-size: 0.85em;">
+                    <thead>
+                        <tr>
+                            <th>Datum</th>
+                            <th>Produkt</th>
+                            <th>Menge</th>
+                            <th>Preis</th>
+                            <th>Gesamt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${unbilledTransactions.map(t => {
+                            const date = new Date(t.created_at);
+                            return `
+                                <tr>
+                                    <td>${date.toLocaleDateString('de-DE')}<br><small>${date.toLocaleTimeString('de-DE')}</small></td>
+                                    <td>${t.product_name}</td>
+                                    <td>${t.quantity}</td>
+                                    <td>${t.price.toFixed(2)}€</td>
+                                    <td><strong>${t.total.toFixed(2)}€</strong></td>
+                                </tr>
+                            `;
+                        }).join('')}
+                        <tr style="background: #fff5e6; font-weight: bold;">
+                            <td colspan="4" style="text-align: right;">Summe:</td>
+                            <td>${unbilledTotal.toFixed(2)}€</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <hr style="margin: 20px 0; border: none; border-top: 2px solid #e2e8f0;">
+        `;
+    }
+    
+    // Abgerechnete Transaktionen nach Abrechnung gruppiert
+    if (Object.keys(billingGroups).length > 0) {
+        html += `<h3 style="color: #38a169; margin-bottom: 15px;">✅ Abgerechnete Perioden (${Object.keys(billingGroups).length})</h3>`;
+        
+        for (const [billingId, transactions] of Object.entries(billingGroups)) {
+            const billing = billings.find(b => b.id === parseInt(billingId));
+            const billingTotal = transactions.reduce((sum, t) => sum + t.total, 0);
+            const billingDate = billing ? new Date(billing.created_at).toLocaleDateString('de-DE') : 'Unbekannt';
+            const billingNumber = billing ? billing.billing_number : billingId;
+            
+            html += `
+                <div style="margin-bottom: 20px; border: 2px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+                    <div style="background: #f8fafc; padding: 12px; cursor: pointer;" onclick="toggleUserTransactions('billing-${billingId}')">
+                        <strong>▶️ Abrechnung ${billingNumber}</strong> 
+                        <span style="margin-left: 15px;">📅 ${billingDate}</span>
+                        <span style="margin-left: 15px; color: #e53e3e; font-weight: bold;">${billingTotal.toFixed(2)}€</span>
+                        <span style="margin-left: 15px; color: #666;">(${transactions.length} Transaktionen)</span>
+                    </div>
+                    <div id="billing-${billingId}" style="display: none;">
+                        <table class="data-table" style="font-size: 0.85em;">
+                            <thead>
+                                <tr>
+                                    <th>Datum</th>
+                                    <th>Produkt</th>
+                                    <th>Menge</th>
+                                    <th>Preis</th>
+                                    <th>Gesamt</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${transactions.map(t => {
+                                    const date = new Date(t.created_at);
+                                    return `
+                                        <tr>
+                                            <td>${date.toLocaleDateString('de-DE')}<br><small>${date.toLocaleTimeString('de-DE')}</small></td>
+                                            <td>${t.product_name}</td>
+                                            <td>${t.quantity}</td>
+                                            <td>${t.price.toFixed(2)}€</td>
+                                            <td><strong>${t.total.toFixed(2)}€</strong></td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                                <tr style="background: #e6f3ff; font-weight: bold;">
+                                    <td colspan="4" style="text-align: right;">Summe:</td>
+                                    <td>${billingTotal.toFixed(2)}€</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    if (Object.keys(billingGroups).length === 0 && unbilledTransactions.length === 0) {
+        html += '<p style="text-align: center; color: #666; padding: 30px;">Keine Transaktionen gefunden</p>';
+    }
+    
+    content.innerHTML = html;
+    modal.style.display = 'block';
+}
+        
         function renderBillingHistory() {
             const tbody = document.querySelector('#billingHistoryTable tbody');
             
@@ -2702,6 +2874,44 @@ function exportBillingDetailsCSV() {
     
     downloadFile(csv, `abrechnung_details_${billing.billing_number}.csv`, 'text/csv');
     showAlert('CSV-Export erfolgreich', 'success');
+}
+
+async function exportUserTransactionsCSV(userId, firstName, lastName) {
+    try {
+        const allTransactions = await apiCall('/api/transactions');
+        const userTransactions = allTransactions.filter(t => t.user_id === userId);
+        
+        if (userTransactions.length === 0) {
+            showAlert('Keine Transaktionen zum Exportieren', 'info');
+            return;
+        }
+        
+        const csv = [
+            ['Datum', 'Uhrzeit', 'Produkt', 'Menge', 'Preis', 'Gesamt', 'Abgerechnet', 'Rechnungsnummer'].join(';'),
+            ...userTransactions.map(t => {
+                const date = new Date(t.created_at);
+                const billing = billings.find(b => b.id === t.billing_id);
+                
+                return [
+                    date.toLocaleDateString('de-DE'),
+                    date.toLocaleTimeString('de-DE'),
+                    t.product_name,
+                    t.quantity,
+                    t.price.toFixed(2),
+                    t.total.toFixed(2),
+                    t.billing_id ? 'Ja' : 'Nein',
+                    billing ? billing.billing_number : '-'
+                ].join(';');
+            })
+        ].join('\n');
+        
+        downloadFile(csv, `transaktionen_${firstName}_${lastName}.csv`, 'text/csv');
+        showAlert('CSV-Export erfolgreich', 'success');
+        
+    } catch (error) {
+        console.error('Export-Fehler:', error);
+        showAlert('Fehler beim Exportieren', 'error');
+    }
 }
         
         // ============ HELPER FUNCTIONS ============
