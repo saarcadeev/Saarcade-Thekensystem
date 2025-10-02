@@ -2331,8 +2331,11 @@ function showUserBillingHistory(user, billingGroups, unbilledTransactions) {
     if (Object.keys(billingGroups).length > 0) {
         html += `<h3 style="color: #38a169; margin-bottom: 15px;">✅ Abgerechnete Perioden (${Object.keys(billingGroups).length})</h3>`;
         
-        for (const [billingId, transactions] of Object.entries(billingGroups)) {
-            const billing = billings.find(b => b.id === parseInt(billingId));
+for (const [billingId, transactions] of Object.entries(billingGroups).sort((a, b) => {
+    const billingA = billings.find(bill => bill.id === parseInt(a[0]));
+    const billingB = billings.find(bill => bill.id === parseInt(b[0]));
+    return new Date(billingB?.created_at || 0) - new Date(billingA?.created_at || 0);
+})) {       const billing = billings.find(b => b.id === parseInt(billingId));
             const billingTotal = transactions.reduce((sum, t) => sum + t.total, 0);
             const billingDate = billing ? new Date(billing.created_at).toLocaleDateString('de-DE') : 'Unbekannt';
             const billingNumber = billing ? billing.billing_number : billingId;
