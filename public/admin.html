@@ -2625,35 +2625,50 @@ function exportNonSepaList(billingId) {
         return;
     }
     
-    // CSV erstellen
     const csv = [
         ['Abrechnung', 'Name', 'Vorname', 'Nachname', 'E-Mail', 'SEPA-Status', 'Betrag', 'Datum'].join(';'),
-${nonSepaUsers.map((u, index) => {
-    const amount = u.billing_amount || Math.abs(u.balance) || 0;
-    const sepaStatus = !u.sepa_active ? '❌ Nicht aktiviert' : (!u.iban ? '⚠️ IBAN fehlt' : '?');
-    return `
-        <tr>
-            <td>
-                <strong style="cursor: pointer; color: #667eea;" onclick="toggleUserTransactions('nonsepa-${index}')">
-                    ▶️ ${u.first_name} ${u.last_name}
-                </strong>
-                <div id="nonsepa-${index}" style="display: none; margin-top: 10px; padding: 10px; background: #f8fafc; border-radius: 4px;">
-                    <strong>Transaktionen:</strong><br>
-                    <small>Anzahl: ${u.transaction_count || 0}</small>
-                </div>
-            </td>
-            <td style="font-size: 0.85em;">${u.email || '-'}</td>
-            <td style="font-size: 0.85em;">${sepaStatus}</td>
-            <td><strong>${amount.toFixed(2)}€</strong></td>
-        </tr>
-    `;
-}).join('')}        })
+        ...nonSepaUsers.map(u => {
+            const amount = u.billing_amount || Math.abs(u.balance) || 0;
+            const sepaStatus = !u.sepa_active ? 'Nicht aktiviert' : (!u.iban ? 'IBAN fehlt' : 'Unbekannt');
+            
+            return [
+                billing.billing_number,
+                `${u.first_name} ${u.last_name}`,
+                u.first_name,
+                u.last_name,
+                u.email || '-',
+                sepaStatus,
+                amount.toFixed(2),
+                new Date(billing.created_at).toLocaleDateString('de-DE')
+            ].join(';');
+        })
     ].join('\n');
     
     downloadFile(csv, `nicht_sepa_${billing.billing_number}.csv`, 'text/csv');
-    showAlert('CSV-Export für Nicht-SEPA-Nutzer erfolgreich', 'success');
+    showAlert('CSV-Export erfolgreich', 'success');
 }
 
+function toggleUserTransactions(elementId) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        if (element.style.display === 'none') {
+            element.style.display = 'block';
+            // Ändere Pfeil
+            const parent = element.previousElementSibling || element.parentElement;
+            if (parent && parent.textContent.includes('▶️')) {
+                parent.innerHTML = parent.innerHTML.replace('▶️', '🔽');
+            }
+        } else {
+            element.style.display = 'none';
+            // Ändere Pfeil zurück
+            const parent = element.previousElementSibling || element.parentElement;
+            if (parent && parent.textContent.includes('🔽')) {
+                parent.innerHTML = parent.innerHTML.replace('🔽', '▶️');
+            }
+        }
+    }
+}
+        
 function exportBillingDetailsCSV() {
     if (!currentBillingData) {
         showAlert('Keine Abrechnungsdaten zum Exportieren', 'error');
@@ -2668,7 +2683,6 @@ function exportBillingDetailsCSV() {
         return;
     }
 
-    // CSV-Daten vorbereiten
     const csv = [
         ['Abrechnung', 'Mitglied', 'Vorname', 'Nachname', 'E-Mail', 'IBAN', 'Betrag', 'SEPA', 'Abgerechnet am'].join(';'),
         ...allUsers.map(u => {
