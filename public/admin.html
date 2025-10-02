@@ -2277,12 +2277,6 @@ function showUserBillingHistory(user, billingGroups, unbilledTransactions) {
             <p><strong>Gesamt Transaktionen:</strong> ${Object.values(billingGroups).flat().length + unbilledTransactions.length}</p>
         </div>
         
-        <div style="margin-bottom: 15px;">
-            <button class="btn btn-success" onclick="exportUserTransactionsCSV(${user.id}, '${user.first_name}', '${user.last_name}')">
-                📊 Alle Transaktionen als CSV exportieren
-            </button>
-        </div>
-        
         <hr style="margin: 20px 0; border: none; border-top: 2px solid #e2e8f0;">
     `;
     
@@ -2291,6 +2285,13 @@ function showUserBillingHistory(user, billingGroups, unbilledTransactions) {
         const unbilledTotal = unbilledTransactions.reduce((sum, t) => sum + t.total, 0);
         html += `
             <h3 style="color: #ed8936; margin-bottom: 15px;">⚠️ Noch nicht abgerechnet (${unbilledTransactions.length} Transaktionen - ${unbilledTotal.toFixed(2)}€)</h3>
+            
+            <div style="margin-bottom: 15px;">
+                <button class="btn btn-warning" onclick='exportSinglePeriodCSV(${JSON.stringify(unbilledTransactions)}, "${user.first_name}", "${user.last_name}", "nicht_abgerechnet")'>
+                    📊 Diese Transaktionen als CSV exportieren
+                </button>
+            </div>
+            
             <div style="max-height: 300px; overflow-y: auto; margin-bottom: 20px;">
                 <table class="data-table" style="font-size: 0.85em;">
                     <thead>
@@ -2338,11 +2339,17 @@ function showUserBillingHistory(user, billingGroups, unbilledTransactions) {
             
             html += `
                 <div style="margin-bottom: 20px; border: 2px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
-                    <div style="background: #f8fafc; padding: 12px; cursor: pointer;" onclick="toggleUserTransactions('billing-${billingId}')">
-                        <strong>▶️ Abrechnung ${billingNumber}</strong> 
-                        <span style="margin-left: 15px;">📅 ${billingDate}</span>
-                        <span style="margin-left: 15px; color: #e53e3e; font-weight: bold;">${billingTotal.toFixed(2)}€</span>
-                        <span style="margin-left: 15px; color: #666;">(${transactions.length} Transaktionen)</span>
+                    <div style="background: #f8fafc; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="cursor: pointer; flex: 1;" onclick="toggleUserTransactions('billing-${billingId}')">
+                            <strong>▶️ Abrechnung ${billingNumber}</strong> 
+                            <span style="margin-left: 15px;">📅 ${billingDate}</span>
+                            <span style="margin-left: 15px; color: #e53e3e; font-weight: bold;">${billingTotal.toFixed(2)}€</span>
+                            <span style="margin-left: 15px; color: #666;">(${transactions.length} Transaktionen)</span>
+                        </div>
+                        <button class="btn btn-success" style="margin-left: 10px; padding: 5px 10px; font-size: 0.8em;" 
+                                onclick='event.stopPropagation(); exportSinglePeriodCSV(${JSON.stringify(transactions)}, "${user.first_name}", "${user.last_name}", "${billingNumber}")'>
+                            📊 CSV
+                        </button>
                     </div>
                     <div id="billing-${billingId}" style="display: none;">
                         <table class="data-table" style="font-size: 0.85em;">
@@ -2912,6 +2919,39 @@ async function exportUserTransactionsCSV(userId, firstName, lastName) {
         console.error('Export-Fehler:', error);
         showAlert('Fehler beim Exportieren', 'error');
     }
+}
+
+        function exportSinglePeriodCSV(transactions, firstName, lastName, periodLabel) {
+    if (!transactions || transactions.length === 0) {
+        showAlert('Keine Transaktionen zum Exportieren', 'info');
+        return;
+    }
+    
+    const total = transactions.reduce((sum, t) => sum + t.total, 0);
+    
+    const csv = [
+        ['Mitglied', 'Periode', 'Datum', 'Uhrzeit', 'Produkt', 'Menge', 'Preis', 'Gesamt'].join(';'),
+        ...transactions.map(t => {
+            const date = new Date(t.created_at);
+            
+            return [
+                `${firstName} ${lastName}`,
+                periodLabel,
+                date.toLocaleDateString('de-DE'),
+                date.toLocaleTimeString('de-DE'),
+                t.product_name,
+                t.quantity,
+                t.price.toFixed(2),
+                t.total.toFixed(2)
+            ].join(';');
+        }),
+        // Summenzeile
+        ['', '', '', '', '', '', 'GESAMT:', total.toFixed(2)].join(';')
+    ].join('\n');
+    
+    const fileName = `${firstName}_${lastName}_${periodLabel}.csv`.replace(/[^a-zA-Z0-9_-]/g, '_');
+    downloadFile(csv, fileName, 'text/csv');
+    showAlert(`CSV für ${periodLabel} exportiert`, 'success');
 }
         
         // ============ HELPER FUNCTIONS ============
