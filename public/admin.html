@@ -533,6 +533,9 @@
                     <button class="btn btn-warning" onclick="editSelectedUser()" id="editUserBtn" disabled>
                         ✏️ Bearbeiten
                     </button>
+                    <button class="btn" onclick="viewUserBillings()" id="viewUserBillingsBtn" disabled>
+                        📋 Abrechnungen anzeigen
+                    </button>
                     <button class="btn btn-danger" onclick="deleteSelectedUsers()" id="deleteUserBtn" disabled>
                         🗑️ Löschen
                     </button>
@@ -2315,7 +2318,7 @@ Nach der Abrechnung werden die Salden auf 0€ gesetzt.`;
                 <div style="margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 8px;">
                   <div style="margin-bottom: 15px;">
                     <button class="btn btn-success" onclick="exportBillingDetailsCSV()">
-                    📊 Komplette Abrechnung als Excel exportieren
+                    📊 Komplette Abrechnung als CSV exportieren
                     </button>
                 </div>
         
@@ -2383,7 +2386,7 @@ Nach der Abrechnung werden die Salden auf 0€ gesetzt.`;
                 html += `
                     <div style="margin-bottom: 15px;">
                         <button class="btn btn-warning" onclick="exportNonSepaList(${billing.id})">
-                            📄 Liste exportieren
+                            📄 CSV exportieren
                         </button>
                     </div>
                     <table class="data-table" style="font-size: 0.85em;">
@@ -2423,6 +2426,17 @@ Nach der Abrechnung werden die Salden auf 0€ gesetzt.`;
             currentBillingData = { billing, sepaUsers, nonSepaUsers };
             modal.style.display = 'block';
         }
+function toggleUserTransactions(elementId) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        if (element.style.display === 'none') {
+            element.style.display = 'block';
+        } else {
+            element.style.display = 'none';
+        }
+    }
+}
+        
         async function exportSepaForBilling(billingId) {
             if (!currentBillingData || !currentBillingData.sepaUsers) {
                 showAlert('Keine SEPA-Daten verfügbar', 'error');
@@ -2575,51 +2589,70 @@ Nach der Abrechnung werden die Salden auf 0€ gesetzt.`;
             
             const csv = [
                 ['Rechnungsnummer', 'Name', 'Vorname', 'E-Mail', 'IBAN', 'Betrag'].join(';'),
-                ...sepaUsers.map(u => [
-                    billing.billing_number,
-                    u.last_name,
-                    u.first_name,
-                    u.email || '',
-                    u.iban,
-                    u.billing_amount.toFixed(2)
-                ].join(';'))
-            ].join('\n');
+ ${sepaUsers.map((u, index) => {
+    const amount = u.billing_amount || Math.abs(u.balance) || 0;
+    return `
+        <tr>
+            <td>
+                <strong style="cursor: pointer; color: #667eea;" onclick="toggleUserTransactions('sepa-${index}')">
+                    ▶️ ${u.first_name} ${u.last_name}
+                </strong>
+                <div id="sepa-${index}" style="display: none; margin-top: 10px; padding: 10px; background: #f8fafc; border-radius: 4px;">
+                    <strong>Transaktionen:</strong><br>
+                    <small>Anzahl: ${u.transaction_count || 0}</small>
+                </div>
+            </td>
+            <td><code style="font-size: 0.85em;">${u.iban || '-'}</code></td>
+            <td style="font-size: 0.85em;">${u.email || '-'}</td>
+            <td><strong>${amount.toFixed(2)}€</strong></td>
+        </tr>
+    `;
+}).join('')}
             
             downloadFile(csv, `sepa_${billing.billing_number}.csv`, 'text/csv');
         }
 
-        function exportNonSepaList(billingId) {
-            if (!currentBillingData || !currentBillingData.nonSepaUsers) {
-                showAlert('Keine Nicht-SEPA-Daten verfügbar', 'error');
-                return;
-            }
+function exportNonSepaList(billingId) {
+    if (!currentBillingData || !currentBillingData.nonSepaUsers) {
+        showAlert('Keine Nicht-SEPA-Daten verfügbar', 'error');
+        return;
+    }
 
-            const { billing, nonSepaUsers } = currentBillingData;
-            
-            if (nonSepaUsers.length === 0) {
-                alert('Keine Nicht-SEPA-Benutzer in dieser Abrechnung');
-                return;
-            }
-            
-            // Erstelle formatierte Textdatei für Druck
-            let text = `ZAHLUNGSAUFFORDERUNG - ${billing.billing_number}\n`;
-            text += `Datum: ${new Date(billing.created_at).toLocaleDateString('de-DE')}\n`;
-            text += `\n${'='.repeat(60)}\n\n`;
-            text += `Folgende Mitglieder haben offene Beträge zu begleichen:\n\n`;
-            
-            nonSepaUsers.forEach((user, index) => {
-                text += `${index + 1}. ${user.first_name} ${user.last_name}\n`;
-                text += `   E-Mail: ${user.email || 'nicht angegeben'}\n`;
-                text += `   Betrag: ${user.billing_amount.toFixed(2)}€\n\n`;
-            });
-            
-            text += `${'='.repeat(60)}\n`;
-            text += `GESAMT: ${nonSepaUsers.reduce((sum, u) => sum + u.billing_amount, 0).toFixed(2)}€\n`;
-            text += `\nBitte überweisen Sie den Betrag auf das Vereinskonto.\n`;
-            
-            downloadFile(text, `nicht_sepa_${billing.billing_number}.txt`, 'text/plain');
-            showAlert('Liste für Nicht-SEPA-Nutzer exportiert', 'success');
-        }
+    const { billing, nonSepaUsers } = currentBillingData;
+    
+    if (nonSepaUsers.length === 0) {
+        alert('Keine Nicht-SEPA-Benutzer in dieser Abrechnung');
+        return;
+    }
+    
+    // CSV erstellen
+    const csv = [
+        ['Abrechnung', 'Name', 'Vorname', 'Nachname', 'E-Mail', 'SEPA-Status', 'Betrag', 'Datum'].join(';'),
+${nonSepaUsers.map((u, index) => {
+    const amount = u.billing_amount || Math.abs(u.balance) || 0;
+    const sepaStatus = !u.sepa_active ? '❌ Nicht aktiviert' : (!u.iban ? '⚠️ IBAN fehlt' : '?');
+    return `
+        <tr>
+            <td>
+                <strong style="cursor: pointer; color: #667eea;" onclick="toggleUserTransactions('nonsepa-${index}')">
+                    ▶️ ${u.first_name} ${u.last_name}
+                </strong>
+                <div id="nonsepa-${index}" style="display: none; margin-top: 10px; padding: 10px; background: #f8fafc; border-radius: 4px;">
+                    <strong>Transaktionen:</strong><br>
+                    <small>Anzahl: ${u.transaction_count || 0}</small>
+                </div>
+            </td>
+            <td style="font-size: 0.85em;">${u.email || '-'}</td>
+            <td style="font-size: 0.85em;">${sepaStatus}</td>
+            <td><strong>${amount.toFixed(2)}€</strong></td>
+        </tr>
+    `;
+}).join('')}        })
+    ].join('\n');
+    
+    downloadFile(csv, `nicht_sepa_${billing.billing_number}.csv`, 'text/csv');
+    showAlert('CSV-Export für Nicht-SEPA-Nutzer erfolgreich', 'success');
+}
 
 function exportBillingDetailsCSV() {
     if (!currentBillingData) {
@@ -2635,58 +2668,29 @@ function exportBillingDetailsCSV() {
         return;
     }
 
-    // Excel-Daten vorbereiten
-    const data = [
-        ['Abrechnung', 'Mitglied', 'Vorname', 'Nachname', 'E-Mail', 'IBAN', 'Betrag', 'SEPA', 'Abgerechnet am']
-    ];
-
-    allUsers.forEach(u => {
-        const amount = u.billing_amount || Math.abs(u.balance) || 0;
-        const isSEPA = u.sepa_active && u.iban ? 'Ja' : 'Nein';
-        
-        data.push([
-            billing.billing_number,
-            `${u.first_name} ${u.last_name}`,
-            u.first_name,
-            u.last_name,
-            u.email || '-',
-            u.iban || '-',
-            amount,
-            isSEPA,
-            new Date(billing.created_at).toLocaleDateString('de-DE')
-        ]);
-    });
-
-    // Excel erstellen
-    const ws = XLSX.utils.aoa_to_sheet(data);
+    // CSV-Daten vorbereiten
+    const csv = [
+        ['Abrechnung', 'Mitglied', 'Vorname', 'Nachname', 'E-Mail', 'IBAN', 'Betrag', 'SEPA', 'Abgerechnet am'].join(';'),
+        ...allUsers.map(u => {
+            const amount = u.billing_amount || Math.abs(u.balance) || 0;
+            const isSEPA = u.sepa_active && u.iban ? 'Ja' : 'Nein';
+            
+            return [
+                billing.billing_number,
+                `${u.first_name} ${u.last_name}`,
+                u.first_name,
+                u.last_name,
+                u.email || '-',
+                u.iban || '-',
+                amount.toFixed(2),
+                isSEPA,
+                new Date(billing.created_at).toLocaleDateString('de-DE')
+            ].join(';');
+        })
+    ].join('\n');
     
-    // Spaltenbreiten
-    ws['!cols'] = [
-        { wch: 20 },  // Abrechnung
-        { wch: 25 },  // Mitglied
-        { wch: 15 },  // Vorname
-        { wch: 15 },  // Nachname
-        { wch: 30 },  // E-Mail
-        { wch: 25 },  // IBAN
-        { wch: 12 },  // Betrag
-        { wch: 8 },   // SEPA
-        { wch: 15 }   // Datum
-    ];
-
-    // Betrag als Währung formatieren
-    const range = XLSX.utils.decode_range(ws['!ref']);
-    for (let R = 1; R <= range.e.r; ++R) {
-        const cell = ws['G' + (R + 1)]; // Spalte G = Betrag
-        if (cell && typeof cell.v === 'number') {
-            cell.z = '#,##0.00 "€"';
-        }
-    }
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Abrechnungsdetails');
-    XLSX.writeFile(wb, `abrechnung_details_${billing.billing_number}.xlsx`);
-    
-    showAlert('Excel-Export erfolgreich', 'success');
+    downloadFile(csv, `abrechnung_details_${billing.billing_number}.csv`, 'text/csv');
+    showAlert('CSV-Export erfolgreich', 'success');
 }
         
         // ============ HELPER FUNCTIONS ============
