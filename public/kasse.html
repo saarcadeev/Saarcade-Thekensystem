@@ -11,14 +11,15 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            max-height: 100vh; /* NEU */
+            overflow: hidden; /* NEU */
             color: #333;
             padding: 15px;
         }
-
         .container {
             max-width: 1920px;
             margin: 0 auto;
-            height: 1080px;
+            height: calc(100vh - 30px); /* GEÄNDERT von 1080px */
             overflow: hidden;
         }
 
@@ -304,7 +305,7 @@
             display: grid;
             grid-template-columns: 1fr 350px;
             gap: 15px;
-            height: calc(100vh - 250px);
+            height: calc(100vh - 280px);
         }
 
         .products-section {
