@@ -197,6 +197,18 @@
         .user-info.guest { background: linear-gradient(135deg, #f6ad55, #ed8936); }
         .user-info.admin { background: linear-gradient(135deg, #9f7aea, #805ad5); }
 
+        .user-info.bartender {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            border: 5px solid #e53e3e;
+            box-shadow: 0 0 0 2px #fff, 0 0 0 7px #e53e3e;
+            animation: barkeeper-pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes barkeeper-pulse {
+            0%, 100% { box-shadow: 0 0 0 2px #fff, 0 0 0 7px #e53e3e; }
+            50% { box-shadow: 0 0 0 2px #fff, 0 0 0 10px #e53e3e; }
+        }
+        
         .user-name {
             font-weight: bold;
             font-size: 1.1em;
@@ -963,30 +975,36 @@ const additionalCSS = `
             }
         }
 
-        function updateWorkflowSteps() {
-            // Alle Schritte auf inaktiv setzen
-            document.getElementById('step1').style.background = '#e2e8f0';
-            document.getElementById('step1').style.color = '#4a5568';
-            document.getElementById('step2').style.background = '#e2e8f0';
-            document.getElementById('step2').style.color = '#4a5568';
-            document.getElementById('step3').style.background = '#e2e8f0';
-            document.getElementById('step3').style.color = '#4a5568';
-            
-            // Aktiven Schritt hervorheben
-            if (scannerMode === 'user') {
-                document.getElementById('step1').style.background = '#667eea';
-                document.getElementById('step1').style.color = 'white';
-            } else if (scannerMode === 'product') {
-                if (cart.length === 0) {
-                    document.getElementById('step2').style.background = '#667eea';
-                    document.getElementById('step2').style.color = 'white';
-                } else {
-                    document.getElementById('step3').style.background = '#667eea';
-                    document.getElementById('step3').style.color = 'white';
-                }
-            }
+function updateWorkflowSteps() {
+    // Alle Schritte auf inaktiv setzen
+    document.getElementById('step1').style.background = '#e2e8f0';
+    document.getElementById('step1').style.color = '#4a5568';
+    document.getElementById('step2').style.background = '#e2e8f0';
+    document.getElementById('step2').style.color = '#4a5568';
+    document.getElementById('step3').style.background = '#e2e8f0';
+    document.getElementById('step3').style.color = '#4a5568';
+    
+    // Aktiven Schritt hervorheben
+    if (scannerMode === 'user') {
+        document.getElementById('step1').style.background = '#667eea';
+        document.getElementById('step1').style.color = 'white';
+    } else if (scannerMode === 'product') {
+        // NEU: Zeige an wenn Barkeeper-Modus aktiv ist
+        if (currentUser && currentUser.role === 'bartender') {
+            document.getElementById('step1').style.background = '#e53e3e';
+            document.getElementById('step1').style.color = 'white';
+            document.getElementById('step1').textContent = '🔴 Barkeeper-Modus';
         }
-
+        
+        if (cart.length === 0) {
+            document.getElementById('step2').style.background = '#667eea';
+            document.getElementById('step2').style.color = 'white';
+        } else {
+            document.getElementById('step3').style.background = '#667eea';
+            document.getElementById('step3').style.color = 'white';
+        }
+    }
+}
         // ============ API FUNCTIONS ============
 
 async function preloadProductImages(products) {
@@ -1775,61 +1793,77 @@ async function searchUsers(query) {
             setScannerMode('product');
         }
 
-        async function checkout() {
-            if (cart.length === 0 || isProcessing) {
-                return;
-            }
+async function checkout() {
+    if (cart.length === 0 || isProcessing) {
+        return;
+    }
 
-            isProcessing = true;
-            updateCartView();
-            showStatus('Verarbeite Transaktion...', 'loading');
+    isProcessing = true;
+    updateCartView();
+    showStatus('Verarbeite Transaktion...', 'loading');
+    
+    try {
+        let total = 0;
+        const items = cart.map(cartItem => {
+            const product = products.find(p => p.id === cartItem.productId);
+            const price = currentUser.role === 'member' ? product.member_price : product.guest_price;
+            const itemTotal = price * cartItem.quantity;
+            total += itemTotal;
             
-            try {
-                let total = 0;
-                const items = cart.map(cartItem => {
-                    const product = products.find(p => p.id === cartItem.productId);
-                    const price = currentUser.role === 'member' ? product.member_price : product.guest_price;
-                    const itemTotal = price * cartItem.quantity;
-                    total += itemTotal;
-                    
-                    return {
-                        productId: product.id,
-                        productName: product.name,
-                        quantity: cartItem.quantity,
-                        price: price,
-                        total: itemTotal
-                    };
-                });
-                
-                const transactionData = {
-                    userId: currentUser.id,
-                    userName: `${currentUser.first_name} ${currentUser.last_name}`,
-                    items: items,
-                    total: total,
-                    paymentMethod: 'balance'
-                };
-                
-                const result = await createTransaction(transactionData);
-                currentUser.balance = result.newBalance;
-                
-                showStatus(`✅ Kauf über ${total.toFixed(2)}€ abgeschlossen!`, 'success');
-                clearCart();
-                updateUserInfo();
-                
-                setTimeout(() => {
-                    resetSession();
-                    showStatus('Session beendet - Nächster Kunde', 'info');
-                }, 2000);
-
-            } catch (error) {
-                showStatus('Fehler beim Abschließen des Kaufs', 'error');
-                console.error('Checkout-Fehler:', error);
-            } finally {
-                isProcessing = false;
-                updateCartView();
-            }
+            return {
+                productId: product.id,
+                productName: product.name,
+                quantity: cartItem.quantity,
+                price: price,
+                total: itemTotal
+            };
+        });
+        
+        const transactionData = {
+            userId: currentUser.id,
+            userName: `${currentUser.first_name} ${currentUser.last_name}`,
+            items: items,
+            total: total,
+            paymentMethod: 'balance'
+        };
+        
+        const result = await createTransaction(transactionData);
+        currentUser.balance = result.newBalance;
+        
+        showStatus(`✅ Kauf über ${total.toFixed(2)}€ abgeschlossen!`, 'success');
+        
+        // NEUE LOGIK: Barkeeper bleiben aktiv
+        if (currentUser.role === 'bartender') {
+            // Nur Warenkorb leeren, Barkeeper bleibt angemeldet
+            clearCart();
+            updateUserInfo();
+            setScannerMode('product'); // Bleibt im Produkt-Scan-Modus
+            showStatus(`✅ Buchung erfolgreich! ${currentUser.first_name} bleibt angemeldet (Barkeeper-Modus)`, 'success');
+            
+            // Fokus direkt wieder auf Eingabefeld
+            setTimeout(() => {
+                document.getElementById('barcodeInput').focus();
+            }, 500);
+        } else {
+            // Normale Mitglieder: Session nach 2 Sekunden beenden
+            clearCart();
+            updateUserInfo();
+            
+            setTimeout(() => {
+                resetSession();
+                showStatus('Session beendet - Nächster Kunde', 'info');
+            }, 2000);
         }
 
+    } catch (error) {
+        showStatus('Fehler beim Abschließen des Kaufs', 'error');
+        console.error('Checkout-Fehler:', error);
+    } finally {
+        isProcessing = false;
+        updateCartView();
+    }
+}
+        
         function resetSession() {
             currentUser = null;
             cart = [];
