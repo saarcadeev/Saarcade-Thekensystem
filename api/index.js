@@ -215,23 +215,19 @@ if (path === '/users' && method === 'POST') {
         return res.status(400).json({ error: 'Pflichtfelder fehlen: first_name, last_name, barcodes' });
     }
 
-// Barcode-Eindeutigkeit prüfen für alle Barcodes
-for (const barcode of userData.barcodes) {
-    const { data: existingUser, error: checkError } = await supabase
-        .from('users')
-        .select('id')
-        .contains('barcodes', [barcode])
-        .single();
+    // Barcode-Eindeutigkeit prüfen für alle Barcodes
+    for (const barcode of userData.barcodes) {
+        const { data: existingUser } = await supabase
+            .from('users')
+            .select('id')
+            .contains('barcodes', [barcode])
+            .single();
 
-    // Ignoriere "nicht gefunden" Fehler, aber werfe andere Fehler
-    if (checkError && checkError.code !== 'PGRST116') {
-        throw checkError;
+        if (existingUser) {
+            return res.status(400).json({ error: `Barcode ${barcode} bereits vergeben` });
+        }
     }
 
-    if (existingUser) {
-        return res.status(400).json({ error: `Barcode ${barcode} bereits vergeben` });
-    }
-}
     const { data, error } = await supabase
         .from('users')
         .insert([{
@@ -508,24 +504,6 @@ if (pathParts[0] === 'products' && pathParts[1] && method === 'PUT') {
             return res.status(200).json(data || []);
         }
 
-    // GET /transactions/user/{userId} - Transaktionen eines Benutzers
-    if (pathParts[0] === 'transactions' && pathParts[1] === 'user' && pathParts[2] && method === 'GET') {
-        const userId = parseInt(pathParts[2]);
-        
-        if (isNaN(userId)) {
-            return res.status(400).json({ error: 'Ungültige Benutzer-ID' });
-        }
-        
-        const { data, error } = await supabase
-            .from('transactions')
-            .select('*')
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false });
-        
-        if (error) throw error;
-        return res.status(200).json(data || []);
-    }
-
         // POST /transactions - Neue Transaktion erstellen
         if (path === '/transactions' && method === 'POST') {
             const transactionData = req.body;
@@ -759,7 +737,7 @@ if (pathParts[0] === 'users' && pathParts[1] === 'id' && pathParts[2] && method 
     
     return res.status(200).json(data);
 }
-        
+
 // GET /users/{barcode} - Benutzer per Barcode
 if (pathParts[0] === 'users' && pathParts[1] && method === 'GET') {
     const barcode = pathParts[1].toUpperCase();
