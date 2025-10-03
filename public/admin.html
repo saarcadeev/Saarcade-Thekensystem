@@ -504,13 +504,12 @@
             </div>
             <div class="stat-card">
                 <div class="stat-number" id="transactionCount">-</div>
-                <div class="stat-label">Transaktionen</div>
+                <div class="stat-label">Nicht abgerechnet</div>
             </div>
             <div class="stat-card">
                 <div class="stat-number" id="todayRevenue">-</div>
-                <div class="stat-label">Heute (€)</div>
+                <div class="stat-label">Offener Betrag (€)</div>
             </div>
-        </div>
 
         <!-- Navigation Tabs -->
         <div class="tabs">
@@ -1412,15 +1411,14 @@ function updateSelectionInfo(type) {
 
         // ============ DATA LOADING FUNCTIONS ============
         
-        async function loadDashboard() {
+async function loadDashboard() {
             try {
                 const data = await apiCall('/api/dashboard');
                 
                 document.getElementById('memberCount').textContent = data.member_count || 0;
                 document.getElementById('productCount').textContent = data.available_products || 0;
-                document.getElementById('transactionCount').textContent = data.today_transactions || 0;
-                document.getElementById('todayRevenue').textContent = `${(data.today_revenue || 0).toFixed(0)}`;
-                
+                document.getElementById('transactionCount').textContent = data.unbilled_transactions || 0;
+                document.getElementById('todayRevenue').textContent = `${(data.unbilled_revenue || 0).toFixed(0)}`;                
             } catch (error) {
                 console.error('Fehler beim Laden der Dashboard-Daten:', error);
                 showAlert('Fehler beim Laden der Dashboard-Statistiken', 'error');
