@@ -647,12 +647,13 @@
                             <th>Preis</th>
                             <th>Gesamt</th>
                             <th>Zahlungsart</th>
+                            <th>Aktionen</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td colspan="7" style="text-align: center; padding: 30px; color: #666;">
-                                Klicke "Neu laden" um Transaktionen zu laden
+                            <td colspan="8" style="text-align: center; padding: 30px; color: #666;">                                Klicke "Neu laden" um Transaktionen zu laden
+                                Lade Mitgliederdaten...
                             </td>
                         </tr>
                     </tbody>
@@ -1063,7 +1064,16 @@
         let transactions = [];
         let allTransactions = [];
         let sepaUsers = [];
-
+        
+        // Tracking welche Tabs bereits geladen wurden
+        let loadedTabs = {
+            users: false,
+            products: false,
+            transactions: false,
+            settings: false,
+            billing: false
+        };
+        
         // ============ API FUNCTIONS ============
         
         async function apiCall(endpoint, options = {}) {
@@ -1320,8 +1330,25 @@
             
             event.target.classList.add('active');
             document.getElementById(tabName).classList.add('active');
+            
+            // Auto-Load beim ersten Aufruf
+            if (!loadedTabs[tabName]) {
+                loadedTabs[tabName] = true;
+                
+                switch(tabName) {
+                    case 'users':
+                        loadUsers();
+                        break;
+                    case 'transactions':
+                        loadTransactions();
+                        break;
+                    case 'billing':
+                        loadOpenBalances();
+                        loadBillingHistory();
+                        break;
+                }
+            }
         }
-
         // ============ SELECTION FUNCTIONS ============
         
         function toggleSelectAll(type) {
@@ -1878,11 +1905,133 @@ function updateSelectionInfo(type) {
             }
         }
 
+        async function deleteTransaction(transactionId, transactionInfo) {
+            if (!confirm(`Möchtest du diese Transaktion wirklich löschen?\n\n${transactionInfo}\n\nDiese Aktion kann nicht rückgängig gemacht werden.`)) {
+                return;
+            }
+            
+            try {
+                showLoading(true);
+                
+                // Hole die Transaktion für Details
+                const transaction = allTransactions.find(t => t.id === transactionId);
+                if (!transaction) {
+                    showAlert('Transaktion nicht gefunden', 'error');
+                    return;
+                }
+                
+                // Lösche die Transaktion
+                await apiCall(`/api/transactions/${transactionId}`, {
+                    method: 'DELETE'
+                });
+                
+                // Aktualisiere den Benutzersaldo (addiere den Betrag zurück)
+                const user = await apiCall(`/api/users/id/${transaction.user_id}`);
+                await apiCall(`/api/users/${transaction.user_id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        ...user,
+                        balance: user.balance + transaction.total
+                    })
+                });
+                
+                // Aktualisiere den Produktbestand (addiere die Menge zurück)
+                const product = await apiCall(`/api/products/${transaction.product_id}`).catch(() => null);
+                if (product) {
+                    await apiCall(`/api/products/${transaction.product_id}`, {
+                        method: 'PUT',
+                        body: JSON.stringify({
+                            ...product,
+                            stock: product.stock + transaction.quantity
+                        })
+                    });
+                }
+                
+                showAlert('Transaktion erfolgreich gelöscht und Saldo wiederhergestellt', 'success');
+                
+                // Aktualisiere alle Ansichten
+                await loadTransactions();
+                await loadUsers();
+                await loadDashboard();
+                
+            } catch (error) {
+                console.error('Fehler beim Löschen der Transaktion:', error);
+                showAlert('Fehler beim Löschen der Transaktion: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        async function deleteTransactionFromModal(transactionId, firstName, lastName) {
+            try {
+                showLoading(true);
+                
+                // Hole die Transaktion für Details
+                const allTransactions = await apiCall('/api/transactions');
+                const transaction = allTransactions.find(t => t.id === transactionId);
+                
+                if (!transaction) {
+                    showAlert('Transaktion nicht gefunden', 'error');
+                    return;
+                }
+                
+                if (!confirm(`Möchtest du diese Transaktion wirklich löschen?\n\n${transaction.product_name} - ${transaction.total.toFixed(2)}€\n\nDiese Aktion kann nicht rückgängig gemacht werden.`)) {
+                    showLoading(false);
+                    return;
+                }
+                
+                // Lösche die Transaktion
+                await apiCall(`/api/transactions/${transactionId}`, {
+                    method: 'DELETE'
+                });
+                
+                // Aktualisiere den Benutzersaldo (addiere den Betrag zurück)
+                const user = await apiCall(`/api/users/id/${transaction.user_id}`);
+                await apiCall(`/api/users/${transaction.user_id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        ...user,
+                        balance: user.balance + transaction.total
+                    })
+                });
+                
+                // Aktualisiere den Produktbestand (addiere die Menge zurück)
+                const product = await apiCall(`/api/products/${transaction.product_id}`).catch(() => null);
+                if (product) {
+                    await apiCall(`/api/products/${transaction.product_id}`, {
+                        method: 'PUT',
+                        body: JSON.stringify({
+                            ...product,
+                            stock: product.stock + transaction.quantity
+                        })
+                    });
+                }
+                
+                showAlert('Transaktion erfolgreich gelöscht und Saldo wiederhergestellt', 'success');
+                
+                // Schließe und öffne Modal neu mit aktualisierten Daten
+                closeModal('billingDetailsModal');
+                
+                // Warte kurz und öffne dann das Modal erneut
+                setTimeout(async () => {
+                    await loadUsers();
+                    await loadDashboard();
+                    await viewUserBillings(); // Öffnet das Modal erneut mit aktuellen Daten
+                }, 500);
+                
+            } catch (error) {
+                console.error('Fehler beim Löschen der Transaktion:', error);
+                showAlert('Fehler beim Löschen der Transaktion: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }       
+        
         function renderTransactions() {
             const tbody = document.querySelector('#transactionTable tbody');
             
             if (transactions.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px; color: #666;">Keine Transaktionen gefunden</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px; color: #666;">Keine Transaktionen gefunden</td></tr>';
                 return;
             }
             
@@ -1890,6 +2039,11 @@ function updateSelectionInfo(type) {
                 const date = new Date(t.created_at);
                 const formattedDate = date.toLocaleDateString('de-DE');
                 const formattedTime = date.toLocaleTimeString('de-DE');
+                
+                // Lösch-Button nur für nicht abgerechnete Transaktionen
+                const deleteBtn = !t.is_billed && !t.billing_id ? 
+                    `<button class="btn btn-danger" onclick="deleteTransaction(${t.id}, '${t.product_name} - ${t.total.toFixed(2)}€')" style="padding: 5px 10px; font-size: 0.8em;">🗑️</button>` : 
+                    '<span style="color: #38a169; font-size: 0.85em;">✅ Abgerechnet</span>';
                 
                 return `
                     <tr>
@@ -1900,11 +2054,12 @@ function updateSelectionInfo(type) {
                         <td>${t.price.toFixed(2)}€</td>
                         <td><strong>${t.total.toFixed(2)}€</strong></td>
                         <td>${t.payment_method === 'balance' ? 'Saldo' : t.payment_method}</td>
+                        <td>${deleteBtn}</td>
                     </tr>
                 `;
             }).join('');
         }
-
+        
         function filterTransactions() {
             const filter = document.getElementById('transactionFilter').value;
             const now = new Date();
@@ -2327,6 +2482,7 @@ function showUserBillingHistory(user, billingGroups, unbilledTransactions) {
                             <th>Menge</th>
                             <th>Preis</th>
                             <th>Gesamt</th>
+                            <th>Aktion</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -2339,14 +2495,18 @@ function showUserBillingHistory(user, billingGroups, unbilledTransactions) {
                                     <td>${t.quantity}</td>
                                     <td>${t.price.toFixed(2)}€</td>
                                     <td><strong>${t.total.toFixed(2)}€</strong></td>
+                                    <td>
+                                        <button class="btn btn-danger" onclick="deleteTransactionFromModal(${t.id}, '${user.first_name}', '${user.last_name}')" style="padding: 3px 8px; font-size: 0.75em;">
+                                            🗑️
+                                        </button>
+                                    </td>
                                 </tr>
                             `;
                         }).join('')}
                         <tr style="background: #fff5e6; font-weight: bold;">
                             <td colspan="4" style="text-align: right;">Summe:</td>
-                            <td>${unbilledTotal.toFixed(2)}€</td>
-                        </tr>
-                    </tbody>
+                            <td colspan="2">${unbilledTotal.toFixed(2)}€</td>
+                        </tr>                    </tbody>
                 </table>
             </div>
             <hr style="margin: 20px 0; border: none; border-top: 2px solid #e2e8f0;">
@@ -3138,7 +3298,8 @@ async function exportUserTransactionsCSV(userId, firstName, lastName) {
             try {
                 await loadDashboard();
                 await loadProducts();
-                
+
+                loadedTabs.products = true;
                 initDragAndDrop();
                 loadAllSettings();
                 loadOpenBalances(); // Lade offene Beträge für Abrechnungs-Tab
