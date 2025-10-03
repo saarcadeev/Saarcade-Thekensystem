@@ -979,23 +979,18 @@
                         </div>
                     </div>
                     
-                    <div class="form-group" id="stockDisplayGroup" style="display: none; background: #f0fff4; padding: 15px; border-radius: 8px; border-left: 4px solid #38a169;">
-                        <label>📦 Aktueller Bestand (nur Anzeige)</label>
-                        <div style="font-size: 1.5em; font-weight: bold; color: #38a169; margin: 10px 0;">
-                            <span id="productStockDisplay">0</span> Einheiten
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>📦 Aktueller Bestand (nur Anzeige)</label>
+                            <input type="number" id="productStock" min="0" value="0" readonly style="background: #f0fff4; cursor: not-allowed;">
+                            <small style="color: #666;">Wird über "📊 Bestand" Tab verwaltet</small>
                         </div>
-                        <small style="color: #666;">
-                            Bestand wird über "📊 Bestand" Tab verwaltet (Beschaffungen & Korrekturen)
-                        </small>
+                        <div class="form-group">
+                            <label>Mindestbestand</label>
+                            <input type="number" id="productMinStock" min="0" value="5">
+                            <small style="color: #666;">Warnung bei Unterschreitung</small>
+                        </div>
                     </div>
-                    <input type="hidden" id="productStock" value="0">
-                    
-                    <div class="form-group">
-                        <label>Mindestbestand</label>
-                        <input type="number" id="productMinStock" min="0" value="5">
-                        <small style="color: #666;">Warnung bei Unterschreitung</small>
-                    </div>
-
                     <div class="form-group" id="stockHistorySection" style="display: none; background: #f8fafc; padding: 15px; border-radius: 8px; border-left: 4px solid #667eea;">
                         <button type="button" class="btn" onclick="viewProductStockHistory()" id="viewStockHistoryBtn">
                             📊 Bestandshistorie anzeigen
@@ -1874,16 +1869,7 @@ if (productId) {
                         document.getElementById('productMemberPrice').value = (product.member_price || 0).toFixed(2);
                         document.getElementById('productGuestPrice').value = (product.guest_price || 0).toFixed(2);
                         document.getElementById('productStock').value = product.stock || 0;
-                        document.getElementById('productMinStock').value = product.min_stock || 5;
-                        
-                        // Bestandsanzeige aktualisieren (falls vorhanden)
-                        const stockDisplay = document.getElementById('productStockDisplay');
-                        const stockGroup = document.getElementById('stockDisplayGroup');
-                        if (stockDisplay && stockGroup) {
-                            stockDisplay.textContent = product.stock || 0;
-                            stockGroup.style.display = 'block';
-                        }                        
-                        const barcodesValue = product.barcodes 
+                        document.getElementById('productMinStock').value = product.min_stock || 5;                        const barcodesValue = product.barcodes 
                             ? (Array.isArray(product.barcodes) ? product.barcodes : [product.barcodes]) 
                             : (product.barcode ? [product.barcode] : []);
                         document.getElementById('productBarcodes').value = barcodesValue.join('\n');
@@ -1922,14 +1908,7 @@ if (productId) {
                     document.getElementById('productStock').value = '0';
                     document.getElementById('productMinStock').value = '5';
                     document.getElementById('productAvailable').checked = true;
-                    
-                    // Bestandsanzeige verstecken bei neuem Produkt
-                    const stockGroup = document.getElementById('stockDisplayGroup');
-                    if (stockGroup) {
-                        stockGroup.style.display = 'none';
-                    }
-                }
-                
+                }               
                 modal.style.display = 'block';
                 
                 setTimeout(() => {
