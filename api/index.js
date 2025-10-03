@@ -587,20 +587,37 @@ if (pathParts[0] === 'products' && pathParts[1] && method === 'PUT') {
                 transactions.push(transaction);
                 totalAmount += item.total;
                 
-                // Bestand reduzieren
+// Bestand reduzieren UND Bestandsbewegung aufzeichnen
                 try {
                     const { data: product } = await supabase
                         .from('products')
-                        .select('stock')
+                        .select('stock, name')
                         .eq('id', item.productId)
                         .single();
 
                     if (product && product.stock >= item.quantity) {
+                        const oldStock = product.stock;
                         const newStock = product.stock - item.quantity;
+                        
+                        // Bestand aktualisieren
                         await supabase
                             .from('products')
                             .update({ stock: newStock })
                             .eq('id', item.productId);
+                        
+                        // Bestandsbewegung aufzeichnen
+                        await supabase
+                            .from('stock_movements')
+                            .insert({
+                                product_id: item.productId,
+                                product_name: product.name,
+                                movement_type: 'sale',
+                                quantity: -item.quantity,
+                                stock_before: oldStock,
+                                stock_after: newStock,
+                                reason: `Verkauf an ${transactionData.userName}`,
+                                created_by: 'system'
+                            });
                     }
                 } catch (stockError) {
                     console.warn('Stock update error:', stockError);
@@ -668,6 +685,171 @@ if (pathParts[0] === 'products' && pathParts[1] && method === 'PUT') {
             return res.status(200).json({ 
                 message: 'Transaktion erfolgreich gelöscht',
                 transaction: transaction
+            });
+        }
+
+        // ============ STOCK MOVEMENTS ENDPUNKTE ============
+        
+        // GET /stock-movements - Alle Bestandsbewegungen
+        if (path === '/stock-movements' && method === 'GET') {
+            const { data, error } = await supabase
+                .from('stock_movements')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(200);
+            
+            if (error) throw error;
+            return res.status(200).json(data || []);
+        }
+
+        // GET /stock-movements/product/{productId} - Bestandsbewegungen eines Produkts
+        if (pathParts[0] === 'stock-movements' && pathParts[1] === 'product' && pathParts[2] && method === 'GET') {
+            const productId = parseInt(pathParts[2]);
+            
+            if (isNaN(productId)) {
+                return res.status(400).json({ error: 'Ungültige Produkt-ID' });
+            }
+
+            const { data, error } = await supabase
+                .from('stock_movements')
+                .select('*')
+                .eq('product_id', productId)
+                .order('created_at', { ascending: false });
+            
+            if (error) throw error;
+            return res.status(200).json(data || []);
+        }
+
+        // POST /stock-movements - Neue Bestandsbewegung erstellen
+        if (path === '/stock-movements' && method === 'POST') {
+            const movementData = req.body;
+            
+            // Validierung
+            if (!movementData.product_id || !movementData.movement_type || !movementData.quantity) {
+                return res.status(400).json({ error: 'Pflichtfelder fehlen: product_id, movement_type, quantity' });
+            }
+
+            // Produkt laden
+            const { data: product, error: productError } = await supabase
+                .from('products')
+                .select('*')
+                .eq('id', movementData.product_id)
+                .single();
+            
+            if (productError) {
+                if (productError.code === 'PGRST116') {
+                    return res.status(404).json({ error: 'Produkt nicht gefunden' });
+                }
+                throw productError;
+            }
+
+            const oldStock = product.stock;
+            let newStock;
+            let quantity = parseInt(movementData.quantity);
+
+            // Berechne neuen Bestand basierend auf Bewegungstyp
+            if (movementData.movement_type === 'purchase' || movementData.movement_type === 'initial') {
+                // Beschaffung oder Startbestand - immer positiv
+                quantity = Math.abs(quantity);
+                newStock = oldStock + quantity;
+            } else if (movementData.movement_type === 'correction') {
+                // Korrektur - kann positiv oder negativ sein
+                newStock = oldStock + quantity;
+                if (newStock < 0) {
+                    return res.status(400).json({ error: 'Bestand kann nicht negativ werden' });
+                }
+            } else {
+                return res.status(400).json({ error: 'Ungültiger Bewegungstyp' });
+            }
+
+            // Bestand im Produkt aktualisieren
+            const { error: updateError } = await supabase
+                .from('products')
+                .update({ stock: newStock })
+                .eq('id', movementData.product_id);
+            
+            if (updateError) throw updateError;
+
+            // Bestandsbewegung aufzeichnen
+            const { data: movement, error: movementError } = await supabase
+                .from('stock_movements')
+                .insert({
+                    product_id: movementData.product_id,
+                    product_name: product.name,
+                    movement_type: movementData.movement_type,
+                    quantity: quantity,
+                    stock_before: oldStock,
+                    stock_after: newStock,
+                    reason: movementData.reason || null,
+                    reference: movementData.reference || null,
+                    cost_per_unit: movementData.cost_per_unit || null,
+                    total_cost: movementData.total_cost || null,
+                    created_by: movementData.created_by || 'admin'
+                })
+                .select()
+                .single();
+            
+            if (movementError) throw movementError;
+
+            return res.status(201).json({
+                movement: movement,
+                newStock: newStock
+            });
+        }
+
+        // DELETE /stock-movements/{id} - Bestandsbewegung löschen
+        if (pathParts[0] === 'stock-movements' && pathParts[1] && method === 'DELETE') {
+            const movementId = parseInt(pathParts[1]);
+            
+            if (isNaN(movementId)) {
+                return res.status(400).json({ error: 'Ungültige Bewegungs-ID' });
+            }
+
+            // Bewegung laden
+            const { data: movement, error: fetchError } = await supabase
+                .from('stock_movements')
+                .select('*')
+                .eq('id', movementId)
+                .single();
+            
+            if (fetchError) {
+                if (fetchError.code === 'PGRST116') {
+                    return res.status(404).json({ error: 'Bestandsbewegung nicht gefunden' });
+                }
+                throw fetchError;
+            }
+
+            // Verkäufe können nicht gelöscht werden (nur über Transaktion)
+            if (movement.movement_type === 'sale') {
+                return res.status(400).json({ error: 'Verkaufsbewegungen können nicht direkt gelöscht werden' });
+            }
+
+            // Lösche die Bewegung
+            const { error: deleteError } = await supabase
+                .from('stock_movements')
+                .delete()
+                .eq('id', movementId);
+            
+            if (deleteError) throw deleteError;
+
+            // Bestand zurückrechnen
+            const { data: product } = await supabase
+                .from('products')
+                .select('stock')
+                .eq('id', movement.product_id)
+                .single();
+            
+            if (product) {
+                const newStock = product.stock - movement.quantity;
+                await supabase
+                    .from('products')
+                    .update({ stock: newStock >= 0 ? newStock : 0 })
+                    .eq('id', movement.product_id);
+            }
+
+            return res.status(200).json({ 
+                message: 'Bestandsbewegung erfolgreich gelöscht',
+                movement: movement
             });
         }
         
