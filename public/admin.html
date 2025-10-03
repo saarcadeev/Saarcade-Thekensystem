@@ -1822,7 +1822,7 @@ async function loadDashboard() {
             }).join('');
         }
 
-        function openProductModal(productId = null) {
+function openProductModal(productId = null) {
             try {
                 const modal = document.getElementById('productModal');
                 const title = document.getElementById('productModalTitle');
@@ -1836,10 +1836,38 @@ async function loadDashboard() {
                 }
                 
                 form.reset();
-                document.getElementById('productId').value = '';
-                document.getElementById('currentImageUrl').value = '';
-                document.getElementById('currentImagePath').value = '';
-                stockHistorySection.style.display = 'none';                
+                
+                // Sichere Initialisierung aller Felder
+                const fields = {
+                    productId: '',
+                    currentImageUrl: '',
+                    currentImagePath: '',
+                    productName: '',
+                    productCategory: 'sonstiges',
+                    productEmoji: '',
+                    productMemberPrice: '0.00',
+                    productGuestPrice: '0.00',
+                    productStock: '0',
+                    productMinStock: '5',
+                    productBarcodes: '',
+                    productAvailable: true
+                };
+                
+                Object.keys(fields).forEach(fieldId => {
+                    const element = document.getElementById(fieldId);
+                    if (element) {
+                        if (element.type === 'checkbox') {
+                            element.checked = fields[fieldId];
+                        } else {
+                            element.value = fields[fieldId];
+                        }
+                    }
+                });
+                
+                if (stockHistorySection) {
+                    stockHistorySection.style.display = 'none';
+                }
+                
                 try {
                     resetPhotoPreview();
                 } catch (resetError) {
@@ -1856,30 +1884,43 @@ async function loadDashboard() {
                     }
                 }
                 
-if (productId) {
+                if (productId) {
                     const product = products.find(p => p.id === productId);
                     if (product) {
                         title.textContent = 'Produkt bearbeiten';
-                        stockHistorySection.style.display = 'block';
+                        if (stockHistorySection) {
+                            stockHistorySection.style.display = 'block';
+                        }
                         
-                        document.getElementById('productId').value = product.id || '';
-                        document.getElementById('productName').value = product.name || '';
-                        document.getElementById('productCategory').value = product.category || 'sonstiges';
-                        document.getElementById('productEmoji').value = product.image || '';
-                        document.getElementById('productMemberPrice').value = (product.member_price || 0).toFixed(2);
-                        document.getElementById('productGuestPrice').value = (product.guest_price || 0).toFixed(2);
-                        document.getElementById('productStock').value = product.stock || 0;
-                        document.getElementById('productMinStock').value = product.min_stock || 5;                        const barcodesValue = product.barcodes 
+                        // Setze Werte mit Null-Checks
+                        const setField = (id, value) => {
+                            const el = document.getElementById(id);
+                            if (el) el.value = value;
+                        };
+                        
+                        setField('productId', product.id || '');
+                        setField('productName', product.name || '');
+                        setField('productCategory', product.category || 'sonstiges');
+                        setField('productEmoji', product.image || '');
+                        setField('productMemberPrice', (product.member_price || 0).toFixed(2));
+                        setField('productGuestPrice', (product.guest_price || 0).toFixed(2));
+                        setField('productStock', product.stock || 0);
+                        setField('productMinStock', product.min_stock || 5);
+                        
+                        const barcodesValue = product.barcodes 
                             ? (Array.isArray(product.barcodes) ? product.barcodes : [product.barcodes]) 
                             : (product.barcode ? [product.barcode] : []);
-                        document.getElementById('productBarcodes').value = barcodesValue.join('\n');
+                        setField('productBarcodes', barcodesValue.join('\n'));
                         
-                        document.getElementById('productAvailable').checked = product.available !== false;
+                        const availableCheckbox = document.getElementById('productAvailable');
+                        if (availableCheckbox) {
+                            availableCheckbox.checked = product.available !== false;
+                        }
                         
                         if (product.image_url && typeof product.image_url === 'string') {
                             try {
-                                document.getElementById('currentImageUrl').value = product.image_url;
-                                document.getElementById('currentImagePath').value = product.image_file_path || '';
+                                setField('currentImageUrl', product.image_url);
+                                setField('currentImagePath', product.image_file_path || '');
                                 
                                 const img = new Image();
                                 img.onload = function() {
@@ -1905,14 +1946,12 @@ if (productId) {
                     }
                 } else {
                     title.textContent = 'Neues Produkt hinzufügen';
-                    document.getElementById('productStock').value = '0';
-                    document.getElementById('productMinStock').value = '5';
-                    document.getElementById('productAvailable').checked = true;
-                }               
+                }
+                
                 modal.style.display = 'block';
                 
                 setTimeout(() => {
-                    const firstInput = form.querySelector('input[type="text"]');
+                    const firstInput = document.getElementById('productName');
                     if (firstInput) {
                         firstInput.focus();
                     }
@@ -1925,7 +1964,7 @@ if (productId) {
                 showAlert('Fehler beim Öffnen des Bearbeiten-Dialogs', 'error');
             }
         }
-
+        
         function editSelectedProduct() {
             if (selectedProducts.length !== 1) return;
             openProductModal(selectedProducts[0]);
