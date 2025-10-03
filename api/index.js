@@ -379,6 +379,30 @@ if (pathParts[0] === 'products' && pathParts[1] === 'barcode' && pathParts[2] &&
     return res.status(200).json(data);
 }
 
+// GET /products/{id} - Produkt per ID
+if (pathParts[0] === 'products' && pathParts[1] && pathParts[1] !== 'barcode' && method === 'GET') {
+    const productId = parseInt(pathParts[1]);
+    
+    if (isNaN(productId)) {
+        return res.status(400).json({ error: 'Ungültige Produkt-ID' });
+    }
+    
+    const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', productId)
+        .single();
+    
+    if (error) {
+        if (error.code === 'PGRST116') {
+            return res.status(404).json({ error: 'Produkt nicht gefunden' });
+        }
+        throw error;
+    }
+    
+    return res.status(200).json(data);
+}
+
 // POST /products - Neues Produkt erstellen
 if (path === '/products' && method === 'POST') {
     const productData = req.body;
