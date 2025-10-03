@@ -979,15 +979,21 @@
                         </div>
                     </div>
                     
-<                    div class="form-grid">
-                        <div class="form-group">
-                            <label>Aktueller Bestand</label>
-                            <input type="number" id="productStock" min="0" value="0">
+<div class="form-group" id="stockDisplayGroup" style="display: none; background: #f0fff4; padding: 15px; border-radius: 8px; border-left: 4px solid #38a169;">
+                        <label>📦 Aktueller Bestand (nur Anzeige)</label>
+                        <div style="font-size: 1.5em; font-weight: bold; color: #38a169; margin: 10px 0;">
+                            <span id="productStockDisplay">0</span> Einheiten
                         </div>
-                        <div class="form-group">
-                            <label>Mindestbestand</label>
-                            <input type="number" id="productMinStock" min="0" value="5">
-                        </div>
+                        <small style="color: #666;">
+                            Bestand wird über "📊 Bestand" Tab verwaltet (Beschaffungen & Korrekturen)
+                        </small>
+                    </div>
+                    <input type="hidden" id="productStock" value="0">
+                    
+                    <div class="form-group">
+                        <label>Mindestbestand</label>
+                        <input type="number" id="productMinStock" min="0" value="5">
+                        <small style="color: #666;">Warnung bei Unterschreitung</small>
                     </div>
 
                     <div class="form-group" id="stockHistorySection" style="display: none; background: #f8fafc; padding: 15px; border-radius: 8px; border-left: 4px solid #667eea;">
@@ -1000,8 +1006,7 @@
                     </div>
                     
                     <div class="form-group">
-                        <label>Barcodes (optional, mit Enter trennen)</label>                        <textarea id="productBarcodes" rows="3" placeholder="4000417025001&#10;5000112637447"></textarea>
-                    </div>
+                        <label>Barcodes (optional, mit Enter trennen)</label>                    </div>
                     
                     <div class="form-group">
                         <label>
@@ -1869,6 +1874,8 @@ if (productId) {
                         document.getElementById('productMemberPrice').value = (product.member_price || 0).toFixed(2);
                         document.getElementById('productGuestPrice').value = (product.guest_price || 0).toFixed(2);
                         document.getElementById('productStock').value = product.stock || 0;
+                        document.getElementById('productStockDisplay').textContent = product.stock || 0;
+                        document.getElementById('stockDisplayGroup').style.display = 'block';
                         document.getElementById('productMinStock').value = product.min_stock || 5;
                         
                         const barcodesValue = product.barcodes 
@@ -1908,6 +1915,7 @@ if (productId) {
                 } else {
                     title.textContent = 'Neues Produkt hinzufügen';
                     document.getElementById('productStock').value = '0';
+                    document.getElementById('stockDisplayGroup').style.display = 'none';
                     document.getElementById('productMinStock').value = '5';
                     document.getElementById('productAvailable').checked = true;
                 }
