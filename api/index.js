@@ -145,34 +145,29 @@ module.exports = async (req, res) => {
             }
         }
 
-        // ============ DASHBOARD ============
+// ============ DASHBOARD ============
         if (path === '/dashboard' && method === 'GET') {
             try {
                 const { data: users } = await supabase.from('users').select('role').eq('role', 'member');
                 const { data: products } = await supabase.from('products').select('stock, available').eq('available', true);
                 const { data: allProducts } = await supabase.from('products').select('stock, min_stock');
                 
-                const today = new Date().toISOString().split('T')[0];
-                const { data: todayTransactions } = await supabase
+                // Nicht abgerechnete Transaktionen statt heutige
+                const { data: unbilledTransactions } = await supabase
                     .from('transactions')
                     .select('total')
-                    .gte('created_at', today);
+                    .is('billing_id', null);
 
                 const stats = {
                     member_count: users ? users.length : 0,
                     available_products: products ? products.length : 0,
                     total_stock: allProducts ? allProducts.reduce((sum, p) => sum + (p.stock || 0), 0) : 0,
                     low_stock_count: allProducts ? allProducts.filter(p => (p.stock || 0) <= (p.min_stock || 0)).length : 0,
-                    today_transactions: todayTransactions ? todayTransactions.length : 0,
-                    today_revenue: todayTransactions ? todayTransactions.reduce((sum, t) => sum + (t.total || 0), 0) : 0
+                    unbilled_transactions: unbilledTransactions ? unbilledTransactions.length : 0,
+                    unbilled_revenue: unbilledTransactions ? unbilledTransactions.reduce((sum, t) => sum + (t.total || 0), 0) : 0
                 };
 
                 return res.status(200).json(stats);
-            } catch (error) {
-                console.error('Dashboard error:', error);
-                return res.status(500).json({ error: 'Dashboard data fetch failed' });
-            }
-        }
 
         // ============ USERS ENDPUNKTE ============
         
