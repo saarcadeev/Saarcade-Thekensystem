@@ -979,7 +979,7 @@
                         </div>
                     </div>
                     
-<div class="form-group" id="stockDisplayGroup" style="display: none; background: #f0fff4; padding: 15px; border-radius: 8px; border-left: 4px solid #38a169;">
+                    <div class="form-group" id="stockDisplayGroup" style="display: none; background: #f0fff4; padding: 15px; border-radius: 8px; border-left: 4px solid #38a169;">
                         <label>📦 Aktueller Bestand (nur Anzeige)</label>
                         <div style="font-size: 1.5em; font-weight: bold; color: #38a169; margin: 10px 0;">
                             <span id="productStockDisplay">0</span> Einheiten
@@ -1874,10 +1874,15 @@ if (productId) {
                         document.getElementById('productMemberPrice').value = (product.member_price || 0).toFixed(2);
                         document.getElementById('productGuestPrice').value = (product.guest_price || 0).toFixed(2);
                         document.getElementById('productStock').value = product.stock || 0;
-                        document.getElementById('productStockDisplay').textContent = product.stock || 0;
-                        document.getElementById('stockDisplayGroup').style.display = 'block';
                         document.getElementById('productMinStock').value = product.min_stock || 5;
                         
+                        // Bestandsanzeige aktualisieren (falls vorhanden)
+                        const stockDisplay = document.getElementById('productStockDisplay');
+                        const stockGroup = document.getElementById('stockDisplayGroup');
+                        if (stockDisplay && stockGroup) {
+                            stockDisplay.textContent = product.stock || 0;
+                            stockGroup.style.display = 'block';
+                        }                        
                         const barcodesValue = product.barcodes 
                             ? (Array.isArray(product.barcodes) ? product.barcodes : [product.barcodes]) 
                             : (product.barcode ? [product.barcode] : []);
@@ -1915,9 +1920,14 @@ if (productId) {
                 } else {
                     title.textContent = 'Neues Produkt hinzufügen';
                     document.getElementById('productStock').value = '0';
-                    document.getElementById('stockDisplayGroup').style.display = 'none';
                     document.getElementById('productMinStock').value = '5';
                     document.getElementById('productAvailable').checked = true;
+                    
+                    // Bestandsanzeige verstecken bei neuem Produkt
+                    const stockGroup = document.getElementById('stockDisplayGroup');
+                    if (stockGroup) {
+                        stockGroup.style.display = 'none';
+                    }
                 }
                 
                 modal.style.display = 'block';
