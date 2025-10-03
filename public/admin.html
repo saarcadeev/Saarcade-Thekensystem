@@ -517,11 +517,12 @@
         <div class="tabs">
             <button class="tab" onclick="showTab('users')">👥 Mitglieder</button>
             <button class="tab active" onclick="showTab('products')">📦 Produkte</button>
+            <button class="tab" onclick="showTab('stock')">📊 Bestand</button>
             <button class="tab" onclick="showTab('transactions')">💰 Transaktionen</button>
             <button class="tab" onclick="showTab('settings')">⚙️ Einstellungen</button>
             <button class="tab" onclick="showTab('billing')">📋 Abrechnung</button>
         </div>
-
+        
         <!-- Mitglieder Tab -->
         <div id="users" class="tab-content">
             <div class="section">
@@ -622,6 +623,58 @@
             </div>
         </div>
 
+        <!-- Bestand Tab -->
+        <div id="stock" class="tab-content">
+            <div class="section">
+                <h2>📊 Bestandsverwaltung</h2>
+                
+                <div class="toolbar">
+                    <button class="btn btn-success" onclick="openStockMovementModal('purchase')" id="addPurchaseBtn">
+                        📥 Beschaffung
+                    </button>
+                    <button class="btn btn-warning" onclick="openStockMovementModal('correction')" id="addCorrectionBtn">
+                        🔧 Korrektur
+                    </button>
+                    <button class="btn" onclick="loadStockMovements()">
+                        🔄 Neu laden
+                    </button>
+                    <select id="stockFilter" onchange="filterStockMovements()" style="padding: 10px; border-radius: 6px; border: 2px solid #e2e8f0;">
+                        <option value="all">Alle Bewegungen</option>
+                        <option value="purchase">📥 Beschaffungen</option>
+                        <option value="sale">🛒 Verkäufe</option>
+                        <option value="correction">🔧 Korrekturen</option>
+                        <option value="initial">🎯 Startbestände</option>
+                    </select>
+                </div>
+
+                <div style="overflow-x: auto;">
+                    <table class="data-table" id="stockMovementTable">
+                        <thead>
+                            <tr>
+                                <th>Datum/Zeit</th>
+                                <th>Produkt</th>
+                                <th>Typ</th>
+                                <th>Menge</th>
+                                <th>Bestand vorher</th>
+                                <th>Bestand nachher</th>
+                                <th>Grund</th>
+                                <th>Referenz</th>
+                                <th>Erstellt von</th>
+                                <th>Aktionen</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="10" style="text-align: center; padding: 30px; color: #666;">
+                                    Lade Bestandsbewegungen...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
         <!-- Transaktionen Tab -->
         <div id="transactions" class="tab-content">
             <div class="section">
@@ -926,7 +979,7 @@
                         </div>
                     </div>
                     
-                    <div class="form-grid">
+<                    div class="form-grid">
                         <div class="form-group">
                             <label>Aktueller Bestand</label>
                             <input type="number" id="productStock" min="0" value="0">
@@ -936,10 +989,18 @@
                             <input type="number" id="productMinStock" min="0" value="5">
                         </div>
                     </div>
+
+                    <div class="form-group" id="stockHistorySection" style="display: none; background: #f8fafc; padding: 15px; border-radius: 8px; border-left: 4px solid #667eea;">
+                        <button type="button" class="btn" onclick="viewProductStockHistory()" id="viewStockHistoryBtn">
+                            📊 Bestandshistorie anzeigen
+                        </button>
+                        <small style="display: block; margin-top: 8px; color: #666;">
+                            Zeige alle Bestandsbewegungen für dieses Produkt
+                        </small>
+                    </div>
                     
                     <div class="form-group">
-                        <label>Barcodes (optional, mit Enter trennen)</label>
-                        <textarea id="productBarcodes" rows="3" placeholder="4000417025001&#10;5000112637447"></textarea>
+                        <label>Barcodes (optional, mit Enter trennen)</label>                        <textarea id="productBarcodes" rows="3" placeholder="4000417025001&#10;5000112637447"></textarea>
                     </div>
                     
                     <div class="form-group">
@@ -1052,9 +1113,77 @@
             </div>
         </div>
     </div>
+
+<!-- Stock Movement Modal -->
+    <div id="stockMovementModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="stockMovementModalTitle">Bestandsbewegung</h3>
+                <span class="close" onclick="closeModal('stockMovementModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="stockMovementForm">
+                    <input type="hidden" id="movementType" value="">
+                    
+                    <div class="form-group">
+                        <label>Produkt auswählen *</label>
+                        <select id="movementProductId" required onchange="updateStockInfo()">
+                            <option value="">-- Produkt wählen --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="currentStockInfo" style="display: none; background: #f8fafc; padding: 12px; border-radius: 6px;">
+                        <strong>Aktueller Bestand:</strong> <span id="currentStockValue">-</span> Einheiten
+                    </div>
+                    
+                    <div class="form-group">
+                        <label id="quantityLabel">Menge *</label>
+                        <input type="number" id="movementQuantity" required min="1" step="1" placeholder="0">
+                        <small id="quantityHelp" style="color: #666;"></small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Grund / Bemerkung</label>
+                        <textarea id="movementReason" rows="3" placeholder="z.B. Wochenmarkt-Einkauf, Inventur-Korrektur"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Referenz (optional)</label>
+                        <input type="text" id="movementReference" placeholder="z.B. Lieferschein-Nr., Rechnungs-Nr.">
+                    </div>
+
+                    <div id="costFields" style="display: none;">
+                        <hr style="margin: 20px 0; border: none; border-top: 2px solid #e2e8f0;">
+                        <h4 style="margin-bottom: 15px; color: #667eea;">💰 Kosten (optional)</h4>
+                        
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Preis pro Einheit (€)</label>
+                                <input type="number" id="movementCostPerUnit" step="0.01" min="0" placeholder="0.00" onchange="calculateTotalCost()">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Gesamtkosten (€)</label>
+                                <input type="number" id="movementTotalCost" step="0.01" min="0" placeholder="0.00" readonly style="background: #f8fafc;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="text-align: right; margin-top: 20px;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('stockMovementModal')">
+                            Abbrechen
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="saveStockMovement()" id="saveMovementBtn">
+                            💾 Speichern
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
     
     <script>
-        // ============ GLOBALE VARIABLEN ============
+// ============ GLOBALE VARIABLEN ============
         let apiConnected = false;
         let users = [];
         let products = [];
@@ -1065,11 +1194,14 @@
         let transactions = [];
         let allTransactions = [];
         let sepaUsers = [];
+        let stockMovements = [];
+        let allStockMovements = [];
         
         // Tracking welche Tabs bereits geladen wurden
         let loadedTabs = {
             users: false,
             products: false,
+            stock: false,
             transactions: false,
             settings: false,
             billing: false
@@ -1324,7 +1456,7 @@
             }, 4000);
         }
 
-        // ============ TAB NAVIGATION ============
+// ============ TAB NAVIGATION ============
         function showTab(tabName) {
             document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -1340,6 +1472,9 @@
                     case 'users':
                         loadUsers();
                         break;
+                    case 'stock':
+                        loadStockMovements();
+                        break;
                     case 'transactions':
                         loadTransactions();
                         break;
@@ -1350,6 +1485,7 @@
                 }
             }
         }
+        
         // ============ SELECTION FUNCTIONS ============
         
         function toggleSelectAll(type) {
@@ -1691,6 +1827,7 @@ async function loadDashboard() {
                 const modal = document.getElementById('productModal');
                 const title = document.getElementById('productModalTitle');
                 const form = document.getElementById('productForm');
+                const stockHistorySection = document.getElementById('stockHistorySection');
                 
                 if (!modal || !title || !form) {
                     console.error('Modal-Elemente nicht gefunden');
@@ -1702,7 +1839,7 @@ async function loadDashboard() {
                 document.getElementById('productId').value = '';
                 document.getElementById('currentImageUrl').value = '';
                 document.getElementById('currentImagePath').value = '';
-                
+                stockHistorySection.style.display = 'none';                
                 try {
                     resetPhotoPreview();
                 } catch (resetError) {
@@ -1719,10 +1856,11 @@ async function loadDashboard() {
                     }
                 }
                 
-                if (productId) {
+if (productId) {
                     const product = products.find(p => p.id === productId);
                     if (product) {
                         title.textContent = 'Produkt bearbeiten';
+                        stockHistorySection.style.display = 'block';
                         
                         document.getElementById('productId').value = product.id || '';
                         document.getElementById('productName').value = product.name || '';
@@ -3193,6 +3331,237 @@ async function exportUserTransactionsCSV(userId, firstName, lastName) {
     downloadFile(csv, fileName, 'text/csv');
     showAlert(`CSV für ${periodLabel} exportiert`, 'success');
 }
+
+// ============ STOCK MOVEMENT FUNCTIONS ============
+
+        async function loadStockMovements() {
+            try {
+                allStockMovements = await apiCall('/api/stock-movements');
+                stockMovements = allStockMovements;
+                renderStockMovements();
+                showAlert(`${stockMovements.length} Bestandsbewegungen geladen`, 'success');
+            } catch (error) {
+                console.error('Fehler beim Laden der Bestandsbewegungen:', error);
+                showAlert('Fehler beim Laden der Bestandsbewegungen', 'error');
+            }
+        }
+
+        function renderStockMovements() {
+            const tbody = document.querySelector('#stockMovementTable tbody');
+            
+            if (stockMovements.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 30px; color: #666;">Keine Bestandsbewegungen gefunden</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = stockMovements.map(m => {
+                const date = new Date(m.created_at);
+                const formattedDate = date.toLocaleDateString('de-DE');
+                const formattedTime = date.toLocaleTimeString('de-DE');
+                
+                let typeIcon, typeColor, typeText;
+                switch(m.movement_type) {
+                    case 'initial':
+                        typeIcon = '🎯';
+                        typeColor = '#9f7aea';
+                        typeText = 'Startbestand';
+                        break;
+                    case 'purchase':
+                        typeIcon = '📥';
+                        typeColor = '#38a169';
+                        typeText = 'Beschaffung';
+                        break;
+                    case 'sale':
+                        typeIcon = '🛒';
+                        typeColor = '#3182ce';
+                        typeText = 'Verkauf';
+                        break;
+                    case 'correction':
+                        typeIcon = '🔧';
+                        typeColor = '#ed8936';
+                        typeText = 'Korrektur';
+                        break;
+                    default:
+                        typeIcon = '❓';
+                        typeColor = '#666';
+                        typeText = m.movement_type;
+                }
+                
+                const quantityColor = m.quantity >= 0 ? '#38a169' : '#e53e3e';
+                const quantitySign = m.quantity >= 0 ? '+' : '';
+                
+                const deleteBtn = m.movement_type !== 'sale' ? 
+                    `<button class="btn btn-danger" onclick="deleteStockMovement(${m.id}, '${m.product_name}')" style="padding: 5px 10px; font-size: 0.8em;">🗑️</button>` : 
+                    '<span style="color: #666; font-size: 0.85em;">Automatisch</span>';
+                
+                return `
+                    <tr>
+                        <td>${formattedDate}<br><small>${formattedTime}</small></td>
+                        <td><strong>${m.product_name}</strong></td>
+                        <td style="color: ${typeColor};">${typeIcon} ${typeText}</td>
+                        <td style="color: ${quantityColor}; font-weight: bold;">${quantitySign}${m.quantity}</td>
+                        <td>${m.stock_before}</td>
+                        <td><strong>${m.stock_after}</strong></td>
+                        <td style="font-size: 0.9em;">${m.reason || '-'}</td>
+                        <td style="font-size: 0.9em;">${m.reference || '-'}</td>
+                        <td style="font-size: 0.9em;">${m.created_by || '-'}</td>
+                        <td>${deleteBtn}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function filterStockMovements() {
+            const filter = document.getElementById('stockFilter').value;
+            
+            if (filter === 'all') {
+                stockMovements = allStockMovements;
+            } else {
+                stockMovements = allStockMovements.filter(m => m.movement_type === filter);
+            }
+            
+            renderStockMovements();
+        }
+
+        function openStockMovementModal(type) {
+            const modal = document.getElementById('stockMovementModal');
+            const title = document.getElementById('stockMovementModalTitle');
+            const form = document.getElementById('stockMovementForm');
+            const quantityLabel = document.getElementById('quantityLabel');
+            const quantityHelp = document.getElementById('quantityHelp');
+            const costFields = document.getElementById('costFields');
+            
+            form.reset();
+            document.getElementById('movementType').value = type;
+            
+            const productSelect = document.getElementById('movementProductId');
+            productSelect.innerHTML = '<option value="">-- Produkt wählen --</option>' + 
+                products.map(p => `<option value="${p.id}">${p.name} (Bestand: ${p.stock})</option>`).join('');
+            
+            if (type === 'purchase') {
+                title.textContent = '📥 Beschaffung / Nachbestellung';
+                quantityLabel.textContent = 'Menge (Zugang) *';
+                quantityHelp.textContent = 'Anzahl der eingekauften/gelieferten Einheiten';
+                costFields.style.display = 'block';
+            } else if (type === 'correction') {
+                title.textContent = '🔧 Bestandskorrektur';
+                quantityLabel.textContent = 'Mengendifferenz *';
+                quantityHelp.textContent = 'Positiv für Zugang, negativ für Abgang (z.B. +5 oder -3)';
+                costFields.style.display = 'none';
+            }
+            
+            document.getElementById('currentStockInfo').style.display = 'none';
+            modal.style.display = 'block';
+            
+            setTimeout(() => {
+                productSelect.focus();
+            }, 150);
+        }
+
+        function updateStockInfo() {
+            const productId = parseInt(document.getElementById('movementProductId').value);
+            const stockInfo = document.getElementById('currentStockInfo');
+            const stockValue = document.getElementById('currentStockValue');
+            
+            if (productId) {
+                const product = products.find(p => p.id === productId);
+                if (product) {
+                    stockValue.textContent = product.stock;
+                    stockInfo.style.display = 'block';
+                }
+            } else {
+                stockInfo.style.display = 'none';
+            }
+        }
+
+        function calculateTotalCost() {
+            const quantity = parseFloat(document.getElementById('movementQuantity').value) || 0;
+            const costPerUnit = parseFloat(document.getElementById('movementCostPerUnit').value) || 0;
+            const totalCost = quantity * costPerUnit;
+            
+            document.getElementById('movementTotalCost').value = totalCost.toFixed(2);
+        }
+
+        async function saveStockMovement() {
+            const saveBtn = document.getElementById('saveMovementBtn');
+            const productId = parseInt(document.getElementById('movementProductId').value);
+            const movementType = document.getElementById('movementType').value;
+            let quantity = parseInt(document.getElementById('movementQuantity').value);
+            const reason = document.getElementById('movementReason').value.trim();
+            const reference = document.getElementById('movementReference').value.trim();
+            const costPerUnit = parseFloat(document.getElementById('movementCostPerUnit').value) || null;
+            const totalCost = parseFloat(document.getElementById('movementTotalCost').value) || null;
+            
+            if (!productId || !quantity) {
+                showAlert('Bitte Produkt und Menge eingeben', 'error');
+                return;
+            }
+
+            if (movementType === 'purchase') {
+                quantity = Math.abs(quantity);
+            }
+            
+            const movementData = {
+                product_id: productId,
+                movement_type: movementType,
+                quantity: quantity,
+                reason: reason || null,
+                reference: reference || null,
+                cost_per_unit: costPerUnit,
+                total_cost: totalCost,
+                created_by: 'admin'
+            };
+            
+            try {
+                saveBtn.disabled = true;
+                saveBtn.textContent = '⏳ Speichere...';
+                
+                const result = await apiCall('/api/stock-movements', {
+                    method: 'POST',
+                    body: JSON.stringify(movementData)
+                });
+                
+                showAlert(`✅ Bestandsbewegung gespeichert! Neuer Bestand: ${result.newStock}`, 'success');
+                closeModal('stockMovementModal');
+                
+                await loadStockMovements();
+                await loadProducts();
+                await loadDashboard();
+                
+            } catch (error) {
+                showAlert('Fehler beim Speichern der Bestandsbewegung: ' + error.message, 'error');
+                console.error('Save stock movement error:', error);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = '💾 Speichern';
+            }
+        }
+
+        async function deleteStockMovement(movementId, productName) {
+            if (!confirm(`Möchtest du diese Bestandsbewegung wirklich löschen?\n\nProdukt: ${productName}\n\nDer Bestand wird automatisch zurückgerechnet.`)) {
+                return;
+            }
+            
+            try {
+                showLoading(true);
+                
+                await apiCall(`/api/stock-movements/${movementId}`, {
+                    method: 'DELETE'
+                });
+                
+                showAlert('✅ Bestandsbewegung gelöscht und Bestand korrigiert', 'success');
+                
+                await loadStockMovements();
+                await loadProducts();
+                await loadDashboard();
+                
+            } catch (error) {
+                showAlert('Fehler beim Löschen: ' + error.message, 'error');
+                console.error('Delete stock movement error:', error);
+            } finally {
+                showLoading(false);
+            }
+        }
         
         // ============ HELPER FUNCTIONS ============
         
@@ -3325,6 +3694,130 @@ async function exportUserTransactionsCSV(userId, firstName, lastName) {
             }
         }
 
+        // ============ PRODUCT STOCK HISTORY FUNCTIONS ============
+
+        async function viewProductStockHistory() {
+            const productId = parseInt(document.getElementById('productId').value);
+            
+            if (!productId) {
+                showAlert('Produkt-ID nicht gefunden', 'error');
+                return;
+            }
+
+            try {
+                showLoading(true);
+                
+                const movements = await apiCall(`/api/stock-movements/product/${productId}`);
+                const product = products.find(p => p.id === productId);
+                
+                if (!product) {
+                    showAlert('Produkt nicht gefunden', 'error');
+                    return;
+                }
+
+                closeModal('productModal');
+                showProductStockHistoryModal(product, movements);
+                
+            } catch (error) {
+                console.error('Fehler beim Laden der Bestandshistorie:', error);
+                showAlert('Fehler beim Laden der Bestandshistorie', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function showProductStockHistoryModal(product, movements) {
+            const modal = document.getElementById('billingDetailsModal');
+            const title = document.getElementById('billingDetailsTitle');
+            const content = document.getElementById('billingDetailsContent');
+            
+            title.textContent = `📊 Bestandshistorie: ${product.name}`;
+            
+            let html = `
+                <div style="margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 8px;">
+                    <p><strong>Produkt:</strong> ${product.name}</p>
+                    <p><strong>Aktueller Bestand:</strong> <span style="color: ${product.stock > 0 ? '#38a169' : '#e53e3e'}; font-weight: bold;">${product.stock} Einheiten</span></p>
+                    <p><strong>Mindestbestand:</strong> ${product.min_stock} Einheiten</p>
+                    <p><strong>Kategorie:</strong> ${getCategoryText(product.category)}</p>
+                </div>
+                
+                <hr style="margin: 20px 0; border: none; border-top: 2px solid #e2e8f0;">
+                
+                <h3 style="margin-bottom: 15px; color: #667eea;">📜 Bewegungshistorie (${movements.length})</h3>
+            `;
+            
+            if (movements.length === 0) {
+                html += '<p style="text-align: center; color: #666; padding: 30px;">Noch keine Bestandsbewegungen aufgezeichnet</p>';
+            } else {
+                html += `
+                    <div style="max-height: 500px; overflow-y: auto;">
+                        <table class="data-table" style="font-size: 0.85em;">
+                            <thead>
+                                <tr>
+                                    <th>Datum/Zeit</th>
+                                    <th>Typ</th>
+                                    <th>Menge</th>
+                                    <th>Vorher</th>
+                                    <th>Nachher</th>
+                                    <th>Grund</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${movements.map(m => {
+                                    const date = new Date(m.created_at);
+                                    let typeIcon, typeColor, typeText;
+                                    
+                                    switch(m.movement_type) {
+                                        case 'initial':
+                                            typeIcon = '🎯';
+                                            typeColor = '#9f7aea';
+                                            typeText = 'Start';
+                                            break;
+                                        case 'purchase':
+                                            typeIcon = '📥';
+                                            typeColor = '#38a169';
+                                            typeText = 'Beschaffung';
+                                            break;
+                                        case 'sale':
+                                            typeIcon = '🛒';
+                                            typeColor = '#3182ce';
+                                            typeText = 'Verkauf';
+                                            break;
+                                        case 'correction':
+                                            typeIcon = '🔧';
+                                            typeColor = '#ed8936';
+                                            typeText = 'Korrektur';
+                                            break;
+                                        default:
+                                            typeIcon = '❓';
+                                            typeColor = '#666';
+                                            typeText = m.movement_type;
+                                    }
+                                    
+                                    const quantityColor = m.quantity >= 0 ? '#38a169' : '#e53e3e';
+                                    const quantitySign = m.quantity >= 0 ? '+' : '';
+                                    
+                                    return `
+                                        <tr>
+                                            <td>${date.toLocaleDateString('de-DE')}<br><small>${date.toLocaleTimeString('de-DE')}</small></td>
+                                            <td style="color: ${typeColor};">${typeIcon} ${typeText}</td>
+                                            <td style="color: ${quantityColor}; font-weight: bold;">${quantitySign}${m.quantity}</td>
+                                            <td>${m.stock_before}</td>
+                                            <td><strong>${m.stock_after}</strong></td>
+                                            <td style="font-size: 0.9em;">${m.reason || '-'}</td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+            
+            content.innerHTML = html;
+            modal.style.display = 'block';
+        }
+        
 async function resetUserPin() {
     const userId = document.getElementById('userId').value;
     if (!userId) return;
