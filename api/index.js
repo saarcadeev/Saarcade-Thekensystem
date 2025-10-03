@@ -119,7 +119,7 @@ module.exports = async (req, res) => {
             }
         }
 
-        // ============ IMAGE DELETE ENDPUNKT ============
+// ============ IMAGE DELETE ENDPUNKT ============
         if (pathParts[0] === 'delete-image' && method === 'DELETE') {
             try {
                 const { filePath } = req.body;
@@ -145,7 +145,7 @@ module.exports = async (req, res) => {
             }
         }
 
-// ============ DASHBOARD ============
+        // ============ DASHBOARD ============
         if (path === '/dashboard' && method === 'GET') {
             try {
                 const { data: users } = await supabase.from('users').select('role').eq('role', 'member');
@@ -168,6 +168,11 @@ module.exports = async (req, res) => {
                 };
 
                 return res.status(200).json(stats);
+            } catch (error) {
+                console.error('Dashboard error:', error);
+                return res.status(500).json({ error: 'Dashboard data fetch failed' });
+            }
+        }
 
         // ============ USERS ENDPUNKTE ============
         
@@ -180,8 +185,7 @@ module.exports = async (req, res) => {
             
             if (error) throw error;
             return res.status(200).json(data || []);
-        }
-// GET /users/id/{id} - Benutzer per ID
+        }// GET /users/id/{id} - Benutzer per ID
 if (pathParts[0] === 'users' && pathParts[1] === 'id' && pathParts[2] && method === 'GET') {
     const userId = parseInt(pathParts[2]);
     
