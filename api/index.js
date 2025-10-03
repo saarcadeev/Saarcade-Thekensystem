@@ -584,6 +584,46 @@ if (pathParts[0] === 'products' && pathParts[1] && method === 'PUT') {
                 }
             }
 
+// DELETE /transactions/{id} - Transaktion löschen
+        if (pathParts[0] === 'transactions' && pathParts[1] && method === 'DELETE') {
+            const transactionId = parseInt(pathParts[1]);
+            
+            if (isNaN(transactionId)) {
+                return res.status(400).json({ error: 'Ungültige Transaktions-ID' });
+            }
+
+            // Prüfe ob Transaktion bereits abgerechnet ist
+            const { data: transaction, error: fetchError } = await supabase
+                .from('transactions')
+                .select('*')
+                .eq('id', transactionId)
+                .single();
+            
+            if (fetchError) {
+                if (fetchError.code === 'PGRST116') {
+                    return res.status(404).json({ error: 'Transaktion nicht gefunden' });
+                }
+                throw fetchError;
+            }
+
+            if (transaction.is_billed || transaction.billing_id) {
+                return res.status(400).json({ error: 'Abgerechnete Transaktionen können nicht gelöscht werden' });
+            }
+
+            // Lösche die Transaktion
+            const { error: deleteError } = await supabase
+                .from('transactions')
+                .delete()
+                .eq('id', transactionId);
+            
+            if (deleteError) throw deleteError;
+            
+            return res.status(200).json({ 
+                message: 'Transaktion erfolgreich gelöscht',
+                transaction: transaction
+            });
+        }
+            
             // Transaktionen speichern
             const { data: savedTransactions, error: transactionError } = await supabase
                 .from('transactions')
