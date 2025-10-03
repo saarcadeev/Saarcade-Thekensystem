@@ -584,7 +584,31 @@ if (pathParts[0] === 'products' && pathParts[1] && method === 'PUT') {
                 }
             }
 
-// DELETE /transactions/{id} - Transaktion löschen
+            // Transaktionen speichern
+            const { data: savedTransactions, error: transactionError } = await supabase
+                .from('transactions')
+                .insert(transactions)
+                .select();
+            
+            if (transactionError) throw transactionError;
+
+            // Benutzersaldo aktualisieren
+            const newBalance = user.balance - totalAmount;
+            const { error: balanceError } = await supabase
+                .from('users')
+                .update({ balance: newBalance })
+                .eq('id', transactionData.userId);
+            
+            if (balanceError) throw balanceError;
+
+            return res.status(201).json({
+                transactions: savedTransactions,
+                newBalance: newBalance,
+                totalAmount: totalAmount
+            });
+        }
+
+        // DELETE /transactions/{id} - Transaktion löschen
         if (pathParts[0] === 'transactions' && pathParts[1] && method === 'DELETE') {
             const transactionId = parseInt(pathParts[1]);
             
@@ -623,31 +647,7 @@ if (pathParts[0] === 'products' && pathParts[1] && method === 'PUT') {
                 transaction: transaction
             });
         }
-            
-            // Transaktionen speichern
-            const { data: savedTransactions, error: transactionError } = await supabase
-                .from('transactions')
-                .insert(transactions)
-                .select();
-            
-            if (transactionError) throw transactionError;
-
-            // Benutzersaldo aktualisieren
-            const newBalance = user.balance - totalAmount;
-            const { error: balanceError } = await supabase
-                .from('users')
-                .update({ balance: newBalance })
-                .eq('id', transactionData.userId);
-            
-            if (balanceError) throw balanceError;
-
-            return res.status(201).json({
-                transactions: savedTransactions,
-                newBalance: newBalance,
-                totalAmount: totalAmount
-            });
-        }
-
+        
         // ============ SETTINGS ENDPUNKTE ============
         
         // GET /settings - Alle Einstellungen
