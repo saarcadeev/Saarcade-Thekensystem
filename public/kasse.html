@@ -310,22 +310,27 @@
 
         .products-section {
             background: rgba(255, 255, 255, 0.95);
-            /* backdrop-filter: blur(10px); <- temporär entfernen zum Testen */
             border-radius: 15px;
             padding: 15px;
             box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            position: relative; /* Hinzufügen */
-            z-index: 1; /* Niedrigerer Wert als Dropdown */
+            position: relative;
+            z-index: 1;
             background-image: url('/Saarcade-Logo.png');
             background-repeat: no-repeat;
             background-position: center center;
             background-size: contain;
-       /*   opacity: 0.1;  Dezent im Hintergrund */
-         }
+        }
 
+        .products-content-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        
         /* Logo ausblenden wenn Produkte sichtbar sind */
         .products-section:has(.products-grid[style*="display: grid"]) {
             background-image: none;
@@ -825,28 +830,28 @@ const additionalCSS = `
                     </div>
                 </div>
                 
-                <div id="loadingMessage">
-                    <div>⏳</div>
-                    <h3>Lade Produkte...</h3>
-                </div>
+    <div class="products-content-wrapper">
+        <div id="loadingMessage">
+            <div>⏳</div>
+            <h3>Lade Produkte...</h3>
+        </div>
+        
+        <div id="noUserMessage" style="display: none;">
+            <div>👤</div>
+            <h3>Bitte zuerst Mitglied auswählen</h3>
+            <p>Mitgliedsausweis scannen oder Namen eingeben</p>
+        </div>
+        
+        <div class="products-grid" id="productsGrid" style="display: none;">
+            <!-- Produkte werden hier eingefügt -->
+        </div>
+    </div>
+    
+    <!-- Credits - IMMER am unteren Rand -->
+    <div style="text-align: center; padding: 8px; font-size: 0.75em; color: #a0aec0; border-top: 1px solid #f0f0f0; margin-top: auto;">
+        Erstellt durch Jochen Klemm und Claude.ai
+    </div>
                 
-                <div id="noUserMessage" style="display: none;">
-                    <div>👤</div>
-                    <h3>Bitte zuerst Mitglied auswählen</h3>
-                    <p>Mitgliedsausweis scannen oder Namen eingeben</p>
-                </div>
-                
-                <div class="products-grid" id="productsGrid" style="display: none;">
-                    <!-- Produkte werden hier eingefügt -->
-                </div>
-
-                    <!-- Credits -->
-                <div style="text-align: center; padding: 8px; font-size: 0.75em; color: #a0aec0; border-top: 1px solid #f0f0f0; margin-top: 10px;">
-                    Erstellt durch Jochen Klemm und Claude.ai
-                </div>
-                
-            </div>
-
             <div class="cart-section">
                 <h2>🛒 Warenkorb</h2>
                 
