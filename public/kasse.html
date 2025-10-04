@@ -768,6 +768,29 @@ const additionalCSS = `
     </style>
 </head>
 <body>
+
+    <script>
+        // Login-Schutz für Kasse
+        (function() {
+            const loginData = sessionStorage.getItem('kasseLogin');
+            if (!loginData) {
+                window.location.href = '/login-kasse.html';
+                return;
+            }
+            
+            try {
+                const user = JSON.parse(loginData);
+                if (!user || (user.role !== 'bartender' && user.role !== 'admin')) {
+                    sessionStorage.removeItem('kasseLogin');
+                    window.location.href = '/login-kasse.html';
+                }
+            } catch (e) {
+                sessionStorage.removeItem('kasseLogin');
+                window.location.href = '/login-kasse.html';
+            }
+        })();
+    </script>
+    
     <div class="container">
         <div class="header">
             <h1>🎮 Saarcade Kassensystem</h1>
