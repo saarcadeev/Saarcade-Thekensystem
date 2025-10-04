@@ -62,6 +62,46 @@ module.exports = async (req, res) => {
         
         console.log(`${method} ${path}`);
 
+// ============ LOGIN ============
+        if (path === '/login' && method === 'POST') {
+            try {
+                const { username, password, role } = req.body;
+                
+                if (!username || !password) {
+                    return res.status(400).json({ error: 'Username und Passwort erforderlich' });
+                }
+
+                const { data: admin, error } = await supabase
+                    .from('admins')
+                    .select('*')
+                    .eq('username', username)
+                    .eq('password', password)
+                    .single();
+
+                if (error || !admin) {
+                    return res.status(401).json({ error: 'Ungültige Anmeldedaten' });
+                }
+
+                // Prüfe Rolle
+                if (role && admin.role !== role) {
+                    return res.status(403).json({ error: 'Keine Berechtigung für diesen Bereich' });
+                }
+
+                return res.status(200).json({
+                    success: true,
+                    user: {
+                        id: admin.id,
+                        username: admin.username,
+                        role: admin.role
+                    }
+                });
+
+            } catch (error) {
+                console.error('Login error:', error);
+                return res.status(500).json({ error: 'Login fehlgeschlagen' });
+            }
+        }
+        
         // ============ HEALTH CHECK ============
         if (path === '/health') {
             return res.status(200).json({
