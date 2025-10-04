@@ -481,25 +481,34 @@
 <body>
 
     <script>
-        // Login-Schutz für Admin
-        (function() {
-            const loginData = sessionStorage.getItem('adminLogin');
-            if (!loginData) {
-                window.location.href = '/login-admin.html';
-                return;
-            }
-            
-            try {
-                const user = JSON.parse(loginData);
-                if (!user || user.role !== 'admin') {
-                    sessionStorage.removeItem('adminLogin');
-                    window.location.href = '/login-admin.html';
-                }
-            } catch (e) {
-                sessionStorage.removeItem('adminLogin');
-                window.location.href = '/login-admin.html';
-            }
-        })();
+// Login-Schutz für Admin mit Ablauf-Prüfung
+(function() {
+    const loginDataStr = localStorage.getItem('adminLogin');
+    if (!loginDataStr) {
+        window.location.href = '/login-admin.html';
+        return;
+    }
+    
+    try {
+        const loginData = JSON.parse(loginDataStr);
+        
+        // Prüfe Ablauf
+        if (loginData.expires && Date.now() > loginData.expires) {
+            localStorage.removeItem('adminLogin');
+            window.location.href = '/login-admin.html';
+            return;
+        }
+        
+        const user = loginData.user;
+        if (!user || user.role !== 'admin') {
+            localStorage.removeItem('adminLogin');
+            window.location.href = '/login-admin.html';
+        }
+    } catch (e) {
+        localStorage.removeItem('adminLogin');
+        window.location.href = '/login-admin.html';
+    }
+})();
     </script>v
     
     <div class="loading-overlay" id="loadingOverlay">
@@ -3752,13 +3761,13 @@ async function exportUserTransactionsCSV(userId, firstName, lastName) {
             }
         });
 
-        // Logout-Funktion
-        function logoutAdmin() {
-            if (confirm('Möchtest du dich wirklich abmelden?')) {
-                sessionStorage.removeItem('adminLogin');
-                window.location.href = '/login-admin.html';
-            }
-        }
+// Logout-Funktion
+function logoutAdmin() {
+    if (confirm('Möchtest du dich wirklich abmelden?')) {
+        localStorage.removeItem('adminLogin');
+        window.location.href = '/login-admin.html';
+    }
+}
         
         window.onclick = function(event) {
             if (event.target.classList.contains('modal')) {
