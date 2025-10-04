@@ -949,7 +949,7 @@ const additionalCSS = `
 
 <!-- Barzahlungs-Modal für Barkeeper -->
 <div id="cashPaymentModal" class="modal">
-    <div class="modal-content" style="max-width: 500px; max-height: 85vh;">
+    <div class="modal-content" style="max-width: 500px; max-height: none;">
         <div class="modal-header">
             <h3>💰 Barzahlung</h3>
         </div>
@@ -972,8 +972,9 @@ const additionalCSS = `
     <div style="font-size: 1.8em; font-weight: bold; color: #a0aec0;" id="changeAmount">0.00€</div>
 </div>
             
-<div id="insufficientSection" style="min-height: 58px; background: #fed7d7; padding: 12px; border-radius: 8px; margin-bottom: 15px; text-align: center; color: #c53030; display: flex; align-items: center; justify-content: center;">
-    <div id="insufficientContent" style="display: none;">
+<!-- Fehlerfeld mit FESTER Höhe -->
+<div id="insufficientSection" style="height: 60px; background: #fed7d7; padding: 12px; border-radius: 8px; margin-bottom: 15px; text-align: center; color: #c53030; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s ease;">
+    <div id="insufficientContent">
         <strong>⚠️ Betrag zu niedrig!</strong><br>
         <span style="font-size: 0.9em;">Noch <span id="missingAmount">0.00€</span> fehlen</span>
     </div>
@@ -2178,6 +2179,7 @@ function openCashPaymentModal(transactionData, totalAmount) {
     const cashGivenInput = document.getElementById('cashGiven');
     const changeSection = document.getElementById('changeSection');
     const changeAmount = document.getElementById('changeAmount');
+    const insufficientSection = document.getElementById('insufficientSection');
     
     totalAmountEl.textContent = totalAmount.toFixed(2) + '€';
     cashGivenInput.value = '';
@@ -2187,8 +2189,8 @@ function openCashPaymentModal(transactionData, totalAmount) {
     changeAmount.textContent = '0.00€';
     changeAmount.style.color = '#a0aec0';
     
-    // Fehlerfeld verstecken
-    document.getElementById('insufficientContent').style.display = 'none';
+    // Fehlerfeld unsichtbar (aber da!)
+    insufficientSection.style.opacity = '0';
     document.getElementById('completeCashBtn').disabled = true;
     
     modal.style.display = 'block';
@@ -2209,7 +2211,7 @@ function calculateChange() {
     const cashGiven = parseFloat(document.getElementById('cashGiven').value) || 0;
     
     const changeSection = document.getElementById('changeSection');
-    const insufficientContent = document.getElementById('insufficientContent');
+    const insufficientSection = document.getElementById('insufficientSection');
     const completeBtn = document.getElementById('completeCashBtn');
     
     // Rückgeld-Feld ist IMMER sichtbar
@@ -2218,7 +2220,7 @@ function calculateChange() {
     if (cashGiven === 0) {
         document.getElementById('changeAmount').textContent = '0.00€';
         document.getElementById('changeAmount').style.color = '#a0aec0';
-        insufficientContent.style.display = 'none';
+        insufficientSection.style.opacity = '0';
         completeBtn.disabled = true;
         return;
     }
@@ -2228,7 +2230,7 @@ function calculateChange() {
         document.getElementById('changeAmount').textContent = change.toFixed(2) + '€';
         document.getElementById('changeAmount').style.color = '#38a169';
         
-        insufficientContent.style.display = 'none';
+        insufficientSection.style.opacity = '0';
         completeBtn.disabled = false;
     } else {
         const missing = totalAmount - cashGiven;
@@ -2236,7 +2238,7 @@ function calculateChange() {
         
         document.getElementById('changeAmount').textContent = '0.00€';
         document.getElementById('changeAmount').style.color = '#a0aec0';
-        insufficientContent.style.display = 'block';
+        insufficientSection.style.opacity = '1';
         completeBtn.disabled = true;
     }
 }
