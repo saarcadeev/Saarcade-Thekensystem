@@ -951,7 +951,7 @@ const additionalCSS = `
                 <label>Vom Kunden erhalten (€)</label>
                 <input type="number" id="cashGiven" step="0.01" min="0" placeholder="0.00" 
                        style="text-align: center; font-size: 1.5em; font-weight: bold;"
-                       oninput="calculateChange()" autofocus>
+                       oninput="calculateChange()">
             </div>
 
             <div id="changeSection" style="display: none; background: #e6f3ff; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
@@ -966,11 +966,14 @@ const additionalCSS = `
 
             <div style="margin-top: 20px;">
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px;">
+                    <button class="btn btn-secondary" onclick="addCashAmount(0.50)" style="padding: 15px; font-size: 1.2em;">+50ct</button>
+                    <button class="btn btn-secondary" onclick="addCashAmount(1)" style="padding: 15px; font-size: 1.2em;">+1€</button>
+                    <button class="btn btn-secondary" onclick="addCashAmount(2)" style="padding: 15px; font-size: 1.2em;">+2€</button>
                     <button class="btn btn-secondary" onclick="addCashAmount(5)" style="padding: 15px; font-size: 1.2em;">+5€</button>
                     <button class="btn btn-secondary" onclick="addCashAmount(10)" style="padding: 15px; font-size: 1.2em;">+10€</button>
                     <button class="btn btn-secondary" onclick="addCashAmount(20)" style="padding: 15px; font-size: 1.2em;">+20€</button>
                     <button class="btn btn-secondary" onclick="addCashAmount(50)" style="padding: 15px; font-size: 1.2em;">+50€</button>
-                    <button class="btn btn-secondary" onclick="setExactAmount()" style="padding: 15px; font-size: 1.2em;">Passend</button>
+                    <button class="btn btn-secondary" onclick="addCashAmount(100)" style="padding: 15px; font-size: 1.2em;">+100€</button>
                     <button class="btn btn-danger" onclick="clearCashAmount()" style="padding: 15px; font-size: 1.2em;">↺</button>
                 </div>
 
@@ -985,7 +988,7 @@ const additionalCSS = `
             </div>
 
             <div style="margin-top: 20px; padding: 12px; background: #fff5e6; border-radius: 6px; text-align: center; font-size: 0.85em; color: #666;">
-                💡 Tipp: Scan den CHECKOUT-Barcode erneut oder klicke "Zahlung abschließen"
+                💡 Tipp: Scan CHECKOUT-Barcode für passende Zahlung
             </div>
         </div>
     </div>
