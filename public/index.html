@@ -326,7 +326,7 @@
             • SEPA-Export für Lastschriften<br>
             • Berichte und Statistiken<br>
             • Inventar und Bestandsführung</p>
-            <a href="/admin" class="demo-button" onclick="return checkAdminAccess()">🔐 Admin-Bereich</a>
+            <a href="/admin" class="demo-button">🔐 Admin-Bereich</a>
         </div>
     </div>
 
@@ -413,17 +413,6 @@
     </div>
 
     <script>
-        // Admin-Access Check (Passwortschutz)
-        function checkAdminAccess() {
-            const password = prompt('🔐 Admin-Passwort eingeben:\n\n(Demo-Passwort: "admin123")');
-            
-            if (password === 'admin123') {
-                return true; // Link wird geöffnet
-            } else if (password !== null) {
-                alert('❌ Falsches Passwort!\n\nFür die Demo verwenden Sie: admin123');
-            }
-            return false; // Link wird nicht geöffnet
-        }
 
         // Live-Statistiken von der API laden
         async function loadLiveStats() {
