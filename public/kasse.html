@@ -972,34 +972,35 @@ const additionalCSS = `
     <div style="font-size: 1.8em; font-weight: bold; color: #a0aec0;" id="changeAmount">0.00€</div>
 </div>
             
-            <div id="insufficientSection" style="display: none; background: #fed7d7; padding: 12px; border-radius: 8px; margin-bottom: 15px; text-align: center; color: #c53030;">
-                <strong>⚠️ Betrag zu niedrig!</strong><br>
-                <span style="font-size: 0.9em;">Noch <span id="missingAmount">0.00€</span> fehlen</span>
-            </div>
+<div id="insufficientSection" style="min-height: 58px; background: #fed7d7; padding: 12px; border-radius: 8px; margin-bottom: 15px; text-align: center; color: #c53030; display: flex; align-items: center; justify-content: center;">
+    <div id="insufficientContent" style="display: none;">
+        <strong>⚠️ Betrag zu niedrig!</strong><br>
+        <span style="font-size: 0.9em;">Noch <span id="missingAmount">0.00€</span> fehlen</span>
+    </div>
+</div>
+            
+<div style="margin-top: 15px;">
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px;">
+        <button class="btn btn-secondary" onclick="addCashAmount(0.50)" style="padding: 12px; font-size: 1.1em;">+50ct</button>
+        <button class="btn btn-secondary" onclick="addCashAmount(1)" style="padding: 12px; font-size: 1.1em;">+1€</button>
+        <button class="btn btn-secondary" onclick="addCashAmount(2)" style="padding: 12px; font-size: 1.1em;">+2€</button>
+        <button class="btn btn-secondary" onclick="addCashAmount(5)" style="padding: 12px; font-size: 1.1em;">+5€</button>
+        <button class="btn btn-secondary" onclick="addCashAmount(10)" style="padding: 12px; font-size: 1.1em;">+10€</button>
+        <button class="btn btn-secondary" onclick="addCashAmount(20)" style="padding: 12px; font-size: 1.1em;">+20€</button>
+        <button class="btn btn-secondary" onclick="addCashAmount(50)" style="padding: 12px; font-size: 1.1em;">+50€</button>
+        <button class="btn btn-success" onclick="setExactAmount()" style="padding: 12px; font-size: 1.1em;">✓ Passend</button>
+        <button class="btn btn-danger" onclick="clearCashAmount()" style="padding: 12px; font-size: 1.1em;">↺</button>
+    </div>
 
-            <div style="margin-top: 15px;">
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px;">
-                    <button class="btn btn-secondary" onclick="addCashAmount(0.50)" style="padding: 12px; font-size: 1.1em;">+50ct</button>
-                    <button class="btn btn-secondary" onclick="addCashAmount(1)" style="padding: 12px; font-size: 1.1em;">+1€</button>
-                    <button class="btn btn-secondary" onclick="addCashAmount(2)" style="padding: 12px; font-size: 1.1em;">+2€</button>
-                    <button class="btn btn-secondary" onclick="addCashAmount(5)" style="padding: 12px; font-size: 1.1em;">+5€</button>
-                    <button class="btn btn-secondary" onclick="addCashAmount(10)" style="padding: 12px; font-size: 1.1em;">+10€</button>
-                    <button class="btn btn-secondary" onclick="addCashAmount(20)" style="padding: 12px; font-size: 1.1em;">+20€</button>
-                    <button class="btn btn-secondary" onclick="addCashAmount(50)" style="padding: 12px; font-size: 1.1em;">+50€</button>
-                    <button class="btn btn-secondary" onclick="addCashAmount(100)" style="padding: 12px; font-size: 1.1em;">+100€</button>
-                    <button class="btn btn-danger" onclick="clearCashAmount()" style="padding: 12px; font-size: 1.1em;">↺</button>
-                </div>
-
-                <div style="text-align: center; margin-top: 20px; display: flex; gap: 10px;">
-                    <button class="btn btn-secondary" onclick="cancelCashPayment()" style="flex: 1; padding: 12px;">
-                        Abbrechen
-                    </button>
-                    <button class="btn btn-success" onclick="completeCashPayment()" id="completeCashBtn" disabled style="flex: 2; padding: 12px; font-size: 1.05em;">
-                        ✅ Zahlung abschließen
-                    </button>
-                </div>
-            </div>
-
+    <div style="text-align: center; margin-top: 20px; display: flex; gap: 10px;">
+        <button class="btn btn-secondary" onclick="cancelCashPayment()" style="flex: 1; padding: 12px;">
+            Abbrechen
+        </button>
+        <button class="btn btn-success" onclick="completeCashPayment()" id="completeCashBtn" disabled style="flex: 2; padding: 12px; font-size: 1.05em;">
+            ✅ Zahlung abschließen
+        </button>
+    </div>
+</div>
             <div style="margin-top: 15px; padding: 10px; background: #fff5e6; border-radius: 6px; text-align: center; font-size: 0.85em; color: #666;">
                 💡 Tipp: Scan CHECKOUT-Barcode für passende Zahlung
             </div>
@@ -2186,7 +2187,8 @@ function openCashPaymentModal(transactionData, totalAmount) {
     changeAmount.textContent = '0.00€';
     changeAmount.style.color = '#a0aec0';
     
-    document.getElementById('insufficientSection').style.display = 'none';
+    // Fehlerfeld verstecken
+    document.getElementById('insufficientContent').style.display = 'none';
     document.getElementById('completeCashBtn').disabled = true;
     
     modal.style.display = 'block';
@@ -2199,7 +2201,7 @@ function openCashPaymentModal(transactionData, totalAmount) {
         }
     }, 100);
 }
-
+        
 function calculateChange() {
     if (!pendingCashTransaction) return;
     
@@ -2207,7 +2209,7 @@ function calculateChange() {
     const cashGiven = parseFloat(document.getElementById('cashGiven').value) || 0;
     
     const changeSection = document.getElementById('changeSection');
-    const insufficientSection = document.getElementById('insufficientSection');
+    const insufficientContent = document.getElementById('insufficientContent');
     const completeBtn = document.getElementById('completeCashBtn');
     
     // Rückgeld-Feld ist IMMER sichtbar
@@ -2216,7 +2218,7 @@ function calculateChange() {
     if (cashGiven === 0) {
         document.getElementById('changeAmount').textContent = '0.00€';
         document.getElementById('changeAmount').style.color = '#a0aec0';
-        insufficientSection.style.display = 'none';
+        insufficientContent.style.display = 'none';
         completeBtn.disabled = true;
         return;
     }
@@ -2226,7 +2228,7 @@ function calculateChange() {
         document.getElementById('changeAmount').textContent = change.toFixed(2) + '€';
         document.getElementById('changeAmount').style.color = '#38a169';
         
-        insufficientSection.style.display = 'none';
+        insufficientContent.style.display = 'none';
         completeBtn.disabled = false;
     } else {
         const missing = totalAmount - cashGiven;
@@ -2234,11 +2236,11 @@ function calculateChange() {
         
         document.getElementById('changeAmount').textContent = '0.00€';
         document.getElementById('changeAmount').style.color = '#a0aec0';
-        insufficientSection.style.display = 'block';
+        insufficientContent.style.display = 'block';
         completeBtn.disabled = true;
     }
 }
-
+        
 function addCashAmount(amount) {
     const cashGivenInput = document.getElementById('cashGiven');
     const currentValue = parseFloat(cashGivenInput.value) || 0;
