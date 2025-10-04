@@ -1893,7 +1893,7 @@ async function checkout() {
             paymentMethod: 'balance'
         };
         
-const result = await createTransaction(transactionData);
+        const result = await createTransaction(transactionData);
         currentUser.balance = result.newBalance;
         
         const userIndex = users.findIndex(u => u.id === currentUser.id);
@@ -1906,7 +1906,7 @@ const result = await createTransaction(transactionData);
         // NEUE LOGIK: Barkeeper bekommen Barzahlungs-Dialog
         if (currentUser.role === 'bartender') {
             openCashPaymentModal(transactionData, total);
-            return; // Warte auf Barzahlungs-Abschluss, verarbeite nicht weiter
+            return; // Warte auf Barzahlungs-Abschluss
         }
         
         // Normale Mitglieder: Session nach 2 Sekunden beenden
@@ -1916,17 +1916,7 @@ const result = await createTransaction(transactionData);
         setTimeout(() => {
             resetSession();
             showStatus('Session beendet - Nächster Kunde', 'info');
-            }, 500);
-        } else {
-            // Normale Mitglieder: Session nach 2 Sekunden beenden
-            clearCart();
-            updateUserInfo();
-            
-            setTimeout(() => {
-                resetSession();
-                showStatus('Session beendet - Nächster Kunde', 'info');
-            }, 2000);
-        }
+        }, 2000);
 
     } catch (error) {
         showStatus('Fehler beim Abschließen des Kaufs', 'error');
@@ -1935,8 +1925,7 @@ const result = await createTransaction(transactionData);
         isProcessing = false;
         updateCartView();
     }
-}
-        
+}        
         function resetSession() {
             currentUser = null;
             cart = [];
