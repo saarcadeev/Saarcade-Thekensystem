@@ -1960,13 +1960,18 @@ async function checkout() {
             if (!trimmedBarcode) return;
 
 if (trimmedBarcode === specialBarcodes.checkout.toUpperCase()) {
-    // NEU: Wenn Barzahlungs-Modal offen ist, schließe Zahlung ab
+    // NEU: Wenn Barzahlungs-Modal offen ist, setze passende Zahlung
     if (document.getElementById('cashPaymentModal').style.display === 'block') {
-        const completeBtn = document.getElementById('completeCashBtn');
-        if (!completeBtn.disabled) {
-            await completeCashPayment();
-        } else {
-            showStatus('Bitte gib zuerst einen ausreichenden Betrag ein', 'error');
+        if (pendingCashTransaction) {
+            // Automatisch passenden Betrag setzen
+            document.getElementById('cashGiven').value = pendingCashTransaction.total.toFixed(2);
+            calculateChange();
+            
+            // Direkt abschließen
+            showStatus('💰 Passende Zahlung angenommen', 'success');
+            setTimeout(async () => {
+                await completeCashPayment();
+            }, 500);
         }
         return;
     }
@@ -2168,9 +2173,12 @@ function openCashPaymentModal(transactionData, totalAmount) {
     
     modal.style.display = 'block';
     
+    // WICHTIG: Fokus bleibt auf Barcode-Scanner, NICHT auf cashGiven
     setTimeout(() => {
-        cashGivenInput.focus();
-        cashGivenInput.select();
+        const barcodeInput = document.getElementById('barcodeInput');
+        if (barcodeInput) {
+            barcodeInput.focus();
+        }
     }, 300);
 }
 
@@ -2239,6 +2247,7 @@ async function completeCashPayment() {
     if (!pendingCashTransaction) return;
     
     const completeBtn = document.getElementById('completeCashBtn');
+    const originalText = completeBtn.textContent;
     completeBtn.disabled = true;
     completeBtn.textContent = '⏳ Verarbeite...';
     
@@ -2254,7 +2263,11 @@ async function completeCashPayment() {
         const cashGiven = parseFloat(document.getElementById('cashGiven').value) || 0;
         const change = cashGiven - pendingCashTransaction.total;
         
-        showStatus(`✅ Barzahlung abgeschlossen! Rückgeld: ${change.toFixed(2)}€`, 'success');
+        if (change === 0) {
+            showStatus(`✅ Barzahlung abgeschlossen! (Passend bezahlt)`, 'success');
+        } else {
+            showStatus(`✅ Barzahlung abgeschlossen! Rückgeld: ${change.toFixed(2)}€`, 'success');
+        }
         
         closeModal('cashPaymentModal');
         pendingCashTransaction = null;
@@ -2264,7 +2277,10 @@ async function completeCashPayment() {
         setScannerMode('product');
         
         setTimeout(() => {
-            document.getElementById('barcodeInput').focus();
+            const barcodeInput = document.getElementById('barcodeInput');
+            if (barcodeInput) {
+                barcodeInput.focus();
+            }
         }, 500);
         
     } catch (error) {
@@ -2273,7 +2289,7 @@ async function completeCashPayment() {
     } finally {
         isProcessing = false;
         completeBtn.disabled = false;
-        completeBtn.textContent = '✅ Zahlung abschließen';
+        completeBtn.textContent = originalText;
     }
 }
         
