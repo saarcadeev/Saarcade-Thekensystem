@@ -1919,7 +1919,7 @@ async function checkout() {
         setTimeout(() => {
             resetSession();
             showStatus('Session beendet - Nächster Kunde', 'info');
-        }, 2000);
+        }, 1000);
 
     } catch (error) {
         showStatus('Fehler beim Abschließen des Kaufs', 'error');
@@ -1971,7 +1971,7 @@ if (trimmedBarcode === specialBarcodes.checkout.toUpperCase()) {
             showStatus('💰 Passende Zahlung angenommen', 'success');
             setTimeout(async () => {
                 await completeCashPayment();
-            }, 500);
+            }, 300);
         }
         return;
     }
@@ -2179,7 +2179,7 @@ function openCashPaymentModal(transactionData, totalAmount) {
         if (barcodeInput) {
             barcodeInput.focus();
         }
-    }, 300);
+    }, 200);
 }
 
 function calculateChange() {
@@ -2286,7 +2286,7 @@ async function completeCashPayment() {
             if (barcodeInput) {
                 barcodeInput.focus();
             }
-        }, 500);
+        }, 300);
         
     } catch (error) {
         showStatus('Fehler beim Abschließen der Zahlung', 'error');
