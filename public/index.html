@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎮 Saarcade Kassensystem - Professional Demo</title>
-    <meta name="description" content="Digitales Kassensystem für Saarcade e.V. - Vollständig funktionsfähige Demo">
+    <title>🎮 Saarcade Kassensystem</title>
+    <meta name="description" content="Digitales Kassensystem für Saarcade e.V.">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -19,28 +19,9 @@
         .header {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            padding: 30px 20px;
+            padding: 40px 20px;
             text-align: center;
             box-shadow: 0 5px 30px rgba(0,0,0,0.1);
-        }
-        
-        .demo-badge {
-            background: linear-gradient(45deg, #ff6b6b, #ee5a5a);
-            color: white;
-            padding: 8px 20px;
-            border-radius: 25px;
-            font-size: 0.9em;
-            font-weight: bold;
-            display: inline-block;
-            margin-bottom: 15px;
-            animation: pulse 2s infinite;
-            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
-        }
-        
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
         }
         
         .header h1 {
@@ -185,101 +166,21 @@
             box-shadow: 0 12px 35px rgba(245, 101, 101, 0.4);
         }
         
-        .stats-section {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 40px;
-            border-radius: 20px;
-            margin: 40px 20px;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.1);
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 30px;
-            margin-top: 30px;
-        }
-        
-        .stat-card {
-            text-align: center;
-            padding: 25px;
-            background: linear-gradient(135deg, #f8f9ff, #fff);
-            border-radius: 15px;
-            border: 2px solid #e2e8f0;
-            transition: all 0.3s ease;
-        }
-        
-        .stat-card:hover {
-            border-color: #667eea;
-            transform: translateY(-5px);
-        }
-        
-        .stat-number {
-            font-size: 3em;
-            font-weight: bold;
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 10px;
-        }
-        
-        .stat-label {
-            color: #666;
-            font-weight: 600;
-        }
-        
-        .features-section {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 40px;
-            border-radius: 20px;
-            margin: 40px 20px;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.1);
-        }
-        
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
-            margin-top: 30px;
-        }
-        
-        .feature-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 20px;
-            background: linear-gradient(135deg, #f8f9ff, #fff);
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            transition: all 0.3s ease;
-        }
-        
-        .feature-item:hover {
-            border-color: #667eea;
-            transform: translateX(5px);
-        }
-        
-        .feature-icon {
-            font-size: 1.5em;
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
         .footer {
             text-align: center;
             padding: 40px 20px;
-            color: rgba(255,255,255,0.8);
+            color: rgba(255,255,255,0.9);
             background: rgba(0,0,0,0.1);
             margin-top: 60px;
+        }
+        
+        .footer h3 {
+            margin-bottom: 10px;
+        }
+        
+        .footer p {
+            font-size: 0.95em;
+            margin-top: 10px;
         }
         
         @media (max-width: 768px) {
@@ -288,19 +189,16 @@
                 grid-template-columns: 1fr;
                 padding: 10px; 
             }
-            .stats-grid { grid-template-columns: 1fr 1fr; }
-            .features-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="demo-badge">LIVE DEMO - Vollständig funktionsfähig!</div>
         <h1>🎮 Saarcade Kassensystem</h1>
-        <p>Professionelles digitales Kassensystem für Vereins-Gastronomie</p>
+        <p>Digitales Kassensystem für das Flipper- und Arcademuseum</p>
         <div class="system-status">
             <div class="status-dot"></div>
-            System online und bereit für Demo
+            System online
         </div>
     </div>
 
@@ -313,7 +211,7 @@
             • Barcode-Scanner Integration<br>
             • Intuitive Benutzer-/Produktsuche<br>
             • Warenkorb und Abrechnung<br>
-            • Responsive für Tablets und Smartphones</p>
+            • integrierte Kassier-Funktion</p>
             <a href="/kasse" class="demo-button">🎮 Kasse öffnen</a>
         </div>
 
@@ -325,124 +223,14 @@
             • Benutzer- und Produktverwaltung<br>
             • SEPA-Export für Lastschriften<br>
             • Berichte und Statistiken<br>
-            • Inventar und Bestandsführung</p>
+            • Inventar und Bestandsverwaltung</p>
             <a href="/admin" class="demo-button">🔐 Admin-Bereich</a>
-        </div>
-    </div>
-
-    <div class="stats-section">
-        <h2 style="text-align: center; margin-bottom: 10px;">📊 Live-Statistiken (Demo-Daten)</h2>
-        <p style="text-align: center; color: #666; margin-bottom: 30px;">Echte Vereinsdaten aus dem Saarcade-System</p>
-        
-        <div class="stats-grid" id="liveStats">
-            <div class="stat-card">
-                <div class="stat-number" id="memberCount">-</div>
-                <div class="stat-label">Vereinsmitglieder</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="productCount">-</div>
-                <div class="stat-label">Verfügbare Getränke</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="revenueCount">-</div>
-                <div class="stat-label">Umsatz (30 Tage)</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="transactionCount">-</div>
-                <div class="stat-label">Transaktionen</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="features-section">
-        <h2 style="text-align: center; margin-bottom: 20px;">✨ Vollständig implementierte Features</h2>
-        <div class="features-grid">
-            <div class="feature-item">
-                <div class="feature-icon">📷</div>
-                <div>
-                    <strong>Barcode-Scanner</strong><br>
-                    <small>Mitglieder und Produkte scannen</small>
-                </div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">💳</div>
-                <div>
-                    <strong>SEPA-Export</strong><br>
-                    <small>Automatische Lastschrift-Generierung</small>
-                </div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">📊</div>
-                <div>
-                    <strong>Live-Statistiken</strong><br>
-                    <small>Umsatz, Bestände, Mitglieder</small>
-                </div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">📱</div>
-                <div>
-                    <strong>Responsive Design</strong><br>
-                    <small>Funktioniert auf allen Geräten</small>
-                </div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">🏪</div>
-                <div>
-                    <strong>Inventar-Management</strong><br>
-                    <small>Bestände und Nachbestellungen</small>
-                </div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">👥</div>
-                <div>
-                    <strong>Mitgliederverwaltung</strong><br>
-                    <small>Profile, Salden, SEPA-Mandate</small>
-                </div>
-            </div>
         </div>
     </div>
 
     <div class="footer">
         <h3>🎮 Saarcade e.V. Kassensystem</h3>
-        <p>Professionelle Demo-Version mit vollständiger Funktionalität</p>
-        <p style="margin-top: 10px; font-size: 0.9em;">
-            <strong>Demo-Zugangsdaten:</strong> SAAR001, SAAR002, SAAR003, GUEST001<br>
-            <strong>Produkt-Barcodes:</strong> 4000417025001, 5000112637447<br>
-            <strong>Admin-Passwort:</strong> admin123
-        </p>
+        <p>Erstellt von Jochen Klemm und claude.ai</p>
     </div>
-
-    <script>
-
-        // Live-Statistiken von der API laden
-        async function loadLiveStats() {
-            try {
-                const response = await fetch('/api/dashboard');
-                const data = await response.json();
-                
-                // Statistiken aktualisieren
-                document.getElementById('memberCount').textContent = data.users?.total || 6;
-                document.getElementById('productCount').textContent = data.products?.available_products || 18;
-                document.getElementById('revenueCount').textContent = `${(data.transactions?.total_revenue || 156).toFixed(0)}€`;
-                document.getElementById('transactionCount').textContent = data.transactions?.total_transactions || 42;
-                
-            } catch (error) {
-                console.log('API nicht erreichbar, verwende Fallback-Werte');
-                // Fallback-Werte für Demo
-                document.getElementById('memberCount').textContent = '6';
-                document.getElementById('productCount').textContent = '18';
-                document.getElementById('revenueCount').textContent = '156€';
-                document.getElementById('transactionCount').textContent = '42';
-            }
-        }
-
-        // Beim Laden der Seite
-        document.addEventListener('DOMContentLoaded', function() {
-            loadLiveStats();
-            
-            // Alle 30 Sekunden aktualisieren
-            setInterval(loadLiveStats, 30000);
-        });
-    </script>
 </body>
 </html>
