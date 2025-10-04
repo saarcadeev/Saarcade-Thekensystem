@@ -1908,6 +1908,14 @@ async function checkout() {
             paymentMethod: 'balance'
         };
         
+        // NEUE LOGIK: Barkeeper bekommen Barzahlungs-Dialog OHNE Buchung
+        if (currentUser.role === 'bartender') {
+            isProcessing = false; // Wichtig: Processing-Flag zurücksetzen
+            openCashPaymentModal(transactionData, total);
+            return; // HIER wird NICHT gebucht, nur Modal geöffnet
+        }
+        
+        // Normale Mitglieder: Direkte Buchung
         const result = await createTransaction(transactionData);
         currentUser.balance = result.newBalance;
         
@@ -1918,20 +1926,13 @@ async function checkout() {
         
         showStatus(`✅ Kauf über ${total.toFixed(2)}€ abgeschlossen!`, 'success');
         
-        // NEUE LOGIK: Barkeeper bekommen Barzahlungs-Dialog
-        if (currentUser.role === 'bartender') {
-            openCashPaymentModal(transactionData, total);
-            return; // Warte auf Barzahlungs-Abschluss
-        }
-        
-        // Normale Mitglieder: Session nach 2 Sekunden beenden
         clearCart();
         updateUserInfo();
         
         setTimeout(() => {
             resetSession();
             showStatus('Session beendet - Nächster Kunde', 'info');
-        }, 1000);
+        }, 750);
 
     } catch (error) {
         showStatus('Fehler beim Abschließen des Kaufs', 'error');
@@ -1940,8 +1941,7 @@ async function checkout() {
         isProcessing = false;
         updateCartView();
     }
-}        
-        function resetSession() {
+}        function resetSession() {
             currentUser = null;
             cart = [];
             isProcessing = false;
