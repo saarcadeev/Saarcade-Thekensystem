@@ -620,17 +620,17 @@
             backdrop-filter: blur(3px);
         }
 
-        .modal-content {
-            background-color: white;
-            margin: 10% auto;
-            padding: 0;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 600px;
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
-            max-height: 80vh;
-            overflow-y: auto;
-        }
+.modal-content {
+    background-color: white;
+    margin: 2vh auto;
+    padding: 0;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+    max-height: 96vh;
+    overflow-y: auto;
+}
 
         .modal-header {
             background: linear-gradient(135deg, #667eea, #764ba2);
@@ -949,12 +949,12 @@ const additionalCSS = `
 
 <!-- Barzahlungs-Modal für Barkeeper -->
 <div id="cashPaymentModal" class="modal">
-    <div class="modal-content" style="max-width: 500px; max-height: none;">
-        <div class="modal-header">
+<div class="modal-content" style="max-width: 500px; max-height: none; margin: 1vh auto;">
+    <div class="modal-header">
             <h3>💰 Barzahlung</h3>
         </div>
-        <div class="modal-body" style="max-height: calc(85vh - 80px); overflow-y: auto;">
-<div style="background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
+<div class="modal-body" style="padding: 15px;">
+    <div style="background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
     <div style="font-size: 0.85em; color: #666; margin-bottom: 3px;">Zu zahlender Betrag:</div>
     <div style="font-size: 2em; font-weight: bold; color: #e53e3e;" id="totalAmount">0.00€</div>
 </div>
@@ -980,17 +980,17 @@ const additionalCSS = `
     </div>
 </div>
             
-<div style="margin-top: 15px;">
-    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px;">
-        <button class="btn btn-secondary" onclick="addCashAmount(0.50)" style="padding: 12px; font-size: 1.1em;">+50ct</button>
-        <button class="btn btn-secondary" onclick="addCashAmount(1)" style="padding: 12px; font-size: 1.1em;">+1€</button>
-        <button class="btn btn-secondary" onclick="addCashAmount(2)" style="padding: 12px; font-size: 1.1em;">+2€</button>
-        <button class="btn btn-secondary" onclick="addCashAmount(5)" style="padding: 12px; font-size: 1.1em;">+5€</button>
-        <button class="btn btn-secondary" onclick="addCashAmount(10)" style="padding: 12px; font-size: 1.1em;">+10€</button>
-        <button class="btn btn-secondary" onclick="addCashAmount(20)" style="padding: 12px; font-size: 1.1em;">+20€</button>
-        <button class="btn btn-secondary" onclick="addCashAmount(50)" style="padding: 12px; font-size: 1.1em;">+50€</button>
-        <button class="btn btn-success" onclick="setExactAmount()" style="padding: 12px; font-size: 1.1em;">✓ Passend</button>
-        <button class="btn btn-danger" onclick="clearCashAmount()" style="padding: 12px; font-size: 1.1em;">↺</button>
+<div style="margin-top: 10px;">
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px;">
+<button class="btn btn-secondary" onclick="addCashAmount(0.50)" style="padding: 10px; font-size: 1em;">+50ct</button>
+<button class="btn btn-secondary" onclick="addCashAmount(1)" style="padding: 10px; font-size: 1em;">+1€</button>
+<button class="btn btn-secondary" onclick="addCashAmount(2)" style="padding: 10px; font-size: 1em;">+2€</button>
+<button class="btn btn-secondary" onclick="addCashAmount(5)" style="padding: 10px; font-size: 1em;">+5€</button>
+<button class="btn btn-secondary" onclick="addCashAmount(10)" style="padding: 10px; font-size: 1em;">+10€</button>
+<button class="btn btn-secondary" onclick="addCashAmount(20)" style="padding: 10px; font-size: 1em;">+20€</button>
+<button class="btn btn-secondary" onclick="addCashAmount(50)" style="padding: 10px; font-size: 1em;">+50€</button>
+<button class="btn btn-success" onclick="setExactAmount()" style="padding: 10px; font-size: 1em;">✓ Passend</button>
+<button class="btn btn-danger" onclick="clearCashAmount()" style="padding: 10px; font-size: 1em;">↺</button>
     </div>
 
     <div style="text-align: center; margin-top: 20px; display: flex; gap: 10px;">
