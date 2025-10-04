@@ -197,10 +197,16 @@
                 
                 const data = await response.json();
                 
-                if (response.ok && data.success) {
-                    sessionStorage.setItem('adminLogin', JSON.stringify(data.user));
-                    window.location.href = '/admin';
-                } else {
+if (response.ok && data.success) {
+    // Speichere für 24 Stunden
+    const loginData = {
+        user: data.user,
+        expires: Date.now() + (24 * 60 * 60 * 1000) // 24 Stunden
+    };
+    localStorage.setItem('adminLogin', JSON.stringify(loginData));
+    window.location.href = '/admin';
+}
+                else {
                     errorMsg.textContent = data.error || 'Zugriff verweigert';
                     errorMsg.style.display = 'block';
                     loginBtn.disabled = false;
@@ -217,4 +223,5 @@
         });
     </script>
 </body>
+
 </html>
