@@ -770,29 +770,41 @@ const additionalCSS = `
 <body>
 
     <script>
-        // Login-Schutz für Kasse
-        (function() {
-            const loginData = sessionStorage.getItem('kasseLogin');
-            if (!loginData) {
-                window.location.href = '/login-kasse.html';
-                return;
-            }
-            
-            try {
-                const user = JSON.parse(loginData);
-                if (!user || (user.role !== 'bartender' && user.role !== 'admin')) {
-                    sessionStorage.removeItem('kasseLogin');
-                    window.location.href = '/login-kasse.html';
-                }
-            } catch (e) {
-                sessionStorage.removeItem('kasseLogin');
-                window.location.href = '/login-kasse.html';
-            }
-        })();
+// Login-Schutz für Kasse mit Ablauf-Prüfung
+(function() {
+    const loginDataStr = localStorage.getItem('kasseLogin');
+    if (!loginDataStr) {
+        window.location.href = '/login-kasse.html';
+        return;
+    }
+    
+    try {
+        const loginData = JSON.parse(loginDataStr);
+        
+        // Prüfe Ablauf
+        if (loginData.expires && Date.now() > loginData.expires) {
+            localStorage.removeItem('kasseLogin');
+            window.location.href = '/login-kasse.html';
+            return;
+        }
+        
+        const user = loginData.user;
+        if (!user || (user.role !== 'bartender' && user.role !== 'admin')) {
+            localStorage.removeItem('kasseLogin');
+            window.location.href = '/login-kasse.html';
+        }
+    } catch (e) {
+        localStorage.removeItem('kasseLogin');
+        window.location.href = '/login-kasse.html';
+    }
+})();
     </script>
     
     <div class="container">
-        <div class="header">
+        <div class="header" style="position: relative;">
+            <button onclick="logout()" style="position: absolute; top: 15px; right: 15px; background: #e53e3e; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9em; z-index: 2000;">
+                🚪 Logout
+            </button>
             <h1>🎮 Saarcade Kassensystem</h1>
             
             <div class="header-main">
@@ -801,9 +813,6 @@ const additionalCSS = `
                         <div class="pin-button-container">
                             <button class="btn" id="pinChangeBtn" onclick="openPinModal()" style="width: 100%; font-size: 0.8em;">
                                 🔐 PIN
-                            </button>
-                            <button class="btn btn-danger" onclick="logout()" style="width: 100%; font-size: 0.8em; margin-top: 5px;">
-                                🚪 Logout
                             </button>
                         </div>
                         <div class="scanner-status" id="scannerStatus">
@@ -2193,13 +2202,13 @@ if (trimmedBarcode === specialBarcodes.checkout.toUpperCase()) {
             showStatus('Verbindungsfehler aufgetreten', 'error');
         });
 
-        // Logout-Funktion
-        function logout() {
-            if (confirm('Möchtest du dich wirklich abmelden?')) {
-                sessionStorage.removeItem('kasseLogin');
-                window.location.href = '/login-kasse.html';
-            }
-        }
+// Logout-Funktion
+function logout() {
+    if (confirm('Möchtest du dich wirklich abmelden?')) {
+        localStorage.removeItem('kasseLogin');
+        window.location.href = '/login-kasse.html';
+    }
+}
 
 // ============ BARZAHLUNGS-FUNKTIONEN ============
 
