@@ -286,14 +286,14 @@
             gap: 10px;
         }
 
-.pin-button-container {
-    flex: 0 0 auto;
-}
+        .pin-button-container {
+            flex: 0 0 auto;
+        }
 
-.pin-button-container .btn {
-    white-space: nowrap;
-    min-width: 140px;
-}
+        .pin-button-container .btn {
+            white-space: nowrap;
+            min-width: 140px;
+        }
 
         .user-info-section {
             display: flex;
@@ -657,6 +657,18 @@
             padding: 20px;
         }
 
+
+        #cashGiven:focus {
+            border-color: #38a169;
+            box-shadow: 0 0 0 3px rgba(56, 161, 105, 0.2);
+        }
+
+        .cash-button-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        
         .form-group {
             margin-bottom: 15px;
         }
@@ -923,6 +935,62 @@ const additionalCSS = `
         </div>
     </div>
 
+<!-- Barzahlungs-Modal für Barkeeper -->
+<div id="cashPaymentModal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+            <h3>💰 Barzahlung</h3>
+        </div>
+        <div class="modal-body">
+            <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+                <div style="font-size: 0.9em; color: #666; margin-bottom: 5px;">Zu zahlender Betrag:</div>
+                <div style="font-size: 3em; font-weight: bold; color: #e53e3e;" id="totalAmount">0.00€</div>
+            </div>
+            
+            <div class="form-group">
+                <label>Vom Kunden erhalten (€)</label>
+                <input type="number" id="cashGiven" step="0.01" min="0" placeholder="0.00" 
+                       style="text-align: center; font-size: 1.5em; font-weight: bold;"
+                       oninput="calculateChange()" autofocus>
+            </div>
+
+            <div id="changeSection" style="display: none; background: #e6f3ff; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+                <div style="font-size: 0.9em; color: #666; margin-bottom: 5px;">Rückgeld:</div>
+                <div style="font-size: 2.5em; font-weight: bold; color: #38a169;" id="changeAmount">0.00€</div>
+            </div>
+
+            <div id="insufficientSection" style="display: none; background: #fed7d7; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center; color: #c53030;">
+                <strong>⚠️ Betrag zu niedrig!</strong><br>
+                <span style="font-size: 0.9em;">Noch <span id="missingAmount">0.00€</span> fehlen</span>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px;">
+                    <button class="btn btn-secondary" onclick="addCashAmount(5)" style="padding: 15px; font-size: 1.2em;">+5€</button>
+                    <button class="btn btn-secondary" onclick="addCashAmount(10)" style="padding: 15px; font-size: 1.2em;">+10€</button>
+                    <button class="btn btn-secondary" onclick="addCashAmount(20)" style="padding: 15px; font-size: 1.2em;">+20€</button>
+                    <button class="btn btn-secondary" onclick="addCashAmount(50)" style="padding: 15px; font-size: 1.2em;">+50€</button>
+                    <button class="btn btn-secondary" onclick="setExactAmount()" style="padding: 15px; font-size: 1.2em;">Passend</button>
+                    <button class="btn btn-danger" onclick="clearCashAmount()" style="padding: 15px; font-size: 1.2em;">↺</button>
+                </div>
+
+                <div style="text-align: center; margin-top: 25px; display: flex; gap: 10px;">
+                    <button class="btn btn-secondary" onclick="cancelCashPayment()" style="flex: 1; padding: 15px;">
+                        Abbrechen
+                    </button>
+                    <button class="btn btn-success" onclick="completeCashPayment()" id="completeCashBtn" disabled style="flex: 2; padding: 15px; font-size: 1.1em;">
+                        ✅ Zahlung abschließen
+                    </button>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px; padding: 12px; background: #fff5e6; border-radius: 6px; text-align: center; font-size: 0.85em; color: #666;">
+                💡 Tipp: Scan den CHECKOUT-Barcode erneut oder klicke "Zahlung abschließen"
+            </div>
+        </div>
+    </div>
+</div>
+    
     <script>
         // ============ GLOBALE VARIABLEN ============
         let currentUser = null;
@@ -1825,10 +1893,9 @@ async function checkout() {
             paymentMethod: 'balance'
         };
         
-        const result = await createTransaction(transactionData);
+const result = await createTransaction(transactionData);
         currentUser.balance = result.newBalance;
         
-        // NEU: Aktualisiere auch im users-Array für korrekte Dropdown-Anzeige
         const userIndex = users.findIndex(u => u.id === currentUser.id);
         if (userIndex !== -1) {
             users[userIndex].balance = result.newBalance;
@@ -1836,17 +1903,19 @@ async function checkout() {
         
         showStatus(`✅ Kauf über ${total.toFixed(2)}€ abgeschlossen!`, 'success');
         
-        // NEUE LOGIK: Barkeeper bleiben aktiv
+        // NEUE LOGIK: Barkeeper bekommen Barzahlungs-Dialog
         if (currentUser.role === 'bartender') {
-            // Nur Warenkorb leeren, Barkeeper bleibt angemeldet
-            clearCart();
-            updateUserInfo();
-            setScannerMode('product'); // Bleibt im Produkt-Scan-Modus
-            showStatus(`✅ Buchung erfolgreich! ${currentUser.first_name} bleibt angemeldet (Barkeeper-Modus)`, 'success');
-            
-            // Fokus direkt wieder auf Eingabefeld
-            setTimeout(() => {
-                document.getElementById('barcodeInput').focus();
+            openCashPaymentModal(transactionData, total);
+            return; // Warte auf Barzahlungs-Abschluss, verarbeite nicht weiter
+        }
+        
+        // Normale Mitglieder: Session nach 2 Sekunden beenden
+        clearCart();
+        updateUserInfo();
+        
+        setTimeout(() => {
+            resetSession();
+            showStatus('Session beendet - Nächster Kunde', 'info');
             }, 500);
         } else {
             // Normale Mitglieder: Session nach 2 Sekunden beenden
@@ -1898,16 +1967,27 @@ async function checkout() {
             
             if (!trimmedBarcode) return;
 
-            if (trimmedBarcode === specialBarcodes.checkout.toUpperCase()) {
-                if (cart.length > 0) {
-                    showStatus('🛒 Checkout-Barcode erkannt', 'success');
-                    await checkout();
-                } else {
-                    showStatus('Warenkorb ist leer - nichts zu buchen', 'error');
-                }
-                return;
-            }
-
+if (trimmedBarcode === specialBarcodes.checkout.toUpperCase()) {
+    // NEU: Wenn Barzahlungs-Modal offen ist, schließe Zahlung ab
+    if (document.getElementById('cashPaymentModal').style.display === 'block') {
+        const completeBtn = document.getElementById('completeCashBtn');
+        if (!completeBtn.disabled) {
+            await completeCashPayment();
+        } else {
+            showStatus('Bitte gib zuerst einen ausreichenden Betrag ein', 'error');
+        }
+        return;
+    }
+    
+    // Normal: Checkout starten
+    if (cart.length > 0) {
+        showStatus('🛒 Checkout-Barcode erkannt', 'success');
+        await checkout();
+    } else {
+        showStatus('Warenkorb ist leer - nichts zu buchen', 'error');
+    }
+    return;
+}
             if (trimmedBarcode === specialBarcodes.cancel.toUpperCase()) {
                 showStatus('❌ Vorgang abgebrochen', 'info');
                 clearCart();
@@ -2075,6 +2155,136 @@ async function checkout() {
             console.error('Unbehandelte Promise-Rejection:', e.reason);
             showStatus('Verbindungsfehler aufgetreten', 'error');
         });
+
+// ============ BARZAHLUNGS-FUNKTIONEN ============
+
+let pendingCashTransaction = null;
+
+function openCashPaymentModal(transactionData, totalAmount) {
+    pendingCashTransaction = transactionData;
+    
+    const modal = document.getElementById('cashPaymentModal');
+    const totalAmountEl = document.getElementById('totalAmount');
+    const cashGivenInput = document.getElementById('cashGiven');
+    
+    totalAmountEl.textContent = totalAmount.toFixed(2) + '€';
+    cashGivenInput.value = '';
+    
+    document.getElementById('changeSection').style.display = 'none';
+    document.getElementById('insufficientSection').style.display = 'none';
+    document.getElementById('completeCashBtn').disabled = true;
+    
+    modal.style.display = 'block';
+    
+    setTimeout(() => {
+        cashGivenInput.focus();
+        cashGivenInput.select();
+    }, 300);
+}
+
+function calculateChange() {
+    if (!pendingCashTransaction) return;
+    
+    const totalAmount = pendingCashTransaction.total;
+    const cashGiven = parseFloat(document.getElementById('cashGiven').value) || 0;
+    
+    const changeSection = document.getElementById('changeSection');
+    const insufficientSection = document.getElementById('insufficientSection');
+    const completeBtn = document.getElementById('completeCashBtn');
+    
+    if (cashGiven === 0) {
+        changeSection.style.display = 'none';
+        insufficientSection.style.display = 'none';
+        completeBtn.disabled = true;
+        return;
+    }
+    
+    if (cashGiven >= totalAmount) {
+        const change = cashGiven - totalAmount;
+        document.getElementById('changeAmount').textContent = change.toFixed(2) + '€';
+        
+        changeSection.style.display = 'block';
+        insufficientSection.style.display = 'none';
+        completeBtn.disabled = false;
+    } else {
+        const missing = totalAmount - cashGiven;
+        document.getElementById('missingAmount').textContent = missing.toFixed(2) + '€';
+        
+        changeSection.style.display = 'none';
+        insufficientSection.style.display = 'block';
+        completeBtn.disabled = true;
+    }
+}
+
+function addCashAmount(amount) {
+    const cashGivenInput = document.getElementById('cashGiven');
+    const currentValue = parseFloat(cashGivenInput.value) || 0;
+    cashGivenInput.value = (currentValue + amount).toFixed(2);
+    calculateChange();
+}
+
+function setExactAmount() {
+    if (!pendingCashTransaction) return;
+    document.getElementById('cashGiven').value = pendingCashTransaction.total.toFixed(2);
+    calculateChange();
+}
+
+function clearCashAmount() {
+    document.getElementById('cashGiven').value = '';
+    calculateChange();
+}
+
+function cancelCashPayment() {
+    if (confirm('Möchtest du die Barzahlung wirklich abbrechen?\n\nDer Warenkorb bleibt erhalten.')) {
+        closeModal('cashPaymentModal');
+        pendingCashTransaction = null;
+        isProcessing = false;
+        updateCartView();
+    }
+}
+
+async function completeCashPayment() {
+    if (!pendingCashTransaction) return;
+    
+    const completeBtn = document.getElementById('completeCashBtn');
+    completeBtn.disabled = true;
+    completeBtn.textContent = '⏳ Verarbeite...';
+    
+    try {
+        const result = await createTransaction(pendingCashTransaction);
+        currentUser.balance = result.newBalance;
+        
+        const userIndex = users.findIndex(u => u.id === currentUser.id);
+        if (userIndex !== -1) {
+            users[userIndex].balance = result.newBalance;
+        }
+        
+        const cashGiven = parseFloat(document.getElementById('cashGiven').value) || 0;
+        const change = cashGiven - pendingCashTransaction.total;
+        
+        showStatus(`✅ Barzahlung abgeschlossen! Rückgeld: ${change.toFixed(2)}€`, 'success');
+        
+        closeModal('cashPaymentModal');
+        pendingCashTransaction = null;
+        
+        clearCart();
+        updateUserInfo();
+        setScannerMode('product');
+        
+        setTimeout(() => {
+            document.getElementById('barcodeInput').focus();
+        }, 500);
+        
+    } catch (error) {
+        showStatus('Fehler beim Abschließen der Zahlung', 'error');
+        console.error('Cash payment error:', error);
+    } finally {
+        isProcessing = false;
+        completeBtn.disabled = false;
+        completeBtn.textContent = '✅ Zahlung abschließen';
+    }
+}
+        
     </script>
 </body>
 </html>
