@@ -798,9 +798,12 @@ const additionalCSS = `
             <div class="header-main">
                 <div class="scanner-pin-area">
                     <div class="scanner-status-row">
-                       <div class="pin-button-container">
+                        <div class="pin-button-container">
                             <button class="btn" id="pinChangeBtn" onclick="openPinModal()" style="width: 100%; font-size: 0.8em;">
                                 🔐 PIN
+                            </button>
+                            <button class="btn btn-danger" onclick="logout()" style="width: 100%; font-size: 0.8em; margin-top: 5px;">
+                                🚪 Logout
                             </button>
                         </div>
                         <div class="scanner-status" id="scannerStatus">
@@ -2189,6 +2192,14 @@ if (trimmedBarcode === specialBarcodes.checkout.toUpperCase()) {
             console.error('Unbehandelte Promise-Rejection:', e.reason);
             showStatus('Verbindungsfehler aufgetreten', 'error');
         });
+
+        // Logout-Funktion
+        function logout() {
+            if (confirm('Möchtest du dich wirklich abmelden?')) {
+                sessionStorage.removeItem('kasseLogin');
+                window.location.href = '/login-kasse.html';
+            }
+        }
 
 // ============ BARZAHLUNGS-FUNKTIONEN ============
 
