@@ -479,6 +479,29 @@
     </style>
 </head>
 <body>
+
+    <script>
+        // Login-Schutz für Admin
+        (function() {
+            const loginData = sessionStorage.getItem('adminLogin');
+            if (!loginData) {
+                window.location.href = '/login-admin.html';
+                return;
+            }
+            
+            try {
+                const user = JSON.parse(loginData);
+                if (!user || user.role !== 'admin') {
+                    sessionStorage.removeItem('adminLogin');
+                    window.location.href = '/login-admin.html';
+                }
+            } catch (e) {
+                sessionStorage.removeItem('adminLogin');
+                window.location.href = '/login-admin.html';
+            }
+        })();
+    </script>v
+    
     <div class="loading-overlay" id="loadingOverlay">
         <div>
             <div class="loading-spinner"></div>
