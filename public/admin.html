@@ -509,10 +509,13 @@
         </div>
     </div>
 
-    <div class="header">
-        <div class="api-status" id="apiStatus">🔄 Verbinde mit API...</div>
-        <h1>⚙️ Saarcade Admin-Dashboard</h1>
-        <p>Vollständige Verwaltung mit Bildupload-Integration</p>
+<div class="header">
+            <div class="api-status" id="apiStatus">🔄 Verbinde mit API...</div>
+            <button onclick="logoutAdmin()" style="position: absolute; top: 20px; right: 20px; background: #e53e3e; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                🚪 Logout
+            </button>
+            <h1>⚙️ Saarcade Admin-Dashboard</h1>
+    <p>Vollständige Verwaltung mit Bildupload-Integration</p>
     </div>
 
     <div class="container">
@@ -3749,6 +3752,14 @@ async function exportUserTransactionsCSV(userId, firstName, lastName) {
             }
         });
 
+        // Logout-Funktion
+        function logoutAdmin() {
+            if (confirm('Möchtest du dich wirklich abmelden?')) {
+                sessionStorage.removeItem('adminLogin');
+                window.location.href = '/login-admin.html';
+            }
+        }
+        
         window.onclick = function(event) {
             if (event.target.classList.contains('modal')) {
                 event.target.style.display = 'none';
