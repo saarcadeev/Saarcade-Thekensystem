@@ -583,21 +583,22 @@
                 </div>
                 
                 <div style="overflow-x: auto;">
-                    <table class="data-table" id="userTable">
-                        <thead>
-                            <tr>
-                                <th class="checkbox-cell">
-                                    <input type="checkbox" id="selectAllUsers" onchange="toggleSelectAll('users')">
-                                </th>
-                                <th>Name</th>
-                                <th>Rolle</th>
-                                <th>Barcode</th>
-                                <th>Saldo</th>
-                                <th>SEPA</th>
-                                <th>E-Mail</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+<table class="data-table" id="userTable">
+    <thead>
+        <tr>
+            <th class="checkbox-cell">
+                <input type="checkbox" id="selectAllUsers" onchange="toggleSelectAll('users')">
+            </th>
+            <th>Name</th>
+            <th>Rolle</th>
+            <th>Barcode</th>
+            <th>Saldo</th>
+            <th>SEPA</th>
+            <th>IBAN</th>
+            <th>E-Mail</th>
+        </tr>
+    </thead>
+    <tbody>
                             <tr>
                                 <td colspan="7" style="text-align: center; padding: 30px; color: #666;">
                                     Lade Mitgliederdaten...
@@ -1656,62 +1657,87 @@ async function loadDashboard() {
             openUserModal(selectedUsers[0]);
         }
 
-        async function saveUser() {
-            const saveBtn = document.getElementById('saveUserBtn');
-            const userId = document.getElementById('userId').value;
-            
-            const barcodes = document.getElementById('userBarcodes').value
-                .split('\n')
-                .map(b => b.trim().toUpperCase())
-                .filter(b => b.length > 0);
-            
-            const userData = {
-                first_name: document.getElementById('userFirstName').value.trim(),
-                last_name: document.getElementById('userLastName').value.trim(),
-                barcodes: barcodes,
-                role: document.getElementById('userRole').value,
-                balance: parseFloat(document.getElementById('userBalance').value) || 0,
-                email: document.getElementById('userEmail').value.trim() || null,
-                sepa_active: document.getElementById('userSepaActive').checked,
-                iban: document.getElementById('userIban').value.trim() || null
-            };
-            
-            if (!userData.first_name || !userData.last_name || barcodes.length === 0) {
-                showAlert('Bitte alle Pflichtfelder ausfüllen (mind. 1 Barcode)', 'error');
-                return;
-            }
-            
-            try {
-                saveBtn.disabled = true;
-                saveBtn.textContent = '⏳ Speichere...';
-                
-                if (userId) {
-                    await apiCall(`/api/users/${userId}`, {
-                        method: 'PUT',
-                        body: JSON.stringify(userData)
-                    });
-                    showAlert('Mitglied erfolgreich aktualisiert', 'success');
-                } else {
-                    await apiCall('/api/users', {
-                        method: 'POST',
-                        body: JSON.stringify(userData)
-                    });
-                    showAlert('Neues Mitglied erfolgreich hinzugefügt', 'success');
-                }
-                
-                closeModal('userModal');
-                loadUsers();
-                loadDashboard();
-                
-            } catch (error) {
-                showAlert(error.message || 'Fehler beim Speichern des Mitglieds', 'error');
-                console.error('Save user error:', error);
-            } finally {
-                saveBtn.disabled = false;
-                saveBtn.textContent = '💾 Speichern';
-            }
+async function saveUser() {
+    const saveBtn = document.getElementById('saveUserBtn');
+    const userId = document.getElementById('userId').value;
+    
+    const barcodes = document.getElementById('userBarcodes').value
+        .split('\n')
+        .map(b => b.trim().toUpperCase())
+        .filter(b => b.length > 0);
+    
+    const sepaActive = document.getElementById('userSepaActive').checked;
+    const ibanValue = document.getElementById('userIban').value.trim();
+    
+    const userData = {
+        first_name: document.getElementById('userFirstName').value.trim(),
+        last_name: document.getElementById('userLastName').value.trim(),
+        barcodes: barcodes,
+        role: document.getElementById('userRole').value,
+        balance: parseFloat(document.getElementById('userBalance').value) || 0,
+        email: document.getElementById('userEmail').value.trim() || null,
+        sepa_active: sepaActive,
+        iban: ibanValue || null
+    };
+    
+    // Validierung
+    if (!userData.first_name || !userData.last_name || barcodes.length === 0) {
+        showAlert('Bitte alle Pflichtfelder ausfüllen (mind. 1 Barcode)', 'error');
+        return;
+    }
+    
+    // SEPA-IBAN-Validierung
+    if (sepaActive && !ibanValue) {
+        showAlert('⚠️ SEPA ist aktiviert, aber keine IBAN angegeben!', 'error');
+        document.getElementById('userIban').focus();
+        return;
+    }
+    
+    // IBAN-Gültigkeitsprüfung
+    if (ibanValue && !validateIBAN(ibanValue)) {
+        showAlert('⚠️ Die eingegebene IBAN ist ungültig! Bitte überprüfe die Eingabe.', 'error');
+        document.getElementById('userIban').focus();
+        document.getElementById('userIban').style.borderColor = '#e53e3e';
+        return;
+    }
+    
+    // IBAN formatieren und speichern
+    if (ibanValue) {
+        userData.iban = ibanValue.replace(/\s/g, '').toUpperCase();
+    }
+    
+    try {
+        saveBtn.disabled = true;
+        saveBtn.textContent = '⏳ Speichere...';
+        
+        if (userId) {
+            await apiCall(`/api/users/${userId}`, {
+                method: 'PUT',
+                body: JSON.stringify(userData)
+            });
+            showAlert('Mitglied erfolgreich aktualisiert', 'success');
+        } else {
+            await apiCall('/api/users', {
+                method: 'POST',
+                body: JSON.stringify(userData)
+            });
+            showAlert('Neues Mitglied erfolgreich hinzugefügt', 'success');
         }
-
+        
+        closeModal('userModal');
+        loadUsers();
+        loadDashboard();
+        
+    } catch (error) {
+        showAlert(error.message || 'Fehler beim Speichern des Mitglieds', 'error');
+        console.error('Save user error:', error);
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = '💾 Speichern';
+        document.getElementById('userIban').style.borderColor = '';
+    }
+}
+        
         async function deleteSelectedUsers() {
             if (selectedUsers.length === 0) return;
             
@@ -1765,36 +1791,42 @@ async function loadDashboard() {
             }
         }
 
-        function renderUsers() {
-            const tbody = document.querySelector('#userTable tbody');
-            selectedUsers = [];
-            updateSelectionInfo('users');
-            
-            if (users.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px; color: #666;">Keine Mitgliederdaten verfügbar</td></tr>';
-                return;
-            }
-            
-            tbody.innerHTML = users.map(user => {
-                const balanceColor = user.balance >= 0 ? '#38a169' : '#e53e3e';
-                const roleIcon = getRoleIcon(user.role);
-                const sepaStatus = user.sepa_active ? '✅' : '❌';
-                
-                return `
-                    <tr>
-                        <td class="checkbox-cell">
-                            <input type="checkbox" value="${user.id}" onchange="toggleRowSelection(this, 'users')">
-                        </td>
-                        <td>${user.first_name} ${user.last_name}</td>
-                        <td>${roleIcon} ${getRoleText(user.role)}</td>
-                        <td><code style="font-size: 0.8em;">${user.barcodes ? user.barcodes.join(', ') : '-'}</code></td>
-                        <td style="color: ${balanceColor}; font-weight: bold;">${user.balance.toFixed(2)}€</td>
-                        <td>${sepaStatus}</td>
-                        <td style="font-size: 0.8em;">${user.email || '-'}</td>
-                    </tr>
-                `;
-            }).join('');
-        }
+function renderUsers() {
+    const tbody = document.querySelector('#userTable tbody');
+    selectedUsers = [];
+    updateSelectionInfo('users');
+    
+    if (users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px; color: #666;">Keine Mitgliederdaten verfügbar</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = users.map(user => {
+        const balanceColor = user.balance >= 0 ? '#38a169' : '#e53e3e';
+        const roleIcon = getRoleIcon(user.role);
+        const sepaStatus = user.sepa_active ? '✅' : '❌';
+        
+        // IBAN formatiert anzeigen oder Platzhalter
+        const ibanDisplay = user.iban 
+            ? `<code style="font-size: 0.75em;">${formatIBAN(user.iban)}</code>` 
+            : '<span style="color: #999;">-</span>';
+        
+        return `
+            <tr>
+                <td class="checkbox-cell">
+                    <input type="checkbox" value="${user.id}" onchange="toggleRowSelection(this, 'users')">
+                </td>
+                <td>${user.first_name} ${user.last_name}</td>
+                <td>${roleIcon} ${getRoleText(user.role)}</td>
+                <td><code style="font-size: 0.8em;">${user.barcodes ? user.barcodes.join(', ') : '-'}</code></td>
+                <td style="color: ${balanceColor}; font-weight: bold;">${user.balance.toFixed(2)}€</td>
+                <td>${sepaStatus}</td>
+                <td>${ibanDisplay}</td>
+                <td style="font-size: 0.8em;">${user.email || '-'}</td>
+            </tr>
+        `;
+    }).join('');
+}
 
         // ============ PRODUCT FUNCTIONS ============
 
@@ -3732,6 +3764,68 @@ async function exportUserTransactionsCSV(userId, firstName, lastName) {
             }
         }
 
+// ============ IBAN VALIDATION ============
+
+function validateIBAN(iban) {
+    // Entferne Leerzeichen und mache Großbuchstaben
+    iban = iban.replace(/\s/g, '').toUpperCase();
+    
+    // Prüfe Format (nur Buchstaben und Zahlen)
+    if (!/^[A-Z]{2}[0-9]{2}[A-Z0-9]+$/.test(iban)) {
+        return false;
+    }
+    
+    // Längenprüfung nach Land
+    const ibanLengths = {
+        AD: 24, AE: 23, AL: 28, AT: 20, AZ: 28, BA: 20, BE: 16, BG: 22,
+        BH: 22, BR: 29, BY: 28, CH: 21, CR: 22, CY: 28, CZ: 24, DE: 22,
+        DK: 18, DO: 28, EE: 20, EG: 29, ES: 24, FI: 18, FO: 18, FR: 27,
+        GB: 22, GE: 22, GI: 23, GL: 18, GR: 27, GT: 28, HR: 21, HU: 28,
+        IE: 22, IL: 23, IS: 26, IT: 27, JO: 30, KW: 30, KZ: 20, LB: 28,
+        LC: 32, LI: 21, LT: 20, LU: 20, LV: 21, MC: 27, MD: 24, ME: 22,
+        MK: 19, MR: 27, MT: 31, MU: 30, NL: 18, NO: 15, PK: 24, PL: 28,
+        PS: 29, PT: 25, QA: 29, RO: 24, RS: 22, SA: 24, SE: 24, SI: 19,
+        SK: 24, SM: 27, TN: 24, TR: 26, UA: 29, VA: 22, VG: 24, XK: 20
+    };
+    
+    const countryCode = iban.substring(0, 2);
+    const expectedLength = ibanLengths[countryCode];
+    
+    if (!expectedLength || iban.length !== expectedLength) {
+        return false;
+    }
+    
+    // MOD-97-Prüfung
+    // Verschiebe die ersten 4 Zeichen ans Ende
+    const rearranged = iban.substring(4) + iban.substring(0, 4);
+    
+    // Ersetze Buchstaben durch Zahlen (A=10, B=11, ..., Z=35)
+    let numericString = '';
+    for (let i = 0; i < rearranged.length; i++) {
+        const char = rearranged[i];
+        if (char >= '0' && char <= '9') {
+            numericString += char;
+        } else {
+            numericString += (char.charCodeAt(0) - 55).toString();
+        }
+    }
+    
+    // Berechne MOD 97
+    let remainder = numericString;
+    while (remainder.length > 2) {
+        const block = remainder.substring(0, 9);
+        remainder = (parseInt(block, 10) % 97).toString() + remainder.substring(block.length);
+    }
+    
+    return parseInt(remainder, 10) % 97 === 1;
+}
+
+function formatIBAN(iban) {
+    // Formatiere IBAN mit Leerzeichen alle 4 Zeichen
+    iban = iban.replace(/\s/g, '').toUpperCase();
+    return iban.replace(/(.{4})/g, '$1 ').trim();
+}
+        
         // ============ INITIALIZATION ============
         
         document.addEventListener('DOMContentLoaded', async function() {
@@ -3751,6 +3845,29 @@ async function exportUserTransactionsCSV(userId, firstName, lastName) {
                 if (sepaCheckbox) {
                     sepaCheckbox.addEventListener('change', toggleIbanField);
                 }
+
+                const sepaCheckbox = document.getElementById('userSepaActive');
+
+// IBAN Live-Validierung
+const ibanInput = document.getElementById('userIban');
+if (ibanInput) {
+    ibanInput.addEventListener('blur', function() {
+        const iban = this.value.trim();
+        if (iban && !validateIBAN(iban)) {
+            this.style.borderColor = '#e53e3e';
+            this.style.backgroundColor = '#fff5f5';
+        } else {
+            this.style.borderColor = '';
+            this.style.backgroundColor = '';
+        }
+    });
+    
+    ibanInput.addEventListener('input', function() {
+        // Entferne Warnung beim Tippen
+        this.style.borderColor = '';
+        this.style.backgroundColor = '';
+    });
+}
                 
                 console.log('✅ Admin-Dashboard erfolgreich initialisiert');
                 showAlert('Dashboard mit Abrechnungs-System geladen', 'success');
