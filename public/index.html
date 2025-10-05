@@ -22,20 +22,24 @@
             margin-bottom: 30px;
         }
 
-.logo-container {
-    background: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    padding: 20px;
-    max-width: 400px;
-    height: 120px;
-    margin: 0 auto 20px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-    background-image: url('/Saarcade-Logo.png');
-    background-repeat: no-repeat;
-    background-position: center center;
-    background-size: contain;
-}
+        .logo-container {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            max-width: 400px;
+            height: 120px;
+            margin: 0 auto 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            background-image: url('/Saarcade-Logo.png');
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-size: contain;
+            display: flex;              /* NEU */
+            align-items: center;        /* NEU - vertikal zentrieren */
+            justify-content: center;    /* NEU - horizontal zentrieren */
+        }
+        
         .logo-container img {
             max-width: 100%;
             height: auto;
