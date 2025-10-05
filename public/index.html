@@ -14,40 +14,57 @@
             min-height: 100vh;
             color: #333;
             overflow-x: hidden;
+            padding: 40px 20px;
         }
         
         .header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .logo-container {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            padding: 30px 20px;
-            text-align: center;
-            box-shadow: 0 5px 30px rgba(0,0,0,0.1);
+            border-radius: 30px;
+            padding: 40px;
+            max-width: 600px;
+            margin: 0 auto 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .logo-container img {
+            max-width: 100%;
+            height: auto;
+            max-height: 200px;
         }
         
         .header h1 {
-            font-size: 3em;
-            margin-bottom: 10px;
+            font-size: 3.5em;
+            margin: 20px 0 15px;
             background: linear-gradient(45deg, #667eea, #764ba2);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            text-shadow: 0 2px 20px rgba(255, 255, 255, 0.3);
         }
         
         .header p {
-            font-size: 1.2em;
-            color: #666;
-            margin-bottom: 20px;
+            font-size: 1.4em;
+            color: rgba(255, 255, 255, 0.95);
+            margin-bottom: 15px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
         
         .system-status {
             display: inline-flex;
             align-items: center;
             gap: 10px;
-            background: #e8f5e8;
+            background: rgba(255, 255, 255, 0.95);
             color: #2d5f2d;
-            padding: 10px 20px;
-            border-radius: 20px;
+            padding: 12px 24px;
+            border-radius: 25px;
             font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
         
         .status-dot {
@@ -64,82 +81,167 @@
         }
         
         .main-container {
-            max-width: 1200px;
-            margin: 40px auto;
-            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 30px;
         }
-        
-        .demo-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
+
+        .main-apps {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .tools-section {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .tools-header {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.2em;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
         
-        .demo-card:hover {
-            transform: translateY(-8px);
+        .main-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            padding: 50px 40px;
             box-shadow: 0 15px 50px rgba(0, 0, 0, 0.25);
-            border-color: rgba(102, 126, 234, 0.3);
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+            min-height: 450px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .tool-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px 30px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        
+        .main-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+            border-color: rgba(102, 126, 234, 0.5);
+        }
+
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+            background: rgba(255, 255, 255, 0.95);
         }
         
         .demo-icon {
-            font-size: 3em;
+            font-size: 5em;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             animation: float 3s ease-in-out infinite;
+        }
+
+        .tool-icon {
+            font-size: 2.5em;
+            text-align: center;
+            margin-bottom: 15px;
         }
         
         @keyframes float {
             0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
+            50% { transform: translateY(-15px); }
         }
         
-        .demo-card h2 {
+        .main-card h2 {
             color: #2d3748;
-            margin-bottom: 15px;
-            font-size: 1.6em;
+            margin-bottom: 20px;
+            font-size: 2.2em;
+            text-align: center;
+        }
+
+        .tool-card h2 {
+            color: #2d3748;
+            margin-bottom: 12px;
+            font-size: 1.3em;
             text-align: center;
         }
         
-        .demo-card p {
+        .main-card p {
             color: #666;
-            line-height: 1.6;
-            margin-bottom: 25px;
-            font-size: 0.95em;
+            line-height: 1.8;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .tool-card p {
+            color: #666;
+            line-height: 1.5;
+            margin-bottom: 15px;
+            font-size: 0.9em;
         }
         
         .demo-button {
             display: block;
             width: 100%;
-            padding: 14px 24px;
+            padding: 18px 24px;
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
             text-decoration: none;
-            border-radius: 12px;
+            border-radius: 15px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 1.2em;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .tool-button {
+            display: block;
+            width: 100%;
+            padding: 10px 16px;
+            background: linear-gradient(135deg, #34d399, #10b981);
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
             text-align: center;
             font-weight: 600;
-            font-size: 1.05em;
+            font-size: 0.95em;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 4px 12px rgba(52, 211, 153, 0.3);
         }
         
         .demo-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-        }
-        
-        .admin-card {
-            border: 2px solid rgba(255, 193, 7, 0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
         }
 
-        .tools-card {
-            border: 2px solid rgba(52, 211, 153, 0.3);
+        .tool-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(52, 211, 153, 0.5);
+        }
+        
+        .kasse-card {
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+
+        .admin-card {
+            border-color: rgba(255, 193, 7, 0.3);
         }
         
         .footer {
@@ -147,7 +249,11 @@
             backdrop-filter: blur(10px);
             padding: 25px;
             text-align: center;
-            margin-top: 40px;
+            margin-top: 50px;
+            border-radius: 20px;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
             box-shadow: 0 -5px 30px rgba(0,0,0,0.1);
         }
         
@@ -162,19 +268,32 @@
             font-size: 0.95em;
         }
         
+        @media (max-width: 1200px) {
+            .main-apps {
+                grid-template-columns: 1fr;
+            }
+            .tools-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
         @media (max-width: 768px) {
             .header h1 { font-size: 2.5em; }
-            .main-container { 
-                grid-template-columns: 1fr;
-                padding: 10px; 
+            .main-card { 
+                padding: 30px 25px;
+                min-height: auto;
             }
+            .demo-icon { font-size: 3.5em; }
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>🎮 Saarcade Kassensystem</h1>
-        <p>Digitales Kassensystem für das Flipper- und Arcademuseum</p>
+        <div class="logo-container">
+            <img id="logoImg" alt="Saarcade e.V. Logo">
+        </div>
+        <h1>🎮 Willkommen beim Saarcade Kassensystem</h1>
+        <p>Dein digitales Kassensystem für das Flipper- und Arcademuseum</p>
         <div class="system-status">
             <div class="status-dot"></div>
             System online
@@ -182,52 +301,64 @@
     </div>
 
     <div class="main-container">
-        <!-- Frontend: Kassensystem -->
-        <div class="demo-card">
-            <div class="demo-icon">🛒</div>
-            <h2>Kassensystem</h2>
-            <p><strong>Frontend für Mitglieder und Kassierer:</strong><br>
-            • Barcode-Scanner Integration<br>
-            • Intuitive Benutzer-/Produktsuche<br>
-            • Warenkorb und Abrechnung<br>
-            • integrierte Kassier-Funktion</p>
-            <a href="/kasse" class="demo-button">🎮 Kasse öffnen</a>
+        <!-- Hauptanwendungen -->
+        <div class="main-apps">
+            <!-- Kassensystem -->
+            <div class="main-card kasse-card">
+                <div>
+                    <div class="demo-icon">🛒</div>
+                    <h2>Kassensystem</h2>
+                    <p><strong>Frontend für Mitglieder und Kassierer</strong><br><br>
+                    • Barcode-Scanner Integration<br>
+                    • Intuitive Benutzer- und Produktsuche<br>
+                    • Warenkorb und Abrechnung<br>
+                    • Integrierte Kassier-Funktion</p>
+                </div>
+                <a href="/kasse" class="demo-button">🎮 Kasse öffnen</a>
+            </div>
+
+            <!-- Admin-Dashboard -->
+            <div class="main-card admin-card">
+                <div>
+                    <div class="demo-icon">⚙️</div>
+                    <h2>Admin-Dashboard</h2>
+                    <p><strong>Backend für Kassenwart und Verwaltung</strong><br><br>
+                    • Benutzer- und Produktverwaltung<br>
+                    • SEPA-Export für Lastschriften<br>
+                    • Berichte und Statistiken<br>
+                    • Inventar und Bestandsverwaltung</p>
+                </div>
+                <a href="/admin" class="demo-button">🔐 Admin-Bereich</a>
+            </div>
         </div>
 
-        <!-- Backend: Admin-Dashboard -->
-        <div class="demo-card admin-card">
-            <div class="demo-icon">⚙️</div>
-            <h2>Admin-Dashboard</h2>
-            <p><strong>Backend für Kassenwart und Verwaltung:</strong><br>
-            • Benutzer- und Produktverwaltung<br>
-            • SEPA-Export für Lastschriften<br>
-            • Berichte und Statistiken<br>
-            • Inventar und Bestandsverwaltung</p>
-            <a href="/admin" class="demo-button">🔐 Admin-Bereich</a>
-        </div>
+        <!-- Tools-Bereich -->
+        <div class="tools-section">
+            <div class="tools-header">
+                📦 Zusätzliche Tools
+            </div>
 
-        <!-- EAN-Generator -->
-        <div class="demo-card tools-card">
-            <div class="demo-icon">📊</div>
-            <h2>EAN-13 Generator</h2>
-            <p><strong>Mitgliedsausweise erstellen:</strong><br>
-            • Barcode für Mitgliedsausweise<br>
-            • Basierend auf Geburtsdatum<br>
-            • PNG-Download für Druck<br>
-            • Automatische Prüfziffer</p>
-            <a href="/EAN13-Generator.html" class="demo-button">🎫 EAN generieren</a>
-        </div>
+            <!-- EAN-Generator -->
+            <div class="tool-card">
+                <div>
+                    <div class="tool-icon">📊</div>
+                    <h2>EAN-13 Generator</h2>
+                    <p>Barcode für Mitgliedsausweise<br>
+                    PNG-Download • Automatische Prüfziffer</p>
+                </div>
+                <a href="/EAN13-Generator.html" class="tool-button">🎫 Generator öffnen</a>
+            </div>
 
-        <!-- SEPA-Tool -->
-        <div class="demo-card tools-card">
-            <div class="demo-icon">💰</div>
-            <h2>SEPA-Tool</h2>
-            <p><strong>SEPA-XML verwalten:</strong><br>
-            • XML-Dateien analysieren<br>
-            • Lastschriften zusammenführen<br>
-            • CSV-Export der Transaktionen<br>
-            • Übersichtliche Statistiken</p>
-            <a href="/sepa-merger.html" class="demo-button">📄 SEPA-Tool öffnen</a>
+            <!-- SEPA-Tool -->
+            <div class="tool-card">
+                <div>
+                    <div class="tool-icon">💰</div>
+                    <h2>SEPA-Tool</h2>
+                    <p>XML-Dateien analysieren und zusammenführen<br>
+                    CSV-Export • Übersichtliche Statistiken</p>
+                </div>
+                <a href="/sepa-merger.html" class="tool-button">📄 SEPA-Tool öffnen</a>
+            </div>
         </div>
     </div>
 
@@ -235,5 +366,21 @@
         <h3>🎮 Saarcade e.V. Kassensystem</h3>
         <p>Erstellt von Jochen Klemm und claude.ai</p>
     </div>
+
+    <script>
+        // Logo laden
+        async function loadLogo() {
+            try {
+                const logoData = await window.fs.readFile('Saarcade-Logo.png');
+                const base64 = btoa(String.fromCharCode(...logoData));
+                document.getElementById('logoImg').src = `data:image/png;base64,${base64}`;
+            } catch (error) {
+                console.log('Logo konnte nicht geladen werden:', error);
+                document.querySelector('.logo-container').style.display = 'none';
+            }
+        }
+
+        loadLogo();
+    </script>
 </body>
 </html>
