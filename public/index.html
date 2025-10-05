@@ -23,13 +23,17 @@
         }
 
         .logo-container {
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.98);
             backdrop-filter: blur(10px);
             border-radius: 30px;
             padding: 40px;
             max-width: 600px;
             margin: 0 auto 30px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            min-height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .logo-container img {
@@ -37,34 +41,38 @@
             height: auto;
             max-height: 200px;
         }
+
+        .logo-placeholder {
+            font-size: 4em;
+            color: #667eea;
+        }
         
         .header h1 {
             font-size: 3.5em;
             margin: 20px 0 15px;
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-shadow: 0 2px 20px rgba(255, 255, 255, 0.3);
+            color: white;
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            font-weight: 700;
         }
         
         .header p {
             font-size: 1.4em;
-            color: rgba(255, 255, 255, 0.95);
+            color: white;
             margin-bottom: 15px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            font-weight: 500;
         }
         
         .system-status {
             display: inline-flex;
             align-items: center;
             gap: 10px;
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.98);
             color: #2d5f2d;
             padding: 12px 24px;
             border-radius: 25px;
             font-weight: 600;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
         
         .status-dot {
@@ -103,15 +111,16 @@
         .tools-header {
             grid-column: 1 / -1;
             text-align: center;
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 1.2em;
+            color: white;
+            font-size: 1.3em;
             margin-top: 20px;
             margin-bottom: 10px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            font-weight: 600;
         }
         
         .main-card {
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.98);
             backdrop-filter: blur(10px);
             border-radius: 25px;
             padding: 50px 40px;
@@ -125,7 +134,7 @@
         }
 
         .tool-card {
-            background: rgba(255, 255, 255, 0.85);
+            background: rgba(255, 255, 255, 0.90);
             backdrop-filter: blur(10px);
             border-radius: 20px;
             padding: 25px 30px;
@@ -147,7 +156,7 @@
         .tool-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.98);
         }
         
         .demo-icon {
@@ -245,7 +254,7 @@
         }
         
         .footer {
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.98);
             backdrop-filter: blur(10px);
             padding: 25px;
             text-align: center;
@@ -290,9 +299,10 @@
 <body>
     <div class="header">
         <div class="logo-container">
-            <img id="logoImg" alt="Saarcade e.V. Logo">
+            <img id="logoImg" alt="Saarcade e.V. Logo" style="display:none;">
+            <div class="logo-placeholder" id="logoPlaceholder">🎮</div>
         </div>
-        <h1>🎮 Willkommen beim Saarcade Kassensystem</h1>
+        <h1>Willkommen beim Saarcade Kassensystem</h1>
         <p>Dein digitales Kassensystem für das Flipper- und Arcademuseum</p>
         <div class="system-status">
             <div class="status-dot"></div>
@@ -368,16 +378,30 @@
     </div>
 
     <script>
-        // Logo laden
+        // Logo laden - mit mehreren Dateinamen probieren
         async function loadLogo() {
-            try {
-                const logoData = await window.fs.readFile('Saarcade-Logo.png');
-                const base64 = btoa(String.fromCharCode(...logoData));
-                document.getElementById('logoImg').src = `data:image/png;base64,${base64}`;
-            } catch (error) {
-                console.log('Logo konnte nicht geladen werden:', error);
-                document.querySelector('.logo-container').style.display = 'none';
+            const possibleNames = [
+                'Saarcade-Logo.png',
+                'saarcade-logo.png', 
+                'logo.png',
+                'Logo.png'
+            ];
+            
+            for (const filename of possibleNames) {
+                try {
+                    const logoData = await window.fs.readFile(filename);
+                    const base64 = btoa(String.fromCharCode(...logoData));
+                    const logoImg = document.getElementById('logoImg');
+                    logoImg.src = `data:image/png;base64,${base64}`;
+                    logoImg.style.display = 'block';
+                    document.getElementById('logoPlaceholder').style.display = 'none';
+                    console.log('Logo geladen:', filename);
+                    return;
+                } catch (error) {
+                    console.log('Logo nicht gefunden:', filename);
+                }
             }
+            console.log('Kein Logo gefunden, verwende Platzhalter');
         }
 
         loadLogo();
