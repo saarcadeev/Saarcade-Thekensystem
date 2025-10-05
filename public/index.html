@@ -65,10 +65,10 @@
         
         .main-container {
             max-width: 1200px;
-            margin: 30px auto;
+            margin: 40px auto;
             padding: 20px;
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 30px;
         }
         
@@ -77,110 +77,89 @@
             backdrop-filter: blur(10px);
             border-radius: 20px;
             padding: 30px;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.1);
-            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
             transition: all 0.3s ease;
-            border: 1px solid rgba(255,255,255,0.2);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .demo-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-            transition: left 0.6s ease;
-        }
-        
-        .demo-card:hover::before {
-            left: 100%;
+            border: 2px solid transparent;
         }
         
         .demo-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+            transform: translateY(-8px);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.25);
+            border-color: rgba(102, 126, 234, 0.3);
         }
         
         .demo-icon {
-            font-size: 5em;
-            margin-bottom: 25px;
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            font-size: 3em;
+            text-align: center;
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
         
         .demo-card h2 {
-            font-size: 1.8em;
-            margin-bottom: 15px;
             color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 1.6em;
+            text-align: center;
         }
         
         .demo-card p {
             color: #666;
-            margin-bottom: 25px;
             line-height: 1.6;
+            margin-bottom: 25px;
+            font-size: 0.95em;
         }
         
         .demo-button {
+            display: block;
+            width: 100%;
+            padding: 14px 24px;
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
-            border: none;
-            padding: 18px 35px;
-            border-radius: 30px;
-            font-size: 1.1em;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
             text-decoration: none;
-            display: inline-block;
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.05em;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
         
         .demo-button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
         }
         
         .admin-card {
-            border-left: 5px solid #f56565;
+            border: 2px solid rgba(255, 193, 7, 0.3);
         }
-        
-        .admin-card .demo-icon {
-            background: linear-gradient(45deg, #f56565, #e53e3e);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .admin-card .demo-button {
-            background: linear-gradient(135deg, #f56565, #e53e3e);
-            box-shadow: 0 8px 25px rgba(245, 101, 101, 0.3);
-        }
-        
-        .admin-card .demo-button:hover {
-            box-shadow: 0 12px 35px rgba(245, 101, 101, 0.4);
+
+        .tools-card {
+            border: 2px solid rgba(52, 211, 153, 0.3);
         }
         
         .footer {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 25px;
             text-align: center;
-            padding: 40px 20px;
-            color: rgba(255,255,255,0.9);
-            background: rgba(0,0,0,0.1);
             margin-top: 40px;
+            box-shadow: 0 -5px 30px rgba(0,0,0,0.1);
         }
         
         .footer h3 {
+            color: #2d3748;
             margin-bottom: 10px;
+            font-size: 1.3em;
         }
         
         .footer p {
+            color: #666;
             font-size: 0.95em;
-            margin-top: 10px;
         }
         
         @media (max-width: 768px) {
@@ -225,6 +204,30 @@
             • Berichte und Statistiken<br>
             • Inventar und Bestandsverwaltung</p>
             <a href="/admin" class="demo-button">🔐 Admin-Bereich</a>
+        </div>
+
+        <!-- EAN-Generator -->
+        <div class="demo-card tools-card">
+            <div class="demo-icon">📊</div>
+            <h2>EAN-13 Generator</h2>
+            <p><strong>Mitgliedsausweise erstellen:</strong><br>
+            • Barcode für Mitgliedsausweise<br>
+            • Basierend auf Geburtsdatum<br>
+            • PNG-Download für Druck<br>
+            • Automatische Prüfziffer</p>
+            <a href="/EAN13-Generator.html" class="demo-button">🎫 EAN generieren</a>
+        </div>
+
+        <!-- SEPA-Tool -->
+        <div class="demo-card tools-card">
+            <div class="demo-icon">💰</div>
+            <h2>SEPA-Tool</h2>
+            <p><strong>SEPA-XML verwalten:</strong><br>
+            • XML-Dateien analysieren<br>
+            • Lastschriften zusammenführen<br>
+            • CSV-Export der Transaktionen<br>
+            • Übersichtliche Statistiken</p>
+            <a href="/sepa-merger.html" class="demo-button">📄 SEPA-Tool öffnen</a>
         </div>
     </div>
 
