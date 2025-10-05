@@ -17,20 +17,30 @@
             padding: 20px;
         }
         
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+}
 
+.header-wrapper {
+    max-width: 1400px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(10px);
+    border-radius: 25px;
+    padding: 30px 40px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+        
         .logo-container {
-            background: rgba(255, 255, 255, 0.98);
+            background: white;
             backdrop-filter: blur(10px);
             border-radius: 20px;
             padding: 20px;
             max-width: 400px;
             height: 120px;
             margin: 0 auto 20px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            box-shadow: none;
             background-image: url('/Saarcade-Logo-Farbe.png');
             background-repeat: no-repeat;
             background-position: center center;
@@ -49,16 +59,16 @@
         .header h1 {
             font-size: 2.5em;
             margin: 15px 0 10px;
-            color: white;
-            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            color: #2d3748;
+            text-shadow: none;
             font-weight: 700;
         }
         
         .header p {
             font-size: 1.1em;
-            color: white;
+            color: #666;
             margin-bottom: 12px;
-            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            text-shadow: none;
             font-weight: 500;
         }
         
@@ -297,8 +307,9 @@
     </style>
 </head>
 <body>
-    <div class="header">
-    <div class="logo-container"></div>
+<div class="header">
+    <div class="header-wrapper">
+        <div class="logo-container"></div>
         <h1>Willkommen beim Saarcade Kassensystem</h1>
         <p>Dein digitales Kassensystem für das Flipper- und Arcademuseum</p>
         <div class="system-status">
@@ -306,6 +317,7 @@
             System online
         </div>
     </div>
+</div>
 
     <div class="main-container">
         <!-- Hauptanwendungen -->
