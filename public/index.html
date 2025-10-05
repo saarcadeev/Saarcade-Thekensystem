@@ -14,23 +14,22 @@
             min-height: 100vh;
             color: #333;
             overflow-x: hidden;
-            padding: 40px 20px;
+            padding: 20px;
         }
         
         .header {
             text-align: center;
-            margin-bottom: 50px;
+            margin-bottom: 30px;
         }
 
         .logo-container {
             background: rgba(255, 255, 255, 0.98);
             backdrop-filter: blur(10px);
-            border-radius: 30px;
-            padding: 40px;
-            max-width: 600px;
-            margin: 0 auto 30px;
+            border-radius: 20px;
+            padding: 20px;
+            max-width: 400px;
+            margin: 0 auto 20px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            min-height: 150px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -39,26 +38,21 @@
         .logo-container img {
             max-width: 100%;
             height: auto;
-            max-height: 200px;
-        }
-
-        .logo-placeholder {
-            font-size: 4em;
-            color: #667eea;
+            max-height: 100px;
         }
         
         .header h1 {
-            font-size: 3.5em;
-            margin: 20px 0 15px;
+            font-size: 2.5em;
+            margin: 15px 0 10px;
             color: white;
             text-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
             font-weight: 700;
         }
         
         .header p {
-            font-size: 1.4em;
+            font-size: 1.1em;
             color: white;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
             font-weight: 500;
         }
@@ -69,15 +63,16 @@
             gap: 10px;
             background: rgba(255, 255, 255, 0.98);
             color: #2d5f2d;
-            padding: 12px 24px;
-            border-radius: 25px;
+            padding: 10px 20px;
+            border-radius: 20px;
             font-weight: 600;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            font-size: 0.95em;
         }
         
         .status-dot {
-            width: 12px;
-            height: 12px;
+            width: 10px;
+            height: 10px;
             background: #4caf50;
             border-radius: 50%;
             animation: blink 2s infinite;
@@ -92,29 +87,29 @@
             max-width: 1400px;
             margin: 0 auto;
             display: grid;
-            gap: 30px;
+            gap: 20px;
         }
 
         .main-apps {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 30px;
-            margin-bottom: 30px;
+            gap: 25px;
+            margin-bottom: 20px;
         }
 
         .tools-section {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
+            gap: 15px;
         }
 
         .tools-header {
             grid-column: 1 / -1;
             text-align: center;
             color: white;
-            font-size: 1.3em;
-            margin-top: 20px;
-            margin-bottom: 10px;
+            font-size: 1.1em;
+            margin-top: 10px;
+            margin-bottom: 5px;
             text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
             font-weight: 600;
         }
@@ -122,12 +117,12 @@
         .main-card {
             background: rgba(255, 255, 255, 0.98);
             backdrop-filter: blur(10px);
-            border-radius: 25px;
-            padding: 50px 40px;
+            border-radius: 20px;
+            padding: 35px 30px;
             box-shadow: 0 15px 50px rgba(0, 0, 0, 0.25);
             transition: all 0.3s ease;
             border: 3px solid transparent;
-            min-height: 450px;
+            min-height: 380px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -136,86 +131,86 @@
         .tool-card {
             background: rgba(255, 255, 255, 0.90);
             backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 25px 30px;
+            border-radius: 15px;
+            padding: 20px 25px;
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
             transition: all 0.3s ease;
             border: 2px solid rgba(255, 255, 255, 0.3);
-            min-height: 200px;
+            min-height: 160px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
         }
         
         .main-card:hover {
-            transform: translateY(-10px) scale(1.02);
+            transform: translateY(-8px) scale(1.01);
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
             border-color: rgba(102, 126, 234, 0.5);
         }
 
         .tool-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-4px);
             box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
             background: rgba(255, 255, 255, 0.98);
         }
         
         .demo-icon {
-            font-size: 5em;
+            font-size: 3.5em;
             text-align: center;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             animation: float 3s ease-in-out infinite;
         }
 
         .tool-icon {
-            font-size: 2.5em;
+            font-size: 2em;
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
         
         @keyframes float {
             0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-15px); }
+            50% { transform: translateY(-12px); }
         }
         
         .main-card h2 {
             color: #2d3748;
-            margin-bottom: 20px;
-            font-size: 2.2em;
+            margin-bottom: 15px;
+            font-size: 1.8em;
             text-align: center;
         }
 
         .tool-card h2 {
             color: #2d3748;
-            margin-bottom: 12px;
-            font-size: 1.3em;
+            margin-bottom: 10px;
+            font-size: 1.15em;
             text-align: center;
         }
         
         .main-card p {
             color: #666;
-            line-height: 1.8;
-            margin-bottom: 30px;
-            font-size: 1.1em;
+            line-height: 1.6;
+            margin-bottom: 25px;
+            font-size: 1em;
         }
 
         .tool-card p {
             color: #666;
-            line-height: 1.5;
-            margin-bottom: 15px;
-            font-size: 0.9em;
+            line-height: 1.4;
+            margin-bottom: 12px;
+            font-size: 0.85em;
         }
         
         .demo-button {
             display: block;
             width: 100%;
-            padding: 18px 24px;
+            padding: 15px 20px;
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
             text-decoration: none;
-            border-radius: 15px;
+            border-radius: 12px;
             text-align: center;
             font-weight: 700;
-            font-size: 1.2em;
+            font-size: 1.1em;
             transition: all 0.3s ease;
             box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
         }
@@ -223,20 +218,20 @@
         .tool-button {
             display: block;
             width: 100%;
-            padding: 10px 16px;
+            padding: 8px 14px;
             background: linear-gradient(135deg, #34d399, #10b981);
             color: white;
             text-decoration: none;
-            border-radius: 10px;
+            border-radius: 8px;
             text-align: center;
             font-weight: 600;
-            font-size: 0.95em;
+            font-size: 0.9em;
             transition: all 0.3s ease;
             box-shadow: 0 4px 12px rgba(52, 211, 153, 0.3);
         }
         
         .demo-button:hover {
-            transform: translateY(-3px);
+            transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
         }
 
@@ -256,10 +251,10 @@
         .footer {
             background: rgba(255, 255, 255, 0.98);
             backdrop-filter: blur(10px);
-            padding: 25px;
+            padding: 15px;
             text-align: center;
-            margin-top: 50px;
-            border-radius: 20px;
+            margin-top: 25px;
+            border-radius: 15px;
             max-width: 1400px;
             margin-left: auto;
             margin-right: auto;
@@ -268,13 +263,13 @@
         
         .footer h3 {
             color: #2d3748;
-            margin-bottom: 10px;
-            font-size: 1.3em;
+            margin-bottom: 5px;
+            font-size: 1.1em;
         }
         
         .footer p {
             color: #666;
-            font-size: 0.95em;
+            font-size: 0.9em;
         }
         
         @media (max-width: 1200px) {
@@ -287,20 +282,19 @@
         }
 
         @media (max-width: 768px) {
-            .header h1 { font-size: 2.5em; }
+            .header h1 { font-size: 2em; }
             .main-card { 
-                padding: 30px 25px;
+                padding: 25px 20px;
                 min-height: auto;
             }
-            .demo-icon { font-size: 3.5em; }
+            .demo-icon { font-size: 3em; }
         }
     </style>
 </head>
 <body>
     <div class="header">
         <div class="logo-container">
-            <img id="logoImg" alt="Saarcade e.V. Logo" style="display:none;">
-            <div class="logo-placeholder" id="logoPlaceholder">🎮</div>
+            <img src="/saarcade-logo.png" alt="Saarcade e.V. Logo">
         </div>
         <h1>Willkommen beim Saarcade Kassensystem</h1>
         <p>Dein digitales Kassensystem für das Flipper- und Arcademuseum</p>
@@ -376,35 +370,5 @@
         <h3>🎮 Saarcade e.V. Kassensystem</h3>
         <p>Erstellt von Jochen Klemm und claude.ai</p>
     </div>
-
-    <script>
-        // Logo laden - mit mehreren Dateinamen probieren
-        async function loadLogo() {
-            const possibleNames = [
-                'Saarcade-Logo.png',
-                'saarcade-logo.png', 
-                'logo.png',
-                'Logo.png'
-            ];
-            
-            for (const filename of possibleNames) {
-                try {
-                    const logoData = await window.fs.readFile(filename);
-                    const base64 = btoa(String.fromCharCode(...logoData));
-                    const logoImg = document.getElementById('logoImg');
-                    logoImg.src = `data:image/png;base64,${base64}`;
-                    logoImg.style.display = 'block';
-                    document.getElementById('logoPlaceholder').style.display = 'none';
-                    console.log('Logo geladen:', filename);
-                    return;
-                } catch (error) {
-                    console.log('Logo nicht gefunden:', filename);
-                }
-            }
-            console.log('Kein Logo gefunden, verwende Platzhalter');
-        }
-
-        loadLogo();
-    </script>
 </body>
 </html>
