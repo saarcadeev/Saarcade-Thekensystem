@@ -3,81 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Saarcade e.V. - Mitglieds-EAN-13 Generator</title>
+    <title>🎮 Saarcade - EAN-13 Generator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
             padding: 20px;
         }
 
         .container {
-            background: white;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 600px;
+            max-width: 700px;
             width: 100%;
             padding: 40px;
+            margin: 20px 0;
         }
 
         .logo {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
 
         .logo img {
-            max-width: 300px;
+            max-width: 250px;
             height: auto;
         }
 
         h1 {
-            color: #333;
+            color: #2d3748;
             text-align: center;
             margin-bottom: 10px;
-            font-size: 24px;
+            font-size: 2em;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .subtitle {
             text-align: center;
             color: #666;
             margin-bottom: 30px;
-            font-size: 14px;
+            font-size: 1em;
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
 
         label {
             display: block;
             margin-bottom: 8px;
-            color: #333;
+            color: #2d3748;
             font-weight: 600;
+            font-size: 0.95em;
         }
 
         input {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s;
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s;
         }
 
         input:focus {
             outline: none;
             border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
         button {
@@ -86,16 +90,17 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            border-radius: 8px;
-            font-size: 18px;
+            border-radius: 10px;
+            font-size: 1.1em;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
 
         button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
         }
 
         button:active {
@@ -104,10 +109,11 @@
 
         .result {
             margin-top: 30px;
-            padding: 20px;
+            padding: 25px;
             background: #f8f9fa;
-            border-radius: 10px;
+            border-radius: 15px;
             display: none;
+            border: 2px solid #e2e8f0;
         }
 
         .result.show {
@@ -116,39 +122,80 @@
 
         .ean-number {
             text-align: center;
-            font-size: 24px;
+            font-size: 1.8em;
             font-weight: bold;
-            color: #333;
+            color: #2d3748;
             margin-bottom: 20px;
-            letter-spacing: 2px;
+            letter-spacing: 3px;
+            font-family: 'Courier New', monospace;
         }
 
         .barcode-container {
             text-align: center;
             background: white;
-            padding: 20px;
-            border-radius: 8px;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
         #barcode {
             max-width: 100%;
         }
 
+        .download-btn {
+            width: 100%;
+            padding: 12px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 15px;
+        }
+
+        .download-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
         .error {
-            color: #dc3545;
-            font-size: 14px;
+            color: #e53e3e;
+            font-size: 0.9em;
             margin-top: 5px;
             display: none;
+            padding: 8px;
+            background: #fed7d7;
+            border-radius: 5px;
+            border-left: 4px solid #e53e3e;
         }
 
         .info {
-            background: #e7f3ff;
-            border-left: 4px solid #2196F3;
-            padding: 12px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            border-left: 4px solid #667eea;
+            padding: 15px;
             margin-top: 20px;
-            border-radius: 4px;
-            font-size: 13px;
-            color: #333;
+            border-radius: 8px;
+            font-size: 0.9em;
+            color: #2d3748;
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .back-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -158,33 +205,38 @@
             <img id="logoImg" alt="Saarcade e.V. Logo">
         </div>
 
-        <h1>Mitglieds-EAN-13 Generator</h1>
+        <h1>🎫 Mitglieds-EAN-13 Generator</h1>
         <p class="subtitle">Erstelle deinen persönlichen Mitgliedsausweis-Barcode</p>
 
         <form id="eanForm">
             <div class="form-group">
-                <label for="birthdate">Geburtsdatum:</label>
+                <label for="birthdate">📅 Geburtsdatum:</label>
                 <input type="date" id="birthdate" required>
                 <div class="error" id="birthdateError">Bitte gib ein gültiges Geburtsdatum ein.</div>
             </div>
 
             <div class="form-group">
-                <label for="memberNumber">Mitgliedsnummer:</label>
+                <label for="memberNumber">🔢 Mitgliedsnummer:</label>
                 <input type="number" id="memberNumber" min="1" max="999" placeholder="z.B. 40" required>
                 <div class="error" id="memberNumberError">Bitte gib eine Mitgliedsnummer zwischen 1 und 999 ein.</div>
             </div>
 
-            <button type="submit">EAN-13 generieren</button>
+            <button type="submit">🎨 EAN-13 generieren</button>
         </form>
 
         <div class="result" id="result">
             <div class="ean-number" id="eanNumber"></div>
-            <div class="barcode-container">
+            <div class="barcode-container" id="barcodeContainer">
                 <svg id="barcode"></svg>
             </div>
+            <button class="download-btn" onclick="downloadBarcodePNG()">📥 Als PNG herunterladen</button>
             <div class="info">
-                Der Barcode kann ausgedruckt und auf Mitgliedsausweise aufgebracht werden.
+                💡 Der Barcode kann ausgedruckt und auf Mitgliedsausweise aufgebracht werden. Das PNG-Format eignet sich ideal für den Druck.
             </div>
+        </div>
+
+        <div class="back-link">
+            <a href="/">← Zurück zur Startseite</a>
         </div>
     </div>
 
@@ -192,11 +244,12 @@
         // Logo laden
         async function loadLogo() {
             try {
-                const logoData = await window.fs.readFile('saarcade-logo.png');
+                const logoData = await window.fs.readFile('Saarcade-Logo.png');
                 const base64 = btoa(String.fromCharCode(...logoData));
                 document.getElementById('logoImg').src = `data:image/png;base64,${base64}`;
             } catch (error) {
                 console.log('Logo konnte nicht geladen werden:', error);
+                document.querySelector('.logo').style.display = 'none';
             }
         }
 
@@ -205,7 +258,6 @@
             let sum = 0;
             for (let i = 0; i < 12; i++) {
                 const digit = parseInt(ean12[i]);
-                // Von links nach rechts: ungerade Positionen (1,3,5...) mit 1, gerade (2,4,6...) mit 3
                 sum += (i % 2 === 0) ? digit : digit * 3;
             }
             const checkDigit = (10 - (sum % 10)) % 10;
@@ -227,17 +279,50 @@
             return ean13;
         }
 
+        // PNG-Download Funktion
+        function downloadBarcodePNG() {
+            const svg = document.getElementById('barcode');
+            const svgData = new XMLSerializer().serializeToString(svg);
+            
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            const svgRect = svg.getBoundingClientRect();
+            canvas.width = svgRect.width * 2;
+            canvas.height = svgRect.height * 2;
+            
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            const img = new Image();
+            const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            
+            img.onload = function() {
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                URL.revokeObjectURL(url);
+                
+                canvas.toBlob(function(blob) {
+                    const link = document.createElement('a');
+                    const eanNumber = document.getElementById('eanNumber').textContent;
+                    link.download = `barcode_${eanNumber}.png`;
+                    link.href = URL.createObjectURL(blob);
+                    link.click();
+                }, 'image/png');
+            };
+            
+            img.src = url;
+        }
+
         // Form-Handler
         document.getElementById('eanForm').addEventListener('submit', function(e) {
             e.preventDefault();
 
-            // Fehler zurücksetzen
             document.querySelectorAll('.error').forEach(el => el.style.display = 'none');
 
             const birthdate = document.getElementById('birthdate').value;
             const memberNumber = document.getElementById('memberNumber').value;
 
-            // Validierung
             let valid = true;
 
             if (!birthdate) {
@@ -252,28 +337,25 @@
 
             if (!valid) return;
 
-            // EAN-13 generieren
             const ean13 = generateEAN13(birthdate, parseInt(memberNumber));
 
-            // Anzeigen
             document.getElementById('eanNumber').textContent = ean13;
             document.getElementById('result').classList.add('show');
 
-            // Barcode generieren
             JsBarcode("#barcode", ean13, {
                 format: "EAN13",
-                width: 2,
-                height: 100,
+                width: 3,
+                height: 120,
                 displayValue: true,
-                fontSize: 18,
-                margin: 10
+                fontSize: 20,
+                margin: 15,
+                background: '#ffffff',
+                lineColor: '#000000'
             });
 
-            // Zum Ergebnis scrollen
             document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         });
 
-        // Logo beim Laden der Seite laden
         loadLogo();
     </script>
 </body>
