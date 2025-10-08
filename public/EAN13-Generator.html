@@ -310,7 +310,7 @@
 <body>
     <div class="container">
         <div class="logo">
-            <img id="logoImg" alt="Saarcade e.V. Logo">
+            <img id="logoImg" src="Saarcade-Logo.png" alt="Saarcade e.V. Logo">
         </div>
 
         <h1>🎫 EAN-Code Generator</h1>
@@ -346,7 +346,7 @@
                     <label>✅ Deine Mitglieds-EAN-13:</label>
                     <div class="code-display">
                         <span id="eanNumber"></span>
-                        <button class="copy-btn" onclick="copyMemberCode()" title="Code kopieren">📋</button>
+                        <button class="copy-btn" onclick="copyMemberCode(this)" title="Code kopieren">📋</button>
                     </div>
                 </div>
                 
@@ -379,7 +379,7 @@
                     <label>✅ Vollständiger Code:</label>
                     <div class="code-display">
                         <span id="completeCode"></span>
-                        <button class="copy-btn" onclick="copyCheckdigitCode()" title="Code kopieren">📋</button>
+                        <button class="copy-btn" onclick="copyCheckdigitCode(this)" title="Code kopieren">📋</button>
                     </div>
                 </div>
                 
@@ -401,27 +401,40 @@
     </div>
 
     <script>
-        // Logo laden
-        async function loadLogo() {
-            try {
-                const logoData = await window.fs.readFile('Saarcade-Logo.png');
-                const base64 = btoa(String.fromCharCode(...logoData));
-                document.getElementById('logoImg').src = `data:image/png;base64,${base64}`;
-            } catch (error) {
-                console.log('Logo konnte nicht geladen werden:', error);
-                document.querySelector('.logo').style.display = 'none';
-            }
-        }
-
-        // EAN-13 Prüfziffer berechnen
-        function calculateCheckDigit(eanCode) {
+        // EAN-13 Prüfziffer berechnen (für 12 Ziffern)
+        function calculateCheckDigitEAN13(ean12) {
             let sum = 0;
-            for (let i = 0; i < eanCode.length; i++) {
-                const digit = parseInt(eanCode[i]);
+            for (let i = 0; i < 12; i++) {
+                const digit = parseInt(ean12[i]);
+                // Position 0,2,4,6,8,10 (gerade Indizes) → *1
+                // Position 1,3,5,7,9,11 (ungerade Indizes) → *3
                 sum += (i % 2 === 0) ? digit : digit * 3;
             }
             const checkDigit = (10 - (sum % 10)) % 10;
             return checkDigit;
+        }
+
+        // EAN-8 Prüfziffer berechnen (für 7 Ziffern)
+        function calculateCheckDigitEAN8(ean7) {
+            let sum = 0;
+            for (let i = 0; i < 7; i++) {
+                const digit = parseInt(ean7[i]);
+                // Position 0,2,4,6 (gerade Indizes) → *3
+                // Position 1,3,5 (ungerade Indizes) → *1
+                sum += (i % 2 === 0) ? digit * 3 : digit;
+            }
+            const checkDigit = (10 - (sum % 10)) % 10;
+            return checkDigit;
+        }
+
+        // Prüfziffer berechnen (automatische Erkennung)
+        function calculateCheckDigit(eanCode) {
+            if (eanCode.length === 7) {
+                return calculateCheckDigitEAN8(eanCode);
+            } else if (eanCode.length === 12) {
+                return calculateCheckDigitEAN13(eanCode);
+            }
+            return 0;
         }
 
         // EAN-13 generieren
@@ -433,7 +446,7 @@
             const member = String(memberNumber).padStart(3, '0');
 
             const ean12 = '9' + day + month + year + member;
-            const checkDigit = calculateCheckDigit(ean12);
+            const checkDigit = calculateCheckDigitEAN13(ean12);
             const ean13 = ean12 + checkDigit;
 
             return ean13;
@@ -516,8 +529,6 @@
             document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         });
 
-        loadLogo();
-
         // Tab-Wechsel
         function switchTab(tab) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -566,17 +577,16 @@
                 });
             } catch (error) {
                 console.error('Fehler beim Generieren des Barcodes:', error);
-                alert('Fehler beim Generieren des Barcodes. Bitte überprüfe die Eingabe.');
+                alert('Fehler beim Generieren des Barcodes: ' + error.message);
             }
 
             document.getElementById('checkdigitResult').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         });
 
         // Kopier-Funktion für Mitgliedscode
-        function copyMemberCode() {
+        function copyMemberCode(btn) {
             const code = document.getElementById('eanNumber').textContent;
             navigator.clipboard.writeText(code).then(() => {
-                const btn = event.target;
                 const originalText = btn.textContent;
                 btn.textContent = '✅';
                 setTimeout(() => {
@@ -588,10 +598,9 @@
         }
 
         // Kopier-Funktion für Prüfziffer-Code
-        function copyCheckdigitCode() {
+        function copyCheckdigitCode(btn) {
             const code = document.getElementById('completeCode').textContent;
             navigator.clipboard.writeText(code).then(() => {
-                const btn = event.target;
                 const originalText = btn.textContent;
                 btn.textContent = '✅';
                 setTimeout(() => {
