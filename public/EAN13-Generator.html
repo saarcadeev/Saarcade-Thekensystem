@@ -57,6 +57,114 @@
             font-size: 1em;
         }
 
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 20px;
+            background: transparent;
+            color: #666;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-radius: 0;
+            box-shadow: none;
+        }
+
+        .tab-btn:hover {
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+            transform: none;
+            box-shadow: none;
+        }
+
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .tab-content {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tab-content h2 {
+            color: #2d3748;
+            font-size: 1.5em;
+            margin-bottom: 8px;
+        }
+
+        .tab-subtitle {
+            color: #666;
+            margin-bottom: 25px;
+            font-size: 0.9em;
+        }
+
+        .complete-code {
+            margin-bottom: 25px;
+        }
+
+        .complete-code label {
+            display: block;
+            margin-bottom: 10px;
+            color: #2d3748;
+            font-weight: 600;
+        }
+
+        .code-display {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .code-display span {
+            flex: 1;
+            font-size: 1.5em;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            color: #2d3748;
+            letter-spacing: 2px;
+        }
+
+        .copy-btn {
+            padding: 8px 15px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s;
+            box-shadow: none;
+            width: auto;
+        }
+
+        .copy-btn:hover {
+            background: #5568d3;
+            transform: scale(1.05);
+        }
+
+        .copy-btn:active {
+            transform: scale(0.95);
+        }
+
         .form-group {
             margin-bottom: 25px;
         }
@@ -84,7 +192,7 @@
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
-        button {
+        button[type="submit"] {
             width: 100%;
             padding: 14px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -98,12 +206,12 @@
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
 
-        button:hover {
+        button[type="submit"]:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
         }
 
-        button:active {
+        button[type="submit"]:active {
             transform: translateY(0);
         }
 
@@ -139,7 +247,7 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
-        #barcode {
+        #barcode, #checkdigitBarcode {
             max-width: 100%;
         }
 
@@ -205,33 +313,85 @@
             <img id="logoImg" alt="Saarcade e.V. Logo">
         </div>
 
-        <h1>🎫 Mitglieds-EAN-13 Generator</h1>
-        <p class="subtitle">Erstelle deinen persönlichen Mitgliedsausweis-Barcode</p>
+        <h1>🎫 EAN-Code Generator</h1>
+        <p class="subtitle">Saarcade e.V. - Barcode Werkzeuge</p>
 
-        <form id="eanForm">
-            <div class="form-group">
-                <label for="birthdate">📅 Geburtsdatum:</label>
-                <input type="date" id="birthdate" required>
-                <div class="error" id="birthdateError">Bitte gib ein gültiges Geburtsdatum ein.</div>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('member')">👥 Mitgliedsausweis</button>
+            <button class="tab-btn" onclick="switchTab('checkdigit')">🔢 Prüfziffer-Rechner</button>
+        </div>
+
+        <div class="tab-content" id="memberTab">
+            <h2>Mitglieds-EAN-13 Generator</h2>
+            <p class="tab-subtitle">Erstelle deinen persönlichen Mitgliedsausweis-Barcode</p>
+            
+            <form id="eanForm">
+                <div class="form-group">
+                    <label for="birthdate">📅 Geburtsdatum:</label>
+                    <input type="date" id="birthdate" required>
+                    <div class="error" id="birthdateError">Bitte gib ein gültiges Geburtsdatum ein.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="memberNumber">🔢 Mitgliedsnummer:</label>
+                    <input type="number" id="memberNumber" min="1" max="999" placeholder="z.B. 40" required>
+                    <div class="error" id="memberNumberError">Bitte gib eine Mitgliedsnummer zwischen 1 und 999 ein.</div>
+                </div>
+
+                <button type="submit">🎨 EAN-13 generieren</button>
+            </form>
+
+            <div class="result" id="result">
+                <div class="complete-code">
+                    <label>✅ Deine Mitglieds-EAN-13:</label>
+                    <div class="code-display">
+                        <span id="eanNumber"></span>
+                        <button class="copy-btn" onclick="copyMemberCode()" title="Code kopieren">📋</button>
+                    </div>
+                </div>
+                
+                <div class="barcode-container" id="barcodeContainer">
+                    <svg id="barcode"></svg>
+                </div>
+                <button class="download-btn" onclick="downloadBarcodePNG()">📥 Als PNG herunterladen</button>
+                <div class="info">
+                    💡 Der Barcode kann ausgedruckt und auf Mitgliedsausweise aufgebracht werden. Das PNG-Format eignet sich ideal für den Druck.
+                </div>
             </div>
+        </div>
 
-            <div class="form-group">
-                <label for="memberNumber">🔢 Mitgliedsnummer:</label>
-                <input type="number" id="memberNumber" min="1" max="999" placeholder="z.B. 40" required>
-                <div class="error" id="memberNumberError">Bitte gib eine Mitgliedsnummer zwischen 1 und 999 ein.</div>
-            </div>
+        <div class="tab-content" id="checkdigitTab" style="display: none;">
+            <h2>Prüfziffer-Rechner</h2>
+            <p class="tab-subtitle">Berechne die Prüfziffer für EAN-8 oder EAN-13 Codes</p>
+            
+            <form id="checkdigitForm">
+                <div class="form-group">
+                    <label for="eanInput">📊 EAN-Code (7 oder 12 Ziffern):</label>
+                    <input type="text" id="eanInput" placeholder="z.B. 400123456789" maxlength="12" required>
+                    <div class="error" id="eanInputError">Bitte gib genau 7 oder 12 Ziffern ein.</div>
+                </div>
 
-            <button type="submit">🎨 EAN-13 generieren</button>
-        </form>
+                <button type="submit">🔍 Prüfziffer berechnen</button>
+            </form>
 
-        <div class="result" id="result">
-            <div class="ean-number" id="eanNumber"></div>
-            <div class="barcode-container" id="barcodeContainer">
-                <svg id="barcode"></svg>
-            </div>
-            <button class="download-btn" onclick="downloadBarcodePNG()">📥 Als PNG herunterladen</button>
-            <div class="info">
-                💡 Der Barcode kann ausgedruckt und auf Mitgliedsausweise aufgebracht werden. Das PNG-Format eignet sich ideal für den Druck.
+            <div class="result" id="checkdigitResult">
+                <div class="complete-code">
+                    <label>✅ Vollständiger Code:</label>
+                    <div class="code-display">
+                        <span id="completeCode"></span>
+                        <button class="copy-btn" onclick="copyCheckdigitCode()" title="Code kopieren">📋</button>
+                    </div>
+                </div>
+                
+                <div class="barcode-container" id="checkdigitBarcodeContainer">
+                    <svg id="checkdigitBarcode"></svg>
+                </div>
+                
+                <button class="download-btn" onclick="downloadCheckdigitBarcodePNG()">📥 Als PNG herunterladen</button>
+                
+                <div class="info">
+                    💡 Der berechnete Code kann für Produkte, Inventar oder andere Zwecke verwendet werden.
+                </div>
             </div>
         </div>
 
@@ -254,10 +414,10 @@
         }
 
         // EAN-13 Prüfziffer berechnen
-        function calculateCheckDigit(ean12) {
+        function calculateCheckDigit(eanCode) {
             let sum = 0;
-            for (let i = 0; i < 12; i++) {
-                const digit = parseInt(ean12[i]);
+            for (let i = 0; i < eanCode.length; i++) {
+                const digit = parseInt(eanCode[i]);
                 sum += (i % 2 === 0) ? digit : digit * 3;
             }
             const checkDigit = (10 - (sum % 10)) % 10;
@@ -279,7 +439,7 @@
             return ean13;
         }
 
-        // PNG-Download Funktion
+        // PNG-Download Funktion für Mitgliedsausweis
         function downloadBarcodePNG() {
             const svg = document.getElementById('barcode');
             const svgData = new XMLSerializer().serializeToString(svg);
@@ -305,7 +465,7 @@
                 canvas.toBlob(function(blob) {
                     const link = document.createElement('a');
                     const eanNumber = document.getElementById('eanNumber').textContent;
-                    link.download = `barcode_${eanNumber}.png`;
+                    link.download = `mitglied_barcode_${eanNumber}.png`;
                     link.href = URL.createObjectURL(blob);
                     link.click();
                 }, 'image/png');
@@ -314,7 +474,7 @@
             img.src = url;
         }
 
-        // Form-Handler
+        // Form-Handler für Mitgliedsausweis
         document.getElementById('eanForm').addEventListener('submit', function(e) {
             e.preventDefault();
 
@@ -357,6 +517,130 @@
         });
 
         loadLogo();
+
+        // Tab-Wechsel
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+            
+            if (tab === 'member') {
+                document.querySelector('.tab-btn:first-child').classList.add('active');
+                document.getElementById('memberTab').style.display = 'block';
+            } else {
+                document.querySelector('.tab-btn:last-child').classList.add('active');
+                document.getElementById('checkdigitTab').style.display = 'block';
+            }
+        }
+
+        // Prüfziffer-Rechner Form Handler
+        document.getElementById('checkdigitForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            document.querySelectorAll('.error').forEach(el => el.style.display = 'none');
+
+            const input = document.getElementById('eanInput').value.trim();
+
+            // Validierung: nur Ziffern und Länge 7 oder 12
+            if (!/^\d+$/.test(input) || (input.length !== 7 && input.length !== 12)) {
+                document.getElementById('eanInputError').style.display = 'block';
+                return;
+            }
+
+            const checkDigit = calculateCheckDigit(input);
+            const completeCode = input + checkDigit;
+            const format = input.length === 7 ? 'EAN8' : 'EAN13';
+
+            document.getElementById('completeCode').textContent = completeCode;
+            document.getElementById('checkdigitResult').classList.add('show');
+
+            try {
+                JsBarcode("#checkdigitBarcode", completeCode, {
+                    format: format,
+                    width: 3,
+                    height: 120,
+                    displayValue: true,
+                    fontSize: 20,
+                    margin: 15,
+                    background: '#ffffff',
+                    lineColor: '#000000'
+                });
+            } catch (error) {
+                console.error('Fehler beim Generieren des Barcodes:', error);
+                alert('Fehler beim Generieren des Barcodes. Bitte überprüfe die Eingabe.');
+            }
+
+            document.getElementById('checkdigitResult').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+
+        // Kopier-Funktion für Mitgliedscode
+        function copyMemberCode() {
+            const code = document.getElementById('eanNumber').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✅';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            }).catch(err => {
+                alert('Fehler beim Kopieren: ' + err);
+            });
+        }
+
+        // Kopier-Funktion für Prüfziffer-Code
+        function copyCheckdigitCode() {
+            const code = document.getElementById('completeCode').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✅';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            }).catch(err => {
+                alert('Fehler beim Kopieren: ' + err);
+            });
+        }
+
+        // PNG-Download für Prüfziffer-Barcode
+        function downloadCheckdigitBarcodePNG() {
+            const svg = document.getElementById('checkdigitBarcode');
+            const svgData = new XMLSerializer().serializeToString(svg);
+            
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            const svgRect = svg.getBoundingClientRect();
+            canvas.width = svgRect.width * 2;
+            canvas.height = svgRect.height * 2;
+            
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            const img = new Image();
+            const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            
+            img.onload = function() {
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                URL.revokeObjectURL(url);
+                
+                canvas.toBlob(function(blob) {
+                    const link = document.createElement('a');
+                    const code = document.getElementById('completeCode').textContent;
+                    link.download = `barcode_${code}.png`;
+                    link.href = URL.createObjectURL(blob);
+                    link.click();
+                }, 'image/png');
+            };
+            
+            img.src = url;
+        }
+
+        // EAN-Input: nur Ziffern erlauben
+        document.getElementById('eanInput').addEventListener('input', function(e) {
+            this.value = this.value.replace(/\D/g, '');
+        });
     </script>
 </body>
 </html>
