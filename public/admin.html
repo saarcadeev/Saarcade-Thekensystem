@@ -705,22 +705,22 @@ body {
 
 <!-- Dashboard Statistiken -->
 <div class="dashboard-grid">
-    <div class="stat-card" style="border-left-color: #9b59b6;">
+    <div class="stat-card" onclick="showTab('users')" style="border-left-color: #9b59b6; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
         <div class="stat-label">Vereinsmitglieder</div>
         <div class="stat-value" id="memberCount">-</div>
         <div style="color: #666; font-size: 0.85em;">Registriert</div>
     </div>
-    <div class="stat-card" style="border-left-color: #27ae60;">
+    <div class="stat-card" onclick="showTab('products')" style="border-left-color: #27ae60; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
         <div class="stat-label">Produkte</div>
         <div class="stat-value" id="productCount">-</div>
         <div style="color: #666; font-size: 0.85em;">Im Sortiment</div>
     </div>
-    <div class="stat-card" style="border-left-color: #f39c12;">
+    <div class="stat-card" onclick="showTab('transactions')" style="border-left-color: #f39c12; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
         <div class="stat-label">Offene Transaktionen</div>
         <div class="stat-value" id="transactionCount">-</div>
         <div style="color: #666; font-size: 0.85em;">Nicht abgerechnet</div>
     </div>
-    <div class="stat-card" style="border-left-color: #e74c3c;">
+    <div class="stat-card" onclick="showTab('billing')" style="border-left-color: #e74c3c; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
         <div class="stat-label">Offener Betrag</div>
         <div class="stat-value"><span id="todayRevenue">-</span> €</div>
         <div style="color: #666; font-size: 0.85em;">Ausstehend</div>
@@ -1827,6 +1827,16 @@ function showTab(tabName) {
     document.querySelectorAll('.page-content').forEach(content => {
         content.style.display = 'none';
     });
+    
+    // SPEZIALFALL: Dashboard hat eine andere ID
+    if (tabName === 'dashboard') {
+        const dashboardPage = document.getElementById('dashboard-page');
+        if (dashboardPage) {
+            dashboardPage.style.display = 'block';
+            dashboardPage.scrollIntoView({ behavior: 'instant', block: 'start' });
+        }
+        return; // Wichtig: hier beenden
+    }
     
     // Nur die gewünschte Seite anzeigen
     const targetPage = document.getElementById(tabName + '-page') || document.getElementById(tabName);
