@@ -663,8 +663,7 @@ if (item.productId && item.productId > 0) {
     } catch (stockError) {
         console.warn('Stock update error:', stockError);
         }
-    }
- }               
+    }              
             // Transaktionen speichern
             const { data: savedTransactions, error: transactionError } = await supabase
                 .from('transactions')
