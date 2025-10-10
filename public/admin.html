@@ -1728,28 +1728,33 @@ body {
             }
         }
 
-        function showAlert(message, type = 'info') {
-            const existingAlert = document.querySelector('.alert');
-            if (existingAlert && !existingAlert.classList.contains('alert-info')) {
-                existingAlert.remove();
-            }
-
-            const alertDiv = document.createElement('div');
-            alertDiv.className = `alert alert-${type}`;
-            
-            const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
-            alertDiv.innerHTML = `<span>${icon}</span><div>${message}</div>`;
-            
-            const container = document.querySelector('.container');
-            container.insertBefore(alertDiv, container.children[1]);
-            
-            setTimeout(() => {
-                if (alertDiv.parentNode) {
-                    alertDiv.remove();
-                }
-            }, 4000);
+function showAlert(message, type = 'info') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type}`;
+    const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+    alertDiv.innerHTML = `<span>${icon}</span><div>${message}</div>`;
+    
+    // Finde die aktuelle aktive page-content
+    const activeContent = document.querySelector('.page-content[style*="display: block"]') || 
+                          document.querySelector('.page-content:not([style*="display: none"])') ||
+                          document.getElementById('dashboard-page');
+    
+    if (activeContent && activeContent.firstChild) {
+        activeContent.insertBefore(alertDiv, activeContent.firstChild);
+    } else {
+        // Fallback: zeige in main-content
+        const mainContent = document.querySelector('.main-content');
+        if (mainContent) {
+            mainContent.insertBefore(alertDiv, mainContent.firstChild);
         }
-
+    }
+    
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 4000);
+}
 // ============ TAB NAVIGATION ============
 function showTab(tabName) {
     // Sidebar Links aktualisieren
