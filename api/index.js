@@ -994,12 +994,11 @@ if (path === '/transactions/mark-billed' && method === 'POST') {
             is_billed: true 
         })
         .in('user_id', user_ids)
-        .eq('is_billed', false);
+        .is('billing_id', null);  // Nur Transaktionen ohne billing_id markieren
     
     if (error) throw error;
     return res.status(200).json({ message: 'Transaktionen markiert' });
-}
-        
+}        
         // ============ SEPA ENDPUNKTE ============
         
         // GET /sepa-users - SEPA-fähige Benutzer
