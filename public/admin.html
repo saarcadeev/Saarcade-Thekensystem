@@ -703,27 +703,30 @@ body {
                 </button>
             </div>
 
-            <!-- Dashboard Statistiken -->
-<div class="stat-card" style="border-left-color: #9b59b6;">
-    <div class="stat-label">Vereinsmitglieder</div>
-    <div class="stat-value" id="memberCount">-</div>
-    <div style="color: #666; font-size: 0.85em;">Registriert</div>
+<!-- Dashboard Statistiken -->
+<div class="dashboard-grid">
+    <div class="stat-card" style="border-left-color: #9b59b6;">
+        <div class="stat-label">Vereinsmitglieder</div>
+        <div class="stat-value" id="memberCount">-</div>
+        <div style="color: #666; font-size: 0.85em;">Registriert</div>
+    </div>
+    <div class="stat-card" style="border-left-color: #27ae60;">
+        <div class="stat-label">Produkte</div>
+        <div class="stat-value" id="productCount">-</div>
+        <div style="color: #666; font-size: 0.85em;">Im Sortiment</div>
+    </div>
+    <div class="stat-card" style="border-left-color: #f39c12;">
+        <div class="stat-label">Offene Transaktionen</div>
+        <div class="stat-value" id="transactionCount">-</div>
+        <div style="color: #666; font-size: 0.85em;">Nicht abgerechnet</div>
+    </div>
+    <div class="stat-card" style="border-left-color: #e74c3c;">
+        <div class="stat-label">Offener Betrag</div>
+        <div class="stat-value"><span id="todayRevenue">-</span> €</div>
+        <div style="color: #666; font-size: 0.85em;">Ausstehend</div>
+    </div>
 </div>
-<div class="stat-card" style="border-left-color: #27ae60;">
-    <div class="stat-label">Produkte</div>
-    <div class="stat-value" id="productCount">-</div>
-    <div style="color: #666; font-size: 0.85em;">Im Sortiment</div>
-</div>
-<div class="stat-card" style="border-left-color: #f39c12;">
-    <div class="stat-label">Offene Deckel</div>
-    <div class="stat-value" id="transactionCount">-</div>
-    <div style="color: #666; font-size: 0.85em;">Nicht abgerechnet</div>
-</div>
-<div class="stat-card" style="border-left-color: #e74c3c;">
-    <div class="stat-label">Offener Betrag</div>
-    <div class="stat-value"><span id="todayRevenue">-</span> €</div>
-    <div style="color: #666; font-size: 0.85em;">Ausstehend</div>
-</div>
+            
             <!-- Artikelbestände Übersicht -->
             <div class="card">
                 <div class="card-header">📦 Artikelbestände und Warnungen</div>
@@ -2916,6 +2919,11 @@ async function viewUserBillings() {
     
     try {
         showLoading(true);
+        
+        // NEU: Lade Abrechnungen, falls noch nicht geladen
+        if (billings.length === 0) {
+            await loadBillingHistory();
+        }
         
         const userId = selectedUsers[0];
         const user = users.find(u => u.id === userId);
