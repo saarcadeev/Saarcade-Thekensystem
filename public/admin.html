@@ -788,6 +788,9 @@ body {
                     <button class="btn btn-warning" onclick="editSelectedUser()" id="editUserBtn" disabled>
                         ✏️ Bearbeiten
                     </button>
+                    <button class="btn" onclick="openManualBookingModal()" id="manualBookingBtn" disabled style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                        💰 Manuelle Buchung
+                    </button>
                     <button class="btn" onclick="viewUserBillings()" id="viewUserBillingsBtn" disabled>
                         📋 Abrechnungen anzeigen
                     </button>
@@ -1360,10 +1363,11 @@ body {
                             </select>
                         </div>
                         
-                        <div class="form-group">
-                            <label>Saldo (€)</label>
-                            <input type="number" id="userBalance" step="0.01" value="0">
-                        </div>
+<div class="form-group">
+    <label>Aktueller Saldo (€) - nur lesbar</label>
+    <input type="number" id="userBalance" step="0.01" readonly style="background: #f0f0f0; cursor: not-allowed;">
+    <small style="color: #666;">Der Saldo wird automatisch durch Transaktionen berechnet</small>
+</div>
                     </div>
                     
                     <div class="form-group">
@@ -1411,6 +1415,59 @@ body {
         </div>
     </div>
 
+<!-- Manual Booking Modal -->
+<div id="manualBookingModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>💰 Manuelle Buchung</h3>
+            <span class="close" onclick="closeModal('manualBookingModal')">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="manualBookingForm">
+                <input type="hidden" id="bookingUserId" value="">
+                
+                <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <p><strong>Mitglied:</strong> <span id="bookingUserName"></span></p>
+                    <p><strong>Aktueller Saldo:</strong> <span id="bookingCurrentBalance" style="font-weight: bold;"></span></p>
+                </div>
+                
+                <div class="form-group">
+                    <label>Buchungsart *</label>
+                    <select id="bookingType" required onchange="updateBookingPreview()">
+                        <option value="">-- Bitte wählen --</option>
+                        <option value="debit">🔴 Lastschrift / Verbindlichkeit (Minus)</option>
+                        <option value="credit">🟢 Gutschrift / Guthaben (Plus)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Betrag (€) *</label>
+                    <input type="number" id="bookingAmount" step="0.01" min="0.01" required placeholder="0.00" oninput="updateBookingPreview()">
+                </div>
+                
+                <div class="form-group">
+                    <label>Beschreibung *</label>
+                    <textarea id="bookingDescription" rows="3" required placeholder="z.B. Barzahlung, Korrektur, Gutschrift für..."></textarea>
+                </div>
+                
+                <div id="bookingPreview" style="display: none; background: #e6f3ff; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                    <p><strong>Vorschau:</strong></p>
+                    <p>Neuer Saldo: <span id="previewNewBalance" style="font-weight: bold; font-size: 1.2em;"></span></p>
+                </div>
+                
+                <div style="text-align: right; margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('manualBookingModal')">
+                        Abbrechen
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="saveManualBooking()">
+                        💾 Buchung durchführen
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+    
 <!-- Stock Movement Modal -->
     <div id="stockMovementModal" class="modal">
         <div class="modal-content">
@@ -1762,39 +1819,44 @@ function showAlert(message, type = 'info') {
 function showTab(tabName) {
     // Sidebar Links aktualisieren
     document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
-    event.target.classList.add('active');
+    if (event && event.target) {
+        event.target.classList.add('active');
+    }
     
-    // Page Content umschalten
+    // WICHTIG: Alle page-content ausblenden
     document.querySelectorAll('.page-content').forEach(content => {
         content.style.display = 'none';
     });
     
+    // Nur die gewünschte Seite anzeigen
     const targetPage = document.getElementById(tabName + '-page') || document.getElementById(tabName);
     if (targetPage) {
         targetPage.style.display = 'block';
+        // Scroll zum Anfang der Seite
+        targetPage.scrollIntoView({ behavior: 'instant', block: 'start' });
     }
     
-            // Auto-Load beim ersten Aufruf
-            if (!loadedTabs[tabName]) {
-                loadedTabs[tabName] = true;
-                
-                switch(tabName) {
-                    case 'users':
-                        loadUsers();
-                        break;
-                    case 'stock':
-                        loadStockMovements();
-                        break;
-                    case 'transactions':
-                        loadTransactions();
-                        break;
-                    case 'billing':
-                        loadOpenBalances();
-                        loadBillingHistory();
-                        break;
-                }
-            }
+    // Auto-Load beim ersten Aufruf
+    if (!loadedTabs[tabName]) {
+        loadedTabs[tabName] = true;
+        
+        switch(tabName) {
+            case 'users':
+                loadUsers();
+                break;
+            case 'stock':
+                loadStockMovements();
+                break;
+            case 'transactions':
+                loadTransactions();
+                break;
+            case 'billing':
+                loadOpenBalances();
+                loadBillingHistory();
+                break;
         }
+    }
+}
         
         // ============ SELECTION FUNCTIONS ============
         
@@ -1846,6 +1908,7 @@ function updateSelectionInfo(type) {
         document.getElementById('editUserBtn').disabled = count !== 1;
         document.getElementById('viewUserBillingsBtn').disabled = count !== 1;
         document.getElementById('deleteUserBtn').disabled = count === 0;
+        document.getElementById('manualBookingBtn').disabled = count !== 1;
         
     } else if (type === 'products') {
         count = selectedProducts.length;
@@ -2007,6 +2070,118 @@ async function saveUser() {
         saveBtn.disabled = false;
         saveBtn.textContent = '💾 Speichern';
         document.getElementById('userIban').style.borderColor = '';
+    }
+}
+
+// ============ MANUELLE BUCHUNG ============
+
+function openManualBookingModal() {
+    if (selectedUsers.length !== 1) return;
+    
+    const userId = selectedUsers[0];
+    const user = users.find(u => u.id === userId);
+    
+    if (!user) {
+        showAlert('Mitglied nicht gefunden', 'error');
+        return;
+    }
+    
+    document.getElementById('bookingUserId').value = user.id;
+    document.getElementById('bookingUserName').textContent = `${user.first_name} ${user.last_name}`;
+    document.getElementById('bookingCurrentBalance').textContent = `${user.balance.toFixed(2)}€`;
+    document.getElementById('bookingCurrentBalance').style.color = user.balance >= 0 ? '#38a169' : '#e53e3e';
+    
+    document.getElementById('manualBookingForm').reset();
+    document.getElementById('bookingUserId').value = user.id;
+    document.getElementById('bookingPreview').style.display = 'none';
+    
+    document.getElementById('manualBookingModal').style.display = 'block';
+}
+
+function updateBookingPreview() {
+    const userId = parseInt(document.getElementById('bookingUserId').value);
+    const user = users.find(u => u.id === userId);
+    const type = document.getElementById('bookingType').value;
+    const amount = parseFloat(document.getElementById('bookingAmount').value);
+    
+    if (!user || !type || !amount || amount <= 0) {
+        document.getElementById('bookingPreview').style.display = 'none';
+        return;
+    }
+    
+    const changeAmount = type === 'credit' ? amount : -amount;
+    const newBalance = user.balance + changeAmount;
+    
+    document.getElementById('previewNewBalance').textContent = `${newBalance.toFixed(2)}€`;
+    document.getElementById('previewNewBalance').style.color = newBalance >= 0 ? '#38a169' : '#e53e3e';
+    document.getElementById('bookingPreview').style.display = 'block';
+}
+
+async function saveManualBooking() {
+    const userId = parseInt(document.getElementById('bookingUserId').value);
+    const type = document.getElementById('bookingType').value;
+    const amount = parseFloat(document.getElementById('bookingAmount').value);
+    const description = document.getElementById('bookingDescription').value.trim();
+    
+    if (!userId || !type || !amount || amount <= 0 || !description) {
+        showAlert('Bitte fülle alle Felder aus', 'error');
+        return;
+    }
+    
+    const user = users.find(u => u.id === userId);
+    if (!user) {
+        showAlert('Mitglied nicht gefunden', 'error');
+        return;
+    }
+    
+    const changeAmount = type === 'credit' ? amount : -amount;
+    const newBalance = user.balance + changeAmount;
+    
+    const confirmMsg = `Möchtest du wirklich diese Buchung durchführen?\n\n` +
+                      `Mitglied: ${user.first_name} ${user.last_name}\n` +
+                      `Typ: ${type === 'credit' ? 'Gutschrift' : 'Lastschrift'}\n` +
+                      `Betrag: ${amount.toFixed(2)}€\n` +
+                      `Aktueller Saldo: ${user.balance.toFixed(2)}€\n` +
+                      `Neuer Saldo: ${newBalance.toFixed(2)}€\n` +
+                      `Beschreibung: ${description}`;
+    
+    if (!confirm(confirmMsg)) {
+        return;
+    }
+    
+    try {
+        showLoading(true);
+        
+        // Erstelle eine "manuelle Buchung" Transaktion
+        const transaction = {
+            userId: userId,
+            userName: `${user.first_name} ${user.last_name}`,
+            items: [{
+                productId: 0,
+                productName: `Manuelle Buchung: ${description}`,
+                quantity: 1,
+                price: changeAmount,
+                total: changeAmount
+            }],
+            paymentMethod: 'manual_booking'
+        };
+        
+        await apiCall('/api/transactions', {
+            method: 'POST',
+            body: JSON.stringify(transaction)
+        });
+        
+        showAlert(`✅ Buchung erfolgreich!\nNeuer Saldo: ${newBalance.toFixed(2)}€`, 'success');
+        
+        closeModal('manualBookingModal');
+        await loadUsers();
+        await loadDashboard();
+        
+    } catch (error) {
+        console.error('Fehler bei manueller Buchung:', error);
+        showAlert('Fehler beim Durchführen der Buchung: ' + error.message, 'error');
+    } finally {
+        showLoading(false);
     }
 }
         
