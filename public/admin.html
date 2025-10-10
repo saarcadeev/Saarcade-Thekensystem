@@ -2875,15 +2875,17 @@ Nach der Abrechnung werden die Salden auf 0€ gesetzt.`;
                 
                 showAlert(`✅ Abrechnung ${billingNumber} erfolgreich erstellt!\n\nSEPA: ${sepaUsers.length} Benutzer (${sepaAmount.toFixed(2)}€)\nManuell: ${nonSepaUsers.length} Benutzer (${nonSepaAmount.toFixed(2)}€)`, 'success');
                 
-                const sepaUsersWithAmount = sepaUsers.map(u => ({
-                    ...u,
-                    billing_amount: Math.abs(u.balance)
-                }));
-                
-                const nonSepaUsersWithAmount = nonSepaUsers.map(u => ({
-                    ...u,
-                    billing_amount: Math.abs(u.balance)
-                }));
+const sepaUsersWithAmount = sepaUsers.map(u => ({
+    ...u,
+    billing_amount: Math.abs(u.balance),
+    transactions: []  // NEU: Leeres Array für neue Abrechnungen
+}));
+
+const nonSepaUsersWithAmount = nonSepaUsers.map(u => ({
+    ...u,
+    billing_amount: Math.abs(u.balance),
+    transactions: []  // NEU: Leeres Array für neue Abrechnungen
+}));
                 
                 showBillingDetails(billing, sepaUsersWithAmount, nonSepaUsersWithAmount);
                 
@@ -3254,7 +3256,7 @@ function showBillingDetails(billing, sepaUsers, nonSepaUsers) {
                                 </tr>
                             </thead>
                             <tbody>
-                                ${u.transactions.map(t => {
+                                ${(u.transactions || []).map(t => {
                                     const date = new Date(t.created_at);
                                     return `
                                         <tr>
@@ -3326,7 +3328,7 @@ function showBillingDetails(billing, sepaUsers, nonSepaUsers) {
                                 </tr>
                             </thead>
                             <tbody>
-                                ${u.transactions.map(t => {
+                                ${(u.transactions || []).map(t => {
                                     const date = new Date(t.created_at);
                                     return `
                                         <tr>
