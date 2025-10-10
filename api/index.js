@@ -627,43 +627,43 @@ if (pathParts[0] === 'products' && pathParts[1] && method === 'PUT') {
                 transactions.push(transaction);
                 totalAmount += item.total;
                 
-// Bestand reduzieren UND Bestandsbewegung aufzeichnen
-                try {
-                    const { data: product } = await supabase
-                        .from('products')
-                        .select('stock, name')
-                        .eq('id', item.productId)
-                        .single();
+// Bestand reduzieren UND Bestandsbewegung aufzeichnen (nur bei echten Produkten)
+if (item.productId > 0) {
+    try {
+        const { data: product } = await supabase
+            .from('products')
+            .select('stock, name')
+            .eq('id', item.productId)
+            .single();
 
-                    if (product && product.stock >= item.quantity) {
-                        const oldStock = product.stock;
-                        const newStock = product.stock - item.quantity;
-                        
-                        // Bestand aktualisieren
-                        await supabase
-                            .from('products')
-                            .update({ stock: newStock })
-                            .eq('id', item.productId);
-                        
-                        // Bestandsbewegung aufzeichnen
-                        await supabase
-                            .from('stock_movements')
-                            .insert({
-                                product_id: item.productId,
-                                product_name: product.name,
-                                movement_type: 'sale',
-                                quantity: -item.quantity,
-                                stock_before: oldStock,
-                                stock_after: newStock,
-                                reason: `Verkauf an ${transactionData.userName}`,
-                                created_by: 'system'
-                            });
-                    }
-                } catch (stockError) {
-                    console.warn('Stock update error:', stockError);
-                }
-            }
-
+        if (product && product.stock >= item.quantity) {
+            const oldStock = product.stock;
+            const newStock = product.stock - item.quantity;
+          
+            // Bestand aktualisieren
+            await supabase
+                .from('products')
+                .update({ stock: newStock })
+                .eq('id', item.productId);
+            
+            // Bestandsbewegung aufzeichnen
+            await supabase
+                .from('stock_movements')
+                .insert({
+                    product_id: item.productId,
+                    product_name: product.name,
+                    movement_type: 'sale',
+                    quantity: -item.quantity,
+                    stock_before: oldStock,
+                    stock_after: newStock,
+                    reason: `Verkauf an ${transactionData.userName}`,
+                    created_by: 'system'
+                });
+        }
+    } catch (stockError) {
+        console.warn('Stock update error:', stockError);
+    }
+}
             // Transaktionen speichern
             const { data: savedTransactions, error: transactionError } = await supabase
                 .from('transactions')
