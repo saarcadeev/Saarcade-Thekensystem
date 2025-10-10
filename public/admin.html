@@ -755,7 +755,78 @@ body {
                 </div>
             </div>
         </div>
+
+</div>
+        
+        <!-- NEUE DASHBOARD WIDGETS -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 20px;">
             
+            <!-- Top 5 Produkte -->
+            <div class="card">
+                <div class="card-header">🏆 Top 5 Produkte (30 Tage)</div>
+                <div id="topProductsList" style="padding: 10px;">
+                    <div style="text-align: center; padding: 20px; color: #666;">Lade Daten...</div>
+                </div>
+            </div>
+            
+            <!-- SEPA Status -->
+            <div class="card">
+                <div class="card-header">💳 SEPA-Status</div>
+                <div style="padding: 20px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                        <span style="color: #666;">SEPA aktiviert:</span>
+                        <strong style="color: #27ae60;"><span id="sepaActiveCount">-</span> Mitglieder</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                        <span style="color: #666;">Ohne SEPA:</span>
+                        <strong style="color: #e74c3c;"><span id="sepaInactiveCount">-</span> Mitglieder</strong>
+                    </div>
+                    <div style="background: #f8fafc; padding: 10px; border-radius: 6px; margin-top: 15px;">
+                        <div style="height: 20px; background: #e2e8f0; border-radius: 10px; overflow: hidden;">
+                            <div id="sepaProgressBar" style="height: 100%; background: linear-gradient(90deg, #27ae60, #2ecc71); width: 0%; transition: width 0.5s;"></div>
+                        </div>
+                        <div style="text-align: center; margin-top: 8px; font-size: 0.9em; color: #666;">
+                            <span id="sepaPercentage">0</span>% SEPA-Quote
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Monatsstatistik -->
+            <div class="card">
+                <div class="card-header">📈 Monatsstatistik</div>
+                <div style="padding: 20px;">
+                    <div style="margin-bottom: 15px;">
+                        <div style="color: #666; font-size: 0.9em;">Umsatz diesen Monat</div>
+                        <div style="font-size: 1.5em; font-weight: bold; color: #667eea;">
+                            <span id="currentMonthRevenue">-</span> €
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <div style="color: #666; font-size: 0.9em;">Transaktionen</div>
+                        <div style="font-size: 1.2em; font-weight: bold;">
+                            <span id="currentMonthTransactions">-</span> Stück
+                        </div>
+                    </div>
+                    <div style="background: #f8fafc; padding: 10px; border-radius: 6px;">
+                        <div style="color: #666; font-size: 0.85em;">Ø Kaufbetrag</div>
+                        <div style="font-size: 1.1em; font-weight: bold; color: #27ae60;">
+                            <span id="averagePurchase">-</span> €
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Top 3 Schuldner -->
+            <div class="card">
+                <div class="card-header">💰 Top 3 Offene Beträge</div>
+                <div id="topDebtorsList" style="padding: 10px;">
+                    <div style="text-align: center; padding: 20px; color: #666;">Lade Daten...</div>
+                </div>
+            </div>
+            
+        </div>
+        
         <!-- Navigation Tabs -->
         <div class="tabs">
             <button class="tab" onclick="showTab('users')">👥 Mitglieder</button>
@@ -1933,23 +2004,29 @@ function updateSelectionInfo(type) {
         // ============ DATA LOADING FUNCTIONS ============
         
 async function loadDashboard() {
-            try {
-                const data = await apiCall('/api/dashboard');
-                
-                document.getElementById('memberCount').textContent = data.member_count || 0;
-                document.getElementById('productCount').textContent = data.available_products || 0;
-                document.getElementById('transactionCount').textContent = data.unbilled_transactions || 0;
-                document.getElementById('todayRevenue').textContent = `${(data.unbilled_revenue || 0).toFixed(2)}`;             
-                 
-                // Bestandsanalyse durchführen
-                await updateStockOverview();
-                
-            } catch (error) {
-                console.error('Fehler beim Laden der Dashboard-Daten:', error);
-                showAlert('Fehler beim Laden der Dashboard-Statistiken', 'error');
-            }
-        }
-
+    try {
+        const data = await apiCall('/api/dashboard');
+        
+        document.getElementById('memberCount').textContent = data.member_count || 0;
+        document.getElementById('productCount').textContent = data.available_products || 0;
+        document.getElementById('transactionCount').textContent = data.unbilled_transactions || 0;
+        document.getElementById('todayRevenue').textContent = `${(data.unbilled_revenue || 0).toFixed(2)}`;
+        
+        // Bestandsanalyse durchführen
+        await updateStockOverview();
+        
+        // NEUE DASHBOARD WIDGETS laden
+        await loadTopProducts();
+        await loadSepaStatus();
+        await loadMonthlyStats();
+        await loadTopDebtors();
+        
+    } catch (error) {
+        console.error('Fehler beim Laden der Dashboard-Daten:', error);
+        showAlert('Fehler beim Laden der Dashboard-Daten', 'error');
+    }
+}
+        
         // ============ USER FUNCTIONS ============
 
         function openUserModal(userId = null) {
@@ -4167,6 +4244,165 @@ async function updateStockOverview() {
     }
 }
 
+// ============ DASHBOARD WIDGETS ============
+
+async function loadTopProducts() {
+    try {
+        // Lade alle Transaktionen der letzten 30 Tage
+        const allTransactions = await apiCall('/api/transactions');
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        
+        const recentTransactions = allTransactions.filter(t => 
+            new Date(t.created_at) >= thirtyDaysAgo
+        );
+        
+        // Gruppiere nach Produkt
+        const productSales = {};
+        recentTransactions.forEach(t => {
+            if (!t.product_name || t.product_name.includes('Manuelle Buchung')) return;
+            
+            if (!productSales[t.product_name]) {
+                productSales[t.product_name] = {
+                    name: t.product_name,
+                    quantity: 0,
+                    revenue: 0
+                };
+            }
+            productSales[t.product_name].quantity += t.quantity;
+            productSales[t.product_name].revenue += t.total;
+        });
+        
+        // Sortiere nach Menge
+        const topProducts = Object.values(productSales)
+            .sort((a, b) => b.quantity - a.quantity)
+            .slice(0, 5);
+        
+        const container = document.getElementById('topProductsList');
+        
+        if (topProducts.length === 0) {
+            container.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">Noch keine Verkäufe</div>';
+            return;
+        }
+        
+        container.innerHTML = topProducts.map((p, index) => `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #e2e8f0;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.5em; font-weight: bold; color: ${index === 0 ? '#f39c12' : index === 1 ? '#95a5a6' : index === 2 ? '#cd7f32' : '#666'};">
+                        ${index + 1}
+                    </span>
+                    <div>
+                        <div style="font-weight: 600;">${p.name}</div>
+                        <div style="font-size: 0.85em; color: #666;">${p.revenue.toFixed(2)} €</div>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-weight: bold; color: #667eea;">${p.quantity}×</div>
+                </div>
+            </div>
+        `).join('');
+        
+    } catch (error) {
+        console.error('Fehler beim Laden der Top-Produkte:', error);
+        document.getElementById('topProductsList').innerHTML = '<div style="text-align: center; padding: 20px; color: #e74c3c;">Fehler beim Laden</div>';
+    }
+}
+
+async function loadSepaStatus() {
+    try {
+        if (!users || users.length === 0) {
+            users = await apiCall('/api/users');
+        }
+        
+        const members = users.filter(u => u.role === 'member');
+        const sepaActive = members.filter(u => u.sepa_active && u.iban);
+        const sepaInactive = members.filter(u => !u.sepa_active || !u.iban);
+        
+        const percentage = members.length > 0 ? Math.round((sepaActive.length / members.length) * 100) : 0;
+        
+        document.getElementById('sepaActiveCount').textContent = sepaActive.length;
+        document.getElementById('sepaInactiveCount').textContent = sepaInactive.length;
+        document.getElementById('sepaPercentage').textContent = percentage;
+        document.getElementById('sepaProgressBar').style.width = percentage + '%';
+        
+    } catch (error) {
+        console.error('Fehler beim Laden des SEPA-Status:', error);
+    }
+}
+
+async function loadMonthlyStats() {
+    try {
+        const allTransactions = await apiCall('/api/transactions');
+        
+        const now = new Date();
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        
+        const monthTransactions = allTransactions.filter(t => {
+            if (t.product_name && t.product_name.includes('Manuelle Buchung')) return false;
+            return new Date(t.created_at) >= firstDayOfMonth;
+        });
+        
+        const revenue = monthTransactions.reduce((sum, t) => sum + t.total, 0);
+        const count = monthTransactions.length;
+        const average = count > 0 ? revenue / count : 0;
+        
+        document.getElementById('currentMonthRevenue').textContent = revenue.toFixed(2);
+        document.getElementById('currentMonthTransactions').textContent = count;
+        document.getElementById('averagePurchase').textContent = average.toFixed(2);
+        
+    } catch (error) {
+        console.error('Fehler beim Laden der Monatsstatistik:', error);
+    }
+}
+
+async function loadTopDebtors() {
+    try {
+        if (!users || users.length === 0) {
+            users = await apiCall('/api/users');
+        }
+        
+        const debtors = users
+            .filter(u => u.balance < 0)
+            .sort((a, b) => a.balance - b.balance)
+            .slice(0, 3);
+        
+        const container = document.getElementById('topDebtorsList');
+        
+        if (debtors.length === 0) {
+            container.innerHTML = '<div style="text-align: center; padding: 20px; color: #27ae60;">✅ Keine offenen Beträge</div>';
+            return;
+        }
+        
+        container.innerHTML = debtors.map((u, index) => {
+            const amount = Math.abs(u.balance);
+            return `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #e2e8f0;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 1.3em; font-weight: bold; color: #e74c3c;">
+                            ${index + 1}
+                        </span>
+                        <div>
+                            <div style="font-weight: 600;">${u.first_name} ${u.last_name}</div>
+                            <div style="font-size: 0.85em; color: #666;">
+                                ${u.sepa_active ? '💳 SEPA' : '📄 Manuell'}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-weight: bold; color: #e74c3c; font-size: 1.1em;">
+                            ${amount.toFixed(2)} €
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+    } catch (error) {
+        console.error('Fehler beim Laden der Top-Schuldner:', error);
+        document.getElementById('topDebtorsList').innerHTML = '<div style="text-align: center; padding: 20px; color: #e74c3c;">Fehler beim Laden</div>';
+    }
+}
+        
 function showStockDetails(category) {
     const categories = window.stockCategories || {critical: [], warning: [], other: []};
     let products = [];
