@@ -2110,7 +2110,7 @@ function updateBookingPreview() {
     }
     
     const changeAmount = type === 'credit' ? -amount : amount;
-    const newBalance = user.balance + changeAmount;
+    const newBalance = user.balance - changeAmount;
     
     document.getElementById('previewNewBalance').textContent = `${newBalance.toFixed(2)}€`;
     document.getElementById('previewNewBalance').style.color = newBalance >= 0 ? '#38a169' : '#e53e3e';
@@ -2134,8 +2134,8 @@ async function saveManualBooking() {
         return;
     }
     
-    const changeAmount = type === 'credit' ? amount : -amount;
-    const newBalance = user.balance + changeAmount;
+    const changeAmount = type === 'credit' ? -amount : amount;
+    const newBalance = user.balance - changeAmount;
     
     const confirmMsg = `Möchtest du wirklich diese Buchung durchführen?\n\n` +
                       `Mitglied: ${user.first_name} ${user.last_name}\n` +
