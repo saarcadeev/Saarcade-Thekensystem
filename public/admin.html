@@ -2920,10 +2920,8 @@ async function viewUserBillings() {
     try {
         showLoading(true);
         
-        // NEU: Lade Abrechnungen, falls noch nicht geladen
-        if (billings.length === 0) {
-            await loadBillingHistory();
-        }
+        // WICHTIG: Lade Abrechnungen IMMER neu, um aktuelle Daten zu haben
+        await loadBillingHistory();
         
         const userId = selectedUsers[0];
         const user = users.find(u => u.id === userId);
@@ -2955,6 +2953,11 @@ async function viewUserBillings() {
             billingGroups[t.billing_id].push(t);
         });
         
+        // Debug: Zeige an, wie viele Abrechnungen gefunden wurden
+        console.log('Gefundene Abrechnungen:', Object.keys(billingGroups).length);
+        console.log('Billing Groups:', billingGroups);
+        console.log('Billings Array:', billings);
+        
         // Erstelle Modal-Inhalt
         showUserBillingHistory(user, billingGroups, unbilledTransactions);
         
@@ -2965,7 +2968,7 @@ async function viewUserBillings() {
         showLoading(false);
     }
 }
-
+        
 function showUserBillingHistory(user, billingGroups, unbilledTransactions) {
     const modal = document.getElementById('billingDetailsModal');
     const title = document.getElementById('billingDetailsTitle');
