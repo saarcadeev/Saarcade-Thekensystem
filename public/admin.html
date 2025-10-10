@@ -2109,7 +2109,7 @@ function updateBookingPreview() {
         return;
     }
     
-    const changeAmount = type === 'credit' ? amount : -amount;
+    const changeAmount = type === 'credit' ? -amount : amount;
     const newBalance = user.balance + changeAmount;
     
     document.getElementById('previewNewBalance').textContent = `${newBalance.toFixed(2)}€`;
