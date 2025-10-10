@@ -628,7 +628,7 @@ if (pathParts[0] === 'products' && pathParts[1] && method === 'PUT') {
                 totalAmount += item.total;
                 
 // Bestand reduzieren UND Bestandsbewegung aufzeichnen (nur bei echten Produkten)
-if (item.productId > 0) {
+if (item.productId && item.productId > 0) {
     try {
         const { data: product } = await supabase
             .from('products')
