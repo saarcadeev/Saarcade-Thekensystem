@@ -636,7 +636,7 @@ if (item.productId && item.productId > 0) {
             .eq('id', item.productId)
             .single();
 
-        if (product && product.stock >= item.quantity) {
+        if (product {
             const oldStock = product.stock;
             const newStock = product.stock - item.quantity;
           
