@@ -570,6 +570,246 @@
             }
         }
 
+/* ============================================
+   OPTIMIERUNG FÜR 1280x800 TABLETS
+   ============================================ */
+
+@media (min-width: 1025px) and (max-width: 1400px) and (max-height: 900px) {
+    /* Container-Anpassungen für begrenzte Höhe */
+    body {
+        padding: 8px;
+    }
+    
+    .container {
+        height: calc(100vh - 16px);
+    }
+    
+    /* Kompakterer Header */
+    .header {
+        padding: 10px;
+        margin-bottom: 8px;
+    }
+    
+    .header h1 {
+        font-size: 1.5em;
+        margin-bottom: 3px;
+    }
+    
+    /* Status-Messages kompakter */
+    .status-message {
+        padding: 6px 12px;
+        margin-bottom: 5px;
+        font-size: 0.85em;
+    }
+    
+    .offline-indicator {
+        padding: 6px 12px;
+        margin-bottom: 5px;
+        font-size: 0.85em;
+    }
+    
+    /* Header-Main kompakter */
+    .header-main {
+        gap: 10px;
+        margin-bottom: 5px;
+    }
+    
+    /* Scanner-Bereich */
+    .scanner-pin-area {
+        gap: 6px;
+    }
+    
+    #barcodeInput {
+        padding: 8px 15px;
+        font-size: 1em;
+    }
+    
+    .scanner-status {
+        padding: 6px 10px;
+        font-size: 0.85em;
+    }
+    
+    .workflow-step {
+        padding: 4px 6px;
+        font-size: 0.75em;
+    }
+    
+    /* User-Info kompakter */
+    .user-info {
+        padding: 8px;
+    }
+    
+    .user-name {
+        font-size: 1em;
+        margin-bottom: 2px;
+    }
+    
+    .user-balance {
+        font-size: 1.1em;
+    }
+    
+    /* Main-Content Höhe anpassen */
+    .main-content {
+        grid-template-columns: 1fr 320px;
+        gap: 10px;
+        height: calc(100vh - 180px); /* Reduzierte Höhe */
+    }
+    
+    /* Produkte-Sektion */
+    .products-section {
+        padding: 12px;
+    }
+    
+    .products-header {
+        margin-bottom: 10px;
+        gap: 15px;
+    }
+    
+    .products-header h2 {
+        font-size: 1.3em;
+    }
+    
+    /* Category-Buttons kleiner */
+    .category-btn {
+        padding: 5px 10px;
+        font-size: 0.8em;
+    }
+    
+    /* Produkte-Grid optimiert für 1280x800 */
+    .products-grid {
+        grid-template-columns: repeat(5, 1fr); /* 5 Spalten statt 4 */
+        grid-template-rows: repeat(2, 1fr); /* 2 Zeilen statt 3 */
+        gap: 8px;
+        max-height: 450px; /* Reduzierte Höhe */
+        padding: 8px;
+    }
+    
+    /* Produktkarten kompakter */
+    .product-card {
+        padding: 10px;
+        height: 170px; /* Reduzierte Höhe */
+    }
+    
+    .product-image {
+        width: 80px;
+        height: 80px;
+        font-size: 2em;
+        margin-bottom: 6px;
+    }
+    
+    .product-name {
+        font-size: 0.9em;
+        margin-bottom: 4px;
+    }
+    
+    .product-price {
+        font-size: 1em;
+    }
+    
+    /* Cart-Sektion */
+    .cart-section {
+        padding: 12px;
+    }
+    
+    .cart-section h2 {
+        font-size: 1.3em;
+        margin-bottom: 8px;
+    }
+    
+    .cart-items {
+        max-height: 420px; /* Angepasst */
+        margin: 8px 0;
+    }
+    
+    .cart-item {
+        padding: 8px;
+        font-size: 0.9em;
+        margin-bottom: 5px;
+    }
+    
+    .cart-total {
+        padding: 12px;
+        font-size: 1em;
+        margin-top: 8px;
+    }
+    
+    /* Buttons kompakter */
+    .btn {
+        padding: 8px 12px;
+        font-size: 0.8em;
+        margin: 2px;
+    }
+    
+    /* PIN-Button */
+    .pin-button-container .btn {
+        min-width: 120px;
+        font-size: 0.75em;
+    }
+    
+    /* Modal-Anpassungen für kleinere Höhe */
+    .modal-content {
+        max-height: 92vh;
+        margin: 1vh auto;
+    }
+    
+    .modal-header {
+        padding: 12px 15px;
+    }
+    
+    .modal-header h3 {
+        font-size: 1.2em;
+    }
+    
+    .modal-body {
+        padding: 15px;
+    }
+    
+    /* Cash Payment Modal kompakter */
+    #totalAmount {
+        font-size: 1.5em;
+    }
+    
+    #cashGiven {
+        padding: 10px;
+        font-size: 1.2em;
+    }
+    
+    #changeAmount {
+        font-size: 1.6em;
+    }
+    
+    .cash-button-grid button {
+        padding: 8px;
+        font-size: 0.9em;
+    }
+    
+    /* Dropdown kompakter */
+    .dropdown {
+        max-height: 250px;
+    }
+    
+    .dropdown-item {
+        padding: 10px 12px;
+    }
+    
+    .dropdown-avatar {
+        width: 30px;
+        height: 30px;
+        font-size: 0.9em;
+    }
+}
+
+/* Zusätzliche Optimierung für genau 1280x800 */
+@media (width: 1280px) and (height: 800px) {
+    .products-grid {
+        max-height: 430px;
+    }
+    
+    .cart-items {
+        max-height: 400px;
+    }
+}
+        
         @media (max-width: 768px) {
             .container {
                 padding: 10px;
