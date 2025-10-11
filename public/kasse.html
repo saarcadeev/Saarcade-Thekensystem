@@ -677,8 +677,8 @@
     
     /* Produkte-Grid optimiert für 1280x800 */
     .products-grid {
-        grid-template-columns: repeat(5, 1fr); /* 5 Spalten statt 4 */
-        grid-template-rows: repeat(2, 1fr); /* 2 Zeilen statt 3 */
+        grid-template-columns: repeat(4, 1fr); /* 4 Spalten */
+        grid-template-rows: repeat(2, 1fr); /* 2 Zeilen */
         gap: 8px;
         max-height: 450px; /* Reduzierte Höhe */
         padding: 8px;
@@ -687,23 +687,23 @@
     /* Produktkarten kompakter */
     .product-card {
         padding: 10px;
-        height: 170px; /* Reduzierte Höhe */
+        height: 190px; /* Etwas mehr Höhe als bei 5x2 */
     }
     
     .product-image {
-        width: 80px;
-        height: 80px;
-        font-size: 2em;
-        margin-bottom: 6px;
+        width: 90px;
+        height: 90px;
+        font-size: 2.2em;
+        margin-bottom: 8px;
     }
     
     .product-name {
-        font-size: 0.9em;
-        margin-bottom: 4px;
+        font-size: 0.95em;
+        margin-bottom: 5px;
     }
     
     .product-price {
-        font-size: 1em;
+        font-size: 1.05em;
     }
     
     /* Cart-Sektion */
@@ -805,6 +805,10 @@
         max-height: 430px;
     }
     
+    .cart-items {
+        max-height: 400px;
+    }
+}    
     .cart-items {
         max-height: 400px;
     }
