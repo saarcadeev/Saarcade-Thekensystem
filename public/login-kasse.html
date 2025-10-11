@@ -184,10 +184,9 @@
                 const data = await response.json();
                 
 if (response.ok && data.success) {
-    // Speichere für 24 Stunden
     const loginData = {
         user: data.user,
-        expires: Date.now() + (24 * 60 * 60 * 1000) // 24 Stunden
+        // Kein expires - bleibt dauerhaft gespeichert
     };
     localStorage.setItem('kasseLogin', JSON.stringify(loginData));
     window.location.href = '/kasse';
@@ -211,3 +210,4 @@ if (response.ok && data.success) {
 </body>
 
 </html>
+
