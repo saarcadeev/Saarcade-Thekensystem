@@ -778,17 +778,12 @@ const additionalCSS = `
         return;
     }
     
-    try {
-        const loginData = JSON.parse(loginDataStr);
-        
-        // Prüfe Ablauf
-        if (loginData.expires && Date.now() > loginData.expires) {
-            localStorage.removeItem('kasseLogin');
-            window.location.href = '/login-kasse.html';
-            return;
-        }
-        
-        const user = loginData.user;
+try {
+    const loginData = JSON.parse(loginDataStr);
+    
+    // Kein Ablauf-Check mehr - Login bleibt dauerhaft
+    const user = loginData.user;
+    
         if (!user || (user.role !== 'bartender' && user.role !== 'admin')) {
             localStorage.removeItem('kasseLogin');
             window.location.href = '/login-kasse.html';
