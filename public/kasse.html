@@ -1394,16 +1394,16 @@ try {
             keyboard.classList.remove('active');
         }
         
-        function renderKeyboard() {
+function renderKeyboard() {
             const grid = document.getElementById('keyboardGrid');
             
-            // Deutsche Tastatur-Layout
+            // Deutsche Tastatur-Layout mit Zahlen
             const keys = [
+                ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
                 ['Q', 'W', 'E', 'R', 'T', 'Z', 'U', 'I', 'O', 'P'],
                 ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Ö'],
                 ['Y', 'X', 'C', 'V', 'B', 'N', 'M', 'Ä', 'Ü', 'ẞ']
-            ];
-            
+            ];            
             let html = '';
             
             keys.forEach(row => {
