@@ -1007,7 +1007,87 @@ const additionalCSS = `
         font-size: 2em;
     }
 }
-`;
+
+ /* ===== ON-SCREEN TASTATUR FÜR TABLETS ===== */
+        .keyboard-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 3px solid #667eea;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+            padding: 15px;
+            z-index: 2000;
+            display: none;
+        }
+
+        .keyboard-container.active {
+            display: block;
+        }
+
+        .keyboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .keyboard-header h3 {
+            color: #667eea;
+            font-size: 1.1em;
+        }
+
+        .keyboard-close {
+            background: #e53e3e;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .keyboard-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .keyboard-key {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 10px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+        }
+
+        .keyboard-key:active {
+            transform: scale(0.95);
+            background: linear-gradient(135deg, #5a67d8, #6b46a0);
+        }
+
+        .keyboard-key.backspace {
+            background: linear-gradient(135deg, #e53e3e, #c53030);
+            grid-column: span 2;
+        }
+
+        .keyboard-key.clear {
+            background: linear-gradient(135deg, #ed8936, #dd6b20);
+        }
+
+        .keyboard-key.space {
+            grid-column: span 4;
+        }       
+        `;
         
     </style>
 </head>
@@ -1067,7 +1147,7 @@ try {
                     <div class="scanner-row">
                         <div class="scanner-input-container">
                             <div class="input-container">
-                                <input type="text" id="barcodeInput" placeholder="Barcode scannen oder Name eingeben..." autocomplete="off" autofocus>
+                                <input type="text" id="barcodeInput" placeholder="Barcode scannen oder Name eingeben..." autocomplete="off" autofocus readonly>
                                 <div class="dropdown" id="userDropdown" style="display: none;"></div>
                             </div>
                         </div>
@@ -1299,6 +1379,74 @@ try {
         };
         let pendingUserForPin = null; // Benutzer der PIN-Eingabe wartet
 
+// ============ ON-SCREEN TASTATUR ============
+        
+        function openKeyboard() {
+            if (scannerMode !== 'user') return; // Nur im User-Modus
+            
+            const keyboard = document.getElementById('onScreenKeyboard');
+            keyboard.classList.add('active');
+            renderKeyboard();
+        }
+        
+        function closeKeyboard() {
+            const keyboard = document.getElementById('onScreenKeyboard');
+            keyboard.classList.remove('active');
+        }
+        
+        function renderKeyboard() {
+            const grid = document.getElementById('keyboardGrid');
+            
+            // Deutsche Tastatur-Layout
+            const keys = [
+                ['Q', 'W', 'E', 'R', 'T', 'Z', 'U', 'I', 'O', 'P'],
+                ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Ö'],
+                ['Y', 'X', 'C', 'V', 'B', 'N', 'M', 'Ä', 'Ü', 'ẞ']
+            ];
+            
+            let html = '';
+            
+            keys.forEach(row => {
+                row.forEach(key => {
+                    html += `<button class="keyboard-key" onclick="typeKey('${key}')">${key}</button>`;
+                });
+            });
+            
+            // Sonderzeilen
+            html += `
+                <button class="keyboard-key space" onclick="typeKey(' ')">LEERTASTE</button>
+                <button class="keyboard-key" onclick="typeKey('-')">-</button>
+                <button class="keyboard-key clear" onclick="clearInput()">LÖSCHEN</button>
+                <button class="keyboard-key backspace" onclick="backspaceKey()">⌫ ZURÜCK</button>
+            `;
+            
+            grid.innerHTML = html;
+        }
+        
+        function typeKey(key) {
+            const input = document.getElementById('barcodeInput');
+            const currentValue = input.value;
+            input.value = currentValue + key;
+            
+            // Trigger input event für Suche
+            const event = new Event('input', { bubbles: true });
+            input.dispatchEvent(event);
+        }
+        
+        function backspaceKey() {
+            const input = document.getElementById('barcodeInput');
+            input.value = input.value.slice(0, -1);
+            
+            const event = new Event('input', { bubbles: true });
+            input.dispatchEvent(event);
+        }
+        
+        function clearInput() {
+            const input = document.getElementById('barcodeInput');
+            input.value = '';
+            hideDropdown();
+        }
+        
         // ============ SCANNER MODE MANAGEMENT ============
         
         function setScannerMode(mode) {
@@ -2028,6 +2176,7 @@ function updateCartView() {
             updateUserInfo();
             updateProductsView();
             setScannerMode('product');
+            closeKeyboard();
             hideDropdown();
         }
 
@@ -2355,6 +2504,13 @@ if (trimmedBarcode === specialBarcodes.checkout.toUpperCase()) {
             showStatus('System bereit für Scanner und Touch-Bedienung!', 'success');
             
             initCategoryFilters();
+
+// Tastatur öffnen bei Klick auf Eingabefeld (nur im User-Modus)
+            barcodeInput.addEventListener('click', function(e) {
+                if (scannerMode === 'user') {
+                    openKeyboard();
+                }
+            });
             
             barcodeInput.addEventListener('input', function(e) {
                 clearTimeout(searchTimeout);
@@ -2603,5 +2759,18 @@ async function completeCashPayment() {
 }
         
     </script>
+
+<!-- ON-SCREEN TASTATUR -->
+    <div class="keyboard-container" id="onScreenKeyboard">
+        <div class="keyboard-header">
+            <h3>⌨️ Mitglied suchen</h3>
+            <button class="keyboard-close" onclick="closeKeyboard()">✕ Schließen</button>
+        </div>
+        
+        <div class="keyboard-grid" id="keyboardGrid">
+            <!-- Wird dynamisch gefüllt -->
+        </div>
+    </div>
+    
 </body>
 </html>
