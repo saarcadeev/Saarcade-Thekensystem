@@ -1286,7 +1286,7 @@ try {
                 <div id="pinInputUserInfo" style="background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 15px; text-align: center;"></div>
                 
                 <div class="form-group">
-                    <input type="password" id="pinInput" maxlength="4" placeholder="0000" style="text-align: center; font-size: 1.5em; letter-spacing: 0.3em; width: 100%;" autofocus>
+                    <input type="password" id="pinInput" inputmode="none" maxlength="4" placeholder="0000" style="text-align: center; font-size: 1.5em; letter-spacing: 0.3em; width: 100%;" autofocus>
                 </div>
                 
                 <div style="text-align: center; margin-top: 20px;">
@@ -1423,8 +1423,21 @@ function renderKeyboard() {
             grid.innerHTML = html;
         }
         
+function getActiveInput() {
+            // Prüfe ob PIN-Modal offen ist
+            const pinModal = document.getElementById('pinInputModal');
+            if (pinModal && pinModal.style.display === 'block') {
+                return document.getElementById('pinInput');
+            }
+            
+            // Sonst Barcode-Input
+            return document.getElementById('barcodeInput');
+        }
+        
         function typeKey(key) {
-            const input = document.getElementById('barcodeInput');
+            const input = getActiveInput();
+            if (!input) return;
+            
             const currentValue = input.value;
             input.value = currentValue + key;
             
@@ -1434,7 +1447,9 @@ function renderKeyboard() {
         }
         
         function backspaceKey() {
-            const input = document.getElementById('barcodeInput');
+            const input = getActiveInput();
+            if (!input) return;
+            
             input.value = input.value.slice(0, -1);
             
             const event = new Event('input', { bubbles: true });
@@ -1442,9 +1457,15 @@ function renderKeyboard() {
         }
         
         function clearInput() {
-            const input = document.getElementById('barcodeInput');
+            const input = getActiveInput();
+            if (!input) return;
+            
             input.value = '';
-            hideDropdown();
+            
+            // Nur hideDropdown wenn wir im Barcode-Input sind
+            if (input.id === 'barcodeInput') {
+                hideDropdown();
+            }
         }
         
         // ============ SCANNER MODE MANAGEMENT ============
