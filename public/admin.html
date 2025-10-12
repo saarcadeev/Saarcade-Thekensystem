@@ -586,12 +586,116 @@ body {
             border: 2px solid #e2e8f0;
         }
 
-        @media (max-width: 768px) {
-            .container { padding: 10px; }
-            .dashboard-grid { grid-template-columns: 1fr; }
-            .toolbar { flex-direction: column; align-items: stretch; }
-            .form-grid { grid-template-columns: 1fr; }
+/* Hamburger Menu Button */
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1100;
+            background: #2c3e50;
+            color: white;
+            border: none;
+            padding: 12px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            font-size: 1.2em;
         }
+
+        .menu-toggle:active {
+            transform: scale(0.95);
+        }
+
+        /* Sidebar Overlay für Mobile */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+
+        @media (max-width: 768px) {
+            /* Hamburger Menu anzeigen */
+            .menu-toggle {
+                display: block;
+            }
+
+            /* Sidebar standardmäßig verstecken */
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            /* Sidebar anzeigen wenn aktiv */
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            /* Overlay anzeigen wenn Sidebar aktiv */
+            .sidebar-overlay.active {
+                display: block;
+            }
+
+            /* Main Content auf volle Breite */
+            .main-content {
+                margin-left: 0;
+                padding: 70px 15px 20px 15px;
+            }
+
+            /* Page Header anpassen */
+            .page-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+
+            .page-header h1 {
+                font-size: 1.4em;
+            }
+
+            /* Dashboard Grid auf 1 Spalte */
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            /* Toolbar vertikal stapeln */
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            /* Form Grid auf 1 Spalte */
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            /* Container Padding */
+            .container {
+                padding: 10px;
+            }
+
+            /* Tabellen scrollbar machen */
+            .table-container {
+                overflow-x: auto;
+            }
+
+            .data-table {
+                min-width: 600px;
+            }
+
+            /* Buttons volle Breite auf Mobile */
+            .toolbar .btn,
+            .form-actions .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+        
     </style>
 </head>
 <body>
@@ -635,6 +739,12 @@ body {
     </div>
 
 <div class="page-container">
+    <!-- Hamburger Menu Button -->
+    <button class="menu-toggle" onclick="toggleMobileMenu()">☰</button>
+    
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" onclick="closeMobileMenu()"></div>
+    
     <!-- Sidebar -->
     <aside class="sidebar">
         <div class="sidebar-header">
@@ -1884,10 +1994,32 @@ function showAlert(message, type = 'info') {
         }
     }, 4000);
 }
+
+// ============ MOBILE MENU ============
+function toggleMobileMenu() {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+    sidebar.classList.toggle('active');
+    overlay.classList.toggle('active');
+}
+
+function closeMobileMenu() {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+    sidebar.classList.remove('active');
+    overlay.classList.remove('active');
+}
+        
 // ============ TAB NAVIGATION ============
 function showTab(tabName) {
     // Sidebar Links aktualisieren
     document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+
+     // Mobile: Sidebar schließen nach Tab-Wechsel
+    if (window.innerWidth <= 768) {
+        closeMobileMenu();
+    }
+    
     if (event && event.target) {
         event.target.classList.add('active');
     }
