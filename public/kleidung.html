@@ -452,9 +452,9 @@
         .order-detail-row {
             display: flex;
             justify-content: space-between;
-            padding: 8px 0;
+            padding: 5px 0;
             border-bottom: 1px solid #e2e8f0;
-            font-size: 0.9em;
+            font-size: 0.85em;
         }
 
         .order-detail-row:last-child {
@@ -1045,7 +1045,8 @@ grid.innerHTML = clothingItems.map(item => {
                 'paypal': 'PayPal'
             };
 
-            orderDetailsContainer.innerHTML = `
+             orderDetailsContainer.innerHTML = `
+                <div style="margin-bottom: 10px;">
                 <div class="order-detail-row">
                     <span>Bestellnummer:</span>
                     <strong>#${orderResult.id}</strong>
@@ -1066,6 +1067,7 @@ grid.innerHTML = clothingItems.map(item => {
                     <span>Gesamtbetrag:</span>
                     <strong>${orderResult.total.toFixed(2)} €</strong>
                 </div>
+                </div>
             `;
 
             // Bankdaten anzeigen bei Überweisung
@@ -1075,7 +1077,7 @@ grid.innerHTML = clothingItems.map(item => {
                 const transferBic = settings.transfer_bic || settings.creditor_bic || '';
                 
                 orderDetailsContainer.innerHTML += `
-                    <div style="margin-top: 15px; padding: 12px; font-size: 0.9em; background: #f7fafc; border-radius: 8px; text-align: left;">
+                    <div style="margin-top: 10px; padding: 10px; font-size: 0.85em; background: #f7fafc; border-radius: 8px; text-align: left;">
                         <strong>Überweisungsdaten:</strong><br>
                         <strong>Empfänger:</strong> ${creditorName}<br>
                         <strong>IBAN:</strong> ${formatIBAN(transferIban)}<br>
@@ -1140,18 +1142,21 @@ grid.innerHTML = clothingItems.map(item => {
                 const creditorName = settings.creditor_name || 'Saarcade e.V.';
                 const transferIban = (settings.transfer_iban || settings.creditor_iban || 'DE89370400440532013000').replace(/\s/g, '');
                 const transferBic = settings.transfer_bic || settings.creditor_bic || '';                
-                qrData = `BCD
+                const amount = orderResult.total.toFixed(2);
+                const purpose = `Kleidung ${orderResult.member_name} #${orderResult.id}`;
+
+qrData = `BCD
 002
 1
 SCT
 ${transferBic}
 ${creditorName}
 ${transferIban}
+EUR${amount}
 
-EUR${orderResult.total.toFixed(2)}
 
-
-Kleidung ${orderResult.member_name} #${orderResult.id}`;
+${purpose}`;
+                
             } else if (orderResult.payment_method === 'paypal') {
                 // PayPal.Me Link (muss in Einstellungen konfiguriert werden)
                 const paypalAccount = settings.paypal_account || 'saarcade';
