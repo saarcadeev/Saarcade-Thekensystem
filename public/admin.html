@@ -1273,20 +1273,34 @@ body {
                         <small style="color: #666;">Eindeutige ID für SEPA-Lastschriften (erhältlich bei der Bundesbank)</small>
                     </div>
                     
-                    <div class="form-grid">
+<div class="form-grid">
                         <div class="form-group">
-                            <label>Vereins-IBAN *</label>
+                            <label>SEPA-Lastschrift IBAN *</label>
                             <input type="text" id="creditorIban" placeholder="DE89 3704 0044 0532 0130 00" required>
-                            <small style="color: #666;">IBAN des Vereinskontos</small>
+                            <small style="color: #666;">IBAN für SEPA-Lastschriften (Abbuchungen)</small>
                         </div>
                         
                         <div class="form-group">
-                            <label>BIC (optional)</label>
+                            <label>SEPA-Lastschrift BIC (optional)</label>
                             <input type="text" id="creditorBic" placeholder="COBADEFFXXX">
                             <small style="color: #666;">Bei deutschen IBANs optional</small>
                         </div>
                     </div>
 
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Überweisungs-IBAN (optional)</label>
+                            <input type="text" id="transferIban" placeholder="DE89 3704 0044 0532 0130 00">
+                            <small style="color: #666;">Alternative IBAN für manuelle Überweisungen von Mitgliedern</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Überweisungs-BIC (optional)</label>
+                            <input type="text" id="transferBic" placeholder="COBADEFFXXX">
+                            <small style="color: #666;">Bei deutschen IBANs optional</small>
+                        </div>
+                    </div>
+                    
                     <div class="form-group">
                         <label>Verwendungszweck (Standard)</label>
                         <input type="text" id="sepaReference" placeholder="Getränkeabrechnung" value="Saarcade Getraenkeabrechnung">
@@ -3060,7 +3074,7 @@ function openProductModal(productId = null) {
 
         // ============ SETTINGS FUNCTIONS (vorher BARCODES) ============
 
-        async function loadAllSettings() {
+async function loadAllSettings() {
             try {
                 const response = await fetch('/api/settings');
                 const settings = await response.json();
@@ -3095,7 +3109,15 @@ function openProductModal(productId = null) {
                 if (settings.sepa_sequence_type) {
                     document.getElementById('sepaSequenceType').value = settings.sepa_sequence_type;
                 }
-                
+
+                // Überweisungs-Einstellungen
+                if (settings.transfer_iban) {
+                    document.getElementById('transferIban').value = settings.transfer_iban;
+                }
+                if (settings.transfer_bic) {
+                    document.getElementById('transferBic').value = settings.transfer_bic;
+                }
+                 
                 // PayPal-Einstellungen
                 if (settings.paypal_account) {
                     document.getElementById('paypalAccount').value = settings.paypal_account;
@@ -3121,6 +3143,10 @@ function openProductModal(productId = null) {
                 sepa_reference: document.getElementById('sepaReference').value,
                 sepa_sequence_type: document.getElementById('sepaSequenceType').value,
 
+                // Überweisungs-Einstellungen (NEW)
+                transfer_iban: document.getElementById('transferIban').value.replace(/\s/g, '') || null,
+                transfer_bic: document.getElementById('transferBic').value || null
+
                 // PayPal-Einstellungen
                 paypal_account: document.getElementById('paypalAccount').value
 
@@ -3129,6 +3155,13 @@ function openProductModal(productId = null) {
             // Validierung der Pflichtfelder
             if (!settings.creditor_name || !settings.creditor_id || !settings.creditor_iban) {
                 alert('⚠️ Bitte fülle alle SEPA-Pflichtfelder aus:\n- Vereinsname\n- Gläubiger-ID\n- Vereins-IBAN');
+                return;
+            }
+
+            // Validierung Überweisungs-IBAN wenn gesetzt
+            if (settings.transfer_iban && !validateIBAN(settings.transfer_iban)) {
+                alert('âš ï¸ Die Überweisungs-IBAN ist ungÃ¼ltig!');
+                document.getElementById('transferIban').focus();
                 return;
             }
             
