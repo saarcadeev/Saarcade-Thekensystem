@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎮 Saarcade Kasse - Tablet Optimiert</title>
+    <title>🎮 Saarcade e.V. Kasse</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -1094,7 +1094,7 @@ const additionalCSS = `
 <body>
 
     <script>
-// Login-Schutz für Kasse mit Ablauf-Prüfung
+// Login-Schutz für Kasse
 (function() {
     const loginDataStr = localStorage.getItem('kasseLogin');
     if (!loginDataStr) {
@@ -1121,9 +1121,6 @@ try {
     
     <div class="container">
         <div class="header" style="position: relative;">
-            <button onclick="logout()" style="position: absolute; top: 15px; right: 15px; background: #e53e3e; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9em; z-index: 2000;">
-                🚪 Logout
-            </button>
             <h1>🎮 Saarcade Kassensystem</h1>
             
             <div class="header-main">
