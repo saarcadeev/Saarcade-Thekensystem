@@ -638,18 +638,22 @@
         
         // Verfügbare Kleidungsstücke werden aus der Datenbank geladen
 
-        // State Management
-        let selectedMember = null;
-        let cart = [];
-        let selectedPaymentMethod = null;
-        let settings = {}; // Vereins-Einstellungen
-        let clothingItems = []; // Kleidungsartikel aus DB
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            loadSettings();
-            renderProducts();
-            setupEventListeners();
-        });
+// State Management
+let selectedMember = null;
+let cart = [];
+let selectedPaymentMethod = null;
+let settings = {};
+let clothingItems = [];
+
+async function loadSettings() {
+    try {
+        settings = await apiCall('/settings');
+        // Bankdaten geladen
+    } catch (error) {
+        console.error('⚠️ Fehler beim Laden der Bankdaten:', error);
+        settings = {};
+    }
+}
 
 async function loadClothingItems() {
     try {
@@ -662,6 +666,13 @@ async function loadClothingItems() {
         renderProducts();
     }
 }
+
+// DANN erst:
+document.addEventListener('DOMContentLoaded', () => {
+    loadSettings();
+    loadClothingItems();
+    setupEventListeners();
+});
         
         function setupEventListeners() {
             // Mitgliedersuche
