@@ -635,79 +635,15 @@
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <script>
         // Verfügbare Kleidungsstücke
-        const clothingItems = [
-            {
-                id: 1,
-                name: 'T-Shirt',
-                emoji: '👕',
-                price: 19.90,
-                sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
-                colors: ['Schwarz', 'Weiß', 'Navy', 'Grau', 'Rot']
-            },
-            {
-                id: 2,
-                name: 'Hoodie',
-                emoji: '🧥',
-                price: 39.90,
-                sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
-                colors: ['Schwarz', 'Navy', 'Grau', 'Bordeaux', 'Dunkelgrün']
-            },
-            {
-                id: 3,
-                name: 'Polo-Shirt',
-                emoji: '👔',
-                price: 24.90,
-                sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
-                colors: ['Schwarz', 'Weiß', 'Navy', 'Grau', 'Rot']
-            },
-            {
-                id: 4,
-                name: 'Cap',
-                emoji: '🧢',
-                price: 14.90,
-                sizes: ['One Size'],
-                colors: ['Schwarz', 'Navy', 'Grau', 'Weiß', 'Rot']
-            },
-            {
-                id: 5,
-                name: 'Jacke',
-                emoji: '🧥',
-                price: 59.90,
-                sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
-                colors: ['Schwarz', 'Navy', 'Grau']
-            },
-            {
-                id: 6,
-                name: 'Sweatshirt',
-                emoji: '👚',
-                price: 29.90,
-                sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
-                colors: ['Schwarz', 'Weiß', 'Navy', 'Grau', 'Rot']
-            },
-            {
-                id: 7,
-                name: 'Trainingsjacke',
-                emoji: '🏃',
-                price: 49.90,
-                sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
-                colors: ['Schwarz', 'Navy', 'Rot']
-            },
-            {
-                id: 8,
-                name: 'Trainingshose',
-                emoji: '👖',
-                price: 34.90,
-                sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
-                colors: ['Schwarz', 'Navy', 'Grau']
-            }
-        ];
+        
+        // Verfügbare Kleidungsstücke werden aus der Datenbank geladen
 
         // State Management
         let selectedMember = null;
         let cart = [];
         let selectedPaymentMethod = null;
         let settings = {}; // Vereins-Einstellungen
-
+        let clothingItems = []; // Kleidungsartikel aus DB
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             loadSettings();
@@ -715,16 +651,18 @@
             setupEventListeners();
         });
 
-        async function loadSettings() {
-            try {
-                settings = await apiCall('/settings');
-                console.log('✅ Vereinseinstellungen geladen:', settings);
-            } catch (error) {
-                console.error('Fehler beim Laden der Einstellungen:', error);
-                settings = {}; // Fallback
-            }
-        }
-
+async function loadClothingItems() {
+    try {
+        clothingItems = await apiCall('/clothing-items/available');
+        console.log(`✅ ${clothingItems.length} Kleidungsartikel geladen`);
+        renderProducts();
+    } catch (error) {
+        console.error('❌ Fehler beim Laden der Kleidungsartikel:', error);
+        clothingItems = [];
+        renderProducts();
+    }
+}
+        
         function setupEventListeners() {
             // Mitgliedersuche
             document.getElementById('memberSearch').addEventListener('input', handleMemberSearch);
@@ -738,10 +676,10 @@
             document.getElementById('submitOrder').addEventListener('click', submitOrder);
 
             // Click außerhalb Dropdown schließen
-            document.addEventListener('click', (e) => {
-                if (!e.target.closest('.member-suggestions')) {
-                    document.getElementById('suggestionsDropdown').classList.remove('active');
-                }
+            document.addEventListener('DOMContentLoaded', () => {
+            loadSettings();
+            loadClothingItems();
+            setupEventListeners();
             });
         }
 
@@ -845,9 +783,20 @@
         function renderProducts() {
             const grid = document.getElementById('productsGrid');
             
-            grid.innerHTML = clothingItems.map(item => `
-                <div class="product-card" data-product-id="${item.id}">
-                    <div class="product-emoji">${item.emoji}</div>
+if (clothingItems.length === 0) {
+    grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #666;">Keine Kleidungsartikel verfügbar.</p>';
+    return;
+}
+
+grid.innerHTML = clothingItems.map(item => {
+    // Zeige Bild wenn vorhanden, sonst Emoji
+    const imageDisplay = item.image_url 
+        ? `<img src="${item.image_url}" alt="${item.name}" style="width: 100%; height: 150px; object-fit: contain; margin-bottom: 10px; border-radius: 8px;">` 
+        : `<div class="product-emoji">${item.emoji || '👕'}</div>`;
+    
+    return `
+    <div class="product-card" data-product-id="${item.id}">
+        ${imageDisplay}
                     <div class="product-name">${item.name}</div>
                     <div class="product-price">${item.price.toFixed(2)} €</div>
                     
@@ -881,6 +830,7 @@
                         </button>
                     </div>
                 </div>
+                `;
             `).join('');
 
             // Event Listeners für Produktkarten
@@ -1108,15 +1058,15 @@
             // Bankdaten anzeigen bei Überweisung
             if (orderResult.payment_method === 'transfer') {
                 const creditorName = settings.creditor_name || 'Saarcade e.V.';
-                const creditorIban = settings.creditor_iban || 'DE89 3704 0044 0532 0130 00';
-                const creditorBic = settings.creditor_bic || '';
+                const transferIban = settings.transfer_iban || settings.creditor_iban || 'DE89 3704 0044 0532 0130 00';
+                const transferBic = settings.transfer_bic || settings.creditor_bic || '';
                 
                 orderDetailsContainer.innerHTML += `
                     <div style="margin-top: 20px; padding: 15px; background: #f7fafc; border-radius: 8px; text-align: left;">
                         <strong>Überweisungsdaten:</strong><br>
                         <strong>Empfänger:</strong> ${creditorName}<br>
-                        <strong>IBAN:</strong> ${formatIBAN(creditorIban)}<br>
-                        ${creditorBic ? `<strong>BIC:</strong> ${creditorBic}<br>` : ''}
+                        <strong>IBAN:</strong> ${formatIBAN(transferIban)}<br>
+                        ${transferBic ? `<strong>BIC:</strong> ${transferBic}<br>` : ''}
                         <strong>Verwendungszweck:</strong> Kleidung ${orderResult.member_name} #${orderResult.id}<br>
                         <strong>Betrag:</strong> ${orderResult.total.toFixed(2)} €
                     </div>
@@ -1175,16 +1125,15 @@
             if (orderResult.payment_method === 'transfer') {
                 // EPC QR-Code für SEPA-Überweisung mit echten Bankdaten
                 const creditorName = settings.creditor_name || 'Saarcade e.V.';
-                const creditorIban = (settings.creditor_iban || 'DE89370400440532013000').replace(/\s/g, '');
-                const creditorBic = settings.creditor_bic || '';
-                
+                const transferIban = (settings.transfer_iban || settings.creditor_iban || 'DE89370400440532013000').replace(/\s/g, '');
+                const transferBic = settings.transfer_bic || settings.creditor_bic || '';                
                 qrData = `BCD
 002
 1
 SCT
 ${creditorBic}
 ${creditorName}
-${creditorIban}
+${transferIban}
 
 EUR${orderResult.total.toFixed(2)}
 
