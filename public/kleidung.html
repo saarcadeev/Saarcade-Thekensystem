@@ -63,6 +63,24 @@
             gap: 10px;
         }
 
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: #4299e1;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: background 0.3s;
+    margin: 20px auto;
+}
+
+.back-button:hover {
+    background: #3182ce;
+}
+        
         .form-group {
             margin-bottom: 20px;
         }
@@ -770,13 +788,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 document.getElementById('selectedMemberName').textContent = `${firstName} ${lastName}`;
                 
-                // SEPA-Status anzeigen
-                let detailsText = `Mitglieds-ID: ${id}`;
-                if (selectedMember.sepaActive && selectedMember.iban) {
-                    detailsText += ` • ✅ SEPA aktiv (${formatIBAN(selectedMember.iban)})`;
-                } else {
-                    detailsText += ` • ⚠️ Kein SEPA-Mandat`;
-                }
+// SEPA-Status anzeigen
+let detailsText = `Mitgliedsnummer: ${member.member_number || id}`;
+if (selectedMember.sepaActive && selectedMember.iban) {
+    detailsText += ` • ✅ SEPA aktiv (${formatIBAN(selectedMember.iban)})`;
+} else {
+    detailsText += ` • ⚠️ Kein SEPA-Mandat`;
+}
                 
                 document.getElementById('selectedMemberDetails').textContent = detailsText;
                 document.getElementById('selectedMember').classList.add('active');
