@@ -729,6 +729,163 @@ if (item.productId && item.productId > 0) {
             });
         }
 
+        // ============ CLOTHING ORDERS ENDPUNKTE ============
+        
+        // GET /clothing-orders - Alle Kleidungsbestellungen
+        if (path === '/clothing-orders' && method === 'GET') {
+            const { data, error } = await supabase
+                .from('clothing_orders')
+                .select('*')
+                .order('created_at', { ascending: false });
+            
+            if (error) throw error;
+            return res.status(200).json(data || []);
+        }
+
+        // GET /clothing-orders/{id} - Einzelne Kleidungsbestellung
+        if (pathParts[0] === 'clothing-orders' && pathParts[1] && method === 'GET') {
+            const orderId = parseInt(pathParts[1]);
+            
+            if (isNaN(orderId)) {
+                return res.status(400).json({ error: 'Ungültige Bestell-ID' });
+            }
+
+            const { data, error } = await supabase
+                .from('clothing_orders')
+                .select('*')
+                .eq('id', orderId)
+                .single();
+            
+            if (error) {
+                if (error.code === 'PGRST116') {
+                    return res.status(404).json({ error: 'Bestellung nicht gefunden' });
+                }
+                throw error;
+            }
+            
+            return res.status(200).json(data);
+        }
+
+        // POST /clothing-orders - Neue Kleidungsbestellung erstellen
+        if (path === '/clothing-orders' && method === 'POST') {
+            const orderData = req.body;
+            
+            // Validierung
+            if (!orderData.member_id || !orderData.member_name || !orderData.items || 
+                orderData.items.length === 0 || !orderData.payment_method) {
+                return res.status(400).json({ 
+                    error: 'Pflichtfelder fehlen: member_id, member_name, items, payment_method' 
+                });
+            }
+
+            // Berechne Gesamtsumme
+            const total = orderData.items.reduce((sum, item) => sum + item.total, 0);
+
+            const { data, error } = await supabase
+                .from('clothing_orders')
+                .insert([{
+                    member_id: orderData.member_id,
+                    member_name: orderData.member_name,
+                    items: orderData.items, // JSONB Array
+                    payment_method: orderData.payment_method,
+                    total: total,
+                    status: 'pending', // pending, confirmed, shipped, completed, cancelled
+                    notes: orderData.notes || null
+                }])
+                .select()
+                .single();
+            
+            if (error) throw error;
+            return res.status(201).json(data);
+        }
+
+        // PUT /clothing-orders/{id} - Bestellung aktualisieren (Status, Notizen)
+        if (pathParts[0] === 'clothing-orders' && pathParts[1] && method === 'PUT') {
+            const orderId = parseInt(pathParts[1]);
+            const updateData = req.body;
+            
+            if (isNaN(orderId)) {
+                return res.status(400).json({ error: 'Ungültige Bestell-ID' });
+            }
+
+            const { data, error } = await supabase
+                .from('clothing_orders')
+                .update({
+                    status: updateData.status,
+                    notes: updateData.notes,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', orderId)
+                .select()
+                .single();
+            
+            if (error) throw error;
+            return res.status(200).json(data);
+        }
+
+        // DELETE /clothing-orders/{id} - Bestellung löschen
+        if (pathParts[0] === 'clothing-orders' && pathParts[1] && method === 'DELETE') {
+            const orderId = parseInt(pathParts[1]);
+            
+            if (isNaN(orderId)) {
+                return res.status(400).json({ error: 'Ungültige Bestell-ID' });
+            }
+
+            const { error } = await supabase
+                .from('clothing_orders')
+                .delete()
+                .eq('id', orderId);
+            
+            if (error) throw error;
+            return res.status(200).json({ message: 'Bestellung erfolgreich gelöscht' });
+        }
+
+        // GET /clothing-orders/member/{memberId} - Bestellungen eines Mitglieds
+        if (pathParts[0] === 'clothing-orders' && pathParts[1] === 'member' && pathParts[2] && method === 'GET') {
+            const memberId = parseInt(pathParts[2]);
+            
+            if (isNaN(memberId)) {
+                return res.status(400).json({ error: 'Ungültige Mitglieds-ID' });
+            }
+
+            const { data, error } = await supabase
+                .from('clothing_orders')
+                .select('*')
+                .eq('member_id', memberId)
+                .order('created_at', { ascending: false });
+            
+            if (error) throw error;
+            return res.status(200).json(data || []);
+        }
+
+        // GET /clothing-orders/stats - Statistiken für Kleidungsbestellungen
+        if (path === '/clothing-orders/stats' && method === 'GET') {
+            try {
+                const { data: allOrders } = await supabase
+                    .from('clothing_orders')
+                    .select('*');
+
+                const stats = {
+                    total_orders: allOrders ? allOrders.length : 0,
+                    pending_orders: allOrders ? allOrders.filter(o => o.status === 'pending').length : 0,
+                    confirmed_orders: allOrders ? allOrders.filter(o => o.status === 'confirmed').length : 0,
+                    shipped_orders: allOrders ? allOrders.filter(o => o.status === 'shipped').length : 0,
+                    completed_orders: allOrders ? allOrders.filter(o => o.status === 'completed').length : 0,
+                    total_revenue: allOrders ? allOrders.reduce((sum, o) => sum + (o.total || 0), 0) : 0,
+                    payment_methods: {
+                        sepa: allOrders ? allOrders.filter(o => o.payment_method === 'sepa').length : 0,
+                        transfer: allOrders ? allOrders.filter(o => o.payment_method === 'transfer').length : 0,
+                        paypal: allOrders ? allOrders.filter(o => o.payment_method === 'paypal').length : 0
+                    }
+                };
+
+                return res.status(200).json(stats);
+            } catch (error) {
+                console.error('Clothing orders stats error:', error);
+                return res.status(500).json({ error: 'Fehler beim Laden der Statistiken' });
+            }
+        }
+        
         // ============ STOCK MOVEMENTS ENDPUNKTE ============
         
         // GET /stock-movements - Alle Bestandsbewegungen
