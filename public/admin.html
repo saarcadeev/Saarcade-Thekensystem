@@ -1750,8 +1750,19 @@ body {
         </div>
     </div>
     <!-- CLOTHING TAB -->
-<div id="clothingTab" class="tab-content">
-    <h2>👕 Kleidungsverwaltung</h2>
+<div id="clothing" class="page-content" style="display: none;">
+    <div class="page-header">
+        <div>
+            <h1>Kleidungsverwaltung</h1>
+            <div class="breadcrumb">Verwaltung / Kleidung</div>
+        </div>
+        <button onclick="logoutAdmin()" style="background: #e53e3e; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+            🚪 Logout
+        </button>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">👕 Kleidungsartikel</div>
     
     <div class="action-buttons" style="margin-bottom: 20px;">
         <button class="btn btn-primary" onclick="openClothingModal()">
@@ -1782,7 +1793,8 @@ body {
         </table>
     </div>
 </div>
-<!-- ENDE clothing Tab -->
+</div>
+    <!-- ENDE clothing Tab -->
     <script>
 // ============ GLOBALE VARIABLEN ============
         let apiConnected = false;
