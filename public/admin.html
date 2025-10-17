@@ -968,6 +968,7 @@ body {
         <div class="tabs">
             <button class="tab" onclick="showTab('users')">👥 Mitglieder</button>
             <button class="tab active" onclick="showTab('products')">📦 Produkte</button>
+            <button class="tab" onclick="showTab('clothing')">👕 Kleidung</button>
             <button class="tab" onclick="showTab('stock')">📊 Bestand</button>
             <button class="tab" onclick="showTab('transactions')">💰 Transaktionen</button>
             <button class="tab" onclick="showTab('settings')">⚙️ Einstellungen</button>
@@ -1754,7 +1755,40 @@ body {
             </div>
         </div>
     </div>
+    <!-- CLOTHING TAB -->
+<div id="clothingTab" class="tab-content">
+    <h2>👕 Kleidungsverwaltung</h2>
     
+    <div class="action-buttons" style="margin-bottom: 20px;">
+        <button class="btn btn-primary" onclick="openClothingModal()">
+            ➕ Neuer Artikel
+        </button>
+        <button class="btn btn-secondary" onclick="loadClothingItems()">
+            🔄 Aktualisieren
+        </button>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 80px;">Bild</th>
+                    <th>Name</th>
+                    <th style="width: 60px;">Emoji</th>
+                    <th style="width: 80px;">Preis</th>
+                    <th>Größen</th>
+                    <th>Farben</th>
+                    <th style="width: 100px;">Verfügbar</th>
+                    <th style="width: 150px;">Aktionen</th>
+                </tr>
+            </thead>
+            <tbody id="clothingTableBody">
+                <tr><td colspan="8" style="text-align: center; padding: 40px;">Lade Kleidungsartikel...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<!-- ENDE clothing Tab -->
     <script>
 // ============ GLOBALE VARIABLEN ============
         let apiConnected = false;
