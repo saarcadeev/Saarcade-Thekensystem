@@ -1304,10 +1304,11 @@ body {
                         <small style="color: #666;">Standard: RCUR für wiederkehrende monatliche Abbuchungen</small>
                     </div>
 
-                    <div style="margin-top: 25px; padding: 15px; background: #fff5e6; border-left: 4px solid #ed8936; border-radius: 4px;">
-                        <strong>⚠️ Wichtig:</strong> Die Gläubiger-ID kannst du bei der Deutschen Bundesbank beantragen. 
-                        <a href="https://extranet.bundesbank.de/scp/" target="_blank" style="color: #667eea;">Hier geht's zur Beantragung</a>
-                    </div>
+<div class="form-group">
+    <label>PayPal Account/Username</label>
+    <input type="text" id="paypalAccount" placeholder="z.B. saarcade oder deine-email@example.com">
+    <small style="color: #666;">Für PayPal.Me Links in der Kleidungsbestellung</small>
+</div>
                     
                     <button type="button" class="btn btn-success" onclick="saveAllSettings()" style="margin-top: 20px;">
                         💾 Alle Einstellungen speichern
@@ -3094,6 +3095,12 @@ function openProductModal(productId = null) {
                 if (settings.sepa_sequence_type) {
                     document.getElementById('sepaSequenceType').value = settings.sepa_sequence_type;
                 }
+                
+                // PayPal-Einstellungen
+                if (settings.paypal_account) {
+                    document.getElementById('paypalAccount').value = settings.paypal_account;
+                }
+                
             } catch (error) {
                 console.log('Keine gespeicherten Einstellungen gefunden, verwende Standardwerte');
             }
@@ -3113,6 +3120,10 @@ function openProductModal(productId = null) {
                 creditor_bic: document.getElementById('creditorBic').value,
                 sepa_reference: document.getElementById('sepaReference').value,
                 sepa_sequence_type: document.getElementById('sepaSequenceType').value
+
+                // PayPal-Einstellungen
+                paypal_account: document.getElementById('paypalAccount').value
+
             };
 
             // Validierung der Pflichtfelder
