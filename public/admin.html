@@ -1761,18 +1761,19 @@ body {
         </button>
     </div>
     
-    <div class="card">
-        <div class="card-header">👕 Kleidungsartikel</div>
+<div class="card">
+    <div class="card-header">👕 Kleidungsartikel</div>
     
-    <div class="action-buttons" style="margin-bottom: 20px;">
-        <button class="btn btn-primary" onclick="openClothingModal()">
+    <div class="toolbar">
+        <button class="btn btn-success" onclick="openClothingModal()">
             ➕ Neuer Artikel
         </button>
         <button class="btn btn-secondary" onclick="loadClothingItems()">
             🔄 Aktualisieren
         </button>
     </div>
-
+    
+    <div style="overflow-x: auto;">
     <div class="table-container">
         <table>
             <thead>
@@ -1791,8 +1792,9 @@ body {
                 <tr><td colspan="8" style="text-align: center; padding: 40px;">Lade Kleidungsartikel...</td></tr>
             </tbody>
         </table>
+      </div>
     </div>
-</div>
+  </div>
 </div>
     <!-- ENDE clothing Tab -->
     <script>
