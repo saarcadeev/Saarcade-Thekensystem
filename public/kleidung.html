@@ -414,20 +414,21 @@
             display: flex;
         }
 
-        .modal-content {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            max-width: 500px;
-            width: 90%;
-            text-align: center;
-        }
+.modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    max-width: 450px;
+    width: 90%;
+    max-height: 95vh;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+}
 
-        .modal-content h2 {
-            color: #667eea;
-            margin-bottom: 20px;
-        }
-
+.modal-content h2 {
+    color: #2d3748;
+    margin-bottom: 15px;
+    font-size: 1.4em;
+}
         .qr-code-container {
             margin: 30px 0;
             padding: 20px;
@@ -453,6 +454,7 @@
             justify-content: space-between;
             padding: 8px 0;
             border-bottom: 1px solid #e2e8f0;
+            font-size: 0.9em;
         }
 
         .order-detail-row:last-child {
@@ -1073,7 +1075,7 @@ grid.innerHTML = clothingItems.map(item => {
                 const transferBic = settings.transfer_bic || settings.creditor_bic || '';
                 
                 orderDetailsContainer.innerHTML += `
-                    <div style="margin-top: 20px; padding: 15px; background: #f7fafc; border-radius: 8px; text-align: left;">
+                    <div style="margin-top: 15px; padding: 12px; font-size: 0.9em; background: #f7fafc; border-radius: 8px; text-align: left;">
                         <strong>Überweisungsdaten:</strong><br>
                         <strong>Empfänger:</strong> ${creditorName}<br>
                         <strong>IBAN:</strong> ${formatIBAN(transferIban)}<br>
@@ -1166,8 +1168,8 @@ Kleidung ${orderResult.member_name} #${orderResult.id}`;
             try {
                 new QRCode(qrCodeElement, {
                     text: qrData,
-                    width: 250,
-                    height: 250,
+                    width: 160,
+                    height: 160,
                     colorDark: "#000000",
                     colorLight: "#ffffff",
                     correctLevel: QRCode.CorrectLevel.M
