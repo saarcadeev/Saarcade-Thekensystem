@@ -774,22 +774,23 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 // Lade vollständige Mitgliedsdaten inkl. SEPA-Info
                 const member = await apiCall(`/users/id/${id}`);
-                
+  
                 selectedMember = {
                     id: member.id,
                     firstName: member.first_name,
                     lastName: member.last_name,
+                    memberNumber: member.member_number || member.id,
                     sepaActive: member.sepa_active || false,
                     iban: member.iban || null
                 };
-                
+              
                 document.getElementById('memberSearch').value = `${firstName} ${lastName}`;
                 document.getElementById('suggestionsDropdown').classList.remove('active');
                 
                 document.getElementById('selectedMemberName').textContent = `${firstName} ${lastName}`;
                 
 // SEPA-Status anzeigen
-let detailsText = `Mitgliedsnummer: ${member.member_number || id}`;
+let detailsText = `Mitgliedsnummer: ${selectedMember.memberNumber}`;
 if (selectedMember.sepaActive && selectedMember.iban) {
     detailsText += ` • ✅ SEPA aktiv (${formatIBAN(selectedMember.iban)})`;
 } else {
