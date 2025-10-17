@@ -1808,6 +1808,7 @@ body {
         let loadedTabs = {
             users: false,
             products: false,
+            clothing: false,
             stock: false,
             transactions: false,
             settings: false,
@@ -2136,11 +2137,20 @@ function showTab(tabName) {
                 loadTransactions();
                 break;
             case 'billing':
-                loadOpenBalances();
-                loadBillingHistory();
-                break;
+                if (!loadedTabs.billing) {
+                    loadOpenBalances();
+                    loadBillingHistory();
+                    loadedTabs.billing = true;
+            }
+            break;
+            case 'clothing':
+                if (!loadedTabs.clothing) {
+                    loadClothingItems();
+                    loadedTabs.clothing = true;
+            }
+            break;
+                }
         }
-    }
 }
         
         // ============ SELECTION FUNCTIONS ============
