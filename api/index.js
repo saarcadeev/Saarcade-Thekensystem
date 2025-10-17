@@ -885,6 +885,146 @@ if (item.productId && item.productId > 0) {
                 return res.status(500).json({ error: 'Fehler beim Laden der Statistiken' });
             }
         }
+
+       // ============ CLOTHING ITEMS ENDPUNKTE ============
+        
+        // GET /clothing-items - Alle Kleidungsstücke
+        if (path === '/clothing-items' && method === 'GET') {
+            const { data, error } = await supabase
+                .from('clothing_items')
+                .select('*')
+                .order('sort_order, name');
+            
+            if (error) throw error;
+            return res.status(200).json(data || []);
+        }
+
+        // GET /clothing-items/available - Nur verfügbare Kleidungsstücke
+        if (path === '/clothing-items/available' && method === 'GET') {
+            const { data, error } = await supabase
+                .from('clothing_items')
+                .select('*')
+                .eq('available', true)
+                .order('sort_order, name');
+            
+            if (error) throw error;
+            return res.status(200).json(data || []);
+        }
+
+        // GET /clothing-items/{id} - Einzelnes Kleidungsstück
+        if (pathParts[0] === 'clothing-items' && pathParts[1] && method === 'GET') {
+            const itemId = parseInt(pathParts[1]);
+            
+            if (isNaN(itemId)) {
+                return res.status(400).json({ error: 'Ungültige Item-ID' });
+            }
+
+            const { data, error } = await supabase
+                .from('clothing_items')
+                .select('*')
+                .eq('id', itemId)
+                .single();
+            
+            if (error) {
+                if (error.code === 'PGRST116') {
+                    return res.status(404).json({ error: 'Kleidungsstück nicht gefunden' });
+                }
+                throw error;
+            }
+            
+            return res.status(200).json(data);
+        }
+
+        // POST /clothing-items - Neues Kleidungsstück erstellen
+        if (path === '/clothing-items' && method === 'POST') {
+            const itemData = req.body;
+            
+            if (!itemData.name || !itemData.price) {
+                return res.status(400).json({ 
+                    error: 'Pflichtfelder fehlen: name, price' 
+                });
+            }
+
+            const { data, error } = await supabase
+                .from('clothing_items')
+                .insert([{
+                    name: itemData.name,
+                    emoji: itemData.emoji || '👕',
+                    price: itemData.price,
+                    sizes: itemData.sizes || ['S', 'M', 'L', 'XL'],
+                    colors: itemData.colors || ['Schwarz', 'Weiß'],
+                    available: itemData.available !== false,
+                    image_url: itemData.image_url || null,
+                    image_file_path: itemData.image_file_path || null,
+                    sort_order: itemData.sort_order || 0
+                }])
+                .select()
+                .single();
+            
+            if (error) throw error;
+            return res.status(201).json(data);
+        }
+
+        // PUT /clothing-items/{id} - Kleidungsstück bearbeiten
+        if (pathParts[0] === 'clothing-items' && pathParts[1] && method === 'PUT') {
+            const itemId = parseInt(pathParts[1]);
+            const itemData = req.body;
+            
+            if (isNaN(itemId)) {
+                return res.status(400).json({ error: 'Ungültige Item-ID' });
+            }
+
+            const updateData = {};
+            if (itemData.name !== undefined) updateData.name = itemData.name;
+            if (itemData.emoji !== undefined) updateData.emoji = itemData.emoji;
+            if (itemData.price !== undefined) updateData.price = itemData.price;
+            if (itemData.sizes !== undefined) updateData.sizes = itemData.sizes;
+            if (itemData.colors !== undefined) updateData.colors = itemData.colors;
+            if (itemData.available !== undefined) updateData.available = itemData.available;
+            if (itemData.image_url !== undefined) updateData.image_url = itemData.image_url;
+            if (itemData.image_file_path !== undefined) updateData.image_file_path = itemData.image_file_path;
+            if (itemData.sort_order !== undefined) updateData.sort_order = itemData.sort_order;
+
+            const { data, error } = await supabase
+                .from('clothing_items')
+                .update(updateData)
+                .eq('id', itemId)
+                .select()
+                .single();
+            
+            if (error) throw error;
+            return res.status(200).json(data);
+        }
+
+        // DELETE /clothing-items/{id} - Kleidungsstück löschen
+        if (pathParts[0] === 'clothing-items' && pathParts[1] && method === 'DELETE') {
+            const itemId = parseInt(pathParts[1]);
+            
+            if (isNaN(itemId)) {
+                return res.status(400).json({ error: 'Ungültige Item-ID' });
+            }
+
+            // Optional: Erst Bild löschen wenn vorhanden
+            const { data: item } = await supabase
+                .from('clothing_items')
+                .select('image_file_path')
+                .eq('id', itemId)
+                .single();
+
+            if (item && item.image_file_path) {
+                await supabase.storage
+                    .from('product-images')
+                    .remove([item.image_file_path]);
+            }
+
+            const { error } = await supabase
+                .from('clothing_items')
+                .delete()
+                .eq('id', itemId);
+            
+            if (error) throw error;
+            return res.status(200).json({ message: 'Kleidungsstück erfolgreich gelöscht' });
+        }
         
         // ============ STOCK MOVEMENTS ENDPUNKTE ============
         
