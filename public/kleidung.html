@@ -418,7 +418,7 @@
     background: white;
     padding: 20px;
     border-radius: 15px;
-    max-width: 450px;
+    max-width: 550px;
     width: 90%;
     max-height: 95vh;
     box-shadow: 0 10px 40px rgba(0,0,0,0.3);
@@ -429,17 +429,17 @@
     margin-bottom: 15px;
     font-size: 1.4em;
 }
-        .qr-code-container {
-            margin: 30px 0;
-            padding: 20px;
-            background: #f7fafc;
-            border-radius: 12px;
-        }
-
-        .qr-code {
-            max-width: 250px;
-            margin: 0 auto;
-        }
+        
+.qr-code-container {
+    margin: 10px 0 5px 0;
+    padding: 10px;
+    background: #f7fafc;
+    border-radius: 12px;
+}
+.qr-code {
+    max-width: 160px;
+    margin: 5px auto 0 auto;
+}
 
         .order-details {
             background: #f7fafc;
@@ -620,13 +620,10 @@
             
             <div class="order-details" id="orderDetailsContainer"></div>
             
-            <div class="qr-code-container" id="qrCodeContainer" style="display: none;">
-                <p style="margin-bottom: 15px; font-weight: 600;">QR-Code für die Zahlung:</p>
-                <div class="qr-code" id="qrCode"></div>
-                <p style="margin-top: 15px; font-size: 0.9em; color: #718096;">
-                    Scanne diesen Code mit deiner Banking-App
-                </p>
-            </div>
+<div class="qr-code-container" id="qrCodeContainer" style="display: none;">
+    <p style="margin-bottom: 5px; margin-top: 5px; font-weight: 600; font-size: 0.9em;">QR-Code für die Zahlung:</p>
+    <div class="qr-code" id="qrCode"></div>
+</div>
 
             <button class="btn btn-primary" onclick="closeModal()" style="margin-top: 20px;">
                 🏠 Zurück zur Startseite
