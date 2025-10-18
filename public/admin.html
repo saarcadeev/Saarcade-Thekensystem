@@ -2326,19 +2326,13 @@ function showTab(tabName) {
             }
             break;
             case 'clothing':
-                if (!loadedTabs.clothing) {
-                    loadClothingItems();
-                    loadedTabs.clothing = true;
-            }
-            break;
+                loadClothingItems();
+                break;
             case 'orders':
-                if (!loadedTabs.orders) {
-                    loadOrders();
-                    loadedTabs.orders = true;
-            }
-            break;
+                loadOrders();
+                break;
         }
-        }
+    }
 }
         
         // ============ SELECTION FUNCTIONS ============
