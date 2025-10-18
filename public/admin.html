@@ -818,6 +818,12 @@ body {
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="showTab('orders'); return false;">
+                        📦 Bestellungen
+                    </a>
+                </li>
+                
+                <li class="nav-item">
                     <a href="#" class="nav-link" onclick="showTab('stock'); return false;">
                         📊 Bestandsverwaltung
                     </a>
@@ -829,6 +835,7 @@ body {
                         💰 Transaktionen
                     </a>
                 </li>
+                
                 <li class="nav-item">
                     <a href="#" class="nav-link" onclick="showTab('billing'); return false;">
                         📋 Abrechnung
@@ -1469,6 +1476,65 @@ body {
     </div>
 </div>
 <!-- ENDE Clothing Tab -->
+
+<!-- Bestellungen Tab -->
+<div id="orders" class="page-content" style="display: none;">
+    <div class="page-header">
+        <div>
+            <h1>Kleidungsbestellungen</h1>
+            <div class="breadcrumb">Verwaltung / Bestellungen</div>
+        </div>
+        <button onclick="logoutAdmin()" style="background: #e53e3e; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+            🚪 Logout
+        </button>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">📋 Alle Bestellungen</div>
+        
+        <div class="toolbar">
+            <button class="btn btn-success" onclick="markSelectedOrdersAsPaid()" id="markPaidBtn" disabled>
+                ✅ Als bezahlt markieren
+            </button>
+            <button class="btn btn-warning" onclick="viewOrderDetails()" id="viewOrderDetailsBtn" disabled>
+                👁️ Details anzeigen
+            </button>
+            <button class="btn btn-danger" onclick="deleteSelectedOrders()" id="deleteOrderBtn" disabled>
+                🗑️ Löschen
+            </button>
+            <button class="btn btn-secondary" onclick="loadOrders()" id="loadOrdersBtn">
+                🔄 Neu laden
+            </button>
+            <div class="selection-info" id="orderSelectionInfo">0 ausgewählt</div>
+        </div>
+        
+        <div style="overflow-x: auto;">
+            <table class="data-table" id="ordersTable">
+                <thead>
+                    <tr>
+                        <th class="checkbox-cell">
+                            <input type="checkbox" id="selectAllOrders" onchange="toggleSelectAll('orders')">
+                        </th>
+                        <th>Bestell-Nr.</th>
+                        <th>Datum</th>
+                        <th>Mitglied</th>
+                        <th>Artikel</th>
+                        <th>Betrag</th>
+                        <th>Zahlungsart</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 30px; color: #666;">
+                            Klicke "Neu laden" um Bestellungen zu laden
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
         
 </main>
         <!-- Abrechnungs-Details Modal -->
@@ -1920,6 +1986,7 @@ body {
             users: false,
             products: false,
             clothing: false,
+            orders: false,
             stock: false,
             transactions: false,
             settings: false,
@@ -2260,7 +2327,13 @@ function showTab(tabName) {
                     loadedTabs.clothing = true;
             }
             break;
-                }
+            case 'orders':
+                if (!loadedTabs.orders) {
+                    loadOrders();
+                    loadedTabs.orders = true;
+            }
+            break;
+        }
         }
 }
         
@@ -2291,7 +2364,11 @@ function showTab(tabName) {
                     if (!selectedProducts.includes(id)) selectedProducts.push(id);
                 } else if (type === 'clothing' && !selectedClothing.includes(id)) {  // ← NEU
                     selectedClothing.push(id);
+                } else if (type === 'orders') {
+                    if (!selectedOrders.includes(id)) {
+                    selectedOrders.push(id);
                 }
+            }
             } else {
                 row.classList.remove('selected');
                 if (type === 'users') {
@@ -2300,6 +2377,8 @@ function showTab(tabName) {
                     selectedProducts = selectedProducts.filter(productId => productId !== id);
                 } else if (type === 'clothing') {  // ← NEU
                     selectedClothing = selectedClothing.filter(cid => cid !== id);
+                } else if (type === 'orders') {
+                    selectedOrders = selectedOrders.filter(oid => oid !== id);
                 }
             }
             
@@ -2327,6 +2406,7 @@ function updateSelectionInfo(type) {
         
         document.getElementById('editProductBtn').disabled = count !== 1;
         document.getElementById('deleteProductBtn').disabled = count === 0;
+   
     } else if (type === 'clothing') {
         count = selectedClothing.length;
         buttons = ['editClothingBtn', 'deleteClothingBtn'];
@@ -2334,6 +2414,14 @@ function updateSelectionInfo(type) {
         
         document.getElementById('editClothingBtn').disabled = count !== 1;
         document.getElementById('deleteClothingBtn').disabled = count === 0;
+    }
+    } else if (type === 'orders') {
+        count = selectedOrders.length;
+        document.getElementById('orderSelectionInfo').textContent = `${count} ausgewählt`;
+    
+        document.getElementById('markPaidBtn').disabled = count === 0;
+        document.getElementById('viewOrderDetailsBtn').disabled = count !== 1;
+        document.getElementById('deleteOrderBtn').disabled = count === 0;
     }
 }
         // ============ DATA LOADING FUNCTIONS ============
@@ -3309,6 +3397,236 @@ function removeClothingPhoto() {
     }
     
     document.getElementById('clothingPhotoInput').value = '';
+}
+
+// ============ ORDERS FUNCTIONS ============
+
+let orders = [];
+let selectedOrders = [];
+
+async function loadOrders() {
+    try {
+        const loadBtn = document.getElementById('loadOrdersBtn');
+        if (loadBtn) {
+            loadBtn.disabled = true;
+            loadBtn.textContent = '⏳ Lade...';
+        }
+        
+        orders = await apiCall('/api/clothing-orders');
+        renderOrders();
+        showAlert(`${orders.length} Bestellungen erfolgreich geladen`, 'success');
+        
+    } catch (error) {
+        console.error('Fehler beim Laden der Bestellungen:', error);
+        showAlert('Fehler beim Laden der Bestellungen', 'error');
+    } finally {
+        const loadBtn = document.getElementById('loadOrdersBtn');
+        if (loadBtn) {
+            loadBtn.disabled = false;
+            loadBtn.textContent = '🔄 Neu laden';
+        }
+    }
+}
+
+function renderOrders() {
+    const tbody = document.querySelector('#ordersTable tbody');
+    selectedOrders = [];
+    updateSelectionInfo('orders');
+    
+    if (orders.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px; color: #666;">Keine Bestellungen verfügbar</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = orders.map(order => {
+        const date = new Date(order.created_at);
+        const statusColors = {
+            'pending': '#f39c12',
+            'paid': '#27ae60',
+            'confirmed': '#3498db',
+            'shipped': '#9b59b6',
+            'completed': '#95a5a6',
+            'cancelled': '#e74c3c'
+        };
+        const statusTexts = {
+            'pending': '⏳ Ausstehend',
+            'paid': '✅ Bezahlt',
+            'confirmed': '📋 Bestätigt',
+            'shipped': '🚚 Versandt',
+            'completed': '✔️ Abgeschlossen',
+            'cancelled': '❌ Storniert'
+        };
+        const paymentIcons = {
+            'sepa': '💳 SEPA',
+            'transfer': '🏦 Überweisung',
+            'paypal': '💰 PayPal'
+        };
+        
+        const itemCount = order.items ? order.items.length : 0;
+        
+        return `
+            <tr>
+                <td class="checkbox-cell">
+                    <input type="checkbox" value="${order.id}" onchange="toggleRowSelection(this, 'orders')">
+                </td>
+                <td><code>#${order.id}</code></td>
+                <td style="font-size: 0.85em;">${date.toLocaleDateString('de-DE')} ${date.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'})}</td>
+                <td><strong>${order.member_name}</strong></td>
+                <td>${itemCount} Artikel</td>
+                <td><strong>${order.total.toFixed(2)} €</strong></td>
+                <td>${paymentIcons[order.payment_method] || order.payment_method}</td>
+                <td style="color: ${statusColors[order.status]}; font-weight: bold;">
+                    ${statusTexts[order.status] || order.status}
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+async function markSelectedOrdersAsPaid() {
+    if (selectedOrders.length === 0) {
+        showAlert('Bitte mindestens eine Bestellung auswählen', 'error');
+        return;
+    }
+    
+    const orderNumbers = selectedOrders.map(id => {
+        const order = orders.find(o => o.id === id);
+        return order ? `#${order.id}` : 'Unbekannt';
+    }).join(', ');
+    
+    if (!confirm(`Möchtest du diese ${selectedOrders.length} Bestellung(en) als bezahlt markieren?\n\n${orderNumbers}`)) {
+        return;
+    }
+    
+    try {
+        for (const orderId of selectedOrders) {
+            await apiCall(`/api/clothing-orders/${orderId}`, {
+                method: 'PUT',
+                body: JSON.stringify({
+                    status: 'paid',
+                    notes: 'Als bezahlt markiert'
+                })
+            });
+        }
+        
+        showAlert(`${selectedOrders.length} Bestellung(en) als bezahlt markiert`, 'success');
+        loadOrders();
+        loadPendingClothingOrders(); // Dashboard aktualisieren
+        
+    } catch (error) {
+        showAlert('Fehler beim Aktualisieren der Bestellungen', 'error');
+        console.error('Error:', error);
+    }
+}
+
+function viewOrderDetails() {
+    if (selectedOrders.length !== 1) {
+        showAlert('Bitte genau eine Bestellung auswählen', 'error');
+        return;
+    }
+    
+    const orderId = selectedOrders[0];
+    const order = orders.find(o => o.id === orderId);
+    
+    if (!order) {
+        showAlert('Bestellung nicht gefunden', 'error');
+        return;
+    }
+    
+    const date = new Date(order.created_at);
+    const paymentNames = {
+        'sepa': 'SEPA-Lastschrift',
+        'transfer': 'Banküberweisung',
+        'paypal': 'PayPal'
+    };
+    
+    let itemsHtml = order.items.map(item => `
+        <tr>
+            <td>${item.name}</td>
+            <td>${item.size || '-'}</td>
+            <td>${item.color || '-'}</td>
+            <td>${item.quantity}x</td>
+            <td style="text-align: right;">${item.price.toFixed(2)} €</td>
+            <td style="text-align: right;"><strong>${item.total.toFixed(2)} €</strong></td>
+        </tr>
+    `).join('');
+    
+    const modalHtml = `
+        <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000;" onclick="this.remove()">
+            <div style="background: white; padding: 30px; border-radius: 12px; max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto;" onclick="event.stopPropagation()">
+                <h2 style="margin-top: 0; color: #667eea;">📦 Bestelldetails #${order.id}</h2>
+                
+                <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div><strong>Mitglied:</strong> ${order.member_name}</div>
+                        <div><strong>Datum:</strong> ${date.toLocaleDateString('de-DE')} ${date.toLocaleTimeString('de-DE')}</div>
+                        <div><strong>Zahlungsart:</strong> ${paymentNames[order.payment_method] || order.payment_method}</div>
+                        <div><strong>Status:</strong> ${order.status}</div>
+                    </div>
+                    ${order.notes ? `<div style="margin-top: 10px;"><strong>Notizen:</strong> ${order.notes}</div>` : ''}
+                </div>
+                
+                <h3>Bestellte Artikel:</h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #667eea; color: white;">
+                            <th style="padding: 8px; text-align: left;">Artikel</th>
+                            <th style="padding: 8px; text-align: left;">Größe</th>
+                            <th style="padding: 8px; text-align: left;">Farbe</th>
+                            <th style="padding: 8px; text-align: left;">Menge</th>
+                            <th style="padding: 8px; text-align: right;">Einzelpreis</th>
+                            <th style="padding: 8px; text-align: right;">Gesamt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${itemsHtml}
+                        <tr style="border-top: 2px solid #667eea; font-weight: bold;">
+                            <td colspan="5" style="padding: 8px; text-align: right;">Gesamtbetrag:</td>
+                            <td style="padding: 8px; text-align: right; color: #667eea; font-size: 1.2em;">${order.total.toFixed(2)} €</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <button onclick="this.closest('[style*=fixed]').remove()" style="margin-top: 20px; background: #667eea; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; width: 100%;">
+                    Schließen
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+async function deleteSelectedOrders() {
+    if (selectedOrders.length === 0) {
+        showAlert('Bitte mindestens eine Bestellung auswählen', 'error');
+        return;
+    }
+    
+    const orderNumbers = selectedOrders.map(id => {
+        const order = orders.find(o => o.id === id);
+        return order ? `#${order.id} (${order.member_name})` : 'Unbekannt';
+    }).join(', ');
+    
+    if (!confirm(`Möchtest du diese ${selectedOrders.length} Bestellung(en) wirklich löschen?\n\n${orderNumbers}\n\nDiese Aktion kann nicht rückgängig gemacht werden.`)) {
+        return;
+    }
+    
+    try {
+        for (const orderId of selectedOrders) {
+            await apiCall(`/api/clothing-orders/${orderId}`, {
+                method: 'DELETE'
+            });
+        }
+        
+        showAlert(`${selectedOrders.length} Bestellung(en) erfolgreich gelöscht`, 'success');
+        loadOrders();
+        loadPendingClothingOrders();
+        
+    } catch (error) {
+        showAlert('Fehler beim Löschen der Bestellungen', 'error');
+        console.error('Error:', error);
+    }
 }
     
         // ============ TRANSACTIONS FUNCTIONS ============
