@@ -4817,13 +4817,13 @@ async function loadClothingBillingData() {
             refreshBtn.textContent = '⏳ Lade...';
         }
 
-        // Lade alle Bestellungen mit Status 'paid' und payment_method 'sepa'
-        const allOrders = await apiCall('/api/clothing-orders');
-        clothingBillingOrders = allOrders.filter(o => 
-            o.status === 'paid' && 
-            o.payment_method === 'sepa'
-        );
-
+// Lade alle Bestellungen mit Status 'pending' und payment_method 'sepa'
+const allOrders = await apiCall('/api/clothing-orders');
+clothingBillingOrders = allOrders.filter(o => 
+    o.status === 'pending' && 
+    o.payment_method === 'sepa'
+);
+        
         renderClothingBillingOrders();
         await loadClothingBillingHistory();
         
@@ -5024,17 +5024,17 @@ async function createClothingSepaFile() {
             body: JSON.stringify(billingData)
         });
 
-        // Bestellungen als 'completed' markieren
-        for (const item of ordersToProcess) {
-            await apiCall(`/api/clothing-orders/${item.order.id}`, {
-                method: 'PUT',
-                body: JSON.stringify({
-                    status: 'completed',
-                    notes: `Abgerechnet mit Billing #${billing.id}`
-                })
-            });
-        }
-
+// Bestellungen als 'paid' markieren
+for (const item of ordersToProcess) {
+    await apiCall(`/api/clothing-orders/${item.order.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+            status: 'paid',
+            notes: `Abgerechnet mit Billing #${billing.id}`
+        })
+    });
+}
+        
         // XML-Datei downloaden
         const blob = new Blob([sepaXml], { type: 'application/xml' });
         const url = window.URL.createObjectURL(blob);
