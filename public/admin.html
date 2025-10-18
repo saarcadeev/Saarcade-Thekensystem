@@ -1349,7 +1349,7 @@ body {
                 </form>
             </div>
         </div>
-
+        
         <!-- Abrechnung Tab (vorher SEPA) -->
         <div id="billing" class="page-content" style="display: none;">
             <div class="section">
@@ -1428,6 +1428,66 @@ body {
             </div>
         </div>
 
+<!-- CLOTHING TAB -->
+<div id="clothing" class="page-content" style="display: none;">
+    <div class="page-header">
+        <div>
+            <h1>Kleidungsverwaltung</h1>
+            <div class="breadcrumb">Verwaltung / Kleidung</div>
+        </div>
+        <button onclick="logoutAdmin()" style="background: #e53e3e; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+            🚪 Logout
+        </button>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">👕 Kleidungsartikel</div>
+        
+        <div class="toolbar">
+            <button class="btn btn-success" onclick="openClothingModal()" id="addClothingBtn">
+                ➕ Neuer Artikel
+            </button>
+            <button class="btn btn-warning" onclick="editSelectedClothing()" id="editClothingBtn" disabled>
+                ✏️ Bearbeiten
+            </button>
+            <button class="btn btn-danger" onclick="deleteSelectedClothing()" id="deleteClothingBtn" disabled>
+                🗑️ Löschen
+            </button>
+            <button class="btn btn-secondary" onclick="loadClothingItems()" id="loadClothingBtn">
+                🔄 Neu laden
+            </button>
+            <div class="selection-info" id="clothingSelectionInfo">0 ausgewählt</div>
+        </div>
+        
+        <div style="overflow-x: auto;">
+            <table class="data-table" id="clothingTable">
+                <thead>
+                    <tr>
+                        <th class="checkbox-cell">
+                            <input type="checkbox" id="selectAllClothing" onchange="toggleSelectAll('clothing')">
+                        </th>
+                        <th>Bild</th>
+                        <th>Name</th>
+                        <th>Preis</th>
+                        <th>Größen</th>
+                        <th>Farben</th>
+                        <th>Verfügbar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 30px; color: #666;">
+                            Klicke "Neu laden" um Kleidungsartikel zu laden
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<!-- ENDE Clothing Tab -->
+        
+</main>
         <!-- Abrechnungs-Details Modal -->
         <div id="billingDetailsModal" class="modal">
             <div class="modal-content" style="max-width: 900px;">
@@ -1773,63 +1833,15 @@ body {
             </div>
         </div>
     </div>
-    <!-- CLOTHING TAB -->
-<div id="clothing" class="page-content" style="display: none;">
-    <div class="page-header">
-        <div>
-            <h1>Kleidungsverwaltung</h1>
-            <div class="breadcrumb">Verwaltung / Kleidung</div>
-        </div>
-        <button onclick="logoutAdmin()" style="background: #e53e3e; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;">
-            🚪 Logout
-        </button>
-    </div>
     
-<div class="card">
-    <div class="card-header">👕 Kleidungsartikel</div>
-    
-    <div class="toolbar">
-        <button class="btn btn-success" onclick="openClothingModal()">
-            ➕ Neuer Artikel
-        </button>
-        <button class="btn btn-secondary" onclick="loadClothingItems()">
-            🔄 Aktualisieren
-        </button>
-    </div>
-    
-    <div style="overflow-x: auto;">
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th style="width: 80px;">Bild</th>
-                    <th>Name</th>
-                    <th style="width: 60px;">Emoji</th>
-                    <th style="width: 80px;">Preis</th>
-                    <th>Größen</th>
-                    <th>Farben</th>
-                    <th style="width: 100px;">Verfügbar</th>
-                    <th style="width: 150px;">Aktionen</th>
-                </tr>
-            </thead>
-            <tbody id="clothingTableBody">
-                <tr><td colspan="8" style="text-align: center; padding: 40px;">Lade Kleidungsartikel...</td></tr>
-            </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
-    <!-- ENDE clothing Tab -->
-</main>
-    
-    <script>
+<script>
 // ============ GLOBALE VARIABLEN ============
         let apiConnected = false;
         let users = [];
         let products = [];
         let selectedUsers = [];
         let selectedProducts = [];
+        let selectedClothing = [];
         let currentImageFile = null;
         let uploadedImageUrl = null;
         let transactions = [];
@@ -2212,6 +2224,8 @@ function showTab(tabName) {
                     if (!selectedUsers.includes(id)) selectedUsers.push(id);
                 } else if (type === 'products') {
                     if (!selectedProducts.includes(id)) selectedProducts.push(id);
+                } else if (type === 'clothing' && !selectedClothing.includes(id)) {  // ← NEU
+                    selectedClothing.push(id);
                 }
             } else {
                 row.classList.remove('selected');
@@ -2219,6 +2233,8 @@ function showTab(tabName) {
                     selectedUsers = selectedUsers.filter(userId => userId !== id);
                 } else if (type === 'products') {
                     selectedProducts = selectedProducts.filter(productId => productId !== id);
+                } else if (type === 'clothing') {  // ← NEU
+                    selectedClothing = selectedClothing.filter(cid => cid !== id);
                 }
             }
             
@@ -2918,6 +2934,120 @@ function openProductModal(productId = null) {
             }
         }
 
+// ============ CLOTHING FUNCTIONS ============
+
+let clothingItems = [];
+let selectedClothing = [];
+
+async function loadClothingItems() {
+    try {
+        const loadBtn = document.getElementById('loadClothingBtn');
+        if (loadBtn) {
+            loadBtn.disabled = true;
+            loadBtn.textContent = '⏳ Lade...';
+        }
+        
+        clothingItems = await apiCall('/api/clothing-items');
+        renderClothing();
+        showAlert(`${clothingItems.length} Kleidungsartikel erfolgreich geladen`, 'success');
+        
+    } catch (error) {
+        console.error('Fehler beim Laden der Kleidungsartikel:', error);
+        showAlert('Fehler beim Laden der Kleidungsartikel', 'error');
+    } finally {
+        const loadBtn = document.getElementById('loadClothingBtn');
+        if (loadBtn) {
+            loadBtn.disabled = false;
+            loadBtn.textContent = '🔄 Neu laden';
+        }
+    }
+}
+
+function renderClothing() {
+    const tbody = document.querySelector('#clothingTable tbody');
+    selectedClothing = [];
+    updateSelectionInfo('clothing');
+    
+    if (clothingItems.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px; color: #666;">Keine Kleidungsartikel verfügbar</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = clothingItems.map(item => {
+        const availableIcon = item.available ? '✅' : '❌';
+        const availableColor = item.available ? '#38a169' : '#e53e3e';
+        
+        // Größen als kommaseparierte Liste
+        const sizesDisplay = item.sizes && item.sizes.length > 0 
+            ? item.sizes.join(', ') 
+            : '-';
+        
+        // Farben als kommaseparierte Liste
+        const colorsDisplay = item.colors && item.colors.length > 0 
+            ? item.colors.join(', ') 
+            : '-';
+        
+        // Bild - gleiche Logik wie bei Produkten
+        const imageDisplay = item.image_url 
+            ? `<img src="${item.image_url}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+               <div style="width: 50px; height: 50px; background: #f0f0f0; border-radius: 4px; display: none; align-items: center; justify-content: center; font-size: 24px;">${item.emoji || '👕'}</div>` 
+            : `<div style="width: 50px; height: 50px; background: #f0f0f0; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 24px;">${item.emoji || '👕'}</div>`;
+        
+        return `
+            <tr>
+                <td class="checkbox-cell">
+                    <input type="checkbox" value="${item.id}" onchange="toggleRowSelection(this, 'clothing')">
+                </td>
+                <td>${imageDisplay}</td>
+                <td><strong>${item.name}</strong></td>
+                <td><strong>${item.price.toFixed(2)}€</strong></td>
+                <td style="font-size: 0.85em;">${sizesDisplay}</td>
+                <td style="font-size: 0.85em;">${colorsDisplay}</td>
+                <td style="color: ${availableColor}; font-weight: bold;">${availableIcon}</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function openClothingModal(clothingId = null) {
+    // TODO: Modal für Kleidung erstellen (ähnlich wie bei Produkten)
+    showAlert('Kleidungs-Modal wird noch entwickelt - erstelle Artikel zunächst direkt in der Datenbank', 'info');
+}
+
+function editSelectedClothing() {
+    if (selectedClothing.length !== 1) {
+        showAlert('Bitte genau einen Artikel zum Bearbeiten auswählen', 'error');
+        return;
+    }
+    
+    const clothingId = selectedClothing[0];
+    openClothingModal(clothingId);
+}
+
+async function deleteSelectedClothing() {
+    if (selectedClothing.length === 0) {
+        showAlert('Bitte mindestens einen Artikel zum Löschen auswählen', 'error');
+        return;
+    }
+    
+    const clothingNames = selectedClothing.map(id => {
+        const item = clothingItems.find(c => c.id === id);
+        return item ? item.name : 'Unbekannt';
+    }).join(', ');
+    
+    if (confirm(`Möchtest du diese ${selectedClothing.length} Kleidungsartikel wirklich löschen?\n\n${clothingNames}\n\nDiese Aktion kann nicht rückgängig gemacht werden.`)) {
+        try {
+            for (const clothingId of selectedClothing) {
+                await apiCall(`/api/clothing-items/${clothingId}`, { method: 'DELETE' });
+            }
+            showAlert(`${selectedClothing.length} Kleidungsartikel erfolgreich gelöscht`, 'success');
+            loadClothingItems();
+        } catch (error) {
+            showAlert('Fehler beim Löschen der Kleidungsartikel', 'error');
+        }
+    }
+}
+    
         // ============ TRANSACTIONS FUNCTIONS ============
 
         async function loadTransactions() {
