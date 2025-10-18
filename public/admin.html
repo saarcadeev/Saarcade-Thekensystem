@@ -2344,9 +2344,15 @@ function updateSelectionInfo(type) {
         
         document.getElementById('editProductBtn').disabled = count !== 1;
         document.getElementById('deleteProductBtn').disabled = count === 0;
+    } else if (type === 'clothing') {
+        count = selectedClothing.length;
+        buttons = ['editClothingBtn', 'deleteClothingBtn'];
+        document.getElementById('clothingSelectionInfo').textContent = `${count} ausgewählt`;
+        
+        document.getElementById('editClothingBtn').disabled = count !== 1;
+        document.getElementById('deleteClothingBtn').disabled = count === 0;
     }
 }
-
         // ============ DATA LOADING FUNCTIONS ============
         
 async function loadDashboard() {
