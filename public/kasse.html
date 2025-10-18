@@ -2793,18 +2793,22 @@ async function showMemberTransactions() {
     }
     
     try {
-        // Hole alle nicht abgerechneten Transaktionen für diesen User
-        const { data: transactions, error } = await supabase
-            .from('transactions')
-            .select('*')
-            .eq('user_id', currentUser.id)
-            .is('billing_id', null)
-            .order('created_at', { ascending: false });
+        showStatus('Lade Transaktionen...', 'loading');
         
-        if (error) throw error;
+        // Hole alle Transaktionen über die API
+        const allTransactions = await apiCall('/api/transactions');
+        
+        // Filtere die Transaktionen für den aktuellen User (nur nicht abgerechnet)
+        const userTransactions = allTransactions.filter(t => 
+            t.user_id === currentUser.id && !t.billing_id
+        );
+        
+        // Nach Datum sortieren (neueste zuerst)
+        userTransactions.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         
         // Zeige Modal mit Transaktionen
-        showMemberTransactionsModal(transactions);
+        showMemberTransactionsModal(userTransactions);
+        showStatus('', '');
         
     } catch (error) {
         console.error('Fehler beim Laden der Transaktionen:', error);
@@ -2855,7 +2859,7 @@ function showMemberTransactionsModal(transactions) {
                     <td style="padding: 10px; text-align: center;">${t.quantity}x</td>
                     <td style="padding: 10px; text-align: right; font-weight: bold;">${t.total.toFixed(2)}€</td>
                     <td style="padding: 10px; text-align: center;">
-                        <button onclick="deleteMemberTransaction(${t.id}, '${t.product_name}', ${t.total}, ${t.quantity}, ${t.product_id})" 
+                        <button onclick="deleteMemberTransaction(${t.id}, '${t.product_name.replace(/'/g, "\\'")}', ${t.total}, ${t.quantity}, ${t.product_id})" 
                                 style="background: #e53e3e; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
                             🗑️ Löschen
                         </button>
@@ -2898,66 +2902,56 @@ async function deleteMemberTransaction(transactionId, productName, amount, quant
     }
     
     try {
-        // 1. Transaktion löschen
-        const { error: deleteError } = await supabase
-            .from('transactions')
-            .delete()
-            .eq('id', transactionId);
+        showStatus('Lösche Transaktion...', 'loading');
         
-        if (deleteError) throw deleteError;
+        // 1. Transaktion über API löschen
+        await apiCall(`/api/transactions/${transactionId}`, {
+            method: 'DELETE'
+        });
         
-        // 2. Saldo des Users korrigieren (Betrag wieder gutschreiben)
-        const newBalance = currentUser.balance + amount;
+        // 2. User-Daten neu laden, um aktuellen Saldo zu bekommen
+        const updatedUser = await apiCall(`/api/users/id/${currentUser.id}`);
         
-        const { error: updateError } = await supabase
-            .from('users')
-            .update({ balance: newBalance })
-            .eq('id', currentUser.id);
+        // 3. Saldo korrigieren (Betrag wieder gutschreiben)
+        const newBalance = updatedUser.balance + amount;
         
-        if (updateError) throw updateError;
+        await apiCall(`/api/users/${currentUser.id}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                ...updatedUser,
+                balance: newBalance
+            })
+        });
         
-        // 3. Produktbestand wieder erhöhen (wenn es ein echtes Produkt ist)
+        // 4. Produktbestand wieder erhöhen (wenn es ein echtes Produkt ist)
         if (productId && productId > 0) {
-            const { data: product } = await supabase
-                .from('products')
-                .select('stock, name')
-                .eq('id', productId)
-                .single();
-            
-            if (product) {
-                await supabase
-                    .from('products')
-                    .update({ stock: product.stock + quantity })
-                    .eq('id', productId);
-                    
-                // Bestandsbewegung aufzeichnen
-                await supabase
-                    .from('stock_movements')
-                    .insert({
-                        product_id: productId,
-                        product_name: product.name,
-                        movement_type: 'correction',
-                        quantity: quantity,
-                        stock_before: product.stock,
-                        stock_after: product.stock + quantity,
-                        reason: `Transaktion storniert für ${currentUser.first_name} ${currentUser.last_name}`,
-                        created_by: 'kasse'
-                    });
+            try {
+                const product = await apiCall(`/api/products/${productId}`);
+                
+                await apiCall(`/api/products/${productId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        ...product,
+                        stock: product.stock + quantity
+                    })
+                });
+            } catch (productError) {
+                console.warn('Produktbestand konnte nicht aktualisiert werden:', productError);
             }
         }
         
-        // 4. Lokale Daten aktualisieren
+        // 5. Lokale Daten aktualisieren
         currentUser.balance = newBalance;
         const userIndex = users.findIndex(u => u.id === currentUser.id);
         if (userIndex !== -1) {
             users[userIndex].balance = newBalance;
         }
         
-        // 5. UI aktualisieren
+        // 6. UI aktualisieren
         updateUserInfo();
         showStatus('✅ Transaktion gelöscht und Saldo angepasst', 'success');
         
-        // 6. Modal schließen und neu laden
+        // 7. Modal schließen und neu laden
         document.querySelector('div[style*="position: fixed"]').remove();
         
         // Nach kurzer Zeit Modal mit aktualisierten Daten neu öffnen
@@ -2969,7 +2963,7 @@ async function deleteMemberTransaction(transactionId, productName, amount, quant
         console.error('Fehler beim Löschen:', error);
         showStatus('❌ Fehler beim Löschen der Transaktion', 'error');
     }
-}
+} 
         
     </script>
 
