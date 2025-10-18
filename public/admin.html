@@ -4999,7 +4999,7 @@ async function createClothingSepaFile() {
 // Lade Settings für Kontodaten
 const settings = await apiCall('/api/settings');
 
-if (!settings.sepa_creditor_name || !settings.sepa_creditor_iban) {
+if (!settings.creditor_name || !settings.creditor_iban) {
     showAlert('⚠️ SEPA-Gläubiger-Daten nicht vollständig in den Einstellungen hinterlegt!', 'error');
     btn.disabled = false;
     btn.textContent = '📥 SEPA-Datei erstellen';
@@ -5069,10 +5069,9 @@ function generateClothingSepaXml(ordersToProcess, settings) {
     const execDateStr = executionDate.toISOString().split('T')[0];
     
     const totalAmount = ordersToProcess.reduce((sum, o) => sum + o.order.total, 0);
-    const creditorIban = settings.sepa_creditor_iban.replace(/\s/g, '');
-    const creditorName = settings.sepa_creditor_name;
-    const creditorId = settings.sepa_creditor_id || 'DE98ZZZ09999999999';
-    let transactions = '';
+    const creditorIban = settings.creditor_iban.replace(/\s/g, '');
+    const creditorName = settings.creditor_name;
+    const creditorId = settings.creditor_id || 'DE98ZZZ09999999999';    let transactions = '';
     
     ordersToProcess.forEach((item, index) => {
         const debtorIban = item.user.iban.replace(/\s/g, '');
