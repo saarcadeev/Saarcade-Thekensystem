@@ -2952,7 +2952,10 @@ async function deleteMemberTransaction(transactionId, productName, amount, quant
         showStatus('✅ Transaktion gelöscht und Saldo angepasst', 'success');
         
         // 7. Modal schließen und neu laden
-        document.querySelector('div[style*="position: fixed"]').remove();
+        const modal = document.querySelector('div[style*="position: fixed"]');
+if (modal) {
+    modal.remove();
+}
         
         // Nach kurzer Zeit Modal mit aktualisierten Daten neu öffnen
         setTimeout(() => {
