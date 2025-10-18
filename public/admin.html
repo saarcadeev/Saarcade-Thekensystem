@@ -930,7 +930,7 @@ body {
             </div>
 
             <!-- Offene Kleidungsbestellungen -->
-            <div class="card">
+            <div class="card" onclick="showTab('orders')" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                 <div class="card-header">👕 Offene Kleidungsbestellungen</div>
                 <div id="pendingClothingOrdersList" style="padding: 10px;">
                 <div style="text-align: center; padding: 20px; color: #666;">Lade Daten...</div>
@@ -5389,8 +5389,8 @@ async function loadPendingClothingOrders() {
     try {
         const allOrders = await apiCall('/api/clothing-orders');
         
-        // Nur offene Bestellungen (pending)
-        const pendingOrders = allOrders.filter(o => o.status === 'pending');
+        // Nur offene Bestellungen (pending und paid, aber nicht shipped/completed)
+        const pendingOrders = allOrders.filter(o => o.status === 'pending' || o.status === 'paid');
         
         const container = document.getElementById('pendingClothingOrdersList');
         
@@ -5424,8 +5424,8 @@ async function loadPendingClothingOrders() {
                             <div style="font-weight: bold; color: #667eea; font-size: 1.1em;">
                                 ${order.total.toFixed(2)} €
                             </div>
-                            <div style="font-size: 0.75em; color: #f39c12; margin-top: 4px;">
-                                ⏳ Ausstehend
+                            <div style="font-size: 0.75em; color: ${order.status === 'paid' ? '#27ae60' : '#f39c12'}; margin-top: 4px;">
+                                ${order.status === 'paid' ? '✅ Bezahlt' : '⏳ Ausstehend'}
                             </div>
                         </div>
                     </div>
