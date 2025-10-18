@@ -838,7 +838,13 @@ body {
                 
                 <li class="nav-item">
                     <a href="#" class="nav-link" onclick="showTab('billing'); return false;">
-                        📋 Abrechnung
+                        📋 Abrechnung Getränke
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="showTab('clothing-billing'); return false;">
+                        👕 Abrechnung Kleidung
                     </a>
                 </li>
                 
@@ -1418,6 +1424,108 @@ body {
             </div>
         </div>
 
+<!-- Kleidungsabrechnung Tab -->
+<div id="clothing-billing" class="page-content" style="display: none;">
+    <div class="page-header">
+        <div>
+            <h1>Kleidungsabrechnung</h1>
+            <div class="breadcrumb">Finanzen / Kleidungsabrechnung</div>
+        </div>
+        <button onclick="logoutAdmin()" style="background: #e53e3e; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+            🚪 Logout
+        </button>
+    </div>
+
+    <!-- Offene SEPA-Bestellungen -->
+    <div class="card">
+        <div class="card-header">💳 Offene SEPA-Bestellungen</div>
+        
+        <div class="toolbar">
+            <button class="btn btn-success" onclick="createClothingSepaFile()" id="createClothingSepaBtn">
+                📥 SEPA-Datei erstellen
+            </button>
+            <button class="btn btn-secondary" onclick="loadClothingBillingData()" id="refreshClothingBillingBtn">
+                🔄 Neu laden
+            </button>
+        </div>
+
+        <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                <div>
+                    <div style="color: #666; font-size: 0.9em;">Offene SEPA-Bestellungen</div>
+                    <div style="font-size: 1.8em; font-weight: bold; color: #667eea;">
+                        <span id="clothingOpenOrdersCount">0</span>
+                    </div>
+                </div>
+                <div>
+                    <div style="color: #666; font-size: 0.9em;">Betroffene Mitglieder</div>
+                    <div style="font-size: 1.8em; font-weight: bold; color: #9b59b6;">
+                        <span id="clothingOpenMembersCount">0</span>
+                    </div>
+                </div>
+                <div>
+                    <div style="color: #666; font-size: 0.9em;">Gesamtbetrag</div>
+                    <div style="font-size: 1.8em; font-weight: bold; color: #e74c3c;">
+                        <span id="clothingTotalAmount">0.00</span> €
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table class="data-table" id="clothingBillingTable">
+                <thead>
+                    <tr>
+                        <th class="checkbox-cell">
+                            <input type="checkbox" id="selectAllClothingBilling" onchange="toggleSelectAllClothingBilling()">
+                        </th>
+                        <th>Bestell-Nr.</th>
+                        <th>Datum</th>
+                        <th>Mitglied</th>
+                        <th>Artikel</th>
+                        <th>Betrag</th>
+                        <th>IBAN</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 30px; color: #666;">
+                            Lade SEPA-Bestellungen...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Abrechnungshistorie -->
+    <div class="card">
+        <div class="card-header">📊 Abrechnungshistorie</div>
+        
+        <div style="overflow-x: auto;">
+            <table class="data-table" id="clothingBillingHistoryTable">
+                <thead>
+                    <tr>
+                        <th>Abrechnungs-Nr.</th>
+                        <th>Datum</th>
+                        <th>Bestellungen</th>
+                        <th>Mitglieder</th>
+                        <th>Gesamtbetrag</th>
+                        <th>Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 30px; color: #666;">
+                            Lade Historie...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+        
 <!-- CLOTHING TAB -->
 <div id="clothing" class="page-content" style="display: none;">
     <div class="page-header">
@@ -1994,7 +2102,8 @@ body {
             stock: false,
             transactions: false,
             settings: false,
-            billing: false
+            billing: false,
+            clothingBilling: false
         };
         
         // ============ API FUNCTIONS ============
@@ -2330,6 +2439,9 @@ function showTab(tabName) {
                 break;
             case 'orders':
                 loadOrders();
+                break;
+            case 'clothing-billing':
+                loadClothingBillingData();
                 break;
         }
     }
@@ -4691,6 +4803,504 @@ function showBillingDetails(billing, sepaUsers, nonSepaUsers) {
     modal.style.display = 'block';
 }
 
+// ============ CLOTHING BILLING FUNCTIONS ============
+
+let clothingBillingOrders = [];
+let selectedClothingBillingOrders = [];
+let clothingBillings = [];
+
+async function loadClothingBillingData() {
+    try {
+        const refreshBtn = document.getElementById('refreshClothingBillingBtn');
+        if (refreshBtn) {
+            refreshBtn.disabled = true;
+            refreshBtn.textContent = '⏳ Lade...';
+        }
+
+        // Lade alle Bestellungen mit Status 'paid' und payment_method 'sepa'
+        const allOrders = await apiCall('/api/clothing-orders');
+        clothingBillingOrders = allOrders.filter(o => 
+            o.status === 'paid' && 
+            o.payment_method === 'sepa'
+        );
+
+        renderClothingBillingOrders();
+        await loadClothingBillingHistory();
+        
+        showAlert(`${clothingBillingOrders.length} SEPA-Bestellungen gefunden`, 'success');
+
+    } catch (error) {
+        console.error('Fehler beim Laden der Kleidungsabrechnung:', error);
+        showAlert('Fehler beim Laden der Daten', 'error');
+    } finally {
+        const refreshBtn = document.getElementById('refreshClothingBillingBtn');
+        if (refreshBtn) {
+            refreshBtn.disabled = false;
+            refreshBtn.textContent = '🔄 Neu laden';
+        }
+    }
+}
+
+function renderClothingBillingOrders() {
+    const tbody = document.querySelector('#clothingBillingTable tbody');
+    selectedClothingBillingOrders = [];
+    
+    if (clothingBillingOrders.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px; color: #27ae60;">✅ Keine offenen SEPA-Bestellungen</td></tr>';
+        
+        document.getElementById('clothingOpenOrdersCount').textContent = '0';
+        document.getElementById('clothingOpenMembersCount').textContent = '0';
+        document.getElementById('clothingTotalAmount').textContent = '0.00';
+        document.getElementById('selectAllClothingBilling').checked = false;
+        
+        return;
+    }
+
+    // Statistiken berechnen
+    const totalAmount = clothingBillingOrders.reduce((sum, o) => sum + o.total, 0);
+    const uniqueMembers = [...new Set(clothingBillingOrders.map(o => o.member_id))].length;
+
+    document.getElementById('clothingOpenOrdersCount').textContent = clothingBillingOrders.length;
+    document.getElementById('clothingOpenMembersCount').textContent = uniqueMembers;
+    document.getElementById('clothingTotalAmount').textContent = totalAmount.toFixed(2);
+    document.getElementById('selectAllClothingBilling').checked = false;
+
+    // Hole User-Daten für IBANs
+    tbody.innerHTML = clothingBillingOrders.map(order => {
+        const date = new Date(order.created_at);
+        const itemsList = order.items ? order.items.map(item => {
+            const details = [];
+            if (item.size) details.push(`Gr. ${item.size}`);
+            if (item.color) details.push(item.color);
+            const detailsText = details.length > 0 ? ` (${details.join(', ')})` : '';
+            return `${item.quantity}x ${item.name}${detailsText}`;
+        }).join('<br>') : '-';
+
+        return `
+            <tr>
+                <td class="checkbox-cell">
+                    <input type="checkbox" value="${order.id}" onchange="toggleClothingBillingOrder(this)">
+                </td>
+                <td><code>#${order.id}</code></td>
+                <td style="font-size: 0.85em;">${date.toLocaleDateString('de-DE')}</td>
+                <td><strong>${order.member_name}</strong></td>
+                <td style="font-size: 0.85em; line-height: 1.6;">${itemsList}</td>
+                <td><strong>${order.total.toFixed(2)} €</strong></td>
+                <td style="font-size: 0.75em;">
+                    <span id="iban-${order.id}">Lade...</span>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    // IBANs laden
+    loadIBANsForOrders();
+}
+
+async function loadIBANsForOrders() {
+    try {
+        const allUsers = await apiCall('/api/users');
+        
+        clothingBillingOrders.forEach(order => {
+            const user = allUsers.find(u => u.id === order.member_id);
+            const ibanElement = document.getElementById(`iban-${order.id}`);
+            
+            if (ibanElement) {
+                if (user && user.iban) {
+                    ibanElement.innerHTML = `<code style="font-size: 0.75em;">${formatIBAN(user.iban)}</code>`;
+                } else {
+                    ibanElement.innerHTML = '<span style="color: #e74c3c;">⚠️ Keine IBAN</span>';
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Fehler beim Laden der IBANs:', error);
+    }
+}
+
+function toggleSelectAllClothingBilling() {
+    const checkbox = document.getElementById('selectAllClothingBilling');
+    const checkboxes = document.querySelectorAll('#clothingBillingTable tbody input[type="checkbox"]');
+    
+    checkboxes.forEach(cb => {
+        cb.checked = checkbox.checked;
+        const orderId = parseInt(cb.value);
+        if (checkbox.checked) {
+            if (!selectedClothingBillingOrders.includes(orderId)) {
+                selectedClothingBillingOrders.push(orderId);
+            }
+        } else {
+            selectedClothingBillingOrders = [];
+        }
+    });
+}
+
+function toggleClothingBillingOrder(checkbox) {
+    const orderId = parseInt(checkbox.value);
+    
+    if (checkbox.checked) {
+        if (!selectedClothingBillingOrders.includes(orderId)) {
+            selectedClothingBillingOrders.push(orderId);
+        }
+    } else {
+        selectedClothingBillingOrders = selectedClothingBillingOrders.filter(id => id !== orderId);
+    }
+}
+
+async function createClothingSepaFile() {
+    if (selectedClothingBillingOrders.length === 0) {
+        showAlert('Bitte mindestens eine Bestellung auswählen', 'error');
+        return;
+    }
+
+    try {
+        const btn = document.getElementById('createClothingSepaBtn');
+        btn.disabled = true;
+        btn.textContent = '⏳ Erstelle SEPA-Datei...';
+
+        // Hole User-Daten
+        const allUsers = await apiCall('/api/users');
+        
+        // Sammle Bestellungen und validiere IBANs
+        const ordersToProcess = [];
+        const missingIbans = [];
+
+        for (const orderId of selectedClothingBillingOrders) {
+            const order = clothingBillingOrders.find(o => o.id === orderId);
+            if (!order) continue;
+
+            const user = allUsers.find(u => u.id === order.member_id);
+            
+            if (!user || !user.iban) {
+                missingIbans.push(order.member_name);
+                continue;
+            }
+
+            ordersToProcess.push({
+                order: order,
+                user: user
+            });
+        }
+
+        if (missingIbans.length > 0) {
+            showAlert(`⚠️ Folgende Mitglieder haben keine IBAN hinterlegt:\n${missingIbans.join(', ')}`, 'error');
+            btn.disabled = false;
+            btn.textContent = '📥 SEPA-Datei erstellen';
+            return;
+        }
+
+        if (ordersToProcess.length === 0) {
+            showAlert('Keine gültigen Bestellungen zum Abrechnen', 'error');
+            btn.disabled = false;
+            btn.textContent = '📥 SEPA-Datei erstellen';
+            return;
+        }
+
+        // Lade Settings für Kontodaten
+        const settings = await apiCall('/api/settings');
+
+        if (!settings.transfer_name || !settings.transfer_iban) {
+            showAlert('⚠️ Bankdaten nicht vollständig in den Einstellungen hinterlegt!', 'error');
+            btn.disabled = false;
+            btn.textContent = '📥 SEPA-Datei erstellen';
+            return;
+        }
+
+        // SEPA-XML generieren
+        const sepaXml = generateClothingSepaXml(ordersToProcess, settings);
+
+        // Billing-Eintrag erstellen
+        const billingData = {
+            billing_type: 'clothing',
+            billing_date: new Date().toISOString(),
+            order_ids: ordersToProcess.map(o => o.order.id),
+            member_ids: [...new Set(ordersToProcess.map(o => o.user.id))],
+            total_amount: ordersToProcess.reduce((sum, o) => sum + o.order.total, 0),
+            order_count: ordersToProcess.length
+        };
+
+        const billing = await apiCall('/api/clothing-billings', {
+            method: 'POST',
+            body: JSON.stringify(billingData)
+        });
+
+        // Bestellungen als 'completed' markieren
+        for (const item of ordersToProcess) {
+            await apiCall(`/api/clothing-orders/${item.order.id}`, {
+                method: 'PUT',
+                body: JSON.stringify({
+                    status: 'completed',
+                    notes: `Abgerechnet mit Billing #${billing.id}`
+                })
+            });
+        }
+
+        // XML-Datei downloaden
+        const blob = new Blob([sepaXml], { type: 'application/xml' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `SEPA_Kleidung_${billing.billing_number}.xml`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        showAlert(`✅ SEPA-Datei erstellt: ${ordersToProcess.length} Bestellungen abgerechnet`, 'success');
+
+        // Daten neu laden
+        await loadClothingBillingData();
+        await loadPendingClothingOrders(); // Dashboard aktualisieren
+
+    } catch (error) {
+        console.error('Fehler bei SEPA-Erstellung:', error);
+        showAlert('Fehler beim Erstellen der SEPA-Datei: ' + error.message, 'error');
+    } finally {
+        const btn = document.getElementById('createClothingSepaBtn');
+        btn.disabled = false;
+        btn.textContent = '📥 SEPA-Datei erstellen';
+    }
+}
+
+function generateClothingSepaXml(ordersToProcess, settings) {
+    const now = new Date();
+    const msgId = `CLOTH-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}${String(now.getSeconds()).padStart(2,'0')}`;
+    const executionDate = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000);
+    const execDateStr = executionDate.toISOString().split('T')[0];
+    
+    const totalAmount = ordersToProcess.reduce((sum, o) => sum + o.order.total, 0);
+    const creditorIban = settings.transfer_iban.replace(/\s/g, '');
+    const creditorName = settings.transfer_name;
+    const creditorId = settings.sepa_creditor_id || 'DE98ZZZ09999999999';
+
+    let transactions = '';
+    
+    ordersToProcess.forEach((item, index) => {
+        const debtorIban = item.user.iban.replace(/\s/g, '');
+        const debtorName = `${item.user.first_name} ${item.user.last_name}`;
+        const amount = item.order.total.toFixed(2);
+        const endToEndId = `CLOTH-${item.order.id}`;
+        const mandateId = `MAND-${item.user.id}`;
+        
+        // Verwendungszweck: Bestellte Artikel
+        const itemsDescription = item.order.items.map(i => {
+            const details = [];
+            if (i.size) details.push(`Gr.${i.size}`);
+            if (i.color) details.push(i.color);
+            const detailStr = details.length > 0 ? ` (${details.join(', ')})` : '';
+            return `${i.quantity}x ${i.name}${detailStr}`;
+        }).join(', ');
+        
+        const purpose = `Kleidungsbestellung #${item.order.id}: ${itemsDescription}`.substring(0, 140);
+
+        transactions += `
+        <DrctDbtTxInf>
+            <PmtId>
+                <EndToEndId>${endToEndId}</EndToEndId>
+            </PmtId>
+            <InstdAmt Ccy="EUR">${amount}</InstdAmt>
+            <DrctDbtTx>
+                <MndtRltdInf>
+                    <MndtId>${mandateId}</MndtId>
+                    <DtOfSgntr>2024-01-01</DtOfSgntr>
+                </MndtRltdInf>
+            </DrctDbtTx>
+            <DbtrAgt>
+                <FinInstnId>
+                    <BIC>NOTPROVIDED</BIC>
+                </FinInstnId>
+            </DbtrAgt>
+            <Dbtr>
+                <Nm>${escapeXml(debtorName)}</Nm>
+            </Dbtr>
+            <DbtrAcct>
+                <Id>
+                    <IBAN>${debtorIban}</IBAN>
+                </Id>
+            </DbtrAcct>
+            <RmtInf>
+                <Ustrd>${escapeXml(purpose)}</Ustrd>
+            </RmtInf>
+        </DrctDbtTxInf>`;
+    });
+
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.008.001.02" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <CstmrDrctDbtInitn>
+        <GrpHdr>
+            <MsgId>${msgId}</MsgId>
+            <CreDtTm>${now.toISOString()}</CreDtTm>
+            <NbOfTxs>${ordersToProcess.length}</NbOfTxs>
+            <CtrlSum>${totalAmount.toFixed(2)}</CtrlSum>
+            <InitgPty>
+                <Nm>${escapeXml(creditorName)}</Nm>
+            </InitgPty>
+        </GrpHdr>
+        <PmtInf>
+            <PmtInfId>${msgId}-1</PmtInfId>
+            <PmtMtd>DD</PmtMtd>
+            <NbOfTxs>${ordersToProcess.length}</NbOfTxs>
+            <CtrlSum>${totalAmount.toFixed(2)}</CtrlSum>
+            <PmtTpInf>
+                <SvcLvl>
+                    <Cd>SEPA</Cd>
+                </SvcLvl>
+                <LclInstrm>
+                    <Cd>CORE</Cd>
+                </LclInstrm>
+                <SeqTp>RCUR</SeqTp>
+            </PmtTpInf>
+            <ReqdColltnDt>${execDateStr}</ReqdColltnDt>
+            <Cdtr>
+                <Nm>${escapeXml(creditorName)}</Nm>
+            </Cdtr>
+            <CdtrAcct>
+                <Id>
+                    <IBAN>${creditorIban}</IBAN>
+                </Id>
+            </CdtrAcct>
+            <CdtrAgt>
+                <FinInstnId>
+                    <BIC>NOTPROVIDED</BIC>
+                </FinInstnId>
+            </CdtrAgt>
+            <CdtrSchmeId>
+                <Id>
+                    <PrvtId>
+                        <Othr>
+                            <Id>${creditorId}</Id>
+                            <SchmeNm>
+                                <Prtry>SEPA</Prtry>
+                            </SchmeNm>
+                        </Othr>
+                    </PrvtId>
+                </Id>
+            </CdtrSchmeId>
+            ${transactions}
+        </PmtInf>
+    </CstmrDrctDbtInitn>
+</Document>`;
+}
+
+async function loadClothingBillingHistory() {
+    try {
+        clothingBillings = await apiCall('/api/clothing-billings');
+        renderClothingBillingHistory();
+    } catch (error) {
+        console.error('Fehler beim Laden der Abrechnungshistorie:', error);
+    }
+}
+
+function renderClothingBillingHistory() {
+    const tbody = document.querySelector('#clothingBillingHistoryTable tbody');
+    
+    if (clothingBillings.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px; color: #666;">Noch keine Abrechnungen erstellt</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = clothingBillings.map(billing => {
+        const date = new Date(billing.billing_date);
+        const memberCount = billing.member_ids ? billing.member_ids.length : 0;
+        
+        return `
+            <tr>
+                <td><strong>${billing.billing_number}</strong></td>
+                <td>${date.toLocaleDateString('de-DE')} ${date.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'})}</td>
+                <td>${billing.order_count} Bestellungen</td>
+                <td>${memberCount} Mitglieder</td>
+                <td><strong>${billing.total_amount.toFixed(2)} €</strong></td>
+                <td>
+                    <button class="btn btn-secondary" onclick="viewClothingBillingDetails(${billing.id})" style="font-size: 0.85em; padding: 5px 10px;">
+                        👁️ Details
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+async function viewClothingBillingDetails(billingId) {
+    try {
+        const billing = clothingBillings.find(b => b.id === billingId);
+        if (!billing) {
+            showAlert('Abrechnung nicht gefunden', 'error');
+            return;
+        }
+
+        // Lade die Bestellungen dieser Abrechnung
+        const allOrders = await apiCall('/api/clothing-orders');
+        const billingOrders = allOrders.filter(o => billing.order_ids.includes(o.id));
+
+        const date = new Date(billing.billing_date);
+
+        let ordersHtml = billingOrders.map(order => {
+            const itemsList = order.items.map(item => {
+                const details = [];
+                if (item.size) details.push(`Gr. ${item.size}`);
+                if (item.color) details.push(item.color);
+                const detailStr = details.length > 0 ? ` (${details.join(', ')})` : '';
+                return `${item.quantity}x ${item.name}${detailStr}`;
+            }).join(', ');
+
+            return `
+                <tr>
+                    <td>#${order.id}</td>
+                    <td>${order.member_name}</td>
+                    <td style="font-size: 0.85em;">${itemsList}</td>
+                    <td style="text-align: right;"><strong>${order.total.toFixed(2)} €</strong></td>
+                </tr>
+            `;
+        }).join('');
+
+        const modalHtml = `
+            <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000;" onclick="this.remove()">
+                <div style="background: white; padding: 30px; border-radius: 12px; max-width: 900px; width: 90%; max-height: 80vh; overflow-y: auto;" onclick="event.stopPropagation()">
+                    <h2 style="margin-top: 0; color: #667eea;">📊 Abrechnungsdetails ${billing.billing_number}</h2>
+                    
+                    <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                            <div><strong>Datum:</strong> ${date.toLocaleDateString('de-DE')} ${date.toLocaleTimeString('de-DE')}</div>
+                            <div><strong>Bestellungen:</strong> ${billing.order_count}</div>
+                            <div><strong>Mitglieder:</strong> ${billing.member_ids.length}</div>
+                            <div><strong>Gesamtbetrag:</strong> ${billing.total_amount.toFixed(2)} €</div>
+                        </div>
+                    </div>
+                    
+                    <h3>Abgerechnete Bestellungen:</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #667eea; color: white;">
+                                <th style="padding: 8px; text-align: left;">Bestell-Nr.</th>
+                                <th style="padding: 8px; text-align: left;">Mitglied</th>
+                                <th style="padding: 8px; text-align: left;">Artikel</th>
+                                <th style="padding: 8px; text-align: right;">Betrag</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${ordersHtml}
+                            <tr style="border-top: 2px solid #667eea; font-weight: bold;">
+                                <td colspan="3" style="padding: 8px; text-align: right;">Gesamtbetrag:</td>
+                                <td style="padding: 8px; text-align: right; color: #667eea; font-size: 1.2em;">${billing.total_amount.toFixed(2)} €</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <button onclick="this.closest('[style*=fixed]').remove()" style="margin-top: 20px; background: #667eea; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; width: 100%;">
+                        Schließen
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    } catch (error) {
+        console.error('Fehler beim Laden der Details:', error);
+        showAlert('Fehler beim Laden der Details', 'error');
+    }
+}
+    
 // ============ TOGGLE FUNCTION - MUSS AUßERHALB SEIN! ============
 function toggleUserTransactions(elementId) {
     const element = document.getElementById(elementId);
