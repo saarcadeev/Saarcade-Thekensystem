@@ -1496,6 +1496,9 @@ body {
             <button class="btn btn-success" onclick="markSelectedOrdersAsPaid()" id="markPaidBtn" disabled>
                 ✅ Als bezahlt markieren
             </button>
+            <button class="btn" onclick="markSelectedOrdersAsShipped()" id="markShippedBtn" disabled style="background: #9b59b6; color: white;">
+                🚚 Als ausgeliefert markieren
+            </button>
             <button class="btn btn-warning" onclick="viewOrderDetails()" id="viewOrderDetailsBtn" disabled>
                 👁️ Details anzeigen
             </button>
@@ -1521,12 +1524,13 @@ body {
                         <th>Artikel</th>
                         <th>Betrag</th>
                         <th>Zahlungsart</th>
-                        <th>Status</th>
+                        <th>Bezahlt</th>
+                        <th>Ausgeliefert</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td colspan="8" style="text-align: center; padding: 30px; color: #666;">
+                        <td colspan="9" style="text-align: center; padding: 30px; color: #666;">
                             Klicke "Neu laden" um Bestellungen zu laden
                         </td>
                     </tr>
@@ -2418,8 +2422,9 @@ function updateSelectionInfo(type) {
     } else if (type === 'orders') {
         count = selectedOrders.length;
         document.getElementById('orderSelectionInfo').textContent = `${count} ausgewählt`;
-    
+
         document.getElementById('markPaidBtn').disabled = count === 0;
+        document.getElementById('markShippedBtn').disabled = count === 0;
         document.getElementById('viewOrderDetailsBtn').disabled = count !== 1;
         document.getElementById('deleteOrderBtn').disabled = count === 0;
     }
@@ -3475,8 +3480,11 @@ function renderOrders() {
                 <td>${itemCount} Artikel</td>
                 <td><strong>${order.total.toFixed(2)} €</strong></td>
                 <td>${paymentIcons[order.payment_method] || order.payment_method}</td>
-                <td style="color: ${statusColors[order.status]}; font-weight: bold;">
-                    ${statusTexts[order.status] || order.status}
+                <td style="text-align: center;">
+                    ${order.status === 'paid' || order.status === 'shipped' || order.status === 'completed' ? '✅' : '❌'}
+                </td>
+                <td style="text-align: center;">
+                    ${order.status === 'shipped' || order.status === 'completed' ? '✅' : '❌'}
                 </td>
             </tr>
         `;
@@ -3519,6 +3527,53 @@ async function markSelectedOrdersAsPaid() {
     }
 }
 
+async function markSelectedOrdersAsShipped() {
+    if (selectedOrders.length === 0) {
+        showAlert('Bitte mindestens eine Bestellung auswählen', 'error');
+        return;
+    }
+    
+    // Prüfe, ob alle ausgewählten Bestellungen bereits bezahlt sind
+    const unpaidOrders = selectedOrders.filter(id => {
+        const order = orders.find(o => o.id === id);
+        return order && order.status === 'pending';
+    });
+    
+    if (unpaidOrders.length > 0) {
+        showAlert('⚠️ Einige Bestellungen sind noch nicht als bezahlt markiert!', 'error');
+        return;
+    }
+    
+    const orderNumbers = selectedOrders.map(id => {
+        const order = orders.find(o => o.id === id);
+        return order ? `#${order.id}` : 'Unbekannt';
+    }).join(', ');
+    
+    if (!confirm(`Möchtest du diese ${selectedOrders.length} Bestellung(en) als ausgeliefert markieren?\n\n${orderNumbers}`)) {
+        return;
+    }
+    
+    try {
+        for (const orderId of selectedOrders) {
+            await apiCall(`/api/clothing-orders/${orderId}`, {
+                method: 'PUT',
+                body: JSON.stringify({
+                    status: 'shipped',
+                    notes: 'Als ausgeliefert markiert'
+                })
+            });
+        }
+        
+        showAlert(`${selectedOrders.length} Bestellung(en) als ausgeliefert markiert`, 'success');
+        loadOrders();
+        loadPendingClothingOrders(); // Dashboard aktualisieren
+        
+    } catch (error) {
+        showAlert('Fehler beim Aktualisieren der Bestellungen', 'error');
+        console.error('Error:', error);
+    }
+}
+    
 function viewOrderDetails() {
     if (selectedOrders.length !== 1) {
         showAlert('Bitte genau eine Bestellung auswählen', 'error');
