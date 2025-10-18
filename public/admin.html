@@ -3461,19 +3461,26 @@ function renderOrders() {
             'paypal': '💰 PayPal'
         };
         
-        const itemCount = order.items ? order.items.length : 0;
-        
-        return `
-            <tr>
-                <td class="checkbox-cell">
-                    <input type="checkbox" value="${order.id}" onchange="toggleRowSelection(this, 'orders')">
-                </td>
-                <td><code>#${order.id}</code></td>
-                <td style="font-size: 0.85em;">${date.toLocaleDateString('de-DE')} ${date.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'})}</td>
-                <td><strong>${order.member_name}</strong></td>
-                <td>${itemCount} Artikel</td>
-                <td><strong>${order.total.toFixed(2)} €</strong></td>
-                <td>${paymentIcons[order.payment_method] || order.payment_method}</td>
+// Artikel formatieren
+const itemsList = order.items ? order.items.map(item => {
+    const details = [];
+    if (item.size) details.push(`Gr. ${item.size}`);
+    if (item.color) details.push(item.color);
+    const detailsText = details.length > 0 ? ` (${details.join(', ')})` : '';
+    return `${item.quantity}x ${item.name}${detailsText}`;
+}).join('<br>') : '-';
+
+return `
+    <tr>
+        <td class="checkbox-cell">
+            <input type="checkbox" value="${order.id}" onchange="toggleRowSelection(this, 'orders')">
+        </td>
+        <td><code>#${order.id}</code></td>
+        <td style="font-size: 0.85em;">${date.toLocaleDateString('de-DE')} ${date.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'})}</td>
+        <td><strong>${order.member_name}</strong></td>
+        <td style="font-size: 0.85em; line-height: 1.6;">${itemsList}</td>
+        <td><strong>${order.total.toFixed(2)} €</strong></td>
+        <td>${paymentIcons[order.payment_method] || order.payment_method}</td>
                 <td style="text-align: center;">
                     ${order.status === 'paid' || order.status === 'shipped' || order.status === 'completed' ? '✅' : '❌'}
                 </td>
