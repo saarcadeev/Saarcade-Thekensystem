@@ -33,6 +33,10 @@
       "dest": "/public/admin.html"
     },
     {
+      "src": "/kleidung",
+      "dest": "/public/kleidung.html"
+    },
+    {
       "src": "/(.*)",
       "dest": "/public/$1"
     }
