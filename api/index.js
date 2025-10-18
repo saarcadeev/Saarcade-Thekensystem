@@ -886,6 +886,73 @@ if (item.productId && item.productId > 0) {
             }
         }
 
+// ============ CLOTHING BILLINGS ENDPUNKTE ============
+
+// GET /clothing-billings - Alle Kleidungsabrechnungen
+if (path === '/clothing-billings' && method === 'GET') {
+    const { data, error } = await supabase
+        .from('clothing_billings')
+        .select('*')
+        .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return res.status(200).json(data || []);
+}
+
+// GET /clothing-billings/{id} - Einzelne Kleidungsabrechnung
+if (pathParts[0] === 'clothing-billings' && pathParts[1] && method === 'GET') {
+    const billingId = parseInt(pathParts[1]);
+    
+    if (isNaN(billingId)) {
+        return res.status(400).json({ error: 'Ungültige Abrechnungs-ID' });
+    }
+
+    const { data, error } = await supabase
+        .from('clothing_billings')
+        .select('*')
+        .eq('id', billingId)
+        .single();
+    
+    if (error) {
+        if (error.code === 'PGRST116') {
+            return res.status(404).json({ error: 'Abrechnung nicht gefunden' });
+        }
+        throw error;
+    }
+    
+    return res.status(200).json(data);
+}
+
+// POST /clothing-billings - Neue Kleidungsabrechnung erstellen
+if (path === '/clothing-billings' && method === 'POST') {
+    const billingData = req.body;
+    
+    if (!billingData.order_ids || billingData.order_ids.length === 0) {
+        return res.status(400).json({ error: 'Keine Bestellungen angegeben' });
+    }
+
+    // Generiere Abrechnungsnummer
+    const now = new Date();
+    const billingNumber = `CLO-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+
+    const { data, error } = await supabase
+        .from('clothing_billings')
+        .insert([{
+            billing_number: billingNumber,
+            billing_type: billingData.billing_type || 'clothing',
+            billing_date: billingData.billing_date,
+            order_ids: billingData.order_ids,
+            member_ids: billingData.member_ids,
+            total_amount: billingData.total_amount,
+            order_count: billingData.order_count
+        }])
+        .select()
+        .single();
+    
+    if (error) throw error;
+    return res.status(201).json(data);
+}
+        
        // ============ CLOTHING ITEMS ENDPUNKTE ============
         
         // GET /clothing-items - Alle Kleidungsstücke
