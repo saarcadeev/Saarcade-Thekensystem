@@ -194,6 +194,11 @@
             justify-content: center;
         }
 
+        .user-info:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+        
         .user-info.member { background: linear-gradient(135deg, #48bb78, #38a169); }
         .user-info.guest { background: linear-gradient(135deg, #f6ad55, #ed8936); }
         .user-info.admin { background: linear-gradient(135deg, #9f7aea, #805ad5); }
@@ -1116,6 +1121,9 @@ try {
         localStorage.removeItem('kasseLogin');
         window.location.href = '/login-kasse.html';
     }
+
+
+    
 })();
     </script>
     
@@ -1151,12 +1159,12 @@ try {
                     </div>
                 </div>
                 
-                <div class="user-info-section">
-                    <div class="user-info" id="userInfo">
-                        <div class="user-name">Kein Benutzer</div>
-                        <div class="user-balance">Bitte scannen</div>
-                    </div>
-                </div>
+<div class="user-info-section">
+    <div class="user-info" id="userInfo" onclick="showMemberTransactions()" style="cursor: pointer;">
+        <div class="user-name">Kein Benutzer</div>
+        <div class="user-balance">Bitte scannen</div>
+    </div>
+</div>    
                 
                 <div class="workflow-steps">
                     <div class="workflow-step" id="step1">1️⃣ Mitglied</div>
@@ -2773,6 +2781,193 @@ async function completeCashPayment() {
         isProcessing = false;
         completeBtn.disabled = false;
         completeBtn.textContent = originalText;
+    }
+}
+
+// ============ MITGLIEDER-TRANSAKTIONEN ANZEIGE ============
+
+async function showMemberTransactions() {
+    if (!currentUser) {
+        showStatus('Bitte zuerst ein Mitglied auswählen', 'error');
+        return;
+    }
+    
+    try {
+        // Hole alle nicht abgerechneten Transaktionen für diesen User
+        const { data: transactions, error } = await supabase
+            .from('transactions')
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .is('billing_id', null)
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        
+        // Zeige Modal mit Transaktionen
+        showMemberTransactionsModal(transactions);
+        
+    } catch (error) {
+        console.error('Fehler beim Laden der Transaktionen:', error);
+        showStatus('Fehler beim Laden der Transaktionen', 'error');
+    }
+}
+
+function showMemberTransactionsModal(transactions) {
+    const totalAmount = transactions.reduce((sum, t) => sum + t.total, 0);
+    
+    let html = `
+        <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center;" onclick="this.remove()">
+            <div style="background: white; padding: 30px; border-radius: 12px; max-width: 800px; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3);" onclick="event.stopPropagation()">
+                <h2 style="margin-top: 0; color: #667eea;">📋 Transaktionen: ${currentUser.first_name} ${currentUser.last_name}</h2>
+                
+                <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <p><strong>Aktueller Saldo:</strong> <span style="color: ${currentUser.balance >= 0 ? '#38a169' : '#e53e3e'}; font-weight: bold; font-size: 1.2em;">${currentUser.balance.toFixed(2)}€</span></p>
+                    <p><strong>Nicht abgerechnet:</strong> ${transactions.length} Transaktionen - ${totalAmount.toFixed(2)}€</p>
+                </div>
+    `;
+    
+    if (transactions.length === 0) {
+        html += '<p style="text-align: center; color: #666; padding: 20px;">Keine offenen Transaktionen</p>';
+    } else {
+        html += `
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #f1f5f9; border-bottom: 2px solid #cbd5e1;">
+                        <th style="padding: 12px; text-align: left;">Datum/Zeit</th>
+                        <th style="padding: 12px; text-align: left;">Produkt</th>
+                        <th style="padding: 12px; text-align: center;">Menge</th>
+                        <th style="padding: 12px; text-align: right;">Betrag</th>
+                        <th style="padding: 12px; text-align: center;">Aktion</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        transactions.forEach(t => {
+            const date = new Date(t.created_at);
+            const formattedDate = date.toLocaleDateString('de-DE');
+            const formattedTime = date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+            
+            html += `
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 10px;">${formattedDate}<br><small style="color: #666;">${formattedTime}</small></td>
+                    <td style="padding: 10px;">${t.product_name}</td>
+                    <td style="padding: 10px; text-align: center;">${t.quantity}x</td>
+                    <td style="padding: 10px; text-align: right; font-weight: bold;">${t.total.toFixed(2)}€</td>
+                    <td style="padding: 10px; text-align: center;">
+                        <button onclick="deleteMemberTransaction(${t.id}, '${t.product_name}', ${t.total}, ${t.quantity}, ${t.product_id})" 
+                                style="background: #e53e3e; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
+                            🗑️ Löschen
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        html += `
+                </tbody>
+            </table>
+        `;
+    }
+    
+    html += `
+                <div style="margin-top: 20px; text-align: center;">
+                    <button onclick="this.closest('div[style*=fixed]').remove()" 
+                            style="background: #667eea; color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: 600;">
+                        Schließen
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', html);
+}
+
+async function deleteMemberTransaction(transactionId, productName, amount, quantity, productId) {
+    // PIN-Abfrage
+    const pin = prompt('🔒 Bitte PIN eingeben, um die Transaktion zu löschen:');
+    
+    if (pin !== '0814') {
+        showStatus('❌ Falsche PIN', 'error');
+        return;
+    }
+    
+    if (!confirm(`Transaktion wirklich löschen?\n\n${productName} - ${amount.toFixed(2)}€\n\nDer Saldo wird entsprechend angepasst.`)) {
+        return;
+    }
+    
+    try {
+        // 1. Transaktion löschen
+        const { error: deleteError } = await supabase
+            .from('transactions')
+            .delete()
+            .eq('id', transactionId);
+        
+        if (deleteError) throw deleteError;
+        
+        // 2. Saldo des Users korrigieren (Betrag wieder gutschreiben)
+        const newBalance = currentUser.balance + amount;
+        
+        const { error: updateError } = await supabase
+            .from('users')
+            .update({ balance: newBalance })
+            .eq('id', currentUser.id);
+        
+        if (updateError) throw updateError;
+        
+        // 3. Produktbestand wieder erhöhen (wenn es ein echtes Produkt ist)
+        if (productId && productId > 0) {
+            const { data: product } = await supabase
+                .from('products')
+                .select('stock, name')
+                .eq('id', productId)
+                .single();
+            
+            if (product) {
+                await supabase
+                    .from('products')
+                    .update({ stock: product.stock + quantity })
+                    .eq('id', productId);
+                    
+                // Bestandsbewegung aufzeichnen
+                await supabase
+                    .from('stock_movements')
+                    .insert({
+                        product_id: productId,
+                        product_name: product.name,
+                        movement_type: 'correction',
+                        quantity: quantity,
+                        stock_before: product.stock,
+                        stock_after: product.stock + quantity,
+                        reason: `Transaktion storniert für ${currentUser.first_name} ${currentUser.last_name}`,
+                        created_by: 'kasse'
+                    });
+            }
+        }
+        
+        // 4. Lokale Daten aktualisieren
+        currentUser.balance = newBalance;
+        const userIndex = users.findIndex(u => u.id === currentUser.id);
+        if (userIndex !== -1) {
+            users[userIndex].balance = newBalance;
+        }
+        
+        // 5. UI aktualisieren
+        updateUserInfo();
+        showStatus('✅ Transaktion gelöscht und Saldo angepasst', 'success');
+        
+        // 6. Modal schließen und neu laden
+        document.querySelector('div[style*="position: fixed"]').remove();
+        
+        // Nach kurzer Zeit Modal mit aktualisierten Daten neu öffnen
+        setTimeout(() => {
+            showMemberTransactions();
+        }, 500);
+        
+    } catch (error) {
+        console.error('Fehler beim Löschen:', error);
+        showStatus('❌ Fehler beim Löschen der Transaktion', 'error');
     }
 }
         
