@@ -921,6 +921,14 @@ body {
                     <div style="text-align: center; padding: 20px; color: #666;">Lade Daten...</div>
                 </div>
             </div>
+
+            <!-- Offene Kleidungsbestellungen -->
+            <div class="card">
+                <div class="card-header">👕 Offene Kleidungsbestellungen</div>
+                <div id="pendingClothingOrdersList" style="padding: 10px;">
+                <div style="text-align: center; padding: 20px; color: #666;">Lade Daten...</div>
+            </div>
+        </div>
             
             <!-- SEPA Status -->
             <div class="card">
@@ -944,32 +952,7 @@ body {
                     </div>
                 </div>
             </div>
-            
-            <!-- Monatsstatistik -->
-            <div class="card">
-                <div class="card-header">📈 Monatsstatistik</div>
-                <div style="padding: 20px;">
-                    <div style="margin-bottom: 15px;">
-                        <div style="color: #666; font-size: 0.9em;">Umsatz diesen Monat</div>
-                        <div style="font-size: 1.5em; font-weight: bold; color: #667eea;">
-                            <span id="currentMonthRevenue">-</span> €
-                        </div>
-                    </div>
-                    <div style="margin-bottom: 15px;">
-                        <div style="color: #666; font-size: 0.9em;">Transaktionen</div>
-                        <div style="font-size: 1.2em; font-weight: bold;">
-                            <span id="currentMonthTransactions">-</span> Stück
-                        </div>
-                    </div>
-                    <div style="background: #f8fafc; padding: 10px; border-radius: 6px;">
-                        <div style="color: #666; font-size: 0.85em;">Ø Kaufbetrag</div>
-                        <div style="font-size: 1.1em; font-weight: bold; color: #27ae60;">
-                            <span id="averagePurchase">-</span> €
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
+                        
             <!-- Top 5 Schuldner -->
             <div class="card">
                 <div class="card-header">💰 Top 5 Offene Beträge</div>
@@ -5028,32 +5011,61 @@ async function loadSepaStatus() {
     }
 }
 
-async function loadMonthlyStats() {
+async function loadPendingClothingOrders() {
     try {
-        const allTransactions = await apiCall('/api/transactions');
+        const allOrders = await apiCall('/api/clothing-orders');
         
-        const now = new Date();
-        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        // Nur offene Bestellungen (pending)
+        const pendingOrders = allOrders.filter(o => o.status === 'pending');
         
-        const monthTransactions = allTransactions.filter(t => {
-            if (t.product_name && t.product_name.includes('Manuelle Buchung')) return false;
-            return new Date(t.created_at) >= firstDayOfMonth;
-        });
+        const container = document.getElementById('pendingClothingOrdersList');
         
-        const revenue = monthTransactions.reduce((sum, t) => sum + t.total, 0);
-        const count = monthTransactions.length;
-        const average = count > 0 ? revenue / count : 0;
+        if (pendingOrders.length === 0) {
+            container.innerHTML = '<div style="text-align: center; padding: 20px; color: #27ae60;">✅ Keine offenen Bestellungen</div>';
+            return;
+        }
         
-        document.getElementById('currentMonthRevenue').textContent = revenue.toFixed(2);
-        document.getElementById('currentMonthTransactions').textContent = count;
-        document.getElementById('averagePurchase').textContent = average.toFixed(2);
+        container.innerHTML = pendingOrders.map(order => {
+            const date = new Date(order.created_at);
+            const paymentIcons = {
+                'sepa': '💳 SEPA',
+                'transfer': '🏦 Überweisung',
+                'paypal': '💰 PayPal'
+            };
+            
+            return `
+                <div style="padding: 12px; border-bottom: 1px solid #e2e8f0; background: #fffbeb; margin-bottom: 8px; border-radius: 4px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-weight: 600; color: #2c3e50;">
+                                ${order.member_name}
+                            </div>
+                            <div style="font-size: 0.85em; color: #666; margin-top: 4px;">
+                                ${paymentIcons[order.payment_method] || order.payment_method} • 
+                                ${order.items.length} Artikel • 
+                                ${date.toLocaleDateString('de-DE')}
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: bold; color: #667eea; font-size: 1.1em;">
+                                ${order.total.toFixed(2)} €
+                            </div>
+                            <div style="font-size: 0.75em; color: #f39c12; margin-top: 4px;">
+                                ⏳ Ausstehend
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
         
     } catch (error) {
-        console.error('Fehler beim Laden der Monatsstatistik:', error);
+        console.error('Fehler beim Laden der Kleidungsbestellungen:', error);
+        document.getElementById('pendingClothingOrdersList').innerHTML = 
+            '<div style="text-align: center; padding: 20px; color: #e74c3c;">Fehler beim Laden</div>';
     }
-}
-
-async function loadTopDebtors() {
+    
+}async function loadTopDebtors() {
     try {
         if (!users || users.length === 0) {
             users = await apiCall('/api/users');
