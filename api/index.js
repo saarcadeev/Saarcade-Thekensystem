@@ -220,7 +220,7 @@ module.exports = async (req, res) => {
         if (path === '/users' && method === 'GET') {
             const { data, error } = await supabase
                 .from('users')
-                .select('id, first_name, last_name, email, role, balance')  // <- ohne IBAN!
+                .select('id, first_name, last_name, email, role, balance, sepa_active, iban, barcodes')
                 .order('first_name');
             
             if (error) throw error;
