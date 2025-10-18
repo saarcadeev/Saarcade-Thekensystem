@@ -2414,7 +2414,7 @@ function updateSelectionInfo(type) {
         
         document.getElementById('editClothingBtn').disabled = count !== 1;
         document.getElementById('deleteClothingBtn').disabled = count === 0;
-    }
+    
     } else if (type === 'orders') {
         count = selectedOrders.length;
         document.getElementById('orderSelectionInfo').textContent = `${count} ausgewählt`;
