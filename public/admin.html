@@ -5407,9 +5407,12 @@ async function loadPendingClothingOrders() {
                 'paypal': '💰 PayPal'
             };
             
-            return `
-                <div style="padding: 12px; border-bottom: 1px solid #e2e8f0; background: #fffbeb; margin-bottom: 8px; border-radius: 4px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
+// Hintergrundfarbe: Hellrot für ausstehende SEPA-Bestellungen, sonst hellgelb
+const bgColor = (order.status === 'pending' && order.payment_method === 'sepa') ? '#ffe6e6' : '#fffbeb';
+
+return `
+    <div style="padding: 12px; border-bottom: 1px solid #e2e8f0; background: ${bgColor}; margin-bottom: 8px; border-radius: 4px;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
                             <div style="font-weight: 600; color: #2c3e50;">
                                 ${order.member_name}
