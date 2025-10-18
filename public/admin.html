@@ -1833,6 +1833,88 @@ body {
             </div>
         </div>
     </div>
+
+<!-- Clothing Modal -->
+<div id="clothingModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="clothingModalTitle">Kleidungsartikel bearbeiten</h3>
+            <span class="close" onclick="closeModal('clothingModal')">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="clothingForm">
+                <input type="hidden" id="clothingId" value="">
+                <input type="hidden" id="currentClothingImageUrl" value="">
+                <input type="hidden" id="currentClothingImagePath" value="">
+                
+                <div class="form-group">
+                    <label>Artikelfoto</label>
+                    <div class="photo-upload" id="clothingPhotoUpload" onclick="triggerClothingFileInput()">
+                        <input type="file" id="clothingPhotoInput" accept="image/*" style="display: none;" onchange="handleClothingPhotoUpload(event)">
+                        <div class="photo-preview-container" id="clothingPhotoPreviewContainer">
+                            <div id="clothingPhotoPlaceholder">
+                                <p style="margin: 10px 0;">📷 Klicken oder Bild hierher ziehen</p>
+                                <p style="font-size: 0.8em; color: #666;">JPG, PNG bis 2MB</p>
+                            </div>
+                        </div>
+                        <div class="photo-upload-progress" id="clothingUploadProgress">
+                            Lade hoch... 0%
+                        </div>
+                    </div>
+                    <div class="photo-actions" id="clothingPhotoActions">
+                        <button type="button" class="btn btn-secondary" onclick="removeClothingPhoto()">
+                            🗑️ Bild entfernen
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Name *</label>
+                    <input type="text" id="clothingName" required placeholder="z.B. Saarcade Hoodie">
+                </div>
+                
+                <div class="form-group">
+                    <label>Emoji (Optional)</label>
+                    <input type="text" id="clothingEmoji" placeholder="👕" maxlength="2">
+                    <small style="color: #666;">Wird als Fallback angezeigt, wenn kein Bild vorhanden ist</small>
+                </div>
+                
+                <div class="form-group">
+                    <label>Preis (€) *</label>
+                    <input type="number" id="clothingPrice" step="0.01" min="0" required placeholder="29.90">
+                </div>
+                
+                <div class="form-group">
+                    <label>Größen verfügbar (mit Enter trennen)</label>
+                    <textarea id="clothingSizes" rows="3" placeholder="XS&#10;S&#10;M&#10;L&#10;XL&#10;XXL"></textarea>
+                    <small style="color: #666;">Jede Größe in eine neue Zeile</small>
+                </div>
+                
+                <div class="form-group">
+                    <label>Farben verfügbar (mit Enter trennen)</label>
+                    <textarea id="clothingColors" rows="2" placeholder="Schwarz&#10;Navy&#10;Grau"></textarea>
+                    <small style="color: #666;">Jede Farbe in eine neue Zeile. Bei nur einer Farbe reicht eine Zeile.</small>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="clothingAvailable" checked>
+                        Verfügbar für Bestellungen
+                    </label>
+                </div>
+                
+                <div style="text-align: right; margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('clothingModal')">
+                        Abbrechen
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="saveClothingItem()" id="saveClothingBtn">
+                        💾 Speichern
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
     
 <script>
 // ============ GLOBALE VARIABLEN ============
@@ -3009,8 +3091,82 @@ function renderClothing() {
 }
 
 function openClothingModal(clothingId = null) {
-    // TODO: Modal für Kleidung erstellen (ähnlich wie bei Produkten)
-    showAlert('Kleidungs-Modal wird noch entwickelt - erstelle Artikel zunächst direkt in der Datenbank', 'info');
+    try {
+        const modal = document.getElementById('clothingModal');
+        const title = document.getElementById('clothingModalTitle');
+        const form = document.getElementById('clothingForm');
+        
+        if (!modal || !title || !form) {
+            console.error('Clothing Modal-Elemente nicht gefunden');
+            showAlert('Fehler: Modal nicht verfügbar', 'error');
+            return;
+        }
+        
+        form.reset();
+        
+        // Felder zurücksetzen
+        document.getElementById('clothingId').value = '';
+        document.getElementById('currentClothingImageUrl').value = '';
+        document.getElementById('currentClothingImagePath').value = '';
+        document.getElementById('clothingAvailable').checked = true;
+        
+        // Foto-Bereich zurücksetzen
+        const photoPreview = document.getElementById('clothingPhotoPreviewContainer');
+        const photoPlaceholder = document.getElementById('clothingPhotoPlaceholder');
+        const photoActions = document.getElementById('clothingPhotoActions');
+        
+        if (photoPreview) photoPreview.innerHTML = '<div id="clothingPhotoPlaceholder"><p style="margin: 10px 0;">📷 Klicken oder Bild hierher ziehen</p><p style="font-size: 0.8em; color: #666;">JPG, PNG bis 2MB</p></div>';
+        if (photoActions) photoActions.style.display = 'none';
+        
+        currentImageFile = null;
+        uploadedImageUrl = null;
+        
+        if (clothingId) {
+            // Bearbeiten
+            title.textContent = 'Kleidungsartikel bearbeiten';
+            const item = clothingItems.find(c => c.id === clothingId);
+            
+            if (item) {
+                document.getElementById('clothingId').value = item.id;
+                document.getElementById('clothingName').value = item.name;
+                document.getElementById('clothingEmoji').value = item.emoji || '';
+                document.getElementById('clothingPrice').value = item.price;
+                document.getElementById('clothingSizes').value = item.sizes ? item.sizes.join('\n') : '';
+                document.getElementById('clothingColors').value = item.colors ? item.colors.join('\n') : '';
+                document.getElementById('clothingAvailable').checked = item.available;
+                
+                // Bild laden, falls vorhanden
+                if (item.image_url) {
+                    document.getElementById('currentClothingImageUrl').value = item.image_url;
+                    document.getElementById('currentClothingImagePath').value = item.image_file_path || '';
+                    
+                    const photoPreview = document.getElementById('clothingPhotoPreviewContainer');
+                    if (photoPreview) {
+                        photoPreview.innerHTML = `<img src="${item.image_url}" class="photo-preview" alt="Vorschau">`;
+                        photoActions.style.display = 'block';
+                    }
+                }
+            } else {
+                console.error('Kleidungsartikel nicht gefunden:', clothingId);
+                showAlert('Artikel nicht gefunden', 'error');
+                return;
+            }
+        } else {
+            // Neu erstellen
+            title.textContent = 'Neuen Kleidungsartikel hinzufügen';
+        }
+        
+        modal.style.display = 'block';
+        
+        setTimeout(() => {
+            const firstInput = document.getElementById('clothingName');
+            if (firstInput) firstInput.focus();
+        }, 150);
+        
+    } catch (error) {
+        console.error('Fehler beim Öffnen des Clothing-Modals:', error);
+        showAlert('Fehler beim Öffnen des Bearbeiten-Dialogs', 'error');
+    }
 }
 
 function editSelectedClothing() {
@@ -3045,6 +3201,125 @@ async function deleteSelectedClothing() {
             showAlert('Fehler beim Löschen der Kleidungsartikel', 'error');
         }
     }
+}
+
+async function saveClothingItem() {
+    const saveBtn = document.getElementById('saveClothingBtn');
+    const clothingId = document.getElementById('clothingId').value;
+    
+    // Größen und Farben aus Textareas
+    const sizes = document.getElementById('clothingSizes').value
+        .split('\n')
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+    
+    const colors = document.getElementById('clothingColors').value
+        .split('\n')
+        .map(c => c.trim())
+        .filter(c => c.length > 0);
+    
+    const clothingData = {
+        name: document.getElementById('clothingName').value,
+        emoji: document.getElementById('clothingEmoji').value || '👕',
+        price: parseFloat(document.getElementById('clothingPrice').value),
+        sizes: sizes,
+        colors: colors,
+        available: document.getElementById('clothingAvailable').checked,
+        image_url: uploadedImageUrl || document.getElementById('currentClothingImageUrl').value || null,
+        image_file_path: document.getElementById('currentClothingImagePath').value || null
+    };
+    
+    try {
+        saveBtn.disabled = true;
+        saveBtn.textContent = '⏳ Speichere...';
+        
+        // Bild hochladen, falls vorhanden
+        if (currentImageFile) {
+            const uploadResult = await uploadImageToAPI(currentImageFile, clothingId || 'new');
+            clothingData.image_url = uploadResult.imageUrl;
+            clothingData.image_file_path = uploadResult.filePath;
+        }
+        
+        if (clothingId) {
+            // Update
+            await apiCall(`/api/clothing-items/${clothingId}`, {
+                method: 'PUT',
+                body: JSON.stringify(clothingData)
+            });
+            showAlert('Kleidungsartikel erfolgreich aktualisiert', 'success');
+        } else {
+            // Create
+            await apiCall('/api/clothing-items', {
+                method: 'POST',
+                body: JSON.stringify(clothingData)
+            });
+            showAlert('Kleidungsartikel erfolgreich erstellt', 'success');
+        }
+        
+        closeModal('clothingModal');
+        loadClothingItems();
+        
+    } catch (error) {
+        console.error('Fehler beim Speichern:', error);
+        showAlert('Fehler beim Speichern des Artikels', 'error');
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = '💾 Speichern';
+    }
+}
+
+function triggerClothingFileInput() {
+    document.getElementById('clothingPhotoInput').click();
+}
+
+async function handleClothingPhotoUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    if (file.size > 2 * 1024 * 1024) {
+        showAlert('Bild ist zu groß. Maximum: 2MB', 'error');
+        return;
+    }
+    
+    if (!file.type.startsWith('image/')) {
+        showAlert('Bitte nur Bilddateien hochladen', 'error');
+        return;
+    }
+    
+    currentImageFile = file;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const photoPreview = document.getElementById('clothingPhotoPreviewContainer');
+        const photoActions = document.getElementById('clothingPhotoActions');
+        
+        if (photoPreview) {
+            photoPreview.innerHTML = `<img src="${e.target.result}" class="photo-preview" alt="Vorschau">`;
+        }
+        if (photoActions) {
+            photoActions.style.display = 'block';
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+function removeClothingPhoto() {
+    currentImageFile = null;
+    uploadedImageUrl = null;
+    document.getElementById('currentClothingImageUrl').value = '';
+    document.getElementById('currentClothingImagePath').value = '';
+    
+    const photoPreview = document.getElementById('clothingPhotoPreviewContainer');
+    const photoActions = document.getElementById('clothingPhotoActions');
+    
+    if (photoPreview) {
+        photoPreview.innerHTML = '<div id="clothingPhotoPlaceholder"><p style="margin: 10px 0;">📷 Klicken oder Bild hierher ziehen</p><p style="font-size: 0.8em; color: #666;">JPG, PNG bis 2MB</p></div>';
+    }
+    if (photoActions) {
+        photoActions.style.display = 'none';
+    }
+    
+    document.getElementById('clothingPhotoInput').value = '';
 }
     
         // ============ TRANSACTIONS FUNCTIONS ============
