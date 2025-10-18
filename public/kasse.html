@@ -2889,10 +2889,29 @@ function showMemberTransactionsModal(transactions) {
 }
 
 async function deleteMemberTransaction(transactionId, productName, amount, quantity, productId) {
-    // PIN-Abfrage
+    // PIN-Abfrage mit Rollenprüfung
     const pin = prompt('🔒 Bitte PIN eingeben, um die Transaktion zu löschen:');
     
-    if (pin !== '0814') {
+    if (!pin) {
+        return; // Abgebrochen
+    }
+    
+    // Lade aktuelle Einstellungen für PIN-Prüfung
+    let correctPin = '0814'; // Fallback
+    try {
+        const settings = await apiCall('/api/settings');
+        
+        // Prüfe welche PIN je nach Rolle gilt
+        if (currentUser && currentUser.role === 'bartender') {
+            correctPin = settings.bartender_pin || '0814';
+        } else {
+            correctPin = settings.member_pin || '1234';
+        }
+    } catch (error) {
+        console.warn('Einstellungen konnten nicht geladen werden, verwende Standard-PIN');
+    }
+    
+    if (pin !== correctPin) {
         showStatus('❌ Falsche PIN', 'error');
         return;
     }
