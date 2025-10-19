@@ -4150,6 +4150,7 @@ async function loadAllSettings() {
         let currentUserBillingData = null;
         let selectedBillingUsers = [];  // NEU
         let usersWithDebt = [];          // NEU
+        let billingTransactionsCache = {};
 
         async function loadOpenBalances() {
             try {
@@ -4620,7 +4621,14 @@ async function viewBillingDetails(billingId) {
             }
         });
         
-        showBillingDetails(billing, sepaUsers, nonSepaUsers);
+// Cache die Transaktionen nach user_id
+billingTransactionsCache = {};
+sepaUsers.forEach(u => {
+    billingTransactionsCache[u.id] = u.transactions || [];
+});
+nonSepaUsers.forEach(u => {
+    billingTransactionsCache[u.id] = u.transactions || [];
+});
         
     } catch (error) {
         console.error('Fehler beim Laden der Details:', error);
@@ -5627,16 +5635,20 @@ async function exportUserTransactionsCSV(userId, firstName, lastName) {
 
 async function exportUserPeriodCSV(userId, billingId, firstName, lastName, periodLabel) {
     try {
-        // Lade die Transaktionen für diesen Benutzer und diese Abrechnung
-        const allTransactions = await apiCall(`/api/billings/${billingId}/transactions`);
-        const userTransactions = allTransactions.filter(t => t.user_id === userId);
+        // Verwende Cache falls vorhanden
+        let userTransactions = billingTransactionsCache[userId];
+        
+        if (!userTransactions || userTransactions.length === 0) {
+            // Fallback: Lade vom Server
+            const allTransactions = await apiCall(`/api/billings/${billingId}/transactions`);
+            userTransactions = allTransactions.filter(t => t.user_id === userId);
+        }
         
         if (userTransactions.length === 0) {
             showAlert('Keine Transaktionen gefunden', 'info');
             return;
         }
         
-        // Rufe die bestehende Export-Funktion auf
         exportSinglePeriodCSV(userTransactions, firstName, lastName, periodLabel);
         
     } catch (error) {
