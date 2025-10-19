@@ -9,7 +9,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-        }
+        
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -1457,12 +1457,11 @@ function addToCartFromModal() {
 }
 
 // Modal schließen bei Klick außerhalb
-window.onclick = function(event) {
-    const modal = document.getElementById('productModal');
-    if (event.target === modal) {
+document.getElementById('productModal').addEventListener('click', function(event) {
+    if (event.target === this) {
         closeProductModal();
     }
-}
+});
             
     </script>
 
