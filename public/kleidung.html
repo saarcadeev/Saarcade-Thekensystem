@@ -723,6 +723,31 @@
     </style>
 </head>
 <body>
+
+    <!-- Passwort-Schutz Overlay -->
+    <div id="passwordOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); max-width: 400px; width: 90%; text-align: center;">
+            <h2 style="margin-bottom: 10px; color: #2d3748;">🔒 Zugang geschützt</h2>
+            <p style="color: #666; margin-bottom: 25px;">Bitte Passwort eingeben</p>
+            
+            <input 
+                type="password" 
+                id="accessPassword" 
+                placeholder="Passwort"
+                style="width: 100%; padding: 15px; font-size: 1.1em; border: 2px solid #e2e8f0; border-radius: 8px; margin-bottom: 15px; text-align: center;"
+                autocomplete="off"
+            >
+            
+            <button onclick="checkPassword()" style="width: 100%; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 1.1em; font-weight: 600; cursor: pointer;">
+                ✓ Entsperren
+            </button>
+            
+            <div id="passwordError" style="color: #e53e3e; margin-top: 15px; display: none; font-weight: 600;">
+                ❌ Falsches Passwort
+            </div>
+        </div>
+    </div>
+    
     <div class="container">
         <div class="logo" style="text-align: center; padding-top: 20px;">
     <img src="Saarcade-Logo.png" alt="Saarcade e.V. Logo" style="max-width: 200px; height: auto;">
@@ -730,7 +755,7 @@
         <div class="header">
             <a href="/" style="position: absolute; top: 20px; left: 20px; color: white; text-decoration: none; font-size: 1.5em;">← Zurück</a>
             <h1>👕 Vereinskleidung bestellen</h1>
-            <p>Saarcade e.V. - Offizielles Merch</p>
+            <p>Saarcade e.V. - Bestellungen für Mitglieder, kein Merchandising</p>
         </div>
 
         <div class="main-content">
@@ -841,9 +866,46 @@
 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
         <script>
-        // Verfügbare Kleidungsstücke
+            
+// Passwort-Schutz
+const CLOTHING_PASSWORD = 'saarcade2025'; // ⚠️ Ändere das Passwort hier!
+
+function checkPassword() {
+    const enteredPassword = document.getElementById('accessPassword').value;
+    const errorDiv = document.getElementById('passwordError');
+    
+    if (enteredPassword === CLOTHING_PASSWORD) {
+        // Passwort korrekt
+        document.getElementById('passwordOverlay').style.display = 'none';
+        // Passwort im SessionStorage speichern (nur für diese Browser-Sitzung)
+        sessionStorage.setItem('clothingAccess', 'granted');
+    } else {
+        // Passwort falsch
+        errorDiv.style.display = 'block';
+        document.getElementById('accessPassword').value = '';
+        document.getElementById('accessPassword').focus();
+    }
+}
+
+// Enter-Taste im Passwort-Feld
+document.addEventListener('DOMContentLoaded', function() {
+    const passwordInput = document.getElementById('accessPassword');
+    if (passwordInput) {
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                checkPassword();
+            }
+        });
         
-        // Verfügbare Kleidungsstücke werden aus der Datenbank geladen
+        // Fokus auf Passwort-Feld
+        passwordInput.focus();
+    }
+    
+    // Prüfen ob bereits eingeloggt (in dieser Session)
+    if (sessionStorage.getItem('clothingAccess') === 'granted') {
+        document.getElementById('passwordOverlay').style.display = 'none';
+    }
+});
 
 // State Management
 let selectedMember = null;
