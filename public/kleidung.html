@@ -159,68 +159,72 @@
             margin-bottom: 5px;
         }
 
-        .products-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-top: 20px;
-        }
-        .product-card {
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 15px;
-            transition: all 0.3s;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            min-height: 280px; /* Einheitliche Höhe */
-        }
-        .product-image-container {
-            width: 100%;
-            height: 120px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 15px;
-            background: #f7fafc;
-            border-radius: 8px;
-        }
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-top: 20px;
+}
+        
+.product-card {
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 15px;
+    transition: all 0.3s;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    min-height: 280px; /* Einheitliche Höhe */
+}
 
-        .product-image-container img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-            border-radius: 8px;
-        }
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.2);
+    border-color: #667eea;
+}
 
-        .product-emoji {
-            font-size: 3em;
-        }
+.product-image-container {
+    width: 100%;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+    background: #f7fafc;
+    border-radius: 8px;
+}
 
-        .product-info {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
+.product-image-container img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+}
 
-        .product-name {
-            font-size: 1em;
-            font-weight: 600;
-            color: #2d3748;
-            margin-bottom: 8px;
-        }
+.product-emoji {
+    font-size: 3em;
+}
 
-        .product-price {
-            font-size: 1.3em;
-            font-weight: bold;
-            color: #667eea;
-            margin-top: auto;
-        }
-        .product-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.2);
-            border-color: #667eea;
-        }
+.product-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.product-name {
+    font-size: 1em;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 8px;
+}
+
+.product-price {
+    font-size: 1.3em;
+    font-weight: bold;
+    color: #667eea;
+    margin-top: auto;
+}
+        
         .product-card.selected {
             border-color: #667eea;
             background: #f0f9ff;
@@ -666,7 +670,8 @@
                 font-size: 1.5em;
             }
         }
-        @media (max-width: 1024px) {
+
+@media (max-width: 1024px) {
     .products-grid {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -710,14 +715,15 @@
     .payment-method {
         width: 100%;
     }
-}
+}        
+        
     </style>
 </head>
 <body>
     <div class="container">
         <div class="logo" style="text-align: center; padding-top: 20px;">
-            <img src="Saarcade-Logo.png" alt="Saarcade e.V. Logo" style="max-width: 200px; height: auto;">
-        </div>       
+    <img src="Saarcade-Logo.png" alt="Saarcade e.V. Logo" style="max-width: 200px; height: auto;">
+</div>
         <div class="header">
             <a href="/" style="position: absolute; top: 20px; left: 20px; color: white; text-decoration: none; font-size: 1.5em;">← Zurück</a>
             <h1>👕 Vereinskleidung bestellen</h1>
@@ -786,8 +792,8 @@
 
                 <div class="form-group" id="paymentSection" style="display: none;">
                     <label>Zahlungsart auswählen</label>
-                        <div class="payment-methods">
-                            <div class="payment-method" data-method="sepa" id="sepaPaymentMethod" onclick="selectPaymentMethod('sepa')">
+                    <div class="payment-methods">
+                        <div class="payment-method" data-method="sepa" id="sepaPaymentMethod" onclick="selectPaymentMethod('sepa')">
                             <div class="payment-method-icon">🏦</div>
                             <div class="payment-method-name">SEPA-Lastschrift</div>
                         </div>
@@ -967,15 +973,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 document.getElementById('selectedMemberName').textContent = `${firstName} ${lastName}`;
                 
-                // SEPA-Status anzeigen
-                let detailsText = selectedMember.sepaActive 
-                ? '✅ SEPA-Mandat vorhanden' 
-                : '⚠️ Kein SEPA-Mandat';
-               // SEPA-Button anzeigen/verstecken
-                const sepaButton = document.getElementById('sepaPaymentMethod');
-                    if (sepaButton) {
-                        sepaButton.style.display = selectedMember.sepaActive ? 'block' : 'none';
-                    }
+// SEPA-Status anzeigen
+let detailsText = selectedMember.sepaActive 
+    ? '✅ SEPA-Mandat vorhanden' 
+    : '⚠️ Kein SEPA-Mandat';
                 
                 document.getElementById('selectedMemberDetails').textContent = detailsText;
                 document.getElementById('selectedMember').classList.add('active');
@@ -987,7 +988,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 showAlert('Fehler beim Laden der Mitgliedsdaten', 'error');
             }
         }
-
+// SEPA-Button anzeigen/verstecken
+const sepaButton = document.getElementById('sepaPaymentMethod');
+if (sepaButton) {
+    sepaButton.style.display = selectedMember.sepaActive ? 'block' : 'none';
+}
         // Produkte rendern
         function renderProducts() {
             const grid = document.getElementById('productsGrid');
@@ -1016,7 +1021,6 @@ grid.innerHTML = clothingItems.map(item => {
         </div>
     `;
 }).join('');
-
             // Event Listeners für Produktkarten
             document.querySelectorAll('.product-card').forEach(card => {
                 card.addEventListener('click', (e) => {
@@ -1220,7 +1224,7 @@ grid.innerHTML = clothingItems.map(item => {
                 <div style="margin-bottom: 10px;">
                 <div class="order-detail-row">
                     <span>Bestellnummer:</span>
-                    <strong>#${orderResult.order_number || orderResult.id}</strong>
+                    <strong>#${orderResult.id}</strong>
                 </div>
                 <div class="order-detail-row">
                     <span>Besteller:</span>
@@ -1267,28 +1271,23 @@ grid.innerHTML = clothingItems.map(item => {
                         <strong>✅ SEPA-Lastschrift</strong><br>
                         <strong>Von IBAN:</strong> ${memberIban}<br>
                         Der Betrag wird automatisch von deinem Konto abgebucht.<br>
+                        Du erhältst eine Benachrichtigung vor dem Einzug.
                     </div>
                 `;
             }
 
-// PayPal-Info
-if (orderResult.payment_method === 'paypal') {
-    const paypalAccount = settings.paypal_account || 'saarcade@example.com';
-    orderDetailsContainer.innerHTML += `
-        <div style="margin-top: 20px; padding: 15px; background: #f0f9ff; border-radius: 8px; text-align: left;">
-            <strong>💰 PayPal</strong><br>
-            Scanne den QR-Code unten oder zahle direkt an:<br>
-            <strong>PayPal:</strong> ${paypalAccount}<br>
-            <div style="margin-top: 10px; padding: 10px; background: white; border-radius: 4px;">
-                <strong>Verwendungszweck:</strong><br>
-                Bestellung #${orderResult.order_number || orderResult.id}
-            </div>
-            <p style="font-size: 0.85em; color: #e53e3e; margin-top: 8px;">
-                ⚠️ Bitte gib den Verwendungszweck im Nachrichtenfeld bei PayPal ein!
-            </p>
-        </div>
-    `;
-}
+            // PayPal-Info
+            if (orderResult.payment_method === 'paypal') {
+                const paypalAccount = settings.paypal_account || 'saarcade@example.com';
+                orderDetailsContainer.innerHTML += `
+                    <div style="margin-top: 20px; padding: 15px; background: #fef5e7; border-radius: 8px; text-align: left;">
+                        <strong>💰 PayPal</strong><br>
+                        Verwende den QR-Code unten oder zahle direkt an:<br>
+                        <strong>PayPal:</strong> ${paypalAccount}
+                    </div>
+                `;
+            }
+
             // QR-Code generieren (je nach Zahlungsart)
             if (orderResult.payment_method === 'transfer' || orderResult.payment_method === 'paypal') {
                 generatePaymentQR(orderResult);
@@ -1333,24 +1332,20 @@ EUR${amount}
 
 ${purpose}`;
                 
-} else if (orderResult.payment_method === 'paypal') {
-    paymentInfo = `
-        <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; margin-top: 15px;">
-            <p style="margin-bottom: 10px;"><strong>💰 PayPal</strong></p>
-            <p style="font-size: 0.9em; margin: 10px 0;">Scanne den QR-Code oder sende manuell an:</p>
-            <p style="font-size: 0.9em; font-family: monospace; background: white; padding: 10px; border-radius: 4px;">
-                <strong>PayPal:</strong> ${settings.paypal_address || 'paypal@saarcade.de'}
-            </p>
-            <p style="font-size: 0.9em; font-family: monospace; background: white; padding: 10px; border-radius: 4px; margin-top: 10px;">
-                <strong>Verwendungszweck:</strong><br>
-                Bestellung #${orderResult.order_number}
-            </p>
-            <p style="font-size: 0.85em; color: #e53e3e; margin-top: 10px;">
-                ⚠️ Bitte gib den Verwendungszweck im Nachrichtenfeld bei PayPal ein!
-            </p>
-        </div>
-    `;
-}            try {
+            } else if (orderResult.payment_method === 'paypal') {
+                // PayPal.Me Link (muss in Einstellungen konfiguriert werden)
+                const paypalAccount = settings.paypal_account || 'saarcade';
+                qrData = `https://paypal.me/${paypalAccount}/${orderResult.total.toFixed(2)}`;
+            }
+
+            // Prüfe ob QRCode Library geladen ist
+            if (typeof QRCode === 'undefined') {
+                qrCodeElement.innerHTML = '<p style="color: #e53e3e;">QR-Code konnte nicht geladen werden. Bitte nutze die Bankdaten oben.</p>';
+                console.error('QRCode library not loaded');
+                return;
+            }
+
+            try {
                 new QRCode(qrCodeElement, {
                     text: qrData,
                     width: 160,
@@ -1384,7 +1379,7 @@ ${purpose}`;
             }, 4000);
         }
 
-      let currentProduct = null;
+            let currentProduct = null;
 let selectedColor = null;
 let selectedSize = null;
 let modalQuantity = 1;
@@ -1449,7 +1444,6 @@ function openProductModal(productId) {
     document.getElementById('modalQuantity').textContent = modalQuantity;
     document.getElementById('productModal').style.display = 'block';
 }
-            
 function closeProductModal() {
     document.getElementById('productModal').style.display = 'none';
     currentProduct = null;
@@ -1523,11 +1517,11 @@ window.onclick = function(event) {
     if (event.target === modal) {
         closeProductModal();
     }
-}      
+}
             
     </script>
-    
-    <!-- Produkt-Auswahl Modal -->
+
+<!-- Produkt-Auswahl Modal -->
 <div class="modal" id="productModal">
     <div class="modal-content" style="max-width: 600px;">
         <span class="close" onclick="closeProductModal()">&times;</span>
