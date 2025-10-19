@@ -6337,18 +6337,18 @@ function quickPurchase(productId) {
             }
         }
 
-        function downloadFile(content, filename, type) {
-            const BOM = '\uFEFF';
-            const blob = new Blob([BOM + content], { type: contentType + ';charset=utf-8;' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-        }
+function downloadFile(content, filename, type) {
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + content], { type: type + ';charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
 
         // ============ DRAG & DROP ============
         
