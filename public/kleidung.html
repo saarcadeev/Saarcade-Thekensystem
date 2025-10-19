@@ -755,9 +755,15 @@
                 </div>
 
                 <div class="selected-member" id="selectedMember">
-                    <h3 id="selectedMemberName"></h3>
-                    <p id="selectedMemberDetails"></p>
-                </div>
+                    <div style="flex: 1;">
+                        <div class="selected-member-name" id="selectedMemberName"></div>
+                        <div class="selected-member-details" id="selectedMemberDetails"></div>
+                    </div>
+                    <button onclick="openPinModal()" style="background: #667eea; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; margin-right: 10px; font-size: 0.9em;">
+                        🔒 PIN
+                    </button>
+                    <button onclick="clearMember()">✕</button>
+                <div>
             </div>
 
             <!-- Schritt 2: Artikel auswählen -->
@@ -1181,6 +1187,87 @@ grid.innerHTML = clothingItems.map(item => {
             updateSubmitButton();
         }
 
+function openPinModal() {
+    const modal = document.getElementById('pinModal');
+    const userInfo = document.getElementById('pinUserInfo');
+    const form = document.getElementById('pinForm');
+    
+    if (!selectedMember) {
+        userInfo.innerHTML = '<strong>❌ Bitte zuerst ein Mitglied auswählen</strong>';
+        form.style.display = 'none';
+    } else {
+        userInfo.innerHTML = `
+            <strong>${selectedMember.firstName} ${selectedMember.lastName}</strong><br>
+            <small>Aktuelle PIN: ${selectedMember.userPin ? '****' : 'Nicht gesetzt'}</small>
+        `;
+        
+        form.style.display = 'block';
+        document.getElementById('newPin').value = '';
+        document.getElementById('confirmPin').value = '';
+    }
+    
+    modal.style.display = 'flex';
+    
+    if (selectedMember) {
+        setTimeout(() => {
+            document.getElementById('newPin').focus();
+        }, 300);
+    }
+}
+
+function closePinModal() {
+    document.getElementById('pinModal').style.display = 'none';
+    document.getElementById('newPin').value = '';
+    document.getElementById('confirmPin').value = '';
+}
+
+async function savePinSettings() {
+    if (!selectedMember) {
+        showAlert('Bitte zuerst Mitglied auswählen', 'error');
+        return;
+    }
+
+    const newPin = document.getElementById('newPin').value;
+    const confirmPin = document.getElementById('confirmPin').value;
+
+    if (newPin && newPin !== confirmPin) {
+        showAlert('PINs stimmen nicht überein', 'error');
+        return;
+    }
+
+    if (newPin && (newPin.length !== 4 || !/^\d{4}$/.test(newPin))) {
+        showAlert('PIN muss genau 4 Ziffern enthalten', 'error');
+        return;
+    }
+
+    try {
+        const updateData = {
+            user_pin: newPin || null
+        };
+
+        await apiCall(`/users/${selectedMember.id}`, {
+            method: 'PUT',
+            body: JSON.stringify(updateData)
+        });
+
+        // Update selectedMember
+        selectedMember.userPin = newPin || null;
+        
+        // Status aktualisieren
+        const pinStatus = selectedMember.userPin ? '🔒 PIN gesetzt' : '🔓 Keine PIN';
+        const sepaStatus = selectedMember.sepaActive ? '✅ SEPA-Mandat vorhanden' : '⚠️ Kein SEPA-Mandat';
+        let detailsText = `${sepaStatus} • ${pinStatus}`;
+        document.getElementById('selectedMemberDetails').textContent = detailsText;
+
+        showAlert(newPin ? '✅ PIN erfolgreich gesetzt' : '✅ PIN erfolgreich entfernt', 'success');
+        closePinModal();
+        
+    } catch (error) {
+        console.error('PIN save error:', error);
+        showAlert('Fehler beim Speichern der PIN: ' + error.message, 'error');
+    }
+}
+            
         function updateSubmitButton() {
             const submitButton = document.getElementById('submitOrder');
             const canSubmit = selectedMember && cart.length > 0 && selectedPaymentMethod;
@@ -1293,9 +1380,7 @@ grid.innerHTML = clothingItems.map(item => {
                 orderDetailsContainer.innerHTML += `
                     <div style="margin-top: 20px; padding: 15px; background: #e6fffa; border-radius: 8px; text-align: left;">
                         <strong>✅ SEPA-Lastschrift</strong><br>
-                        <strong>Von IBAN:</strong> ${memberIban}<br>
-                        Der Betrag wird automatisch von deinem Konto abgebucht.<br>
-                        Du erhältst eine Benachrichtigung vor dem Einzug.
+                        Der Betrag wird von dem von dir angegebenen Konto abgebucht.<br>
                     </div>
                 `;
             }
@@ -1616,6 +1701,44 @@ function addToCartFromModal() {
         </div>
     </div>
 </div>
-    
+
+<!-- PIN-Verwaltungs-Modal -->
+<div class="modal" id="pinModal">
+    <div class="modal-content" style="max-width: 450px;">
+        <span class="close" onclick="closePinModal()">&times;</span>
+        <h2>🔒 PIN-Verwaltung</h2>
+        
+        <div id="pinUserInfo" style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+            <strong>Bitte zuerst Mitglied auswählen</strong>
+        </div>
+        
+        <form id="pinForm" style="display: none;">
+            <div class="form-group">
+                <label>Neue PIN (4-stellig)</label>
+                <input type="password" id="newPin" maxlength="4" placeholder="0000" style="text-align: center; font-size: 1.3em; letter-spacing: 0.3em; padding: 12px;">
+                <small style="color: #666;">Nur Ziffern (0-9)</small>
+            </div>
+            
+            <div class="form-group">
+                <label>PIN bestätigen</label>
+                <input type="password" id="confirmPin" maxlength="4" placeholder="0000" style="text-align: center; font-size: 1.3em; letter-spacing: 0.3em; padding: 12px;">
+            </div>
+            
+            <div style="background: #fff5e6; padding: 12px; border-radius: 8px; margin: 15px 0; font-size: 0.9em; color: #666;">
+                ℹ️ Die PIN wird bei der Mitgliederauswahl abgefragt und schützt dein Konto.
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button type="button" class="btn btn-secondary" onclick="closePinModal()" style="flex: 1;">
+                    Abbrechen
+                </button>
+                <button type="button" class="btn btn-success" onclick="savePinSettings()" style="flex: 2;">
+                    💾 PIN speichern
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+            
 </body>
 </html>
