@@ -918,9 +918,15 @@ document.addEventListener('DOMContentLoaded', function() {
         passwordInput.focus();
     }
     
-    // Prüfen ob bereits eingeloggt (in dieser Session)
-    if (sessionStorage.getItem('clothingAccess') === 'granted') {
+// Prüfen ob bereits eingeloggt (in dieser Session)
+    const hasAccess = sessionStorage.getItem('clothingAccess');
+    console.log('Clothing Access Check:', hasAccess); // Debug
+    
+    if (hasAccess === 'granted') {
         document.getElementById('passwordOverlay').style.display = 'none';
+    } else {
+        // Sicherstellen, dass Overlay angezeigt wird
+        document.getElementById('passwordOverlay').style.display = 'flex';
     }
 });
 
