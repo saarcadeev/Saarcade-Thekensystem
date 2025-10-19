@@ -583,7 +583,6 @@ if (pathParts[0] === 'products' && pathParts[1] && method === 'PUT') {
                 .from('transactions')
                 .select('*')
                 .order('created_at', { ascending: false })
-                .limit(100);
             
             if (error) throw error;
             return res.status(200).json(data || []);
