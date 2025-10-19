@@ -1322,8 +1322,16 @@ ${purpose}`;
         }
 
 function openProductModal(productId) {
+    console.log('Opening modal for product:', productId);
+    console.log('Available items:', clothingItems);
+    
     const product = clothingItems.find(item => item.id === productId);
-    if (!product) return;
+   
+    if (!product) {
+        console.error('Produkt nicht gefunden:', productId);
+        showAlert('Produkt konnte nicht geladen werden', 'error');
+        return;
+    }
     
     currentProduct = product;
     selectedColor = null;
