@@ -27,22 +27,43 @@
             overflow: hidden;
         }
 
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
+.header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px 30px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
 
-        .header h1 {
-            font-size: 2em;
-            margin-bottom: 10px;
-        }
+.header-logo {
+    background: white;
+    padding: 10px;
+    border-radius: 12px;
+    flex-shrink: 0;
+}
 
-        .header p {
-            opacity: 0.9;
-            font-size: 1.1em;
-        }
+.header-logo img {
+    max-width: 120px !important;
+    height: auto;
+    display: block;
+}
+
+.header-text {
+    flex: 1;
+    text-align: left;
+}
+
+.header h1 {
+    font-size: 1.6em;
+    margin-bottom: 5px;
+}
+
+.header p {
+    opacity: 0.9;
+    font-size: 0.95em;
+    margin: 0;
+}
 
         .main-content {
             display: grid;
@@ -766,15 +787,16 @@
     </div>
     
     <div class="container">
-        <div class="logo" style="text-align: center; padding-top: 20px;">
-    <img src="Saarcade-Logo.png" alt="Saarcade e.V. Logo" style="max-width: 200px; height: auto;">
+<div class="header">
+    <a href="/" style="position: absolute; top: 15px; left: 15px; color: white; text-decoration: none; font-size: 1.2em; z-index: 10;">← Zurück</a>
+    <div class="header-logo">
+        <img src="Saarcade-Logo.png" alt="Saarcade e.V. Logo">
+    </div>
+    <div class="header-text">
+        <h1>👕 Vereinskleidung bestellen</h1>
+        <p>Saarcade e.V. - Bestellungen für Mitglieder, kein Merchandising</p>
+    </div>
 </div>
-        <div class="header">
-            <a href="/" style="position: absolute; top: 20px; left: 20px; color: white; text-decoration: none; font-size: 1.5em;">← Zurück</a>
-            <h1>👕 Vereinskleidung bestellen</h1>
-            <p>Saarcade e.V. - Bestellungen für Mitglieder, kein Merchandising</p>
-        </div>
-
         <div class="main-content">
             <div class="left-column">
                 <!-- Alerts -->
