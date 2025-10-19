@@ -1331,7 +1331,6 @@ ${purpose}`;
     paymentInfo = `
         <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; margin-top: 15px;">
             <p style="margin-bottom: 10px;"><strong>💰 PayPal</strong></p>
-            <div id="qrCodeContainer"></div>
             <p style="font-size: 0.9em; margin: 10px 0;">Scanne den QR-Code oder sende manuell an:</p>
             <p style="font-size: 0.9em; font-family: monospace; background: white; padding: 10px; border-radius: 4px;">
                 <strong>PayPal:</strong> ${settings.paypal_address || 'paypal@saarcade.de'}
@@ -1345,8 +1344,7 @@ ${purpose}`;
             </p>
         </div>
     `;
-}
-            try {
+}            try {
                 new QRCode(qrCodeElement, {
                     text: qrData,
                     width: 160,
