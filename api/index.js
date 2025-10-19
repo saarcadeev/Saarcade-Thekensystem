@@ -216,13 +216,12 @@ module.exports = async (req, res) => {
 
         // ============ USERS ENDPUNKTE ============
         
-        // GET /users - Alle Benutzer
-        if (path === '/users' && method === 'GET') {
-            const { data, error } = await supabase
-                .from('users')
-                .select('id, first_name, last_name, email, role, balance, sepa_active, iban, barcodes')
-                .order('first_name');
-            
+// GET /users - Alle Benutzer
+if (path === '/users' && method === 'GET') {
+    const { data, error } = await supabase
+        .from('users')
+        .select('id, first_name, last_name, email, role, balance, barcodes, user_pin, pin_require_for_name_search, pin_require_for_barcode')
+        .order('first_name');            
             if (error) throw error;
             return res.status(200).json(data || []);
         }// GET /users/id/{id} - Benutzer per ID
