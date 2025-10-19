@@ -1021,31 +1021,6 @@ grid.innerHTML = clothingItems.map(item => {
         </div>
     `;
 }).join('');
-            // Event Listeners für Produktkarten
-            document.querySelectorAll('.product-card').forEach(card => {
-                card.addEventListener('click', (e) => {
-                    if (!e.target.closest('button')) {
-                        card.classList.toggle('selected');
-                    }
-                });
-            });
-
-            // Event Listeners für Farb- und Größenauswahl
-            document.querySelectorAll('.color-btn').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    this.parentElement.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                });
-            });
-
-            document.querySelectorAll('.size-btn').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    this.parentElement.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                });
-            });
         }
 
         function changeQuantity(productId, change) {
