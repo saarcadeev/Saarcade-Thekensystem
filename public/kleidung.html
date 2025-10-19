@@ -852,6 +852,71 @@ let selectedColor = null;
 let selectedSize = null;
 let modalQuantity = 1;
 
+function cancelPinInput() {
+    document.getElementById('pinInputModal').style.display = 'none';
+    pendingMemberForPin = null;
+    document.getElementById('pinInput').value = '';
+    document.getElementById('memberSearch').value = '';
+}
+
+function validatePin() {
+    if (!pendingMemberForPin) return;
+    
+    const enteredPin = document.getElementById('pinInput').value.trim();
+    
+    if (!enteredPin) {
+        showAlert('Bitte PIN eingeben', 'error');
+        return;
+    }
+    
+    if (enteredPin === pendingMemberForPin.userPin) {
+        // PIN korrekt
+        selectedMember = pendingMemberForPin;
+        pendingMemberForPin = null;
+        
+        document.getElementById('pinInputModal').style.display = 'none';
+        document.getElementById('pinInput').value = '';
+        
+        // Mitglied anzeigen
+        document.getElementById('memberSearch').value = `${selectedMember.firstName} ${selectedMember.lastName}`;
+        document.getElementById('selectedMemberName').textContent = `${selectedMember.firstName} ${selectedMember.lastName}`;
+        
+        // SEPA-Status und PIN-Status anzeigen
+        const pinStatus = '🔒 PIN gesetzt';
+        const sepaStatus = selectedMember.sepaActive ? '✅ SEPA-Mandat vorhanden' : '⚠️ Kein SEPA-Mandat';
+        let detailsText = `${sepaStatus} • ${pinStatus}`;
+        
+        document.getElementById('selectedMemberDetails').textContent = detailsText;
+        document.getElementById('selectedMember').classList.add('active');
+        
+        // SEPA-Button anzeigen/verstecken
+        const sepaButton = document.getElementById('sepaPaymentMethod');
+        if (sepaButton) {
+            sepaButton.style.display = selectedMember.sepaActive ? 'block' : 'none';
+        }
+        
+        updateSubmitButton();
+        showAlert(`✓ PIN korrekt - ${selectedMember.firstName} ${selectedMember.lastName} ausgewählt`, 'success');
+    } else {
+        // PIN falsch
+        showAlert('❌ Falsche PIN!', 'error');
+        document.getElementById('pinInput').value = '';
+        document.getElementById('pinInput').focus();
+    }
+}
+
+// Enter-Taste im PIN-Feld
+document.addEventListener('DOMContentLoaded', function() {
+    const pinInput = document.getElementById('pinInput');
+    if (pinInput) {
+        pinInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                validatePin();
+            }
+        });
+    }
+});
+            
 async function loadSettings() {
     try {
         settings = await apiCall('/settings');
@@ -965,36 +1030,53 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Lade vollständige Mitgliedsdaten inkl. SEPA-Info
                 const member = await apiCall(`/users/id/${id}`);
   
-                selectedMember = {
-                    id: member.id,
-                    firstName: member.first_name,
-                    lastName: member.last_name,
-                    memberNumber: member.member_number || member.id,
-                    sepaActive: member.sepa_active || false,
-                    iban: member.iban || null
-                };
-              
-                document.getElementById('memberSearch').value = `${firstName} ${lastName}`;
-                document.getElementById('suggestionsDropdown').classList.remove('active');
-                
-                document.getElementById('selectedMemberName').textContent = `${firstName} ${lastName}`;
-                
-// SEPA-Status anzeigen
-let detailsText = selectedMember.sepaActive 
-    ? '✅ SEPA-Mandat vorhanden' 
-    : '⚠️ Kein SEPA-Mandat';
-                
-                document.getElementById('selectedMemberDetails').textContent = detailsText;
-                document.getElementById('selectedMember').classList.add('active');
+selectedMember = {
+    id: member.id,
+    firstName: member.first_name,
+    lastName: member.last_name,
+    sepaActive: member.sepa_active || false,
+    iban: member.iban || null,
+    userPin: member.user_pin || null
+};
 
-                // SEPA-Button anzeigen/verstecken
-                const sepaButton = document.getElementById('sepaPaymentMethod');
-                if (sepaButton) {
-                sepaButton.style.display = selectedMember.sepaActive ? 'block' : 'none';
-                }         
-                
-                updateSubmitButton();
-                showAlert(`Mitglied "${firstName} ${lastName}" ausgewählt`, 'success');
+// PIN-Prüfung
+if (selectedMember.userPin) {
+    pendingMemberForPin = selectedMember;
+    selectedMember = null;
+    document.getElementById('suggestionsDropdown').classList.remove('active');
+    
+    // PIN-Modal öffnen
+    document.getElementById('pinInputUserInfo').innerHTML = `
+        <strong>${firstName} ${lastName}</strong><br>
+        <small>Bitte PIN eingeben um fortzufahren</small>
+    `;
+    document.getElementById('pinInput').value = '';
+    document.getElementById('pinInputModal').style.display = 'flex';
+    setTimeout(() => document.getElementById('pinInput').focus(), 100);
+    return;
+}
+
+// Normal weitermachen wenn keine PIN
+document.getElementById('memberSearch').value = `${firstName} ${lastName}`;
+document.getElementById('suggestionsDropdown').classList.remove('active');
+document.getElementById('selectedMemberName').textContent = `${firstName} ${lastName}`;
+
+// SEPA-Status und PIN-Status anzeigen
+const pinStatus = selectedMember.userPin ? '🔒 PIN gesetzt' : '🔓 Keine PIN';
+const sepaStatus = selectedMember.sepaActive ? '✅ SEPA-Mandat vorhanden' : '⚠️ Kein SEPA-Mandat';
+let detailsText = `${sepaStatus} • ${pinStatus}`;
+
+document.getElementById('selectedMemberDetails').textContent = detailsText;
+document.getElementById('selectedMember').classList.add('active');
+
+// SEPA-Button anzeigen/verstecken
+const sepaButton = document.getElementById('sepaPaymentMethod');
+if (sepaButton) {
+    sepaButton.style.display = selectedMember.sepaActive ? 'block' : 'none';
+}
+
+updateSubmitButton();
+showAlert(`Mitglied "${firstName} ${lastName}" ausgewählt`, 'success');
             } catch (error) {
                 console.error('Fehler beim Laden der Mitgliedsdaten:', error);
                 showAlert('Fehler beim Laden der Mitgliedsdaten', 'error');
@@ -1504,6 +1586,34 @@ function addToCartFromModal() {
         <button class="btn btn-primary" onclick="addToCartFromModal()" style="width: 100%; padding: 15px; font-size: 1.1em; margin-top: 20px;">
             🛒 In den Warenkorb
         </button>
+    </div>
+</div>
+
+<!-- PIN-Eingabe Modal -->
+<div class="modal" id="pinInputModal">
+    <div class="modal-content" style="max-width: 400px;">
+        <h2>🔒 PIN erforderlich</h2>
+        <div id="pinInputUserInfo" style="text-align: center; margin: 15px 0; color: #666;">
+            <!-- Wird dynamisch befüllt -->
+        </div>
+        
+        <input 
+            type="password" 
+            id="pinInput" 
+            maxlength="4"
+            placeholder="PIN"
+            style="width: 100%; padding: 15px; font-size: 1.5em; text-align: center; letter-spacing: 0.3em; border: 2px solid #e2e8f0; border-radius: 8px; margin: 15px 0;"
+            autocomplete="off"
+        >
+        
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="btn btn-secondary" onclick="cancelPinInput()" style="flex: 1;">
+                Abbrechen
+            </button>
+            <button class="btn btn-primary" onclick="validatePin()" style="flex: 2;">
+                ✓ Bestätigen
+            </button>
+        </div>
     </div>
 </div>
     
