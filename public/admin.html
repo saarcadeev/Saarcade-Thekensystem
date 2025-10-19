@@ -5592,8 +5592,7 @@ function exportBillingDetailsCSV() {
             const amount = u.billing_amount || Math.abs(u.balance) || 0;
             const isSEPA = u.sepa_active && u.iban ? 'Ja' : 'Nein';
             
-            return [
-return [
+           return [
     billing.billing_number,
     `${u.first_name} ${u.last_name}`,
     u.first_name,
@@ -5626,8 +5625,7 @@ async function exportUserTransactionsCSV(userId, firstName, lastName) {
             ...userTransactions.map(t => {
                 const date = new Date(t.created_at);
                 const billing = billings.find(b => b.id === t.billing_id);
-                
-                return [
+
 return [
     date.toLocaleDateString('de-DE'),
     date.toLocaleTimeString('de-DE'),
