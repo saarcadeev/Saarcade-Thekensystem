@@ -1220,7 +1220,7 @@ grid.innerHTML = clothingItems.map(item => {
                 <div style="margin-bottom: 10px;">
                 <div class="order-detail-row">
                     <span>Bestellnummer:</span>
-                    <strong>#${orderResult.id}</strong>
+                    <strong>#${orderResult.order_number || orderResult.id}</strong>
                 </div>
                 <div class="order-detail-row">
                     <span>Besteller:</span>
@@ -1271,18 +1271,24 @@ grid.innerHTML = clothingItems.map(item => {
                 `;
             }
 
-            // PayPal-Info
-            if (orderResult.payment_method === 'paypal') {
-                const paypalAccount = settings.paypal_account || 'saarcade@example.com';
-                orderDetailsContainer.innerHTML += `
-                    <div style="margin-top: 20px; padding: 15px; background: #fef5e7; border-radius: 8px; text-align: left;">
-                        <strong>💰 PayPal</strong><br>
-                        Verwende den QR-Code unten oder zahle direkt an:<br>
-                        <strong>PayPal:</strong> ${paypalAccount}
-                    </div>
-                `;
-            }
-
+// PayPal-Info
+if (orderResult.payment_method === 'paypal') {
+    const paypalAccount = settings.paypal_account || 'saarcade@example.com';
+    orderDetailsContainer.innerHTML += `
+        <div style="margin-top: 20px; padding: 15px; background: #f0f9ff; border-radius: 8px; text-align: left;">
+            <strong>💰 PayPal</strong><br>
+            Scanne den QR-Code unten oder zahle direkt an:<br>
+            <strong>PayPal:</strong> ${paypalAccount}<br>
+            <div style="margin-top: 10px; padding: 10px; background: white; border-radius: 4px;">
+                <strong>Verwendungszweck:</strong><br>
+                Bestellung #${orderResult.order_number || orderResult.id}
+            </div>
+            <p style="font-size: 0.85em; color: #e53e3e; margin-top: 8px;">
+                ⚠️ Bitte gib den Verwendungszweck im Nachrichtenfeld bei PayPal ein!
+            </p>
+        </div>
+    `;
+}
             // QR-Code generieren (je nach Zahlungsart)
             if (orderResult.payment_method === 'transfer' || orderResult.payment_method === 'paypal') {
                 generatePaymentQR(orderResult);
