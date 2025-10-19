@@ -4495,8 +4495,7 @@ for (const [billingId, transactions] of Object.entries(billingGroups).sort((a, b
                             <span style="margin-left: 15px; color: #666;">(${transactions.length} Transaktionen)</span>
                         </div>
                             <button class="btn btn-success" style="margin-left: 10px; padding: 5px 10px; font-size: 0.8em;" 
-                            onclick="event.stopPropagation(); exportUserPeriodCSV(${u.id}, ${billing.id}, '${u.first_name}', '${u.last_name}', '${billing.billing_number}')">
-                            📊 CSV
+                            onclick="event.stopPropagation(); exportUserPeriodCSV(${u.id}, ${billing.id})"
                             </button>
                         </div>
                     <div id="billing-${billingId}" style="display: none;">
@@ -4575,6 +4574,18 @@ for (const [billingId, transactions] of Object.entries(billingGroups).sort((a, b
             }).join('');
         }
 
+async function exportSinglePeriodCSVSafe(transactionIds, firstName, lastName, periodLabel) {
+    try {
+        const ids = transactionIds.split(',').map(id => parseInt(id));
+        const allTransactions = await apiCall('/api/transactions');
+        const transactions = allTransactions.filter(t => ids.includes(t.id));
+        exportSinglePeriodCSV(transactions, firstName, lastName, periodLabel);
+    } catch (error) {
+        console.error('Fehler:', error);
+        showAlert('Fehler beim CSV-Export', 'error');
+    }
+}
+    
 async function viewBillingDetails(billingId) {
     try {
         showLoading(true);
@@ -4694,7 +4705,7 @@ function showBillingDetails(billing, sepaUsers, nonSepaUsers) {
                             <span style="margin-left: 15px; color: #666;">(${u.transaction_count} Transaktionen)</span>
                         </div>
 <button class="btn btn-success" style="margin-left: 10px; padding: 5px 10px; font-size: 0.8em;" 
-        onclick="event.stopPropagation(); exportUserPeriodCSV(${u.id}, ${billing.id}, '${u.first_name}', '${u.last_name}', '${billing.billing_number}')">
+       onclick="event.stopPropagation(); exportUserPeriodCSV(${u.id}, ${billing.id})"
     📊 CSV
 </button>
                     </div>
@@ -5635,8 +5646,22 @@ async function exportUserTransactionsCSV(userId, firstName, lastName) {
     }
 }
 
-async function exportUserPeriodCSV(userId, billingId, firstName, lastName, periodLabel) {
+async function exportUserPeriodCSV(userId, billingId) {
     try {
+        // Hole die Benutzerdaten
+        const user = users.find(u => u.id === userId);
+        if (!user) {
+            showAlert('Benutzer nicht gefunden', 'error');
+            return;
+        }
+        
+        const firstName = user.first_name;
+        const lastName = user.last_name;
+        
+        // Hole die Abrechnung für die Periodenlabel
+        const billing = billings.find(b => b.id === billingId);
+        const periodLabel = billing ? billing.billing_number : 'unbekannt';
+        
         // Verwende Cache falls vorhanden
         let userTransactions = billingTransactionsCache[userId];
         
