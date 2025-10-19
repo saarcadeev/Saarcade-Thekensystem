@@ -2129,22 +2129,20 @@ function updateCartView() {
             }
         }
 
-        function requiresPinCheck(user, isFromBarcode = false) {
-            if (!user.user_pin) {
-                return false;
-            }
-            
-            if (isFromBarcode && user.pin_require_for_barcode) {
-                return true;
-            }
-            
-            if (!isFromBarcode && user.pin_require_for_name_search) {
-                return true;
-            }
-            
-            return false;
-        }
-
+function requiresPinCheck(user, isFromBarcode = false) {
+    // Prüfe ob überhaupt eine PIN gesetzt ist
+    if (!user.user_pin) {
+        return false;
+    }
+    
+    // Unterstütze beide Schreibweisen (snake_case aus DB und camelCase)
+    if (isFromBarcode) {
+        return user.pin_require_for_barcode || user.pinRequireForBarcode || false;
+    } else {
+        return user.pin_require_for_name_search || user.pinRequireForNameSearch || false;
+    }
+}
+        
         function promptForPin(user, isFromBarcode = false) {
             pendingUserForPin = user;
             const modal = document.getElementById('pinInputModal');
