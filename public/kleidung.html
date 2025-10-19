@@ -1385,17 +1385,21 @@ async function savePinSettings() {
                 `;
             }
 
-            // PayPal-Info
-            if (orderResult.payment_method === 'paypal') {
-                const paypalAccount = settings.paypal_account || 'saarcade@example.com';
-                orderDetailsContainer.innerHTML += `
-                    <div style="margin-top: 20px; padding: 15px; background: #fef5e7; border-radius: 8px; text-align: left;">
-                        <strong>💰 PayPal</strong><br>
-                        Verwende den QR-Code unten oder zahle direkt an:<br>
-                        <strong>PayPal:</strong> ${paypalAccount}
-                    </div>
-                `;
-            }
+// PayPal-Info
+if (orderResult.payment_method === 'paypal') {
+    const paypalAccount = settings.paypal_account || 'saarcade@example.com';
+    orderDetailsContainer.innerHTML += `
+        <div style="margin-top: 20px; padding: 15px; background: #fef5e7; border-radius: 8px; text-align: left;">
+            <strong>💰 PayPal</strong><br>
+            Verwende den QR-Code unten oder zahle direkt an:<br>
+            <strong>PayPal:</strong> ${paypalAccount}<br>
+            <br>
+            <strong>⚠️ Wichtig:</strong><br>
+            • Bitte als <strong>"Geld an Freunde senden"</strong> zahlen<br>
+            • <strong>Verwendungszweck:</strong> Kleidung ${orderResult.member_name} #${orderResult.id}
+        </div>
+    `;
+}
 
             // QR-Code generieren (je nach Zahlungsart)
             if (orderResult.payment_method === 'transfer' || orderResult.payment_method === 'paypal') {
