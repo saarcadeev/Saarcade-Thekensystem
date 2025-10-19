@@ -564,6 +564,95 @@
             margin-bottom: 15px;
         }
 
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 30px;
+    border-radius: 15px;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.close {
+    position: absolute;
+    right: 20px;
+    top: 15px;
+    font-size: 2em;
+    font-weight: bold;
+    color: #999;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.close:hover {
+    color: #333;
+}
+
+.color-btn, .size-btn {
+    padding: 10px 20px;
+    border: 2px solid #e2e8f0;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.color-btn:hover, .size-btn:hover {
+    border-color: #667eea;
+    background: #f7fafc;
+}
+
+.color-btn.selected, .size-btn.selected {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+.quantity-btn {
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.3s;
+}
+
+.quantity-btn:hover {
+    background: #5568d3;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: transform 0.3s;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+}
+        
         @media (max-width: 768px) {
             .main-content {
                 padding: 20px;
@@ -1285,6 +1374,172 @@ ${purpose}`;
                 setTimeout(() => alert.remove(), 300);
             }, 4000);
         }
+
+      let currentProduct = null;
+let selectedColor = null;
+let selectedSize = null;
+let modalQuantity = 1;
+
+function openProductModal(productId) {
+    const product = clothingItems.find(item => item.id === productId);
+    if (!product) return;
+    
+    currentProduct = product;
+    selectedColor = null;
+    selectedSize = null;
+    modalQuantity = 1;
+    
+    // Modal befüllen
+    document.getElementById('modalProductName').textContent = product.name;
+    document.getElementById('modalProductPrice').textContent = `${product.price.toFixed(2)} €`;
+    
+    // Bild oder Emoji
+    const imageContainer = document.getElementById('modalProductImage');
+    if (product.image_url) {
+        imageContainer.innerHTML = `<img src="${product.image_url}" alt="${product.name}" style="max-width: 200px; max-height: 200px; border-radius: 12px;">`;
+    } else {
+        imageContainer.innerHTML = `<div style="font-size: 5em;">${product.emoji || '👕'}</div>`;
+    }
+    
+    // Farben
+    const colorContainer = document.getElementById('modalColorOptions');
+    if (product.colors && product.colors.length > 0) {
+        colorContainer.innerHTML = product.colors.map(color => 
+            `<button class="color-btn" onclick="selectColor('${color}')">${color}</button>`
+        ).join('');
+    } else {
+        colorContainer.innerHTML = '<p style="color: #666;">Keine Farbauswahl verfügbar</p>';
+    }
+    
+    // Größen
+    const sizeContainer = document.getElementById('modalSizeOptions');
+    if (product.sizes && product.sizes.length > 0) {
+        sizeContainer.innerHTML = product.sizes.map(size => 
+            `<button class="size-btn" onclick="selectSize('${size}')">${size}</button>`
+        ).join('');
+    } else {
+        sizeContainer.innerHTML = '<p style="color: #666;">Keine Größenauswahl verfügbar</p>';
+    }
+    
+    document.getElementById('modalQuantity').textContent = modalQuantity;
+    document.getElementById('productModal').style.display = 'block';
+}
+
+function closeProductModal() {
+    document.getElementById('productModal').style.display = 'none';
+    currentProduct = null;
+    selectedColor = null;
+    selectedSize = null;
+    modalQuantity = 1;
+}
+
+function selectColor(color) {
+    selectedColor = color;
+    // Alle Color-Buttons zurücksetzen
+    document.querySelectorAll('.color-btn').forEach(btn => {
+        btn.classList.remove('selected');
+        if (btn.textContent === color) {
+            btn.classList.add('selected');
+        }
+    });
+}
+
+function selectSize(size) {
+    selectedSize = size;
+    // Alle Size-Buttons zurücksetzen
+    document.querySelectorAll('.size-btn').forEach(btn => {
+        btn.classList.remove('selected');
+        if (btn.textContent === size) {
+            btn.classList.add('selected');
+        }
+    });
+}
+
+function changeModalQuantity(delta) {
+    modalQuantity = Math.max(1, modalQuantity + delta);
+    document.getElementById('modalQuantity').textContent = modalQuantity;
+}
+
+function addToCartFromModal() {
+    if (!currentProduct) return;
+    
+    // Validierung
+    if (currentProduct.colors && currentProduct.colors.length > 0 && !selectedColor) {
+        showAlert('Bitte wähle eine Farbe aus', 'error');
+        return;
+    }
+    
+    if (currentProduct.sizes && currentProduct.sizes.length > 0 && !selectedSize) {
+        showAlert('Bitte wähle eine Größe aus', 'error');
+        return;
+    }
+    
+    // Zum Warenkorb hinzufügen
+    for (let i = 0; i < modalQuantity; i++) {
+        cart.push({
+            product_id: currentProduct.id,
+            name: currentProduct.name,
+            price: currentProduct.price,
+            color: selectedColor,
+            size: selectedSize,
+            quantity: 1,
+            total: currentProduct.price
+        });
+    }
+    
+    updateCart();
+    closeProductModal();
+    showAlert(`${modalQuantity}x ${currentProduct.name} zum Warenkorb hinzugefügt`, 'success');
+}
+
+// Modal schließen bei Klick außerhalb
+window.onclick = function(event) {
+    const modal = document.getElementById('productModal');
+    if (event.target === modal) {
+        closeProductModal();
+    }
+}      
+            
     </script>
+    
+    <!-- Produkt-Auswahl Modal -->
+<div class="modal" id="productModal">
+    <div class="modal-content" style="max-width: 600px;">
+        <span class="close" onclick="closeProductModal()">&times;</span>
+        <h2 id="modalProductName"></h2>
+        <div id="modalProductImage" style="text-align: center; margin: 20px 0;"></div>
+        <div style="text-align: center; font-size: 1.5em; font-weight: bold; color: #667eea; margin-bottom: 20px;">
+            <span id="modalProductPrice"></span>
+        </div>
+        
+        <div class="form-group">
+            <label>Farbe wählen:</label>
+            <div id="modalColorOptions" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <!-- Farben werden hier eingefügt -->
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>Größe wählen:</label>
+            <div id="modalSizeOptions" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <!-- Größen werden hier eingefügt -->
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>Anzahl:</label>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <button class="quantity-btn" onclick="changeModalQuantity(-1)" style="width: 40px; height: 40px; font-size: 1.5em;">-</button>
+                <span id="modalQuantity" style="font-size: 1.3em; font-weight: bold; min-width: 30px; text-align: center;">1</span>
+                <button class="quantity-btn" onclick="changeModalQuantity(1)" style="width: 40px; height: 40px; font-size: 1.5em;">+</button>
+            </div>
+        </div>
+        
+        <button class="btn btn-primary" onclick="addToCartFromModal()" style="width: 100%; padding: 15px; font-size: 1.1em; margin-top: 20px;">
+            🛒 In den Warenkorb
+        </button>
+    </div>
+</div>
+    
 </body>
 </html>
