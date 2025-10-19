@@ -2130,16 +2130,32 @@ function updateCartView() {
         }
 
 function requiresPinCheck(user, isFromBarcode = false) {
+    console.log('🔍 PIN-Check Debug:', {
+        user_id: user.id,
+        name: `${user.first_name} ${user.last_name}`,
+        has_pin: !!user.user_pin,
+        pin_value: user.user_pin,
+        isFromBarcode: isFromBarcode,
+        pin_require_for_barcode: user.pin_require_for_barcode,
+        pin_require_for_name_search: user.pin_require_for_name_search,
+        complete_user_object: user
+    });
+    
     // Prüfe ob überhaupt eine PIN gesetzt ist
     if (!user.user_pin) {
+        console.log('❌ Keine PIN gesetzt - Skip');
         return false;
     }
     
     // Unterstütze beide Schreibweisen (snake_case aus DB und camelCase)
     if (isFromBarcode) {
-        return user.pin_require_for_barcode || user.pinRequireForBarcode || false;
+        const result = user.pin_require_for_barcode || user.pinRequireForBarcode || false;
+        console.log(`🔍 Barcode-Check: ${result}`);
+        return result;
     } else {
-        return user.pin_require_for_name_search || user.pinRequireForNameSearch || false;
+        const result = user.pin_require_for_name_search || user.pinRequireForNameSearch || false;
+        console.log(`🔍 Name-Check: ${result}`);
+        return result;
     }
 }
         
