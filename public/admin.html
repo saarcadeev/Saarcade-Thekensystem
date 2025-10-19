@@ -4629,6 +4629,8 @@ sepaUsers.forEach(u => {
 nonSepaUsers.forEach(u => {
     billingTransactionsCache[u.id] = u.transactions || [];
 });
+
+showBillingDetails(billing, sepaUsers, nonSepaUsers);
         
     } catch (error) {
         console.error('Fehler beim Laden der Details:', error);
