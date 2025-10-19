@@ -4427,7 +4427,7 @@ function showUserBillingHistory(user, billingGroups, unbilledTransactions) {
             <h3 style="color: #ed8936; margin-bottom: 15px;">⚠️ Noch nicht abgerechnet (${unbilledTransactions.length} Transaktionen - ${unbilledTotal.toFixed(2)}€)</h3>
             
             <div style="margin-bottom: 15px;">
-                <button class="btn btn-warning" onclick='exportSinglePeriodCSV(${JSON.stringify(unbilledTransactions)}, "${user.first_name}", "${user.last_name}", "nicht_abgerechnet")'>
+              <button class="btn btn-warning" onclick='exportTransactionsByIds([${unbilledTransactions.map(t => t.id).join(",")}], "${user.first_name}", "${user.last_name}", "nicht_abgerechnet")'>
                     📊 Diese Transaktionen als CSV exportieren
                 </button>
             </div>
@@ -4494,8 +4494,9 @@ for (const [billingId, transactions] of Object.entries(billingGroups).sort((a, b
                             <span style="margin-left: 15px; color: #e53e3e; font-weight: bold;">${billingTotal.toFixed(2)}€</span>
                             <span style="margin-left: 15px; color: #666;">(${transactions.length} Transaktionen)</span>
                         </div>
-                            <button class="btn btn-success" style="margin-left: 10px; padding: 5px 10px; font-size: 0.8em;" 
-                            onclick="event.stopPropagation(); exportUserPeriodCSV(${u.id}, ${billing.id})"
+   <button class="btn btn-success" style="margin-left: 10px; padding: 5px 10px; font-size: 0.8em;" 
+        onclick='exportTransactionsByIds([${transactions.map(t => t.id).join(",")}], "${user.first_name}", "${user.last_name}", "${billingNumber}")'>
+    📊 CSV
                             </button>
                         </div>
                     <div id="billing-${billingId}" style="display: none;">
@@ -4705,7 +4706,7 @@ function showBillingDetails(billing, sepaUsers, nonSepaUsers) {
                             <span style="margin-left: 15px; color: #666;">(${u.transaction_count} Transaktionen)</span>
                         </div>
 <button class="btn btn-success" style="margin-left: 10px; padding: 5px 10px; font-size: 0.8em;" 
-       onclick="event.stopPropagation(); exportUserPeriodCSV(${u.id}, ${billing.id})"
+        onclick="event.stopPropagation(); exportUserPeriodCSV(${u.id}, ${billing.id})">
     📊 CSV
 </button>
                     </div>
@@ -4776,10 +4777,10 @@ function showBillingDetails(billing, sepaUsers, nonSepaUsers) {
                             <span style="margin-left: 15px; color: #e53e3e; font-weight: bold;">${amount.toFixed(2)}€</span>
                             <span style="margin-left: 15px; color: #666;">(${u.transaction_count} Transaktionen)</span>
                         </div>
-                        <button class="btn btn-success" style="margin-left: 10px; padding: 5px 10px; font-size: 0.8em;" 
-                                onclick='event.stopPropagation(); exportSinglePeriodCSV(${JSON.stringify(u.transactions)}, "${u.first_name}", "${u.last_name}", "${billing.billing_number}")'>
-                            📊 CSV
-                        </button>
+<button class="btn btn-success" style="margin-left: 10px; padding: 5px 10px; font-size: 0.8em;" 
+        onclick="event.stopPropagation(); exportUserPeriodCSV(${u.id}, ${billing.id})">
+    📊 CSV
+</button>
                     </div>
                     <div id="nonsepa-${billing.id}-${index}" style="display: none;">
                         <table class="data-table" style="font-size: 0.85em;">
@@ -5646,6 +5647,23 @@ async function exportUserTransactionsCSV(userId, firstName, lastName) {
     }
 }
 
+async function exportTransactionsByIds(transactionIds, firstName, lastName, periodLabel) {
+    try {
+        const allTransactions = await apiCall('/api/transactions');
+        const transactions = allTransactions.filter(t => transactionIds.includes(t.id));
+        
+        if (transactions.length === 0) {
+            showAlert('Keine Transaktionen gefunden', 'info');
+            return;
+        }
+        
+        exportSinglePeriodCSV(transactions, firstName, lastName, periodLabel);
+    } catch (error) {
+        console.error('Fehler beim Exportieren:', error);
+        showAlert('Fehler beim CSV-Export', 'error');
+    }
+}
+    
 async function exportUserPeriodCSV(userId, billingId) {
     try {
         // Hole die Benutzerdaten
