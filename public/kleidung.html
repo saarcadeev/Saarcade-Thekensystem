@@ -846,6 +846,12 @@ let selectedPaymentMethod = null;
 let settings = {};
 let clothingItems = [];
 
+// Modal-Variablen - HIER einfügen!
+let currentProduct = null;
+let selectedColor = null;
+let selectedSize = null;
+let modalQuantity = 1;
+
 async function loadSettings() {
     try {
         settings = await apiCall('/settings');
@@ -980,6 +986,12 @@ let detailsText = selectedMember.sepaActive
                 
                 document.getElementById('selectedMemberDetails').textContent = detailsText;
                 document.getElementById('selectedMember').classList.add('active');
+
+                // SEPA-Button anzeigen/verstecken
+                const sepaButton = document.getElementById('sepaPaymentMethod');
+                if (sepaButton) {
+                sepaButton.style.display = selectedMember.sepaActive ? 'block' : 'none';
+                }         
                 
                 updateSubmitButton();
                 showAlert(`Mitglied "${firstName} ${lastName}" ausgewählt`, 'success');
@@ -988,11 +1000,7 @@ let detailsText = selectedMember.sepaActive
                 showAlert('Fehler beim Laden der Mitgliedsdaten', 'error');
             }
         }
-// SEPA-Button anzeigen/verstecken
-const sepaButton = document.getElementById('sepaPaymentMethod');
-if (sepaButton) {
-    sepaButton.style.display = selectedMember.sepaActive ? 'block' : 'none';
-}
+
         // Produkte rendern
         function renderProducts() {
             const grid = document.getElementById('productsGrid');
@@ -1021,47 +1029,6 @@ grid.innerHTML = clothingItems.map(item => {
         </div>
     `;
 }).join('');
-        }
-
-        function changeQuantity(productId, change) {
-            const quantityDisplay = document.querySelector(`[data-quantity-id="${productId}"]`);
-            let currentQuantity = parseInt(quantityDisplay.textContent);
-            currentQuantity = Math.max(1, currentQuantity + change);
-            quantityDisplay.textContent = currentQuantity;
-        }
-
-        function addToCart(productId) {
-            const product = clothingItems.find(item => item.id === productId);
-            const card = document.querySelector(`[data-product-id="${productId}"]`);
-            
-            const selectedColor = card.querySelector('.color-btn.active');
-            const selectedSize = card.querySelector('.size-btn.active');
-            const quantity = parseInt(card.querySelector('.quantity-display').textContent);
-
-            if (!selectedColor || !selectedSize) {
-                showAlert('Bitte wähle Farbe und Größe aus', 'error');
-                return;
-            }
-
-            const cartItem = {
-                productId: product.id,
-                name: product.name,
-                emoji: product.emoji,
-                price: product.price,
-                color: selectedColor.dataset.color,
-                size: selectedSize.dataset.size,
-                quantity: quantity,
-                total: product.price * quantity
-            };
-
-            cart.push(cartItem);
-            updateCart();
-            showAlert(`${product.name} wurde zum Warenkorb hinzugefügt`, 'success');
-            
-            // Reset Produktkarte
-            card.classList.remove('selected');
-            card.querySelectorAll('.color-btn, .size-btn').forEach(btn => btn.classList.remove('active'));
-            card.querySelector('.quantity-display').textContent = '1';
         }
 
         function updateCart() {
@@ -1353,11 +1320,6 @@ ${purpose}`;
                 setTimeout(() => alert.remove(), 300);
             }, 4000);
         }
-
-            let currentProduct = null;
-let selectedColor = null;
-let selectedSize = null;
-let modalQuantity = 1;
 
 function openProductModal(productId) {
     const product = clothingItems.find(item => item.id === productId);
