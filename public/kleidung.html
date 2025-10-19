@@ -1443,6 +1443,10 @@ function addToCartFromModal() {
         return;
     }
     
+    // Name und Menge vorher speichern!
+    const productName = currentProduct.name;
+    const quantity = modalQuantity;
+    
     // Zum Warenkorb hinzufügen
     for (let i = 0; i < modalQuantity; i++) {
         cart.push({
@@ -1458,7 +1462,7 @@ function addToCartFromModal() {
     
     updateCart();
     closeProductModal();
-    showAlert(`${modalQuantity}x ${currentProduct.name} zum Warenkorb hinzugefügt`, 'success');
+    showAlert(`${quantity}x ${productName} zum Warenkorb hinzugefügt`, 'success');
 }
 
     </script>
