@@ -6338,7 +6338,8 @@ function quickPurchase(productId) {
         }
 
         function downloadFile(content, filename, type) {
-            const blob = new Blob([content], { type });
+            const BOM = '\uFEFF';
+            const blob = new Blob([BOM + content], { type: contentType + ';charset=utf-8;' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
