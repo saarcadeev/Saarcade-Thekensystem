@@ -1425,7 +1425,12 @@ function changeModalQuantity(delta) {
 }
 
 function addToCartFromModal() {
-    if (!currentProduct) return;
+    console.log('addToCartFromModal called, currentProduct:', currentProduct);
+    
+    if (!currentProduct) {
+        showAlert('Fehler: Kein Produkt ausgewählt', 'error');
+        return;
+    }
     
     // Validierung
     if (currentProduct.colors && currentProduct.colors.length > 0 && !selectedColor) {
@@ -1456,13 +1461,6 @@ function addToCartFromModal() {
     showAlert(`${modalQuantity}x ${currentProduct.name} zum Warenkorb hinzugefügt`, 'success');
 }
 
-// Modal schließen bei Klick außerhalb
-document.getElementById('productModal').addEventListener('click', function(event) {
-    if (event.target === this) {
-        closeProductModal();
-    }
-});
-            
     </script>
 
 <!-- Produkt-Auswahl Modal -->
