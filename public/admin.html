@@ -4015,8 +4015,8 @@ async function deleteSelectedOrders() {
     t.user_name,
     t.product_name,
     t.quantity,
-    `="${t.price.toFixed(2).replace('.', ',')}"`,
-    `="${t.total.toFixed(2).replace('.', ',')}"`,
+    `=${t.price.toFixed(2).replace('.', ',')}`,
+    `=${t.total.toFixed(2).replace('.', ',')}`,
     t.payment_method === 'balance' ? 'Saldo' : t.payment_method,
     t.billing_id ? 'Ja' : 'Nein'
 ].join(';');
@@ -5505,7 +5505,7 @@ function exportSepaCSVForBilling(billingId) {
     u.last_name,
     u.email || '-',
     u.iban || '-',
-    `="${amount.toFixed(2).replace('.', ',')}"`,
+    `=${amount.toFixed(2).replace('.', ',')}`,
     new Date(billing.created_at).toLocaleDateString('de-DE')
 ].join(';');
         })
@@ -5541,7 +5541,7 @@ return [
     u.last_name,
     u.email || '-',
     sepaStatus,
-    `="${amount.toFixed(2).replace('.', ',')}"`,
+    `=${amount.toFixed(2).replace('.', ',')}`,
     new Date(billing.created_at).toLocaleDateString('de-DE')
 ].join(';');
         })
@@ -5599,7 +5599,7 @@ function exportBillingDetailsCSV() {
     u.last_name,
     u.email || '-',
     u.iban || '-',
-    `="${amount.toFixed(2).replace('.', ',')}"`,
+    `=${amount.toFixed(2).replace('.', ',')}`,
     isSEPA,
     new Date(billing.created_at).toLocaleDateString('de-DE')
 ].join(';');
@@ -5631,8 +5631,8 @@ return [
     date.toLocaleTimeString('de-DE'),
     t.product_name,
     t.quantity,
-    `="${t.price.toFixed(2).replace('.', ',')}"`,
-    `="${t.total.toFixed(2).replace('.', ',')}"`,
+    `=${t.price.toFixed(2).replace('.', ',')}`,
+    `=${t.total.toFixed(2).replace('.', ',')}`,
     t.billing_id ? 'Ja' : 'Nein',
     billing ? billing.billing_number : '-'
 ].join(';');
@@ -5723,8 +5723,8 @@ return [
     date.toLocaleTimeString('de-DE'),
     t.product_name,
     t.quantity,
-    `="${t.price.toFixed(2).replace('.', ',')}"`,
-    `="${t.total.toFixed(2).replace('.', ',')}"`,
+    `=${t.price.toFixed(2).replace('.', ',')}`,
+    `=${t.total.toFixed(2).replace('.', ',')}`,
 ].join(';');
         }),
         // Summenzeile
