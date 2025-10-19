@@ -4365,9 +4365,8 @@ async function viewUserBillings() {
             return;
         }
         
-        // Lade alle Transaktionen des Mitglieds
-        const allTransactions = await apiCall('/api/transactions');
-        const userTransactions = allTransactions.filter(t => t.user_id === userId);
+// Lade ALLE Transaktionen des Mitglieds direkt
+const userTransactions = await apiCall(`/api/users/${userId}/transactions`);
         
         if (userTransactions.length === 0) {
             showAlert(`Keine Transaktionen für ${user.first_name} ${user.last_name} gefunden`, 'info');
