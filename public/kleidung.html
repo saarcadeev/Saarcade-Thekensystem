@@ -19,7 +19,7 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1600px;
             margin: 0 auto;
             background: white;
             border-radius: 20px;
@@ -45,7 +45,23 @@
         }
 
         .main-content {
-            padding: 40px;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 0;
+            height: calc(100vh - 260px);
+            min-height: 600px;
+        }
+
+        .left-column {
+            padding: 30px;
+            overflow-y: auto;
+            border-right: 2px solid #e2e8f0;
+        }
+
+        .right-column {
+            padding: 30px;
+            background: #f7fafc;
+            overflow-y: auto;
         }
 
         .section {
@@ -164,7 +180,7 @@
 
 .products-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 15px;
     margin-top: 20px;
 }
@@ -660,19 +676,20 @@
     transform: translateY(-2px);
 }
         
-        @media (max-width: 768px) {
-            .main-content {
-                padding: 20px;
-            }
+@media (max-width: 768px) {
+    .main-content {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
 
-            .products-grid {
-                grid-template-columns: 1fr;
-            }
+    .left-column {
+        border-right: none;
+        border-bottom: 2px solid #e2e8f0;
+    }
 
-            .header h1 {
-                font-size: 1.5em;
-            }
-        }
+    .products-grid {
+        grid-template-columns: 1fr;
+    }
 
 @media (max-width: 1024px) {
     .products-grid {
@@ -759,11 +776,12 @@
         </div>
 
         <div class="main-content">
-            <!-- Alerts -->
-            <div id="alertContainer"></div>
+            <div class="left-column">
+                <!-- Alerts -->
+                <div id="alertContainer"></div>
 
-            <!-- Schritt 1: Mitgliedersuche -->
-            <div class="section">
+                <!-- Schritt 1: Mitgliedersuche -->
+                <div class="section">
                 <div class="section-title">
                     <span>1️⃣</span>
                     <span>Mitglied auswählen</span>
@@ -802,7 +820,10 @@
                     <!-- Products werden hier dynamisch eingefügt -->
                 </div>
             </div>
-
+            </div> <!-- Ende left-column -->
+            
+            <div class="right-column">
+                    
             <!-- Schritt 3: Warenkorb & Zahlung -->
             <div class="section">
                 <div class="section-title">
@@ -842,9 +863,9 @@
                 <button class="btn btn-primary" id="submitOrder" disabled>
                     ✅ Bestellung abschicken
                 </button>
-            </div>
-        </div>
-    </div>
+            </div> <!-- Ende right-column -->
+        </div> <!-- Ende main-content -->
+    </div> <!-- Ende container -->
 
     <!-- Erfolgs-Modal -->
     <div class="modal" id="successModal">
