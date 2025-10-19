@@ -4009,16 +4009,17 @@ async function deleteSelectedOrders() {
                 ['Datum', 'Zeit', 'Mitglied', 'Produkt', 'Menge', 'Preis', 'Gesamt', 'Zahlungsart'].join(';'),
                 ...transactions.map(t => {
                     const date = new Date(t.created_at);
-                    return [
-                        date.toLocaleDateString('de-DE'),
-                        date.toLocaleTimeString('de-DE'),
-                        t.user_name,
-                        t.product_name,
-                        t.quantity,
-                        t.price.toFixed(2),
-                        t.total.toFixed(2),
-                        t.payment_method
-                    ].join(';');
+  return [
+    date.toLocaleDateString('de-DE'),
+    date.toLocaleTimeString('de-DE'),
+    t.user_name,
+    t.product_name,
+    t.quantity,
+    `="${t.price.toFixed(2).replace('.', ',')}"`,
+    `="${t.total.toFixed(2).replace('.', ',')}"`,
+    t.payment_method === 'balance' ? 'Saldo' : t.payment_method,
+    t.billing_id ? 'Ja' : 'Nein'
+].join(';');
                 })
             ].join('\n');
             
@@ -5497,16 +5498,16 @@ function exportSepaCSVForBilling(billingId) {
         ...sepaUsers.map(u => {
             const amount = u.billing_amount || Math.abs(u.balance) || 0;
             
-            return [
-                billing.billing_number,
-                `${u.first_name} ${u.last_name}`,
-                u.first_name,
-                u.last_name,
-                u.email || '-',
-                u.iban || '-',
-                amount.toFixed(2),
-                new Date(billing.created_at).toLocaleDateString('de-DE')
-            ].join(';');
+ return [
+    billing.billing_number,
+    `${u.first_name} ${u.last_name}`,
+    u.first_name,
+    u.last_name,
+    u.email || '-',
+    u.iban || '-',
+    `="${amount.toFixed(2).replace('.', ',')}"`,
+    new Date(billing.created_at).toLocaleDateString('de-DE')
+].join(';');
         })
     ].join('\n');
     
@@ -5533,16 +5534,16 @@ function exportNonSepaList(billingId) {
             const amount = u.billing_amount || Math.abs(u.balance) || 0;
             const sepaStatus = !u.sepa_active ? 'Nicht aktiviert' : (!u.iban ? 'IBAN fehlt' : 'Unbekannt');
             
-            return [
-                billing.billing_number,
-                `${u.first_name} ${u.last_name}`,
-                u.first_name,
-                u.last_name,
-                u.email || '-',
-                sepaStatus,
-                amount.toFixed(2),
-                new Date(billing.created_at).toLocaleDateString('de-DE')
-            ].join(';');
+return [
+    billing.billing_number,
+    `${u.first_name} ${u.last_name}`,
+    u.first_name,
+    u.last_name,
+    u.email || '-',
+    sepaStatus,
+    `="${amount.toFixed(2).replace('.', ',')}"`,
+    new Date(billing.created_at).toLocaleDateString('de-DE')
+].join(';');
         })
     ].join('\n');
     
@@ -5592,16 +5593,17 @@ function exportBillingDetailsCSV() {
             const isSEPA = u.sepa_active && u.iban ? 'Ja' : 'Nein';
             
             return [
-                billing.billing_number,
-                `${u.first_name} ${u.last_name}`,
-                u.first_name,
-                u.last_name,
-                u.email || '-',
-                u.iban || '-',
-                amount.toFixed(2),
-                isSEPA,
-                new Date(billing.created_at).toLocaleDateString('de-DE')
-            ].join(';');
+return [
+    billing.billing_number,
+    `${u.first_name} ${u.last_name}`,
+    u.first_name,
+    u.last_name,
+    u.email || '-',
+    u.iban || '-',
+    `="${amount.toFixed(2).replace('.', ',')}"`,
+    isSEPA,
+    new Date(billing.created_at).toLocaleDateString('de-DE')
+].join(';');
         })
     ].join('\n');
     
@@ -5626,15 +5628,16 @@ async function exportUserTransactionsCSV(userId, firstName, lastName) {
                 const billing = billings.find(b => b.id === t.billing_id);
                 
                 return [
-                    date.toLocaleDateString('de-DE'),
-                    date.toLocaleTimeString('de-DE'),
-                    t.product_name,
-                    t.quantity,
-                    t.price.toFixed(2),
-                    t.total.toFixed(2),
-                    t.billing_id ? 'Ja' : 'Nein',
-                    billing ? billing.billing_number : '-'
-                ].join(';');
+return [
+    date.toLocaleDateString('de-DE'),
+    date.toLocaleTimeString('de-DE'),
+    t.product_name,
+    t.quantity,
+    `="${t.price.toFixed(2).replace('.', ',')}"`,
+    `="${t.total.toFixed(2).replace('.', ',')}"`,
+    t.billing_id ? 'Ja' : 'Nein',
+    billing ? billing.billing_number : '-'
+].join(';');
             })
         ].join('\n');
         
@@ -5715,19 +5718,19 @@ async function exportUserPeriodCSV(userId, billingId) {
         ...transactions.map(t => {
             const date = new Date(t.created_at);
             
-            return [
-                `${firstName} ${lastName}`,
-                periodLabel,
-                date.toLocaleDateString('de-DE'),
-                date.toLocaleTimeString('de-DE'),
-                t.product_name,
-                t.quantity,
-                t.price.toFixed(2),
-                t.total.toFixed(2)
-            ].join(';');
+return [
+    `${firstName} ${lastName}`,
+    periodLabel,
+    date.toLocaleDateString('de-DE'),
+    date.toLocaleTimeString('de-DE'),
+    t.product_name,
+    t.quantity,
+    `="${t.price.toFixed(2).replace('.', ',')}"`,
+    `="${t.total.toFixed(2).replace('.', ',')}"`,
+].join(';');
         }),
         // Summenzeile
-        ['', '', '', '', '', '', 'GESAMT:', total.toFixed(2)].join(';')
+['', '', '', '', '', '', 'GESAMT:', `="${total.toFixed(2).replace('.', ',')}"`].join(';')
     ].join('\n');
     
     const fileName = `${firstName}_${lastName}_${periodLabel}.csv`.replace(/[^a-zA-Z0-9_-]/g, '_');
