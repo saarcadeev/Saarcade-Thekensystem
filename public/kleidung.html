@@ -1452,6 +1452,7 @@ function addToCartFromModal() {
         cart.push({
             product_id: currentProduct.id,
             name: currentProduct.name,
+            emoji: currentProduct.emoji || '👕',
             price: currentProduct.price,
             color: selectedColor,
             size: selectedSize,
