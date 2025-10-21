@@ -18,7 +18,7 @@ if (!supabaseUrl || !supabaseKey) {
     console.error('SUPABASE_URL or SUPABASE_ANON_KEY missing');
 }
 
-// CORS-Headers für alle Antworten
+// CORS-Headers fÃ¼r alle Antworten
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -26,21 +26,21 @@ const corsHeaders = {
     'Content-Type': 'application/json'
 };
 
-// Hilfsfunktion für Base64 zu Buffer Konvertierung
+// Hilfsfunktion fÃ¼r Base64 zu Buffer Konvertierung
 function base64ToBuffer(base64String) {
     // Entferne Data URL Prefix falls vorhanden
     const base64Data = base64String.replace(/^data:image\/[a-z]+;base64,/, '');
     return Buffer.from(base64Data, 'base64');
 }
 
-// Hilfsfunktion für Dateiname generierung
+// Hilfsfunktion fÃ¼r Dateiname generierung
 function generateFileName(originalName, productId) {
     const timestamp = Date.now();
     const extension = originalName ? originalName.split('.').pop() : 'jpg';
     return `product_${productId}_${timestamp}.${extension}`;
 }
 
-// Haupthandler für alle API-Requests
+// Haupthandler fÃ¼r alle API-Requests
 module.exports = async (req, res) => {
     // CORS Preflight
     if (req.method === 'OPTIONS') {
@@ -63,55 +63,56 @@ module.exports = async (req, res) => {
         console.log(`${method} ${path}`);
 
 // ============ LOGIN (SICHER MIT PASSWORT-HASHING) ============
-if (path === '/login' && method === 'POST') {
-    try {
-        const { username, password, role } = req.body;
-        
-        if (!username || !password) {
-            return res.status(400).json({ error: 'Username und Passwort erforderlich' });
-        }
+        if (path === '/login' && method === 'POST') {
+            try {
+                const { username, password, role } = req.body;
+                
+                if (!username || !password) {
+                    return res.status(400).json({ error: 'Username und Passwort erforderlich' });
+                }
 
-        // Nutze die sichere admin_login Funktion aus der Datenbank
-        const { data, error } = await supabase
-            .rpc('admin_login', {
-                p_username: username,
-                p_password: password
-            });
+                // Nutze die sichere admin_login Funktion aus der Datenbank
+                const { data, error } = await supabase
+                    .rpc('admin_login', {
+                        p_username: username,
+                        p_password: password
+                    });
 
-        if (error) {
-            console.error('Login RPC error:', error);
-            return res.status(500).json({ error: 'Login fehlgeschlagen' });
-        }
+                if (error) {
+                    console.error('Login RPC error:', error);
+                    return res.status(500).json({ error: 'Login fehlgeschlagen' });
+                }
 
-        // data ist ein Array mit einem Element
-        const loginResult = data && data[0];
+                // data ist ein Array mit einem Element
+                const loginResult = data && data[0];
 
-        if (!loginResult || !loginResult.success) {
-            return res.status(401).json({ 
-                error: loginResult?.error_message || 'Ungültige Anmeldedaten' 
-            });
-        }
+                if (!loginResult || !loginResult.success) {
+                    return res.status(401).json({ 
+                        error: loginResult?.error_message || 'Ungültige Anmeldedaten' 
+                    });
+                }
 
-        // Prüfe Rolle (falls spezifisch angefordert)
-        if (role && loginResult.role !== role) {
-            return res.status(403).json({ error: 'Keine Berechtigung für diesen Bereich' });
-        }
+                // Prüfe Rolle (falls spezifisch angefordert)
+                if (role && loginResult.role !== role) {
+                    return res.status(403).json({ error: 'Keine Berechtigung für diesen Bereich' });
+                }
 
-        // Erfolgreicher Login
-        return res.status(200).json({
-            success: true,
-            user: {
-                id: loginResult.user_id,
-                username: loginResult.username,
-                role: loginResult.role
+                // Erfolgreicher Login
+                return res.status(200).json({
+                    success: true,
+                    user: {
+                        id: loginResult.user_id,
+                        username: loginResult.username,
+                        role: loginResult.role
+                    }
+                });
+
+            } catch (error) {
+                console.error('Login error:', error);
+                return res.status(500).json({ error: 'Login fehlgeschlagen' });
             }
-        });
-
-    } catch (error) {
-        console.error('Login error:', error);
-        return res.status(500).json({ error: 'Login fehlgeschlagen' });
-    }
-}        
+        }
+        
         // ============ HEALTH CHECK ============
         if (path === '/health') {
             return res.status(200).json({
@@ -151,7 +152,7 @@ if (path === '/login' && method === 'POST') {
                     return res.status(500).json({ error: 'Fehler beim Hochladen des Bildes' });
                 }
 
-                // Generiere öffentliche URL
+                // Generiere Ã¶ffentliche URL
                 const { data: urlData } = supabase.storage
                     .from('product-images')
                     .getPublicUrl(filePath);
@@ -184,14 +185,14 @@ if (path === '/login' && method === 'POST') {
 
                 if (deleteError) {
                     console.error('Delete Error:', deleteError);
-                    return res.status(500).json({ error: 'Fehler beim Löschen des Bildes' });
+                    return res.status(500).json({ error: 'Fehler beim LÃ¶schen des Bildes' });
                 }
 
                 return res.status(200).json({ success: true });
 
             } catch (error) {
                 console.error('Image delete error:', error);
-                return res.status(500).json({ error: 'Interner Fehler beim Löschen' });
+                return res.status(500).json({ error: 'Interner Fehler beim LÃ¶schen' });
             }
         }
 
@@ -226,12 +227,13 @@ if (path === '/login' && method === 'POST') {
 
         // ============ USERS ENDPUNKTE ============
         
-// GET /users - Alle Benutzer
-if (path === '/users' && method === 'GET') {
-    const { data, error } = await supabase
-        .from('users')
-        .select('id, first_name, last_name, email, role, balance, barcodes, user_pin, pin_require_for_name_search, pin_require_for_barcode')
-        .order('first_name');            
+        // GET /users - Alle Benutzer
+        if (path === '/users' && method === 'GET') {
+            const { data, error } = await supabase
+                .from('users')
+                .select('id, first_name, last_name, email, role, balance, sepa_active, iban, barcodes')
+                .order('first_name');
+            
             if (error) throw error;
             return res.status(200).json(data || []);
         }// GET /users/id/{id} - Benutzer per ID
@@ -239,7 +241,7 @@ if (pathParts[0] === 'users' && pathParts[1] === 'id' && pathParts[2] && method 
     const userId = parseInt(pathParts[2]);
     
     if (isNaN(userId)) {
-        return res.status(400).json({ error: 'Ungültige Benutzer-ID' });
+        return res.status(400).json({ error: 'UngÃ¼ltige Benutzer-ID' });
     }
     
     const { data, error } = await supabase
@@ -286,7 +288,7 @@ if (path === '/users' && method === 'POST') {
         return res.status(400).json({ error: 'Pflichtfelder fehlen: first_name, last_name, barcodes' });
     }
 
-    // Barcode-Eindeutigkeit prüfen für alle Barcodes
+    // Barcode-Eindeutigkeit prÃ¼fen fÃ¼r alle Barcodes
     for (const barcode of userData.barcodes) {
         const { data: existingUser } = await supabase
             .from('users')
@@ -327,10 +329,10 @@ if (pathParts[0] === 'users' && pathParts[1] && method === 'PUT') {
     const userData = req.body;
     
     if (isNaN(userId)) {
-        return res.status(400).json({ error: 'Ungültige Benutzer-ID' });
+        return res.status(400).json({ error: 'UngÃ¼ltige Benutzer-ID' });
     }
 
-    // Barcode-Eindeutigkeit prüfen (ausgenommen aktueller Benutzer)
+    // Barcode-Eindeutigkeit prÃ¼fen (ausgenommen aktueller Benutzer)
     if (userData.barcodes && userData.barcodes.length > 0) {
         for (const barcode of userData.barcodes) {
             const { data: existingUser } = await supabase
@@ -376,12 +378,12 @@ if (pathParts[0] === 'users' && pathParts[1] && method === 'PUT') {
 }
 
 
-        // DELETE /users/{id} - Benutzer löschen
+        // DELETE /users/{id} - Benutzer lÃ¶schen
         if (pathParts[0] === 'users' && pathParts[1] && method === 'DELETE') {
             const userId = parseInt(pathParts[1]);
             
             if (isNaN(userId)) {
-                return res.status(400).json({ error: 'Ungültige Benutzer-ID' });
+                return res.status(400).json({ error: 'UngÃ¼ltige Benutzer-ID' });
             }
 
             const { error } = await supabase
@@ -390,7 +392,7 @@ if (pathParts[0] === 'users' && pathParts[1] && method === 'PUT') {
                 .eq('id', userId);
             
             if (error) throw error;
-            return res.status(200).json({ message: 'Benutzer erfolgreich gelöscht' });
+            return res.status(200).json({ message: 'Benutzer erfolgreich gelÃ¶scht' });
         }
 
         // ============ PRODUCTS ENDPUNKTE (ERWEITERT) ============
@@ -432,7 +434,7 @@ if (pathParts[0] === 'products' && pathParts[1] && pathParts[1] !== 'barcode' &&
     const productId = parseInt(pathParts[1]);
     
     if (isNaN(productId)) {
-        return res.status(400).json({ error: 'Ungültige Produkt-ID' });
+        return res.status(400).json({ error: 'UngÃ¼ltige Produkt-ID' });
     }
     
     const { data, error } = await supabase
@@ -459,7 +461,7 @@ if (path === '/products' && method === 'POST') {
         return res.status(400).json({ error: 'Pflichtfelder fehlen: name, member_price, guest_price' });
     }
 
-    // Barcode-Eindeutigkeit prüfen (falls angegeben)
+    // Barcode-Eindeutigkeit prÃ¼fen (falls angegeben)
     if (productData.barcodes && productData.barcodes.length > 0) {
         for (const barcode of productData.barcodes) {
             const { data: existingProduct } = await supabase
@@ -479,7 +481,7 @@ if (path === '/products' && method === 'POST') {
         .insert([{
             name: productData.name,
             category: productData.category || 'sonstiges',
-            image: productData.image || '📦',
+            image: productData.image || 'ðŸ“¦',
             member_price: productData.member_price,
             guest_price: productData.guest_price,
             stock: productData.stock || 0,
@@ -502,10 +504,10 @@ if (pathParts[0] === 'products' && pathParts[1] && method === 'PUT') {
     const productData = req.body;
     
     if (isNaN(productId)) {
-        return res.status(400).json({ error: 'Ungültige Produkt-ID' });
+        return res.status(400).json({ error: 'UngÃ¼ltige Produkt-ID' });
     }
 
-    // Barcode-Eindeutigkeit prüfen (ausgenommen aktuelles Produkt)
+    // Barcode-Eindeutigkeit prÃ¼fen (ausgenommen aktuelles Produkt)
     if (productData.barcodes && productData.barcodes.length > 0) {
         for (const barcode of productData.barcodes) {
             const { data: existingProduct } = await supabase
@@ -551,15 +553,15 @@ if (pathParts[0] === 'products' && pathParts[1] && method === 'PUT') {
     return res.status(200).json(data);
 }
 
-        // DELETE /products/{id} - Produkt löschen (MIT BILDLÖSCHUNG)
+        // DELETE /products/{id} - Produkt lÃ¶schen (MIT BILDLÃ–SCHUNG)
         if (pathParts[0] === 'products' && pathParts[1] && method === 'DELETE') {
             const productId = parseInt(pathParts[1]);
             
             if (isNaN(productId)) {
-                return res.status(400).json({ error: 'Ungültige Produkt-ID' });
+                return res.status(400).json({ error: 'UngÃ¼ltige Produkt-ID' });
             }
 
-            // Produktbild löschen
+            // Produktbild lÃ¶schen
             try {
                 const { data: product } = await supabase
                     .from('products')
@@ -582,7 +584,7 @@ if (pathParts[0] === 'products' && pathParts[1] && method === 'PUT') {
                 .eq('id', productId);
             
             if (error) throw error;
-            return res.status(200).json({ message: 'Produkt erfolgreich gelöscht' });
+            return res.status(200).json({ message: 'Produkt erfolgreich gelÃ¶scht' });
         }
 
         // ============ TRANSACTIONS ENDPUNKTE ============
@@ -593,6 +595,7 @@ if (pathParts[0] === 'products' && pathParts[1] && method === 'PUT') {
                 .from('transactions')
                 .select('*')
                 .order('created_at', { ascending: false })
+                .limit(100);
             
             if (error) throw error;
             return res.status(200).json(data || []);
@@ -604,7 +607,7 @@ if (pathParts[0] === 'products' && pathParts[1] && method === 'PUT') {
             
             // Validierung
             if (!transactionData.userId || !transactionData.items || transactionData.items.length === 0) {
-                return res.status(400).json({ error: 'Ungültige Transaktionsdaten' });
+                return res.status(400).json({ error: 'UngÃ¼ltige Transaktionsdaten' });
             }
 
             // Benutzer laden
@@ -697,15 +700,15 @@ if (item.productId && item.productId > 0) {
             });
         }
 
-        // DELETE /transactions/{id} - Transaktion löschen
+        // DELETE /transactions/{id} - Transaktion lÃ¶schen
         if (pathParts[0] === 'transactions' && pathParts[1] && method === 'DELETE') {
             const transactionId = parseInt(pathParts[1]);
             
             if (isNaN(transactionId)) {
-                return res.status(400).json({ error: 'Ungültige Transaktions-ID' });
+                return res.status(400).json({ error: 'UngÃ¼ltige Transaktions-ID' });
             }
 
-            // Prüfe ob Transaktion bereits abgerechnet ist
+            // PrÃ¼fe ob Transaktion bereits abgerechnet ist
             const { data: transaction, error: fetchError } = await supabase
                 .from('transactions')
                 .select('*')
@@ -720,10 +723,10 @@ if (item.productId && item.productId > 0) {
             }
 
             if (transaction.is_billed || transaction.billing_id) {
-                return res.status(400).json({ error: 'Abgerechnete Transaktionen können nicht gelöscht werden' });
+                return res.status(400).json({ error: 'Abgerechnete Transaktionen kÃ¶nnen nicht gelÃ¶scht werden' });
             }
 
-            // Lösche die Transaktion
+            // LÃ¶sche die Transaktion
             const { error: deleteError } = await supabase
                 .from('transactions')
                 .delete()
@@ -732,7 +735,7 @@ if (item.productId && item.productId > 0) {
             if (deleteError) throw deleteError;
             
             return res.status(200).json({ 
-                message: 'Transaktion erfolgreich gelöscht',
+                message: 'Transaktion erfolgreich gelÃ¶scht',
                 transaction: transaction
             });
         }
@@ -755,7 +758,7 @@ if (item.productId && item.productId > 0) {
             const orderId = parseInt(pathParts[1]);
             
             if (isNaN(orderId)) {
-                return res.status(400).json({ error: 'Ungültige Bestell-ID' });
+                return res.status(400).json({ error: 'UngÃ¼ltige Bestell-ID' });
             }
 
             const { data, error } = await supabase
@@ -813,7 +816,7 @@ if (item.productId && item.productId > 0) {
             const updateData = req.body;
             
             if (isNaN(orderId)) {
-                return res.status(400).json({ error: 'Ungültige Bestell-ID' });
+                return res.status(400).json({ error: 'UngÃ¼ltige Bestell-ID' });
             }
 
             const { data, error } = await supabase
@@ -831,12 +834,12 @@ if (item.productId && item.productId > 0) {
             return res.status(200).json(data);
         }
 
-        // DELETE /clothing-orders/{id} - Bestellung löschen
+        // DELETE /clothing-orders/{id} - Bestellung lÃ¶schen
         if (pathParts[0] === 'clothing-orders' && pathParts[1] && method === 'DELETE') {
             const orderId = parseInt(pathParts[1]);
             
             if (isNaN(orderId)) {
-                return res.status(400).json({ error: 'Ungültige Bestell-ID' });
+                return res.status(400).json({ error: 'UngÃ¼ltige Bestell-ID' });
             }
 
             const { error } = await supabase
@@ -845,7 +848,7 @@ if (item.productId && item.productId > 0) {
                 .eq('id', orderId);
             
             if (error) throw error;
-            return res.status(200).json({ message: 'Bestellung erfolgreich gelöscht' });
+            return res.status(200).json({ message: 'Bestellung erfolgreich gelÃ¶scht' });
         }
 
         // GET /clothing-orders/member/{memberId} - Bestellungen eines Mitglieds
@@ -853,7 +856,7 @@ if (item.productId && item.productId > 0) {
             const memberId = parseInt(pathParts[2]);
             
             if (isNaN(memberId)) {
-                return res.status(400).json({ error: 'Ungültige Mitglieds-ID' });
+                return res.status(400).json({ error: 'UngÃ¼ltige Mitglieds-ID' });
             }
 
             const { data, error } = await supabase
@@ -866,7 +869,7 @@ if (item.productId && item.productId > 0) {
             return res.status(200).json(data || []);
         }
 
-        // GET /clothing-orders/stats - Statistiken für Kleidungsbestellungen
+        // GET /clothing-orders/stats - Statistiken fÃ¼r Kleidungsbestellungen
         if (path === '/clothing-orders/stats' && method === 'GET') {
             try {
                 const { data: allOrders } = await supabase
@@ -912,7 +915,7 @@ if (pathParts[0] === 'clothing-billings' && pathParts[1] && method === 'GET') {
     const billingId = parseInt(pathParts[1]);
     
     if (isNaN(billingId)) {
-        return res.status(400).json({ error: 'Ungültige Abrechnungs-ID' });
+        return res.status(400).json({ error: 'UngÃ¼ltige Abrechnungs-ID' });
     }
 
     const { data, error } = await supabase
@@ -963,7 +966,7 @@ if (path === '/clothing-billings' && method === 'POST') {
         
        // ============ CLOTHING ITEMS ENDPUNKTE ============
         
-        // GET /clothing-items - Alle Kleidungsstücke
+        // GET /clothing-items - Alle KleidungsstÃ¼cke
         if (path === '/clothing-items' && method === 'GET') {
             const { data, error } = await supabase
                 .from('clothing_items')
@@ -974,7 +977,7 @@ if (path === '/clothing-billings' && method === 'POST') {
             return res.status(200).json(data || []);
         }
 
-        // GET /clothing-items/available - Nur verfügbare Kleidungsstücke
+        // GET /clothing-items/available - Nur verfÃ¼gbare KleidungsstÃ¼cke
         if (path === '/clothing-items/available' && method === 'GET') {
             const { data, error } = await supabase
                 .from('clothing_items')
@@ -986,12 +989,12 @@ if (path === '/clothing-billings' && method === 'POST') {
             return res.status(200).json(data || []);
         }
 
-        // GET /clothing-items/{id} - Einzelnes Kleidungsstück
+        // GET /clothing-items/{id} - Einzelnes KleidungsstÃ¼ck
         if (pathParts[0] === 'clothing-items' && pathParts[1] && method === 'GET') {
             const itemId = parseInt(pathParts[1]);
             
             if (isNaN(itemId)) {
-                return res.status(400).json({ error: 'Ungültige Item-ID' });
+                return res.status(400).json({ error: 'UngÃ¼ltige Item-ID' });
             }
 
             const { data, error } = await supabase
@@ -1002,7 +1005,7 @@ if (path === '/clothing-billings' && method === 'POST') {
             
             if (error) {
                 if (error.code === 'PGRST116') {
-                    return res.status(404).json({ error: 'Kleidungsstück nicht gefunden' });
+                    return res.status(404).json({ error: 'KleidungsstÃ¼ck nicht gefunden' });
                 }
                 throw error;
             }
@@ -1010,7 +1013,7 @@ if (path === '/clothing-billings' && method === 'POST') {
             return res.status(200).json(data);
         }
 
-        // POST /clothing-items - Neues Kleidungsstück erstellen
+        // POST /clothing-items - Neues KleidungsstÃ¼ck erstellen
         if (path === '/clothing-items' && method === 'POST') {
             const itemData = req.body;
             
@@ -1024,10 +1027,10 @@ if (path === '/clothing-billings' && method === 'POST') {
                 .from('clothing_items')
                 .insert([{
                     name: itemData.name,
-                    emoji: itemData.emoji || '👕',
+                    emoji: itemData.emoji || 'ðŸ‘•',
                     price: itemData.price,
                     sizes: itemData.sizes || ['S', 'M', 'L', 'XL'],
-                    colors: itemData.colors || ['Schwarz', 'Weiß'],
+                    colors: itemData.colors || ['Schwarz', 'WeiÃŸ'],
                     available: itemData.available !== false,
                     image_url: itemData.image_url || null,
                     image_file_path: itemData.image_file_path || null,
@@ -1040,13 +1043,13 @@ if (path === '/clothing-billings' && method === 'POST') {
             return res.status(201).json(data);
         }
 
-        // PUT /clothing-items/{id} - Kleidungsstück bearbeiten
+        // PUT /clothing-items/{id} - KleidungsstÃ¼ck bearbeiten
         if (pathParts[0] === 'clothing-items' && pathParts[1] && method === 'PUT') {
             const itemId = parseInt(pathParts[1]);
             const itemData = req.body;
             
             if (isNaN(itemId)) {
-                return res.status(400).json({ error: 'Ungültige Item-ID' });
+                return res.status(400).json({ error: 'UngÃ¼ltige Item-ID' });
             }
 
             const updateData = {};
@@ -1071,15 +1074,15 @@ if (path === '/clothing-billings' && method === 'POST') {
             return res.status(200).json(data);
         }
 
-        // DELETE /clothing-items/{id} - Kleidungsstück löschen
+        // DELETE /clothing-items/{id} - KleidungsstÃ¼ck lÃ¶schen
         if (pathParts[0] === 'clothing-items' && pathParts[1] && method === 'DELETE') {
             const itemId = parseInt(pathParts[1]);
             
             if (isNaN(itemId)) {
-                return res.status(400).json({ error: 'Ungültige Item-ID' });
+                return res.status(400).json({ error: 'UngÃ¼ltige Item-ID' });
             }
 
-            // Optional: Erst Bild löschen wenn vorhanden
+            // Optional: Erst Bild lÃ¶schen wenn vorhanden
             const { data: item } = await supabase
                 .from('clothing_items')
                 .select('image_file_path')
@@ -1098,7 +1101,7 @@ if (path === '/clothing-billings' && method === 'POST') {
                 .eq('id', itemId);
             
             if (error) throw error;
-            return res.status(200).json({ message: 'Kleidungsstück erfolgreich gelöscht' });
+            return res.status(200).json({ message: 'KleidungsstÃ¼ck erfolgreich gelÃ¶scht' });
         }
         
         // ============ STOCK MOVEMENTS ENDPUNKTE ============
@@ -1120,7 +1123,7 @@ if (path === '/clothing-billings' && method === 'POST') {
             const productId = parseInt(pathParts[2]);
             
             if (isNaN(productId)) {
-                return res.status(400).json({ error: 'Ungültige Produkt-ID' });
+                return res.status(400).json({ error: 'UngÃ¼ltige Produkt-ID' });
             }
 
             const { data, error } = await supabase
@@ -1172,7 +1175,7 @@ if (path === '/clothing-billings' && method === 'POST') {
                     return res.status(400).json({ error: 'Bestand kann nicht negativ werden' });
                 }
             } else {
-                return res.status(400).json({ error: 'Ungültiger Bewegungstyp' });
+                return res.status(400).json({ error: 'UngÃ¼ltiger Bewegungstyp' });
             }
 
             // Bestand im Produkt aktualisieren
@@ -1210,12 +1213,12 @@ if (path === '/clothing-billings' && method === 'POST') {
             });
         }
 
-        // DELETE /stock-movements/{id} - Bestandsbewegung löschen
+        // DELETE /stock-movements/{id} - Bestandsbewegung lÃ¶schen
         if (pathParts[0] === 'stock-movements' && pathParts[1] && method === 'DELETE') {
             const movementId = parseInt(pathParts[1]);
             
             if (isNaN(movementId)) {
-                return res.status(400).json({ error: 'Ungültige Bewegungs-ID' });
+                return res.status(400).json({ error: 'UngÃ¼ltige Bewegungs-ID' });
             }
 
             // Bewegung laden
@@ -1232,12 +1235,12 @@ if (path === '/clothing-billings' && method === 'POST') {
                 throw fetchError;
             }
 
-            // Verkäufe können nicht gelöscht werden (nur über Transaktion)
+            // VerkÃ¤ufe kÃ¶nnen nicht gelÃ¶scht werden (nur Ã¼ber Transaktion)
             if (movement.movement_type === 'sale') {
-                return res.status(400).json({ error: 'Verkaufsbewegungen können nicht direkt gelöscht werden' });
+                return res.status(400).json({ error: 'Verkaufsbewegungen kÃ¶nnen nicht direkt gelÃ¶scht werden' });
             }
 
-            // Lösche die Bewegung
+            // LÃ¶sche die Bewegung
             const { error: deleteError } = await supabase
                 .from('stock_movements')
                 .delete()
@@ -1245,7 +1248,7 @@ if (path === '/clothing-billings' && method === 'POST') {
             
             if (deleteError) throw deleteError;
 
-            // Bestand zurückrechnen
+            // Bestand zurÃ¼ckrechnen
             const { data: product } = await supabase
                 .from('products')
                 .select('stock')
@@ -1261,7 +1264,7 @@ if (path === '/clothing-billings' && method === 'POST') {
             }
 
             return res.status(200).json({ 
-                message: 'Bestandsbewegung erfolgreich gelöscht',
+                message: 'Bestandsbewegung erfolgreich gelÃ¶scht',
                 movement: movement
             });
         }
@@ -1292,7 +1295,7 @@ if (path === '/clothing-billings' && method === 'POST') {
             const settingsData = req.body;
             
             try {
-                // Alle vorhandenen Einstellungen löschen und neue einfügen
+                // Alle vorhandenen Einstellungen lÃ¶schen und neue einfÃ¼gen
                 await supabase.from('settings').delete().neq('id', 0);
                 
                 const settingsArray = Object.entries(settingsData).map(([key, value]) => ({
@@ -1374,7 +1377,7 @@ if (path === '/transactions/mark-billed' && method === 'POST') {
 }        
         // ============ SEPA ENDPUNKTE ============
         
-        // GET /sepa-users - SEPA-fähige Benutzer
+        // GET /sepa-users - SEPA-fÃ¤hige Benutzer
         if (path === '/sepa-users' && method === 'GET') {
             const { data, error } = await supabase
                 .from('users')
@@ -1399,7 +1402,7 @@ if (pathParts[0] === 'users' && pathParts[1] === 'id' && pathParts[2] && method 
     const userId = parseInt(pathParts[2]);
     
     if (isNaN(userId)) {
-        return res.status(400).json({ error: 'Ungültige Benutzer-ID' });
+        return res.status(400).json({ error: 'UngÃ¼ltige Benutzer-ID' });
     }
     
     const { data, error } = await supabase
