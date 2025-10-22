@@ -4377,7 +4377,7 @@ const userTransactions = allTransactions.filter(t => t.user_id === userId);
         
         // Gruppiere nach Abrechnungen
         const billedTransactions = userTransactions.filter(t => t.billing_id);
-        const unbilledTransactions = userTransactions.filter(t => !t.billing_id);
+        const unbilledTransactions = userTransactions.filter(t => !t.billing_id && !t.cancelled);
         
         // Gruppiere abgerechnete Transaktionen nach billing_id
         const billingGroups = {};
