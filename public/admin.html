@@ -1184,14 +1184,30 @@ body {
                 <div class="toolbar">
                     <button class="btn" onclick="loadTransactions()">🔄 Neu laden</button>
                     <button class="btn btn-success" onclick="exportTransactions()">📊 CSV Export</button>
-                    <select id="transactionFilter" onchange="filterTransactions()" style="padding: 10px; border-radius: 6px; border: 2px solid #e2e8f0;">
-                        <option value="all">Alle Transaktionen</option>
-                        <option value="today">Heute</option>
-                        <option value="week">Diese Woche</option>
-                        <option value="month">Dieser Monat</option>
-                    </select>
+ <select id="transactionFilter" onchange="filterTransactions()" style="padding: 10px; border-radius: 6px; border: 2px solid #e2e8f0; margin-right: 10px;">
+    <option value="all">Alle Transaktionen</option>
+    <option value="today">Heute</option>
+    <option value="week">Diese Woche</option>
+    <option value="month">Dieser Monat</option>
+</select>
+<select id="limitFilter" onchange="filterTransactions()" style="padding: 10px; border-radius: 6px; border: 2px solid #e2e8f0;">
+    <option value="100" selected>Letzte 100</option>
+    <option value="500">Letzte 500</option>
+    <option value="1000">Letzte 1000</option>
+    <option value="all">Alle laden</option>
+</select>
                 </div>
-                
+<div style="display: flex; justify-content: space-between; align-items: center; margin: 15px 0; padding: 10px; background: #f8fafc; border-radius: 6px;">
+    <button class="btn" id="prevPageBtn" onclick="changePage(-1)" disabled>
+        ⬅️ Vorherige
+    </button>
+    <span id="pageInfo" style="font-weight: 600; color: #475569;">
+        Seite 1
+    </span>
+    <button class="btn" id="nextPageBtn" onclick="changePage(1)">
+        Nächste ➡️
+    </button>
+</div>         
                 <table class="data-table" id="transactionTable">
                     <thead>
                         <tr>
@@ -3799,19 +3815,49 @@ async function deleteSelectedOrders() {
     
         // ============ TRANSACTIONS FUNCTIONS ============
 
-        async function loadTransactions() {
-            try {
-                const response = await fetch('/api/transactions');
-                const data = await response.json();
-                allTransactions = data;
-                transactions = data;
-                renderTransactions();
-                updateTransactionSummary();
-            } catch (error) {
-                console.error('Fehler beim Laden der Transaktionen:', error);
-                alert('Fehler beim Laden der Transaktionen');
-            }
-        }
+let currentPage = 0;
+let totalTransactions = 0;
+
+async function loadTransactions() {
+    try {
+        const limitSelect = document.getElementById('limitFilter');
+        const filterSelect = document.getElementById('transactionFilter');
+        const limit = limitSelect?.value === 'all' ? 10000 : parseInt(limitSelect?.value || '100');
+        const offset = currentPage * limit;
+        const filter = filterSelect?.value || 'all';
+        
+        const response = await fetch(`/api/transactions?limit=${limit}&offset=${offset}&filter=${filter}`);
+        const data = await response.json();
+        
+        allTransactions = data.transactions || [];
+        transactions = allTransactions;
+        totalTransactions = data.totalCount || 0;
+        
+        renderTransactions();
+        updateTransactionSummary();
+        updatePaginationUI();
+    } catch (error) {
+        console.error('Fehler beim Laden der Transaktionen:', error);
+        alert('Fehler beim Laden der Transaktionen');
+    }
+}
+
+function changePage(direction) {
+    currentPage += direction;
+    if (currentPage < 0) currentPage = 0;
+    loadTransactions();
+}
+
+function updatePaginationUI() {
+    const limitSelect = document.getElementById('limitFilter');
+    const limit = limitSelect?.value === 'all' ? 10000 : parseInt(limitSelect?.value || '100');
+    const totalPages = Math.ceil(totalTransactions / limit);
+    
+    document.getElementById('prevPageBtn').disabled = currentPage === 0;
+    document.getElementById('nextPageBtn').disabled = (currentPage + 1) >= totalPages;
+    document.getElementById('pageInfo').textContent = 
+        `Seite ${currentPage + 1} von ${totalPages} (${totalTransactions} Transaktionen)`;
+}
 
         async function deleteTransaction(transactionId, transactionInfo) {
             if (!confirm(`Möchtest du diese Transaktion wirklich löschen?\n\n${transactionInfo}\n\nDiese Aktion kann nicht rückgängig gemacht werden.`)) {
@@ -3976,27 +4022,10 @@ async function deleteSelectedOrders() {
                 `;            }).join('');
         }
         
-        function filterTransactions() {
-            const filter = document.getElementById('transactionFilter').value;
-            const now = new Date();
-            
-            if (filter === 'all') {
-                transactions = allTransactions;
-            } else if (filter === 'today') {
-                const today = now.toISOString().split('T')[0];
-                transactions = allTransactions.filter(t => t.created_at.startsWith(today));
-            } else if (filter === 'week') {
-                const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-                transactions = allTransactions.filter(t => new Date(t.created_at) >= weekAgo);
-            } else if (filter === 'month') {
-                const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-                transactions = allTransactions.filter(t => new Date(t.created_at) >= monthAgo);
-            }
-            
-            renderTransactions();
-            updateTransactionSummary();
-        }
-
+function filterTransactions() {
+    currentPage = 0; // Zurück auf Seite 1
+    loadTransactions(); // Neu laden mit aktuellen Filtern
+}
         function updateTransactionSummary() {
             const summary = document.getElementById('transactionSummary');
             const totalRevenue = transactions.reduce((sum, t) => sum + t.total, 0);
