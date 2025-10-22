@@ -203,12 +203,13 @@ module.exports = async (req, res) => {
                 const { data: products } = await supabase.from('products').select('stock, available').eq('available', true);
                 const { data: allProducts } = await supabase.from('products').select('stock, min_stock');
                 
-                // Nicht abgerechnete Transaktionen statt heutige
-                const { data: unbilledTransactions } = await supabase
-                    .from('transactions')
-                    .select('total')
-                    .is('billing_id', null);
-
+// Nicht abgerechnete UND nicht stornierte Transaktionen
+const { data: unbilledTransactions } = await supabase
+    .from('transactions')
+    .select('total')
+    .is('billing_id', null)
+    .eq('cancelled', false);
+                
                 const stats = {
                     member_count: users ? users.length : 0,
                     available_products: products ? products.length : 0,
