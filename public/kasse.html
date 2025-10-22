@@ -2942,48 +2942,19 @@ async function deleteMemberTransaction(transactionId, productName, amount, quant
             method: 'DELETE'
         });
         
-        // 2. User-Daten neu laden, um aktuellen Saldo zu bekommen
+// 2. User-Daten neu laden (Backend hat alles bereits korrigiert!)
         const updatedUser = await apiCall(`/api/users/id/${currentUser.id}`);
         
-        // 3. Saldo korrigieren (Betrag wieder gutschreiben)
-        const newBalance = updatedUser.balance + amount;
-        
-        await apiCall(`/api/users/${currentUser.id}`, {
-            method: 'PUT',
-            body: JSON.stringify({
-                ...updatedUser,
-                balance: newBalance
-            })
-        });
-        
-        // 4. Produktbestand wieder erhöhen (wenn es ein echtes Produkt ist)
-        if (productId && productId > 0) {
-            try {
-                const product = await apiCall(`/api/products/${productId}`);
-                
-                await apiCall(`/api/products/${productId}`, {
-                    method: 'PUT',
-                    body: JSON.stringify({
-                        ...product,
-                        stock: product.stock + quantity
-                    })
-                });
-            } catch (productError) {
-                console.warn('Produktbestand konnte nicht aktualisiert werden:', productError);
-            }
-        }
-        
-        // 5. Lokale Daten aktualisieren
-        currentUser.balance = newBalance;
+        // 3. Lokale Daten aktualisieren
+        currentUser.balance = updatedUser.balance;
         const userIndex = users.findIndex(u => u.id === currentUser.id);
         if (userIndex !== -1) {
-            users[userIndex].balance = newBalance;
+            users[userIndex].balance = updatedUser.balance;
         }
         
-        // 6. UI aktualisieren
+        // 4. UI aktualisieren
         updateUserInfo();
-        showStatus('✅ Transaktion gelöscht und Saldo angepasst', 'success');
-        
+        showStatus('✅ Transaktion storniert - Saldo und Bestand korrigiert', 'success');        
         // 7. Modal schließen und neu laden
         const modal = document.querySelector('div[style*="position: fixed"]');
 if (modal) {
