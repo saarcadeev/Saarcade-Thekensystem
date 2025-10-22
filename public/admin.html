@@ -3948,15 +3948,24 @@ async function deleteSelectedOrders() {
                 const formattedDate = date.toLocaleDateString('de-DE');
                 const formattedTime = date.toLocaleTimeString('de-DE');
                 
-                // Lösch-Button nur für nicht abgerechnete Transaktionen
-                const deleteBtn = !t.is_billed && !t.billing_id ? 
+// Storniert-Badge
+                const cancelledBadge = t.cancelled ? 
+                    `<span style="background: #fed7d7; color: #c53030; padding: 2px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold; margin-left: 8px;">❌ STORNIERT</span>` : 
+                    '';
+                
+                // Lösch-Button nur für nicht abgerechnete und nicht stornierte Transaktionen
+                const deleteBtn = !t.is_billed && !t.billing_id && !t.cancelled ? 
                     `<button class="btn btn-danger" onclick="deleteTransaction(${t.id}, '${t.product_name} - ${t.total.toFixed(2)}€')" style="padding: 5px 10px; font-size: 0.8em;">🗑️</button>` : 
+                    t.cancelled ? '<span style="color: #e53e3e; font-size: 0.85em;">🚫 Storniert</span>' :
                     '<span style="color: #38a169; font-size: 0.85em;">✅ Abgerechnet</span>';
                 
+                // Zeile ausgrauen wenn storniert
+                const rowStyle = t.cancelled ? 'style="opacity: 0.5; background: #f9f9f9;"' : '';
+                
                 return `
-                    <tr>
+                    <tr ${rowStyle}>
                         <td>${formattedDate}<br><small>${formattedTime}</small></td>
-                        <td>${t.user_name}</td>
+                        <td>${t.user_name}${cancelledBadge}</td>
                         <td>${t.product_name}</td>
                         <td>${t.quantity}</td>
                         <td>${t.price.toFixed(2)}€</td>
@@ -3964,8 +3973,7 @@ async function deleteSelectedOrders() {
                         <td>${t.payment_method === 'balance' ? 'Saldo' : t.payment_method}</td>
                         <td>${deleteBtn}</td>
                     </tr>
-                `;
-            }).join('');
+                `;            }).join('');
         }
         
         function filterTransactions() {
