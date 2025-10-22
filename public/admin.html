@@ -4026,15 +4026,17 @@ function filterTransactions() {
     currentPage = 0; // Zurück auf Seite 1
     loadTransactions(); // Neu laden mit aktuellen Filtern
 }
-        function updateTransactionSummary() {
-            const summary = document.getElementById('transactionSummary');
-            const totalRevenue = transactions.reduce((sum, t) => sum + t.total, 0);
-            
-            document.getElementById('transactionCountSpan').textContent = transactions.length;
-            document.getElementById('totalRevenue').textContent = totalRevenue.toFixed(2);
-            
-            summary.style.display = 'block';
-        }
+function updateTransactionSummary() {
+    const summary = document.getElementById('transactionSummary');
+    // Nur nicht-stornierte Transaktionen zählen
+    const activeTransactions = transactions.filter(t => !t.cancelled);
+    const totalRevenue = activeTransactions.reduce((sum, t) => sum + t.total, 0);
+    
+    document.getElementById('transactionCountSpan').textContent = activeTransactions.length;
+    document.getElementById('totalRevenue').textContent = totalRevenue.toFixed(2);
+    
+    summary.style.display = 'block';
+}
 
         function exportTransactions() {
             if (transactions.length === 0) {
