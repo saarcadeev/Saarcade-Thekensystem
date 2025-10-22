@@ -590,16 +590,45 @@ if (pathParts[0] === 'products' && pathParts[1] && method === 'PUT') {
 
         // ============ TRANSACTIONS ENDPUNKTE ============
         
-        // GET /transactions - Alle Transaktionen
-        if (path === '/transactions' && method === 'GET') {
-            const { data, error } = await supabase
-                .from('transactions')
-                .select('*')
-                .order('created_at', { ascending: false })
-                .limit(100);
-            
-            if (error) throw error;
-            return res.status(200).json(data || []);
+// GET /transactions - Alle Transaktionen mit Pagination
+if (path === '/transactions' && method === 'GET') {
+    const url = new URL(req.url, `https://${req.headers.host}`);
+    const limit = parseInt(url.searchParams.get('limit')) || 100;
+    const offset = parseInt(url.searchParams.get('offset')) || 0;
+    const filter = url.searchParams.get('filter') || 'all';
+    
+    let query = supabase
+        .from('transactions')
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false });
+    
+    // Zeitfilter anwenden
+    const now = new Date();
+    if (filter === 'today') {
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        query = query.gte('created_at', today.toISOString());
+    } else if (filter === 'week') {
+        const weekAgo = new Date(now);
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        query = query.gte('created_at', weekAgo.toISOString());
+    } else if (filter === 'month') {
+        const monthAgo = new Date(now);
+        monthAgo.setMonth(monthAgo.getMonth() - 1);
+        query = query.gte('created_at', monthAgo.toISOString());
+    }
+    
+    // Pagination anwenden
+    query = query.range(offset, offset + limit - 1);
+    
+    const { data, error, count } = await query;
+    
+    if (error) throw error;
+    return res.status(200).json({
+        transactions: data || [],
+        totalCount: count || 0,
+        limit,
+        offset
+    });
         }
 
         // POST /transactions - Neue Transaktion erstellen
