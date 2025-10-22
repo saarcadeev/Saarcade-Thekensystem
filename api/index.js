@@ -700,15 +700,15 @@ if (item.productId && item.productId > 0) {
             });
         }
 
-        // DELETE /transactions/{id} - Transaktion lÃ¶schen
+// DELETE /transactions/{id} - Transaktion stornieren (SOFT DELETE)
         if (pathParts[0] === 'transactions' && pathParts[1] && method === 'DELETE') {
             const transactionId = parseInt(pathParts[1]);
             
             if (isNaN(transactionId)) {
-                return res.status(400).json({ error: 'UngÃ¼ltige Transaktions-ID' });
+                return res.status(400).json({ error: 'Ungültige Transaktions-ID' });
             }
 
-            // PrÃ¼fe ob Transaktion bereits abgerechnet ist
+            // Prüfe ob Transaktion bereits abgerechnet ist
             const { data: transaction, error: fetchError } = await supabase
                 .from('transactions')
                 .select('*')
@@ -723,23 +723,83 @@ if (item.productId && item.productId > 0) {
             }
 
             if (transaction.is_billed || transaction.billing_id) {
-                return res.status(400).json({ error: 'Abgerechnete Transaktionen kÃ¶nnen nicht gelÃ¶scht werden' });
+                return res.status(400).json({ error: 'Abgerechnete Transaktionen können nicht storniert werden' });
             }
 
-            // LÃ¶sche die Transaktion
-            const { error: deleteError } = await supabase
+            if (transaction.cancelled) {
+                return res.status(400).json({ error: 'Transaktion ist bereits storniert' });
+            }
+
+            // SOFT DELETE: Markiere als storniert
+            const { error: cancelError } = await supabase
                 .from('transactions')
-                .delete()
+                .update({
+                    cancelled: true,
+                    cancelled_at: new Date().toISOString(),
+                    cancelled_by: 'barkeeper',
+                    cancellation_reason: 'Storniert über Kasse'
+                })
                 .eq('id', transactionId);
             
-            if (deleteError) throw deleteError;
+            if (cancelError) throw cancelError;
+
+            // BESTANDSKORREKTUR: Produkt zurückbuchen
+            if (transaction.product_id && transaction.product_id > 0) {
+                try {
+                    const { data: product } = await supabase
+                        .from('products')
+                        .select('stock, name')
+                        .eq('id', transaction.product_id)
+                        .single();
+
+                    if (product) {
+                        const oldStock = product.stock;
+                        const newStock = product.stock + transaction.quantity;
+
+                        await supabase
+                            .from('products')
+                            .update({ stock: newStock })
+                            .eq('id', transaction.product_id);
+
+                        await supabase
+                            .from('stock_movements')
+                            .insert({
+                                product_id: transaction.product_id,
+                                product_name: product.name,
+                                movement_type: 'cancellation',
+                                quantity: transaction.quantity,
+                                stock_before: oldStock,
+                                stock_after: newStock,
+                                reason: `Stornierung Transaktion #${transactionId}`,
+                                created_by: 'system'
+                            });
+                    }
+                } catch (stockError) {
+                    console.warn('Stock correction error:', stockError);
+                }
+            }
+
+            // SALDO KORRIGIEREN: Geld zurückbuchen
+            const { data: user } = await supabase
+                .from('users')
+                .select('balance')
+                .eq('id', transaction.user_id)
+                .single();
+
+            if (user) {
+                const newBalance = user.balance + transaction.total;
+                await supabase
+                    .from('users')
+                    .update({ balance: newBalance })
+                    .eq('id', transaction.user_id);
+            }
             
             return res.status(200).json({ 
-                message: 'Transaktion erfolgreich gelÃ¶scht',
-                transaction: transaction
+                message: 'Transaktion erfolgreich storniert',
+                transaction: transaction,
+                refunded: transaction.total
             });
         }
-
         // ============ CLOTHING ORDERS ENDPUNKTE ============
         
         // GET /clothing-orders - Alle Kleidungsbestellungen
