@@ -2814,7 +2814,7 @@ async function showMemberTransactions() {
         
         // Filtere die Transaktionen für den aktuellen User (nur nicht abgerechnet)
         const userTransactions = allTransactions.filter(t => 
-            t.user_id === currentUser.id && !t.billing_id
+            t.user_id === currentUser.id && !t.billing_id && !t.cancelled
         );
         
         // Nach Datum sortieren (neueste zuerst)
