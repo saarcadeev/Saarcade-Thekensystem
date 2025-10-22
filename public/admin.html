@@ -929,7 +929,7 @@ body {
             
             <!-- Top 5 Produkte -->
             <div class="card">
-                <div class="card-header">🏆 Top 10 Produkte (30 Tage)</div>
+                <div class="card-header">🏆 Top 20 Produkte (30 Tage)</div>
                 <div id="topProductsList" style="padding: 10px;">
                     <div style="text-align: center; padding: 20px; color: #666;">Lade Daten...</div>
                 </div>
@@ -3921,7 +3921,8 @@ function updatePaginationUI() {
                 showLoading(true);
                 
                 // Hole die Transaktion für Details
-                const allTransactions = await apiCall('/api/transactions');
+                const response = await apiCall('/api/transactions?limit=10000');
+                const allTransactions = response.transactions || response;
                 const transaction = allTransactions.find(t => t.id === transactionId);
                 
                 if (!transaction) {
@@ -6066,7 +6067,7 @@ async function loadTopProducts() {
         // Sortiere nach Menge
         const topProducts = Object.values(productSales)
             .sort((a, b) => b.quantity - a.quantity)
-            .slice(0, 10);
+            .slice(0, 20);
         
         const container = document.getElementById('topProductsList');
         
