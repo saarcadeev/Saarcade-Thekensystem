@@ -4619,7 +4619,8 @@ for (const [billingId, transactions] of Object.entries(billingGroups).sort((a, b
 async function exportSinglePeriodCSVSafe(transactionIds, firstName, lastName, periodLabel) {
     try {
         const ids = transactionIds.split(',').map(id => parseInt(id));
-        const allTransactions = await apiCall('/api/transactions');
+        const response = await apiCall('/api/transactions?limit=10000');
+        const allTransactions = Array.isArray(response) ? response : (response.transactions || []);
         const transactions = allTransactions.filter(t => ids.includes(t.id));
         exportSinglePeriodCSV(transactions, firstName, lastName, periodLabel);
     } catch (error) {
@@ -5652,7 +5653,8 @@ function exportBillingDetailsCSV() {
 
 async function exportUserTransactionsCSV(userId, firstName, lastName) {
     try {
-        const allTransactions = await apiCall('/api/transactions');
+        const response = await apiCall('/api/transactions?limit=10000');
+        const allTransactions = Array.isArray(response) ? response : (response.transactions || []);
         const userTransactions = allTransactions.filter(t => t.user_id === userId);
         
         if (userTransactions.length === 0) {
@@ -5690,7 +5692,8 @@ return [
 
 async function exportTransactionsByIds(transactionIds, firstName, lastName, periodLabel) {
     try {
-        const allTransactions = await apiCall('/api/transactions');
+        const response = await apiCall('/api/transactions?limit=10000');
+        const allTransactions = Array.isArray(response) ? response : (response.transactions || []);
         const transactions = allTransactions.filter(t => transactionIds.includes(t.id));
         
         if (transactions.length === 0) {
@@ -6040,7 +6043,8 @@ async function updateStockOverview() {
 async function loadTopProducts() {
     try {
         // Lade alle Transaktionen der letzten 30 Tage
-        const allTransactions = await apiCall('/api/transactions');
+        const response = await apiCall('/api/transactions?limit=10000');
+        const allTransactions = Array.isArray(response) ? response : (response.transactions || []);
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         
