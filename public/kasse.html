@@ -2810,7 +2810,8 @@ async function showMemberTransactions() {
         showStatus('Lade Transaktionen...', 'loading');
         
         // Hole alle Transaktionen über die API
-        const allTransactions = await apiCall('/api/transactions');
+        const response = await apiCall('/api/transactions?limit=10000');
+        const allTransactions = Array.isArray(response) ? response : (response.transactions || []);
         
         // Filtere die Transaktionen für den aktuellen User (nur nicht abgerechnet)
         const userTransactions = allTransactions.filter(t => 
