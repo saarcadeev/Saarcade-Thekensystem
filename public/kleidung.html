@@ -869,7 +869,24 @@ body {
             
             <div class="right-column">
                 <h2 style="font-size: 1.8em; color: #2d3748; margin-bottom: 20px;">🛒 Warenkorb</h2>
+                
+<!-- WICHTIGER HINWEIS -->
+<div style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 3px solid #c23616; box-shadow: 0 8px 20px rgba(238, 90, 36, 0.4); text-align: center; animation: pulse 2s infinite;">
+    <div style="font-size: 1.8em; font-weight: bold; margin-bottom: 10px;">⚠️ WICHTIG ⚠️</div>
+    <div style="font-size: 1.2em; font-weight: 600; line-height: 1.5;">
+        Bitte noch nicht bezahlen!<br>
+        Der Preis kann sich noch reduzieren.<br>
+        Alle Besteller erhalten eine Mail!
+    </div>
+</div>
 
+<style>
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+}
+</style>
+                
                 <div class="cart-summary" id="cartSummary">
                     <h3>🛒 Deine Bestellung</h3>
                     <div id="cartItems">
@@ -1024,10 +1041,10 @@ function validatePin() {
         document.getElementById('selectedMember').classList.add('active');
         
         // SEPA-Button anzeigen/verstecken
-        const sepaButton = document.getElementById('sepaPaymentMethod');
+   /*     const sepaButton = document.getElementById('sepaPaymentMethod');
         if (sepaButton) {
             sepaButton.style.display = selectedMember.sepaActive ? 'block' : 'none';
-        }
+        } */
         
         updateSubmitButton();
         showAlert(`✓ PIN korrekt - ${selectedMember.firstName} ${selectedMember.lastName} ausgewählt`, 'success');
@@ -1204,10 +1221,10 @@ document.getElementById('selectedMemberDetails').textContent = detailsText;
 document.getElementById('selectedMember').classList.add('active');
 
 // SEPA-Button anzeigen/verstecken
-const sepaButton = document.getElementById('sepaPaymentMethod');
+/* const sepaButton = document.getElementById('sepaPaymentMethod');
 if (sepaButton) {
     sepaButton.style.display = selectedMember.sepaActive ? 'block' : 'none';
-}
+} */
 
 updateSubmitButton();
 showAlert(`Mitglied "${firstName} ${lastName}" ausgewählt`, 'success');
