@@ -4,7 +4,7 @@
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚙️ Saarcade Admin - Mit Bildupload</title>
+    <title>⚙️ Saarcade e.V. Adminbereich</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -4409,7 +4409,8 @@ async function viewUserBillings() {
         }
         
 // Lade alle Transaktionen des Mitglieds
-const allTransactions = await apiCall('/api/transactions');
+const response = await apiCall('/api/transactions?limit=10000');
+const allTransactions = Array.isArray(response) ? response : (response.transactions || []);
 const userTransactions = allTransactions.filter(t => t.user_id === userId);
         
         if (userTransactions.length === 0) {
