@@ -1077,7 +1077,7 @@ body {
                 
                 <div style="overflow-x: auto;">
                     <table class="data-table" id="productTable">
-                        <thead>
+<thead>
                             <tr>
                                 <th class="checkbox-cell">
                                     <input type="checkbox" id="selectAllProducts" onchange="toggleSelectAll('products')">
@@ -1088,12 +1088,13 @@ body {
                                 <th>Mitgliedspreis</th>
                                 <th>Gastpreis</th>
                                 <th>Bestand</th>
+                                <th>Verfügbar</th>
                                 <th>Barcode</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td colspan="8" style="text-align: center; padding: 30px; color: #666;">
+                                <td colspan="9" style="text-align: center; padding: 30px; color: #666;">
                                     Klicke "Neu laden" um Produktdaten zu laden
                                 </td>
                             </tr>
@@ -2940,16 +2941,16 @@ function renderUsers() {
             }
         }
 
-        function renderProducts() {
+function renderProducts() {
             const tbody = document.querySelector('#productTable tbody');
             selectedProducts = [];
             updateSelectionInfo('products');
             
             if (products.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px; color: #666;">Keine Produktdaten verfügbar</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 30px; color: #666;">Keine Produktdaten verfügbar</td></tr>';
                 return;
             }
-            
+    
             tbody.innerHTML = products.map(product => {
                 const stockColor = product.stock > 0 ? '#38a169' : '#e53e3e';
                 
@@ -2964,6 +2965,8 @@ function renderUsers() {
                     imageHtml = `<div class="product-emoji-fallback">📦</div>`;
                 }
                 
+                const availableIcon = product.available ? '✅' : '❌';
+                
                 return `
                     <tr>
                         <td class="checkbox-cell">
@@ -2975,10 +2978,10 @@ function renderUsers() {
                         <td>${product.member_price.toFixed(2)}€</td>
                         <td>${product.guest_price.toFixed(2)}€</td>
                         <td style="color: ${stockColor}; font-weight: bold;">${product.stock}</td>
+                        <td style="text-align: center; font-size: 1.2em;">${availableIcon}</td>
                         <td><code style="font-size: 0.8em;">${product.barcodes ? product.barcodes.join(', ') : '-'}</code></td>
                     </tr>
-                `;
-            }).join('');
+                `;            }).join('');
         }
 
 function openProductModal(productId = null) {
