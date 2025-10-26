@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎮 Saarcade e.V. Kasse</title>
+    <title>🎮 Saarcade e.V. Vereinskasse</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -2814,15 +2814,49 @@ async function showMemberTransactions() {
         const allTransactions = Array.isArray(response) ? response : (response.transactions || []);
         
         // Filtere die Transaktionen für den aktuellen User (nur nicht abgerechnet)
-        const userTransactions = allTransactions.filter(t => 
+        const unbilledTransactions = allTransactions.filter(t => 
             t.user_id === currentUser.id && !t.billing_id && !t.cancelled
         );
         
         // Nach Datum sortieren (neueste zuerst)
-        userTransactions.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        unbilledTransactions.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         
-        // Zeige Modal mit Transaktionen
-        showMemberTransactionsModal(userTransactions);
+        // Hole alle Abrechnungen
+        const allBillings = await apiCall('/api/billings');
+        
+        // Filtere Abrechnungen, die Transaktionen dieses Users enthalten
+        const userBilledTransactions = allTransactions.filter(t => 
+            t.user_id === currentUser.id && t.billing_id && !t.cancelled
+        );
+        
+        // Gruppiere abgerechnete Transaktionen nach billing_id
+        const billingGroups = {};
+        userBilledTransactions.forEach(t => {
+            if (!billingGroups[t.billing_id]) {
+                billingGroups[t.billing_id] = [];
+            }
+            billingGroups[t.billing_id].push(t);
+        });
+        
+        // Erstelle Array mit Abrechnungs-Infos
+        const userBillings = Object.entries(billingGroups).map(([billingId, transactions]) => {
+            const billing = allBillings.find(b => b.id === parseInt(billingId));
+            const total = transactions.reduce((sum, t) => sum + t.total, 0);
+            return {
+                billing_id: parseInt(billingId),
+                billing_number: billing ? billing.billing_number : `#${billingId}`,
+                billing_date: billing ? billing.billing_date : transactions[0].created_at,
+                transactions: transactions,
+                total: total,
+                count: transactions.length
+            };
+        });
+        
+        // Sortiere Abrechnungen nach Datum (neueste zuerst)
+        userBillings.sort((a, b) => new Date(b.billing_date) - new Date(a.billing_date));
+        
+        // Zeige Modal mit Transaktionen und Abrechnungen
+        showMemberTransactionsModal(unbilledTransactions, userBillings);
         showStatus('', '');
         
     } catch (error) {
@@ -2830,22 +2864,25 @@ async function showMemberTransactions() {
         showStatus('Fehler beim Laden der Transaktionen', 'error');
     }
 }
-
-function showMemberTransactionsModal(transactions) {
-    const totalAmount = transactions.reduce((sum, t) => sum + t.total, 0);
+function showMemberTransactionsModal(unbilledTransactions, userBillings) {
+   const totalAmount = unbilledTransactions.reduce((sum, t) => sum + t.total, 0);
     
     let html = `
         <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center;" onclick="this.remove()">
             <div style="background: white; padding: 30px; border-radius: 12px; max-width: 800px; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3);" onclick="event.stopPropagation()">
                 <h2 style="margin-top: 0; color: #667eea;">📋 Transaktionen: ${currentUser.first_name} ${currentUser.last_name}</h2>
                 
-                <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+<div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                     <p><strong>Aktueller Saldo:</strong> <span style="color: ${currentUser.balance >= 0 ? '#38a169' : '#e53e3e'}; font-weight: bold; font-size: 1.2em;">${currentUser.balance.toFixed(2)}€</span></p>
-                    <p><strong>Nicht abgerechnet:</strong> ${transactions.length} Transaktionen - ${totalAmount.toFixed(2)}€</p>
+                    <p><strong>Nicht abgerechnet:</strong> ${unbilledTransactions.length} Transaktionen - ${totalAmount.toFixed(2)}€</p>
+                    <p><strong>Abgerechnete Perioden:</strong> ${userBillings.length}</p>
                 </div>
-    `;
+                
+                <h3 style="color: #667eea; margin-top: 20px; margin-bottom: 10px;">📝 Aktuelle Transaktionen (nicht abgerechnet)</h3>
+                
+                `;
     
-    if (transactions.length === 0) {
+if (unbilledTransactions.length === 0) {
         html += '<p style="text-align: center; color: #666; padding: 20px;">Keine offenen Transaktionen</p>';
     } else {
         html += `
@@ -2862,7 +2899,7 @@ function showMemberTransactionsModal(transactions) {
                 <tbody>
         `;
         
-        transactions.forEach(t => {
+       unbilledTransactions.forEach(t => {
             const date = new Date(t.created_at);
             const formattedDate = date.toLocaleDateString('de-DE');
             const formattedTime = date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
@@ -2877,6 +2914,54 @@ function showMemberTransactionsModal(transactions) {
                         <button onclick="deleteMemberTransaction(${t.id}, '${t.product_name.replace(/'/g, "\\'")}', ${t.total}, ${t.quantity}, ${t.product_id})" 
                                 style="background: #e53e3e; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
                             🗑️ Löschen
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        html += `
+                </tbody>
+            </table>         
+        `;
+    }
+
+// Abgerechnete Transaktionen anzeigen
+    html += `
+        <h3 style="color: #667eea; margin-top: 30px; margin-bottom: 10px; padding-top: 20px; border-top: 2px solid #e2e8f0;">✅ Abgerechnete Perioden</h3>
+    `;
+    
+    if (userBillings.length === 0) {
+        html += '<p style="text-align: center; color: #666; padding: 20px;">Keine abgerechneten Perioden</p>';
+    } else {
+        html += `
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #f1f5f9; border-bottom: 2px solid #cbd5e1;">
+                        <th style="padding: 12px; text-align: left;">Abrechnungsnummer</th>
+                        <th style="padding: 12px; text-align: left;">Datum</th>
+                        <th style="padding: 12px; text-align: center;">Transaktionen</th>
+                        <th style="padding: 12px; text-align: right;">Betrag</th>
+                        <th style="padding: 12px; text-align: center;">Aktion</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        userBillings.forEach(billing => {
+            const date = new Date(billing.billing_date);
+            const formattedDate = date.toLocaleDateString('de-DE');
+            
+            html += `
+                <tr style="border-bottom: 1px solid #e2e8f0; cursor: pointer;" onclick="showBillingDetails(${billing.billing_id}, '${billing.billing_number}')">
+                    <td style="padding: 10px;"><strong>${billing.billing_number}</strong></td>
+                    <td style="padding: 10px;">${formattedDate}</td>
+                    <td style="padding: 10px; text-align: center;">${billing.count}</td>
+                    <td style="padding: 10px; text-align: right; font-weight: bold;">${billing.total.toFixed(2)}€</td>
+                    <td style="padding: 10px; text-align: center;">
+                        <button onclick="event.stopPropagation(); showBillingDetails(${billing.billing_id}, '${billing.billing_number}')" 
+                                style="background: #667eea; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
+                            📋 Details
                         </button>
                     </td>
                 </tr>
@@ -2972,6 +3057,88 @@ if (modal) {
         showStatus('❌ Fehler beim Löschen der Transaktion', 'error');
     }
 } 
+
+async function showBillingDetails(billingId, billingNumber) {
+    try {
+        showStatus('Lade Abrechnungsdetails...', 'loading');
+        
+        // Lade Transaktionen dieser Abrechnung für den aktuellen User
+        const allTransactions = await apiCall(`/api/billings/${billingId}/transactions`);
+        const userTransactions = allTransactions.filter(t => t.user_id === currentUser.id);
+        
+        // Nach Datum sortieren
+        userTransactions.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        
+        const totalAmount = userTransactions.reduce((sum, t) => sum + t.total, 0);
+        
+        let html = `
+            <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 10000; display: flex; align-items: center; justify-content: center;" onclick="this.remove()">
+                <div style="background: white; padding: 30px; border-radius: 12px; max-width: 800px; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3);" onclick="event.stopPropagation()">
+                    <h2 style="margin-top: 0; color: #667eea;">📋 Details: ${billingNumber}</h2>
+                    
+                    <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <p><strong>Mitglied:</strong> ${currentUser.first_name} ${currentUser.last_name}</p>
+                        <p><strong>Transaktionen:</strong> ${userTransactions.length}</p>
+                        <p><strong>Gesamtbetrag:</strong> <span style="font-weight: bold; font-size: 1.2em;">${totalAmount.toFixed(2)}€</span></p>
+                    </div>
+        `;
+        
+        if (userTransactions.length === 0) {
+            html += '<p style="text-align: center; color: #666; padding: 20px;">Keine Transaktionen gefunden</p>';
+        } else {
+            html += `
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #f1f5f9; border-bottom: 2px solid #cbd5e1;">
+                            <th style="padding: 12px; text-align: left;">Datum/Zeit</th>
+                            <th style="padding: 12px; text-align: left;">Produkt</th>
+                            <th style="padding: 12px; text-align: center;">Menge</th>
+                            <th style="padding: 12px; text-align: right;">Betrag</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            userTransactions.forEach(t => {
+                const date = new Date(t.created_at);
+                const formattedDate = date.toLocaleDateString('de-DE');
+                const formattedTime = date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                
+                html += `
+                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                        <td style="padding: 10px;">${formattedDate}<br><small style="color: #666;">${formattedTime}</small></td>
+                        <td style="padding: 10px;">${t.product_name}</td>
+                        <td style="padding: 10px; text-align: center;">${t.quantity}x</td>
+                        <td style="padding: 10px; text-align: right; font-weight: bold;">${t.total.toFixed(2)}€</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                    </tbody>
+                </table>
+            `;
+        }
+        
+        html += `
+                    <div style="margin-top: 20px; text-align: center;">
+                        <button onclick="this.closest('div[style*=fixed]').remove()" 
+                                style="background: #667eea; color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: 600;">
+                            Schließen
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', html);
+        showStatus('', '');
+        
+    } catch (error) {
+        console.error('Fehler beim Laden der Abrechnungsdetails:', error);
+        showStatus('Fehler beim Laden der Abrechnungsdetails', 'error');
+    }
+}
         
     </script>
 
