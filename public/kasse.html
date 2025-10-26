@@ -2948,9 +2948,14 @@ if (unbilledTransactions.length === 0) {
                 <tbody>
         `;
         
-        userBillings.forEach(billing => {
-            const date = new Date(billing.billing_date);
-            const formattedDate = date.toLocaleDateString('de-DE');
+userBillings.forEach(billing => {
+            let date = new Date(billing.billing_date);
+            if (isNaN(date.getTime()) && billing.transactions.length > 0) {
+                // Fallback: Nutze das Datum der letzten (neuesten) Transaktion
+                // Transaktionen sind bereits nach Datum sortiert (neueste zuerst)
+                date = new Date(billing.transactions[0].created_at);
+            }
+            const formattedDate = isNaN(date.getTime()) ? 'Datum unbekannt' : date.toLocaleDateString('de-DE');
             
             html += `
                 <tr style="border-bottom: 1px solid #e2e8f0; cursor: pointer;" onclick="showBillingDetails(${billing.billing_id}, '${billing.billing_number}')">
