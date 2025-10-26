@@ -81,6 +81,38 @@
             margin-bottom: 8px;
         }
 
+        .cash-helper-toggle {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 2px solid #e2e8f0;
+            font-size: 0.9em;
+            z-index: 100;
+        }
+
+        .cash-helper-toggle.show {
+            display: flex;
+        }
+
+        .cash-helper-toggle input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .cash-helper-toggle label {
+            cursor: pointer;
+            user-select: none;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        
         .scanner-pin-area {
             display: flex;
             flex-direction: column;
@@ -1129,7 +1161,13 @@ try {
     
     <div class="container">
         <div class="header" style="position: relative;">
-            <h1>🎮 Saarcade Kassensystem</h1>
+            <h1>🎮 Saarcade e.V. Kassensystem</h1>
+
+<!-- Kassierhilfe Toggle (nur für Barkeeper sichtbar) -->
+        <div class="cash-helper-toggle" id="cashHelperToggle">
+            <input type="checkbox" id="cashHelperCheckbox" checked>
+            <label for="cashHelperCheckbox">💰 Kassierhilfe</label>
+        </div>
             
             <div class="header-main">
                 <div class="scanner-pin-area">
