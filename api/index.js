@@ -289,19 +289,18 @@ if (path === '/users' && method === 'POST') {
         return res.status(400).json({ error: 'Pflichtfelder fehlen: first_name, last_name, barcodes' });
     }
 
-    // Barcode-Eindeutigkeit prÃ¼fen fÃ¼r alle Barcodes
+    // Barcode-Eindeutigkeit prüfen für alle Barcodes
     for (const barcode of userData.barcodes) {
-        const { data: existingUser } = await supabase
+        const { data: existingUsers } = await supabase
             .from('users')
             .select('id')
-            .contains('barcodes', [barcode])
-            .single();
+            .contains('barcodes', [barcode]);
 
-        if (existingUser) {
+        if (existingUsers && existingUsers.length > 0) {
             return res.status(400).json({ error: `Barcode ${barcode} bereits vergeben` });
         }
     }
-
+    
     const { data, error } = await supabase
         .from('users')
         .insert([{
