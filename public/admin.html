@@ -3876,32 +3876,10 @@ function updatePaginationUI() {
                     return;
                 }
                 
-                // Lösche die Transaktion
+               // Lösche die Transaktion (Backend korrigiert automatisch Saldo und Bestand)
                 await apiCall(`/api/transactions/${transactionId}`, {
                     method: 'DELETE'
                 });
-                
-                // Aktualisiere den Benutzersaldo (addiere den Betrag zurück)
-                const user = await apiCall(`/api/users/id/${transaction.user_id}`);
-                await apiCall(`/api/users/${transaction.user_id}`, {
-                    method: 'PUT',
-                    body: JSON.stringify({
-                        ...user,
-                        balance: user.balance + transaction.total
-                    })
-                });
-                
-                // Aktualisiere den Produktbestand (addiere die Menge zurück)
-                const product = await apiCall(`/api/products/${transaction.product_id}`).catch(() => null);
-                if (product) {
-                    await apiCall(`/api/products/${transaction.product_id}`, {
-                        method: 'PUT',
-                        body: JSON.stringify({
-                            ...product,
-                            stock: product.stock + transaction.quantity
-                        })
-                    });
-                }
                 
                 showAlert('Transaktion erfolgreich gelöscht und Saldo wiederhergestellt', 'success');
                 
@@ -3937,32 +3915,10 @@ function updatePaginationUI() {
                     return;
                 }
                 
-                // Lösche die Transaktion
+             // Lösche die Transaktion (Backend korrigiert automatisch Saldo und Bestand)
                 await apiCall(`/api/transactions/${transactionId}`, {
                     method: 'DELETE'
                 });
-                
-                // Aktualisiere den Benutzersaldo (addiere den Betrag zurück)
-                const user = await apiCall(`/api/users/id/${transaction.user_id}`);
-                await apiCall(`/api/users/${transaction.user_id}`, {
-                    method: 'PUT',
-                    body: JSON.stringify({
-                        ...user,
-                        balance: user.balance + transaction.total
-                    })
-                });
-                
-                // Aktualisiere den Produktbestand (addiere die Menge zurück)
-                const product = await apiCall(`/api/products/${transaction.product_id}`).catch(() => null);
-                if (product) {
-                    await apiCall(`/api/products/${transaction.product_id}`, {
-                        method: 'PUT',
-                        body: JSON.stringify({
-                            ...product,
-                            stock: product.stock + transaction.quantity
-                        })
-                    });
-                }
                 
                 showAlert('Transaktion erfolgreich gelöscht und Saldo wiederhergestellt', 'success');
                 
