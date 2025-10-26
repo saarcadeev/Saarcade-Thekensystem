@@ -1840,6 +1840,12 @@ window.debugImageDisplay = debugImageDisplay;
                     <div class="user-name">Kein Benutzer</div>
                     <div class="user-balance">Bitte scannen</div>
                 `;
+                
+                // Kassierhilfe-Toggle verstecken
+                const cashHelperToggle = document.getElementById('cashHelperToggle');
+                if (cashHelperToggle) {
+                    cashHelperToggle.classList.remove('show');
+                }
                 return;
             }
 
@@ -1848,8 +1854,16 @@ window.debugImageDisplay = debugImageDisplay;
                 <div class="user-name">${currentUser.first_name} ${currentUser.last_name}</div>
                 <div class="user-balance">${currentUser.balance.toFixed(2)}€</div>
             `;
+            
+            // Kassierhilfe-Toggle ein/ausblenden
+            const cashHelperToggle = document.getElementById('cashHelperToggle');
+            if (currentUser.role === 'bartender') {
+                cashHelperToggle.classList.add('show');
+            } else {
+                cashHelperToggle.classList.remove('show');
+            }
         }
-
+        
         // ============ CATEGORY FILTER ============
         
         function initCategoryFilters() {
@@ -2411,12 +2425,17 @@ async function checkout() {
             paymentMethod: 'balance'
         };
         
-        // NEUE LOGIK: Barkeeper bekommen Barzahlungs-Dialog OHNE Buchung
+        // NEUE LOGIK: Barkeeper bekommen Barzahlungs-Dialog OHNE Buchung (nur wenn Kassierhilfe aktiviert)
         if (currentUser.role === 'bartender') {
-            isProcessing = false; // Wichtig: Processing-Flag zurücksetzen
-            openCashPaymentModal(transactionData, total);
-            return; // HIER wird NICHT gebucht, nur Modal geöffnet
+            const cashHelperCheckbox = document.getElementById('cashHelperCheckbox');
+            if (cashHelperCheckbox && cashHelperCheckbox.checked) {
+                isProcessing = false; // Wichtig: Processing-Flag zurücksetzen
+                openCashPaymentModal(transactionData, total);
+                return; // HIER wird NICHT gebucht, nur Modal geöffnet
+            }
+            // Wenn Kassierhilfe deaktiviert: Weiter wie normales Mitglied
         }
+
         
         // Normale Mitglieder: Direkte Buchung
         const result = await createTransaction(transactionData);
@@ -2444,7 +2463,9 @@ async function checkout() {
         isProcessing = false;
         updateCartView();
     }
-}        function resetSession() {
+} 
+        
+function resetSession() {
             currentUser = null;
             cart = [];
             isProcessing = false;
@@ -2452,6 +2473,12 @@ async function checkout() {
             
             document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelector('[data-category="all"]').classList.add('active');
+            
+            // Kassierhilfe-Toggle zurücksetzen
+            const cashHelperCheckbox = document.getElementById('cashHelperCheckbox');
+            if (cashHelperCheckbox) {
+                cashHelperCheckbox.checked = true; // Standard: aktiviert
+            }
             
             updateUserInfo();
             updateProductsView();
@@ -2461,7 +2488,7 @@ async function checkout() {
             document.getElementById('barcodeInput').value = '';
             document.getElementById('barcodeInput').focus();
         }
-
+        
     function isAnyModalOpen() {
     const modals = document.querySelectorAll('.modal');
     return Array.from(modals).some(modal => modal.style.display === 'block');
