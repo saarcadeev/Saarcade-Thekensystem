@@ -2425,7 +2425,7 @@ async function checkout() {
             paymentMethod: 'balance'
         };
         
-        // NEUE LOGIK: Barkeeper bekommen Barzahlungs-Dialog OHNE Buchung (nur wenn Kassierhilfe aktiviert)
+// NEUE LOGIK: Barkeeper bekommen Barzahlungs-Dialog OHNE Buchung (nur wenn Kassierhilfe aktiviert)
         if (currentUser.role === 'bartender') {
             const cashHelperCheckbox = document.getElementById('cashHelperCheckbox');
             if (cashHelperCheckbox && cashHelperCheckbox.checked) {
@@ -2433,11 +2433,25 @@ async function checkout() {
                 openCashPaymentModal(transactionData, total);
                 return; // HIER wird NICHT gebucht, nur Modal geöffnet
             }
-            // Wenn Kassierhilfe deaktiviert: Weiter wie normales Mitglied
+            // Wenn Kassierhilfe deaktiviert: Direkte Buchung OHNE Session-Reset
+            const result = await createTransaction(transactionData);
+            currentUser.balance = result.newBalance;
+            
+            const userIndex = users.findIndex(u => u.id === currentUser.id);
+            if (userIndex !== -1) {
+                users[userIndex].balance = result.newBalance;
+            }
+            
+            showStatus(`✅ Kauf über ${total.toFixed(2)}€ abgeschlossen!`, 'success');
+            
+            clearCart();
+            updateUserInfo();
+            // KEIN resetSession() - Barkeeper bleibt eingeloggt!
+            
+            return; // Wichtig: Hier beenden, nicht weitermachen
         }
-
         
-        // Normale Mitglieder: Direkte Buchung
+        // Normale Mitglieder: Direkte Buchung MIT Session-Reset
         const result = await createTransaction(transactionData);
         currentUser.balance = result.newBalance;
         
@@ -2455,7 +2469,6 @@ async function checkout() {
             resetSession();
             showStatus('Session beendet - Nächster Kunde', 'info');
         }, 750);
-
     } catch (error) {
         showStatus('Fehler beim Abschließen des Kaufs', 'error');
         console.error('Checkout-Fehler:', error);
