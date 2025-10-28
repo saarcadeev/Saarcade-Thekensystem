@@ -1442,14 +1442,27 @@ async function savePinSettings() {
                 total: cart.reduce((sum, item) => sum + item.total, 0)
             };
 
-            try {
+try {
+                // Zeige sofort eine Lade-Animation
+                const submitBtn = document.getElementById('submitOrder');
+                const originalText = submitBtn.textContent;
+                submitBtn.disabled = true;
+                submitBtn.textContent = '⏳ Sende Bestellung...';
+                
                 const result = await apiCall('/clothing-orders', {
                     method: 'POST',
                     body: JSON.stringify(orderData)
                 });
 
-                showSuccessModal(result);
+                // Zeige deutliche Erfolgsmeldung
+                submitBtn.textContent = '✅ Bestellung erfolgreich!';
+                submitBtn.style.background = '#48bb78';
+                showAlert('✅ Bestellung erfolgreich übertragen!', 'success');
                 
+                // Kurze Verzögerung, damit User die Bestätigung sehen
+                await new Promise(resolve => setTimeout(resolve, 800));
+                
+                showSuccessModal(result);                
                 // Reset
                 cart = [];
                 selectedMember = null;
