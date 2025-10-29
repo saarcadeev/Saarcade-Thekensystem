@@ -2469,16 +2469,15 @@ async function checkout() {
     updateCartView();
     showStatus('Verarbeite Transaktion...', 'loading');
     
-    try {
-        let total = 0;
-const items = cart.map(cartItem => {
+try {
+        const items = cart.map(cartItem => {
             const product = products.find(p => p.id === cartItem.productId);
             const price = currentUser.role === 'member' ? product.member_price : product.guest_price;
             const itemTotal = price * cartItem.quantity;
             
             return {
                 productId: cartItem.productId,
-                name: product.name,
+                productName: product.name,
                 quantity: cartItem.quantity,
                 price: price,
                 total: itemTotal
@@ -2534,11 +2533,16 @@ const items = cart.map(cartItem => {
                 const product = products.find(p => p.id === cartItem.productId);
                 const price = currentUser.role === 'member' ? product.member_price : product.guest_price;
                 
+         // Finde die passende Transaction für diesen Artikel
+                const matchingTransaction = result.transactions?.find(t => 
+                    t.product_id === cartItem.productId && t.user_id === currentUser.id
+                );
+                
                 try {
                     await apiCall('/api/voucher-sales', {
                         method: 'POST',
                         body: JSON.stringify({
-                            transaction_id: result.transaction?.id || null,
+                            transaction_id: matchingTransaction?.id || null,
                             member_id: currentUser.id,
                             member_name: `${currentUser.first_name} ${currentUser.last_name}`,
                             product_id: cartItem.productId,
