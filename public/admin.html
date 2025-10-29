@@ -6804,32 +6804,50 @@ async function loadVouchers() {
         const response = await fetch('/api/transactions?limit=10000');
         const data = await response.json();
         
+        console.log('Geladene Transaktionen:', data.transactions?.length || 0);
+        
         // Filtere nur Gutschein-Transaktionen (haben voucherSerialNumber)
         allVouchers = [];
         
         if (data.transactions) {
             data.transactions.forEach(transaction => {
-                if (transaction.items) {
-                    const items = typeof transaction.items === 'string' ? JSON.parse(transaction.items) : transaction.items;
-                    
-                    items.forEach(item => {
-                        if (item.voucherSerialNumber) {
-                            allVouchers.push({
-                                date: transaction.created_at,
-                                member_id: transaction.member_id,
-                                member_name: transaction.member_name || 'Unbekannt',
-                                product_name: item.name,
-                                category: item.category,
-                                voucher_serial: item.voucherSerialNumber,
-                                voucher_hologram: item.voucherHologramNumber,
-                                amount: item.price * item.quantity,
-                                transaction_id: transaction.id
-                            });
-                        }
-                    });
+                // Parse items falls String
+                let items = transaction.items;
+                if (typeof items === 'string') {
+                    try {
+                        items = JSON.parse(items);
+                    } catch (e) {
+                        console.error('Fehler beim Parsen von items:', e);
+                        return;
+                    }
                 }
+                
+                // Items muss Array sein
+                if (!Array.isArray(items)) {
+                    items = [items];
+                }
+                
+                items.forEach(item => {
+                    console.log('Prüfe Item:', item.name, 'Hat voucherSerialNumber:', !!item.voucherSerialNumber);
+                    
+                    if (item.voucherSerialNumber) {
+                        allVouchers.push({
+                            date: transaction.created_at,
+                            member_id: transaction.member_id,
+                            member_name: transaction.member_name || 'Unbekannt',
+                            product_name: item.name,
+                            category: item.category,
+                            voucher_serial: item.voucherSerialNumber,
+                            voucher_hologram: item.voucherHologramNumber,
+                            amount: (item.price || 0) * (item.quantity || 1),
+                            transaction_id: transaction.id
+                        });
+                    }
+                });
             });
         }
+        
+        console.log('Gefundene Gutscheine:', allVouchers.length);
         
         renderVouchers();
         updateVoucherStats();
@@ -6839,14 +6857,13 @@ async function loadVouchers() {
         
     } catch (error) {
         console.error('Fehler beim Laden der Gutscheine:', error);
-        showAlert('Fehler beim Laden der Gutscheine', 'error');
+        showAlert('Fehler beim Laden der Gutscheine: ' + error.message, 'error');
         
         const btn = document.getElementById('loadVouchersBtn');
         btn.disabled = false;
         btn.textContent = '🔄 Neu laden';
     }
 }
-
 function filterVouchers() {
     renderVouchers();
 }
