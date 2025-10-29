@@ -6827,7 +6827,11 @@ async function loadVouchers() {
                     items = [items];
                 }
                 
-                items.forEach(item => {
+items.forEach(item => {
+                    // Debug: Zeige alle Item-Keys
+                    console.log('Item Keys:', item ? Object.keys(item) : 'null');
+                    console.log('Item Daten:', item);
+                    
                     // Überspringe wenn Item leer oder ungültig ist
                     if (!item || typeof item !== 'object') {
                         return;
