@@ -2375,11 +2375,11 @@ async function searchUsers(query) {
                 return;
             }
             
-            if (!hologramNumber || hologramNumber.length !== 8 || !/^\d{8}$/.test(hologramNumber)) {
-                showStatus('Bitte gültige 8-stellige Hologramm-Nummer eingeben', 'error');
-                document.getElementById('voucherHologramNumber').focus();
-                return;
-            }
+if (!hologramNumber || hologramNumber.length !== 6 || !/^\d{6}$/.test(hologramNumber)) {
+    showStatus('Bitte gültige 6-stellige Hologramm-Nummer eingeben', 'error');
+    document.getElementById('voucherHologramNumber').focus();
+    return;
+}
             
             if (currentVoucherProduct) {
                 cart.push({ 
