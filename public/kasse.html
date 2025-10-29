@@ -2528,13 +2528,41 @@ const items = cart.map(cartItem => {
             return; // Wichtig: Hier beenden, nicht weitermachen
         }
         
-        // Normale Mitglieder: Direkte Buchung MIT Session-Reset
+// Normale Mitglieder: Direkte Buchung
         const result = await createTransaction(transactionData);
         currentUser.balance = result.newBalance;
         
         const userIndex = users.findIndex(u => u.id === currentUser.id);
         if (userIndex !== -1) {
             users[userIndex].balance = result.newBalance;
+        }
+        
+        // Gutscheine separat speichern
+        for (const cartItem of cart) {
+            if (cartItem.voucherSerialNumber) {
+                const product = products.find(p => p.id === cartItem.productId);
+                const price = currentUser.role === 'member' ? product.member_price : product.guest_price;
+                
+                try {
+                    await apiCall('/api/voucher-sales', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            transaction_id: result.transaction?.id || null,
+                            member_id: currentUser.id,
+                            member_name: `${currentUser.first_name} ${currentUser.last_name}`,
+                            product_id: cartItem.productId,
+                            product_name: product.name,
+                            category: product.category,
+                            voucher_serial_number: cartItem.voucherSerialNumber,
+                            voucher_hologram_number: cartItem.voucherHologramNumber,
+                            price: price,
+                            payment_method: 'balance'
+                        })
+                    });
+                } catch (error) {
+                    console.error('Fehler beim Speichern des Gutscheins:', error);
+                }
+            }
         }
         
         showStatus(`✅ Kauf über ${total.toFixed(2)}€ abgeschlossen!`, 'success');
