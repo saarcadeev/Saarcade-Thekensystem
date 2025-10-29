@@ -2483,7 +2483,9 @@ try {
                 total: itemTotal
             };
         });
-        
+
+        const total = items.reduce((sum, item) => sum + item.total, 0);
+    
         const transactionData = {
             userId: currentUser.id,
             userName: `${currentUser.first_name} ${currentUser.last_name}`,
