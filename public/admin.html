@@ -6809,8 +6809,16 @@ async function loadVouchers() {
         // Filtere nur Gutschein-Transaktionen (haben voucherSerialNumber)
         allVouchers = [];
         
-        if (data.transactions) {
-            data.transactions.forEach(transaction => {
+if (data.transactions) {
+            data.transactions.forEach((transaction, index) => {
+                // Zeige nur die letzten 3 Transaktionen im Detail
+                if (index >= data.transactions.length - 3) {
+                    console.log('=== Transaktion #' + transaction.id + ' ===');
+                    console.log('Transaction Keys:', Object.keys(transaction));
+                    console.log('Transaction.items (raw):', transaction.items);
+                    console.log('Transaction.items Type:', typeof transaction.items);
+                }
+                
                 // Parse items falls String
                 let items = transaction.items;
                 if (typeof items === 'string') {
