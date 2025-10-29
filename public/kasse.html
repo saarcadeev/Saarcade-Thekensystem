@@ -2471,19 +2471,27 @@ async function checkout() {
     
     try {
         let total = 0;
-        const items = cart.map(cartItem => {
+const items = cart.map(cartItem => {
             const product = products.find(p => p.id === cartItem.productId);
             const price = currentUser.role === 'member' ? product.member_price : product.guest_price;
             const itemTotal = price * cartItem.quantity;
-            total += itemTotal;
             
-            return {
-                productId: product.id,
-                productName: product.name,
+            const item = {
+                productId: cartItem.productId,
+                name: product.name,
                 quantity: cartItem.quantity,
                 price: price,
                 total: itemTotal
             };
+            
+            // Gutscheinnummern hinzufügen falls vorhanden
+            if (cartItem.voucherSerialNumber) {
+                item.voucherSerialNumber = cartItem.voucherSerialNumber;
+                item.voucherHologramNumber = cartItem.voucherHologramNumber;
+                item.category = product.category;
+            }
+            
+            return item;
         });
         
         const transactionData = {
