@@ -3733,7 +3733,10 @@ function viewOrderDetails() {
     
     let itemsHtml = order.items.map(item => `
         <tr>
-            <td>${item.name}</td>
+            <td>
+                ${item.name}
+                ${item.voucherSerialNumber ? `<br><small style="color: #667eea; font-weight: 600;">🎁 Gutschein: ${item.voucherSerialNumber} | Hologramm: ${item.voucherHologramNumber}</small>` : ''}
+            </td>
             <td>${item.size || '-'}</td>
             <td>${item.color || '-'}</td>
             <td>${item.quantity}x</td>
