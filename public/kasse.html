@@ -3365,18 +3365,18 @@ async function showBillingDetails(billingId, billingNumber) {
                 >
             </div>
             
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label for="voucherHologramNumber">Hologramm-Nummer (8-stellig) *</label>
-                <input 
-                    type="text" 
-                    id="voucherHologramNumber" 
-                    maxlength="8"
-                    placeholder="12345678"
-                    style="width: 100%; padding: 12px; font-size: 1.3em; text-align: center; border: 2px solid #e2e8f0; border-radius: 8px;"
-                    pattern="[0-9]{8}"
-                    onkeypress="if(event.key==='Enter' && this.value.length===8) confirmVoucherNumbers()"
-                >
-            </div>
+<div class="form-group" style="margin-bottom: 20px;">
+    <label for="voucherHologramNumber">Hologramm-Nummer (6-stellig) *</label>
+    <input 
+        type="text" 
+        id="voucherHologramNumber" 
+        maxlength="6"
+        placeholder="123456"
+        style="width: 100%; padding: 12px; font-size: 1.3em; text-align: center; border: 2px solid #e2e8f0; border-radius: 8px;"
+        pattern="[0-9]{6}"
+        onkeypress="if(event.key==='Enter' && this.value.length===6) confirmVoucherNumbers()"
+    >
+</div>
             
             <div style="background: #fff5e6; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9em;">
                 ℹ️ Diese Nummern dienen zur eindeutigen Identifikation des Gutscheins.
