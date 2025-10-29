@@ -6800,87 +6800,23 @@ async function loadVouchers() {
         btn.disabled = true;
         btn.textContent = '⏳ Lade...';
         
-        // Lade alle Transaktionen
-        const response = await fetch('/api/transactions?limit=10000');
+        // Lade alle Gutscheinverkäufe aus der neuen Tabelle
+        const response = await fetch('/api/voucher-sales');
         const data = await response.json();
         
-        console.log('Geladene Transaktionen:', data.transactions?.length || 0);
+        console.log('Geladene Gutscheine:', data.length);
         
-        // Filtere nur Gutschein-Transaktionen (haben voucherSerialNumber)
-        allVouchers = [];
-        
-if (data.transactions) {
-            data.transactions.forEach((transaction, index) => {
-                // Zeige nur die letzten 3 Transaktionen im Detail
-                if (index >= data.transactions.length - 3) {
-                    console.log('=== Transaktion #' + transaction.id + ' ===');
-                    console.log('Transaction Keys:', Object.keys(transaction));
-                    console.log('Transaction.items (raw):', transaction.items);
-                    console.log('Transaction.items Type:', typeof transaction.items);
-                }
-                
-                // Parse items falls String
-                let items = transaction.items;
-                if (typeof items === 'string') {
-                    try {
-                        items = JSON.parse(items);
-                    } catch (e) {
-                        console.error('Fehler beim Parsen von items:', e);
-                        return;
-                    }
-                }
-                
-                // Items muss Array sein
-                if (!Array.isArray(items)) {
-                    items = [items];
-                }
-                
-items.forEach(item => {
-                    // Debug: Zeige alle Item-Keys
-                    console.log('Item Keys:', item ? Object.keys(item) : 'null');
-                    console.log('Item Daten:', item);
-                    
-                    // Überspringe wenn Item leer oder ungültig ist
-                    if (!item || typeof item !== 'object') {
-                        return;
-                    }
-                    
-                    // Prüfe ob Gutschein (hat voucherSerialNumber)
-                    if (item.voucherSerialNumber) {
-                        // Hole Produktdaten aus products Array falls item.name fehlt
-                        let productName = item.name || 'Unbekannt';
-                        let category = item.category || 'wertgutscheine';
-                        let price = item.price || 0;
-                        
-                        // Falls productId vorhanden, versuche Produkt zu laden
-                        if (!item.name && item.productId && typeof products !== 'undefined') {
-                            const product = products.find(p => p.id === item.productId);
-                            if (product) {
-                                productName = product.name;
-                                category = product.category;
-                                price = product.member_price || product.guest_price || 0;
-                            }
-                        }
-                        
-                        allVouchers.push({
-                            date: transaction.created_at,
-                            member_id: transaction.member_id,
-                            member_name: transaction.member_name || 'Unbekannt',
-                            product_name: productName,
-                            category: category,
-                            voucher_serial: item.voucherSerialNumber,
-                            voucher_hologram: item.voucherHologramNumber,
-                            amount: price * (item.quantity || 1),
-                            transaction_id: transaction.id
-                        });
-                        
-                        console.log('✅ Gutschein gefunden:', productName, item.voucherSerialNumber);
-                    }
-                });
-            });
-        }
-        
-        console.log('📊 Gesamt gefundene Gutscheine:', allVouchers.length);
+        allVouchers = data.map(voucher => ({
+            date: voucher.created_at,
+            member_id: voucher.member_id,
+            member_name: voucher.member_name,
+            product_name: voucher.product_name,
+            category: voucher.category,
+            voucher_serial: voucher.voucher_serial_number,
+            voucher_hologram: voucher.voucher_hologram_number,
+            amount: parseFloat(voucher.price),
+            transaction_id: voucher.transaction_id
+        }));
         
         renderVouchers();
         updateVoucherStats();
@@ -6896,8 +6832,7 @@ items.forEach(item => {
         btn.disabled = false;
         btn.textContent = '🔄 Neu laden';
     }
-}
-    
+}    
     function filterVouchers() {
     renderVouchers();
 }
