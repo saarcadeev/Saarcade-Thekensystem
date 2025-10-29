@@ -285,6 +285,37 @@ if (pathParts[0] === 'users' && pathParts[1] && method === 'GET') {
     return res.status(200).json(data);
 }
 
+// POST /voucher-sales - Neuen Gutscheinverkauf speichern
+        if (path === '/voucher-sales' && method === 'POST') {
+            const voucherData = req.body;
+            
+            if (!voucherData.member_id || !voucherData.voucher_serial_number || !voucherData.voucher_hologram_number) {
+                return res.status(400).json({ 
+                    error: 'Pflichtfelder fehlen: member_id, voucher_serial_number, voucher_hologram_number' 
+                });
+            }
+
+            const { data, error } = await supabase
+                .from('voucher_sales')
+                .insert([voucherData])
+                .select()
+                .single();
+            
+            if (error) throw error;
+            return res.status(201).json(data);
+        }
+
+        // GET /voucher-sales - Alle Gutscheinverkäufe
+        if (path === '/voucher-sales' && method === 'GET') {
+            const { data, error } = await supabase
+                .from('voucher_sales')
+                .select('*')
+                .order('created_at', { ascending: false });
+            
+            if (error) throw error;
+            return res.status(200).json(data || []);
+        }
+        
 // POST /users - Neuen Benutzer erstellen
 if (path === '/users' && method === 'POST') {
     const userData = req.body;
