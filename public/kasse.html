@@ -1124,10 +1124,7 @@ const additionalCSS = `
         .keyboard-key.space {
             grid-column: span 4;
         }       
-        
         `;
-
-
         
     </style>
 </head>
@@ -1227,8 +1224,6 @@ try {
                    <!-- <button class="category-btn" data-category="schnaps">🥃 Spirituosen</button> -->
                         <button class="category-btn" data-category="snacks">🍿 Snacks</button>
                         <button class="category-btn" data-category="heissgetraenke">☕ Heißgetränke</button>
-                        <button class="category-btn" data-category="wertgutscheine">🎁 Wertgutscheine</button>
-                        <button class="category-btn" data-category="geldwertkarten">💳 Geldwertkarten</button>
                     </div>
                 </div>
                 
@@ -1426,7 +1421,6 @@ try {
             reset: 'RESET123'
         };
         let pendingUserForPin = null; // Benutzer der PIN-Eingabe wartet
-        let currentVoucherProduct = null; // Gutschein-Modal Variablen
 
 // ============ ON-SCREEN TASTATUR ============
         
@@ -1645,94 +1639,6 @@ async function preloadProductImages(products) {
             }
         }
 
-// === GUTSCHEIN-MODAL FUNKTIONEN ===
-        function openVoucherModal(product) {
-            currentVoucherProduct = product;
-            
-            // Produktinfo anzeigen
-            document.getElementById('voucherProductInfo').innerHTML = `
-                <strong>${product.name}</strong><br>
-                <span style="color: #667eea; font-size: 1.2em;">${product.price.toFixed(2)} €</span>
-            `;
-            
-            // Felder leeren
-            document.getElementById('voucherSerialNumber').value = '';
-            document.getElementById('voucherHologramNumber').value = '';
-            
-            // Modal anzeigen
-            document.getElementById('voucherModal').style.display = 'flex';
-            
-            // Focus auf erstes Feld
-            setTimeout(() => {
-                document.getElementById('voucherSerialNumber').focus();
-            }, 100);
-        }
-
-        function closeVoucherModal() {
-            document.getElementById('voucherModal').style.display = 'none';
-            currentVoucherProduct = null;
-        }
-
-        function confirmVoucherNumbers() {
-            const serialNumber = document.getElementById('voucherSerialNumber').value.trim();
-            const hologramNumber = document.getElementById('voucherHologramNumber').value.trim();
-            
-            // Validierung
-            if (!serialNumber || serialNumber.length !== 4 || !/^\d{4}$/.test(serialNumber)) {
-                alert('Bitte eine gültige 4-stellige Gutscheinnummer eingeben (nur Zahlen).');
-                document.getElementById('voucherSerialNumber').focus();
-                return;
-            }
-            
-            if (!hologramNumber || hologramNumber.length !== 8 || !/^\d{8}$/.test(hologramNumber)) {
-                alert('Bitte eine gültige 8-stellige Hologramm-Nummer eingeben (nur Zahlen).');
-                document.getElementById('voucherHologramNumber').focus();
-                return;
-            }
-            
-            // Gutschein zum Warenkorb hinzufügen mit Nummern
-            if (currentVoucherProduct) {
-                cart.push({ 
-                    productId: currentVoucherProduct.id, 
-                    quantity: 1, 
-                    justAdded: true,
-                    voucherSerialNumber: serialNumber,
-                    voucherHologramNumber: hologramNumber
-                });
-                
-                updateCartView();
-                showStatus(`🎁 ${currentVoucherProduct.name} mit Gutscheinnummer ${serialNumber} hinzugefügt`, 'success');
-                
-                // Modal schließen
-                closeVoucherModal();
-                
-                // Focus zurück auf Barcode-Input
-                setTimeout(() => {
-                    document.getElementById('barcodeInput').focus();
-                }, 100);
-            }
-        }
-        
-        // Enter-Taste im Modal abfangen
-        document.addEventListener('DOMContentLoaded', function() {
-            const modal = document.getElementById('voucherModal');
-            if (modal) {
-                modal.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        const serialInput = document.getElementById('voucherSerialNumber');
-                        const hologramInput = document.getElementById('voucherHologramNumber');
-                        
-                        if (document.activeElement === serialInput && serialInput.value.length === 4) {
-                            hologramInput.focus();
-                        } else if (document.activeElement === hologramInput || serialInput.value.length === 4) {
-                            confirmVoucherNumbers();
-                        }
-                    }
-                });
-            }
-        });
-        
  async function loadProducts() {
     try {
         products = await apiCall('/api/products');
@@ -2122,12 +2028,6 @@ function updateCartView() {
         const product = products.find(p => p.id === item.productId);
         if (!product) return '';
         
-            // Gutscheininfo anzeigen falls vorhanden
-            const voucherInfo = item.voucherSerialNumber ? 
-                `<div style="font-size: 0.85em; color: #666; margin-top: 4px;">
-                    🎁 Gutschein: ${item.voucherSerialNumber} | Hologramm: ${item.voucherHologramNumber}
-                </div>` : '';
-                    
         const price = currentUser.role === 'member' ? product.member_price : product.guest_price;
         const itemTotal = price * item.quantity;
         total += itemTotal;
@@ -2147,14 +2047,10 @@ function updateCartView() {
             productIcon = `<span style="margin-right: 5px;">${product.image || '📦'}</span>`;
         }
         
-// Gutscheininfo falls vorhanden
-        const voucherInfo = item.voucherSerialNumber ? 
-            `<br><small style="color: #667eea; font-weight: 600;">🎁 Gutschein: ${item.voucherSerialNumber} | Hologramm: ${item.voucherHologramNumber}</small>` : '';
-        
         return `
             <div class="cart-item ${item.justAdded ? 'just-added' : ''}">
                 <div>
-                    <strong>${productIcon}${product.name}</strong>${voucherInfo}<br>
+                    <strong>${productIcon}${product.name}</strong><br>
                     <small>${item.quantity}x ${price.toFixed(2)}€ = ${itemTotal.toFixed(2)}€</small>
                 </div>
                 <button class="btn btn-danger" onclick="removeFromCart(${index})" style="padding: 5px 8px;">−</button>
@@ -2442,22 +2338,14 @@ async function searchUsers(query) {
 
         // ============ CART FUNCTIONS ============
         
-function addToCart(productId, fromBarcode = false) {
+        function addToCart(productId, fromBarcode = false) {
             if (!currentUser) {
                 showStatus('Bitte zuerst Benutzer auswählen', 'error');
                 return;
             }
 
-            const product = products.find(p => p.id === productId);
-            
-            // Wenn Wertgutschein, Modal öffnen statt direkt hinzuzufügen
-            if (product && product.category === 'wertgutscheine') {
-                openVoucherModal(product);
-                return;
-            }
-
             const existingItem = cart.find(item => item.productId === productId);
-    if (existingItem) {
+            if (existingItem) {
                 existingItem.quantity++;
                 existingItem.justAdded = true;
             } else {
@@ -3348,55 +3236,6 @@ async function showBillingDetails(billingId, billingNumber) {
             <!-- Wird dynamisch gefüllt -->
         </div>
     </div>
-
-<!-- Gutschein-Nummern Modal -->
-<div id="voucherModal" class="modal" style="display: none;">
-    <div class="modal-content" style="max-width: 500px;">
-        <span class="close" onclick="closeVoucherModal()">&times;</span>
-        <h2 style="margin-bottom: 20px;">🎁 Gutschein-Nummern eingeben</h2>
-        
-        <div id="voucherProductInfo" style="background: #f7fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
-            <!-- Produktname wird hier angezeigt -->
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-            <label for="voucherSerialNumber">Laufende Gutscheinnummer (4-stellig) *</label>
-            <input 
-                type="text" 
-                id="voucherSerialNumber" 
-                maxlength="4"
-                placeholder="z.B. 0001"
-                style="width: 100%; padding: 12px; font-size: 1.2em; text-align: center; border: 2px solid #e2e8f0; border-radius: 8px;"
-                pattern="[0-9]{4}"
-            >
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-            <label for="voucherHologramNumber">Hologramm-Nummer (8-stellig) *</label>
-            <input 
-                type="text" 
-                id="voucherHologramNumber" 
-                maxlength="8"
-                placeholder="z.B. 12345678"
-                style="width: 100%; padding: 12px; font-size: 1.2em; text-align: center; border: 2px solid #e2e8f0; border-radius: 8px;"
-                pattern="[0-9]{8}"
-            >
-        </div>
-        
-        <div style="background: #fff5e6; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9em;">
-            ℹ️ Diese Nummern dienen zur eindeutigen Identifikation des Gutscheins.
-        </div>
-        
-        <div style="display: flex; gap: 10px;">
-            <button onclick="closeVoucherModal()" style="flex: 1; padding: 12px; background: #e2e8f0; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
-                Abbrechen
-            </button>
-            <button onclick="confirmVoucherNumbers()" style="flex: 2; padding: 12px; background: #48bb78; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
-                ✓ Bestätigen
-            </button>
-        </div>
-    </div>
-</div>
-
+    
 </body>
 </html>
