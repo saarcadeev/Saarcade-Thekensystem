@@ -1289,6 +1289,7 @@ body {
                         <th>Gutschein-Nr.</th>
                         <th>Hologramm-Nr.</th>
                         <th>Betrag</th>
+                        <th>✓ Ticket-Shop</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -1299,29 +1300,7 @@ body {
                     </tr>
                 </tbody>
             </table>
-        </div>
-        
-        <div id="voucherStats" style="margin-top: 20px; padding: 20px; background: #f7fafc; border-radius: 8px; display: none;">
-            <h3 style="margin-bottom: 15px;">📊 Statistik</h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #667eea;">
-                    <div style="color: #666; font-size: 0.9em;">Gesamt verkauft</div>
-                    <div style="font-size: 1.5em; font-weight: bold; color: #667eea;" id="totalVouchers">0</div>
-                </div>
-                <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #48bb78;">
-                    <div style="color: #666; font-size: 0.9em;">🎁 Wertgutscheine</div>
-                    <div style="font-size: 1.5em; font-weight: bold; color: #48bb78;" id="totalWertgutscheine">0</div>
-                </div>
-                <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #4299e1;">
-                    <div style="color: #666; font-size: 0.9em;">💳 Geldwertkarten</div>
-                    <div style="font-size: 1.5em; font-weight: bold; color: #4299e1;" id="totalGeldwertkarten">0</div>
-                </div>
-                <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #f6ad55;">
-                    <div style="color: #666; font-size: 0.9em;">Gesamtwert</div>
-                    <div style="font-size: 1.5em; font-weight: bold; color: #f6ad55;" id="totalVoucherValue">0,00 €</div>
-                </div>
-            </div>
-        </div>
+        </div>        
     </div>
 </div>
 <!-- ENDE Verkaufte Gutscheine Tab -->
@@ -2547,6 +2526,10 @@ function showTab(tabName) {
             case 'clothing-billing':
                 loadClothingBillingData();
                 break;
+            case 'vouchers':
+                loadVouchers();
+                break;
+        }
         }
     }
 }
@@ -6819,7 +6802,6 @@ async function loadVouchers() {
         }));
         
         renderVouchers();
-        updateVoucherStats();
         
         btn.disabled = false;
         btn.textContent = '🔄 Neu laden';
@@ -6860,12 +6842,13 @@ function renderVouchers() {
     // Sortiere nach Datum (neueste zuerst)
     filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
     
-    tbody.innerHTML = filtered.map(voucher => {
+tbody.innerHTML = filtered.map((voucher, index) => {
         const date = new Date(voucher.date);
         const dateStr = date.toLocaleDateString('de-DE');
         const timeStr = date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
         
         const categoryIcon = voucher.category === 'wertgutscheine' ? '🎁' : '💳';
+        const isCompleted = voucher.ticket_shop_completed || false;
         
         return `
             <tr>
@@ -6876,29 +6859,29 @@ function renderVouchers() {
                 <td style="font-weight: 600; color: #667eea;">${voucher.voucher_serial}</td>
                 <td style="font-family: monospace; color: #666;">${voucher.voucher_hologram}</td>
                 <td style="text-align: right; font-weight: bold;">${voucher.amount.toFixed(2)} €</td>
+                <td style="text-align: center;">
+                    <input type="checkbox" ${isCompleted ? 'checked' : ''} 
+                           onchange="toggleTicketShopCompleted(${index}, this.checked)"
+                           style="width: 20px; height: 20px; cursor: pointer;">
+                </td>
             </tr>
         `;
     }).join('');
 }
 
-function updateVoucherStats() {
-    const statsDiv = document.getElementById('voucherStats');
-    
-    if (allVouchers.length === 0) {
-        statsDiv.style.display = 'none';
-        return;
+function toggleTicketShopCompleted(index, completed) {
+    const filter = document.getElementById('voucherCategoryFilter').value;
+    let filtered = allVouchers;
+    if (filter !== 'all') {
+        filtered = allVouchers.filter(v => v.category === filter);
     }
+    filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
     
-    statsDiv.style.display = 'block';
+    const voucher = filtered[index];
+    voucher.ticket_shop_completed = completed;
     
-    const wertgutscheine = allVouchers.filter(v => v.category === 'wertgutscheine');
-    const geldwertkarten = allVouchers.filter(v => v.category === 'geldwertkarten');
-    const totalValue = allVouchers.reduce((sum, v) => sum + v.amount, 0);
-    
-    document.getElementById('totalVouchers').textContent = allVouchers.length;
-    document.getElementById('totalWertgutscheine').textContent = wertgutscheine.length;
-    document.getElementById('totalGeldwertkarten').textContent = geldwertkarten.length;
-    document.getElementById('totalVoucherValue').textContent = totalValue.toFixed(2) + ' €';
+    // Hier könntest du optional den Status in die Datenbank speichern
+    console.log(`Gutschein ${voucher.voucher_serial}: Ticket-Shop ${completed ? 'erledigt' : 'nicht erledigt'}`);
 }
     
     </script>
