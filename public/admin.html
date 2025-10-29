@@ -849,6 +849,12 @@ body {
                         👕 Abrechnung Kleidung
                     </a>
                 </li>
+
+                 <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="showTab('vouchers'); return false;">
+                        🎁 Verkaufte Gutscheine
+                    </a>
+                </li>
                 
                 <li class="nav-category">System</li>
                 <li class="nav-item">
@@ -1243,6 +1249,83 @@ body {
             </div>
         </div>
 
+<!-- Verkaufte Gutscheine Tab -->
+<div id="vouchers" class="page-content" style="display: none;">
+    <div class="page-header">
+        <div>
+            <h1>🎁 Verkaufte Gutscheine</h1>
+            <div class="breadcrumb">Verwaltung / Verkaufte Gutscheine</div>
+        </div>
+        <button onclick="logoutAdmin()" style="background: #e53e3e; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+            🚪 Logout
+        </button>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">🎫 Alle verkauften Wertgutscheine & Geldwertkarten</div>
+        
+        <div class="toolbar">
+            <button class="btn btn-secondary" onclick="loadVouchers()" id="loadVouchersBtn">
+                🔄 Neu laden
+            </button>
+            <div style="margin-left: auto; display: flex; gap: 10px; align-items: center;">
+                <label style="margin: 0;">Filter:</label>
+                <select id="voucherCategoryFilter" onchange="filterVouchers()" style="padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
+                    <option value="all">Alle</option>
+                    <option value="wertgutscheine">🎁 Wertgutscheine</option>
+                    <option value="geldwertkarten">💳 Geldwertkarten</option>
+                </select>
+            </div>
+        </div>
+        
+        <div style="overflow-x: auto;">
+            <table class="data-table" id="vouchersTable">
+                <thead>
+                    <tr>
+                        <th>Datum</th>
+                        <th>Uhrzeit</th>
+                        <th>Mitglied</th>
+                        <th>Produkt</th>
+                        <th>Gutschein-Nr.</th>
+                        <th>Hologramm-Nr.</th>
+                        <th>Betrag</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 30px; color: #666;">
+                            Klicke "Neu laden" um Gutscheine zu laden
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div id="voucherStats" style="margin-top: 20px; padding: 20px; background: #f7fafc; border-radius: 8px; display: none;">
+            <h3 style="margin-bottom: 15px;">📊 Statistik</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #667eea;">
+                    <div style="color: #666; font-size: 0.9em;">Gesamt verkauft</div>
+                    <div style="font-size: 1.5em; font-weight: bold; color: #667eea;" id="totalVouchers">0</div>
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #48bb78;">
+                    <div style="color: #666; font-size: 0.9em;">🎁 Wertgutscheine</div>
+                    <div style="font-size: 1.5em; font-weight: bold; color: #48bb78;" id="totalWertgutscheine">0</div>
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #4299e1;">
+                    <div style="color: #666; font-size: 0.9em;">💳 Geldwertkarten</div>
+                    <div style="font-size: 1.5em; font-weight: bold; color: #4299e1;" id="totalGeldwertkarten">0</div>
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #f6ad55;">
+                    <div style="color: #666; font-size: 0.9em;">Gesamtwert</div>
+                    <div style="font-size: 1.5em; font-weight: bold; color: #f6ad55;" id="totalVoucherValue">0,00 €</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- ENDE Verkaufte Gutscheine Tab -->
+        
 <!-- Einstellungen Tab (vorher Barcodes) -->
         <div id="settings" class="page-content" style="display: none;">
             <div class="page-header">
@@ -6706,7 +6789,132 @@ async function resetUserPin() {
         resetBtn.textContent = '🔓 PIN zurücksetzen';
     }
 }
+
+// ============ VERKAUFTE GUTSCHEINE FUNKTIONEN ============
+
+let allVouchers = [];
+
+async function loadVouchers() {
+    try {
+        const btn = document.getElementById('loadVouchersBtn');
+        btn.disabled = true;
+        btn.textContent = '⏳ Lade...';
         
+        // Lade alle Transaktionen
+        const response = await fetch('/api/transactions?limit=10000');
+        const data = await response.json();
+        
+        // Filtere nur Gutschein-Transaktionen (haben voucherSerialNumber)
+        allVouchers = [];
+        
+        if (data.transactions) {
+            data.transactions.forEach(transaction => {
+                if (transaction.items) {
+                    const items = typeof transaction.items === 'string' ? JSON.parse(transaction.items) : transaction.items;
+                    
+                    items.forEach(item => {
+                        if (item.voucherSerialNumber) {
+                            allVouchers.push({
+                                date: transaction.created_at,
+                                member_id: transaction.member_id,
+                                member_name: transaction.member_name || 'Unbekannt',
+                                product_name: item.name,
+                                category: item.category,
+                                voucher_serial: item.voucherSerialNumber,
+                                voucher_hologram: item.voucherHologramNumber,
+                                amount: item.price * item.quantity,
+                                transaction_id: transaction.id
+                            });
+                        }
+                    });
+                }
+            });
+        }
+        
+        renderVouchers();
+        updateVoucherStats();
+        
+        btn.disabled = false;
+        btn.textContent = '🔄 Neu laden';
+        
+    } catch (error) {
+        console.error('Fehler beim Laden der Gutscheine:', error);
+        showAlert('Fehler beim Laden der Gutscheine', 'error');
+        
+        const btn = document.getElementById('loadVouchersBtn');
+        btn.disabled = false;
+        btn.textContent = '🔄 Neu laden';
+    }
+}
+
+function filterVouchers() {
+    renderVouchers();
+}
+
+function renderVouchers() {
+    const filter = document.getElementById('voucherCategoryFilter').value;
+    const tbody = document.querySelector('#vouchersTable tbody');
+    
+    let filtered = allVouchers;
+    if (filter !== 'all') {
+        filtered = allVouchers.filter(v => v.category === filter);
+    }
+    
+    if (filtered.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 30px; color: #666;">
+                    Keine Gutscheine gefunden
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    // Sortiere nach Datum (neueste zuerst)
+    filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    tbody.innerHTML = filtered.map(voucher => {
+        const date = new Date(voucher.date);
+        const dateStr = date.toLocaleDateString('de-DE');
+        const timeStr = date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+        
+        const categoryIcon = voucher.category === 'wertgutscheine' ? '🎁' : '💳';
+        
+        return `
+            <tr>
+                <td>${dateStr}</td>
+                <td>${timeStr}</td>
+                <td>${voucher.member_name}</td>
+                <td>${categoryIcon} ${voucher.product_name}</td>
+                <td style="font-weight: 600; color: #667eea;">${voucher.voucher_serial}</td>
+                <td style="font-family: monospace; color: #666;">${voucher.voucher_hologram}</td>
+                <td style="text-align: right; font-weight: bold;">${voucher.amount.toFixed(2)} €</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function updateVoucherStats() {
+    const statsDiv = document.getElementById('voucherStats');
+    
+    if (allVouchers.length === 0) {
+        statsDiv.style.display = 'none';
+        return;
+    }
+    
+    statsDiv.style.display = 'block';
+    
+    const wertgutscheine = allVouchers.filter(v => v.category === 'wertgutscheine');
+    const geldwertkarten = allVouchers.filter(v => v.category === 'geldwertkarten');
+    const totalValue = allVouchers.reduce((sum, v) => sum + v.amount, 0);
+    
+    document.getElementById('totalVouchers').textContent = allVouchers.length;
+    document.getElementById('totalWertgutscheine').textContent = wertgutscheine.length;
+    document.getElementById('totalGeldwertkarten').textContent = geldwertkarten.length;
+    document.getElementById('totalVoucherValue').textContent = totalValue.toFixed(2) + ' €';
+}
+    
     </script>
 </body>
 </html>
