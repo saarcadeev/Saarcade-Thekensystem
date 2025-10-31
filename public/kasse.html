@@ -2548,13 +2548,15 @@ async function retryFailedTransactions() {
         const tx = pendingTransactions[i];
         
         try {
-            // Baue die Transaktion wieder zusammen
+            // Baue die Transaktion wieder zusammen - JETZT MIT RETRY-MARKIERUNG
             const transactionData = {
                 userId: tx.userId,
                 userName: tx.user,
                 items: tx.items,
                 total: tx.total,
-                paymentMethod: tx.paymentMethod
+                paymentMethod: tx.paymentMethod,
+                retried: true,  // ← NEU: Markiere als nachgetragen
+                originalTimestamp: tx.timestamp  // ← NEU: Ursprünglicher Zeitpunkt
             };
             
             // Versuche die Transaktion zu übertragen
@@ -2619,7 +2621,6 @@ async function retryFailedTransactions() {
         retryButton.textContent = '🔄 Erneut versuchen';
     }
 }
-
 function showFailedTransactions() {
     const failedTransactions = JSON.parse(localStorage.getItem('failedTransactions') || '[]');
     const pendingTransactions = failedTransactions.filter(t => !t.retried);
