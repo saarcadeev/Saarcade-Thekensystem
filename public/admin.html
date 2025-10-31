@@ -4013,47 +4013,64 @@ function updatePaginationUI() {
             }
         }       
         
-        function renderTransactions() {
-            const tbody = document.querySelector('#transactionTable tbody');
-            
-            if (transactions.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px; color: #666;">Keine Transaktionen gefunden</td></tr>';
-                return;
-            }
-            
-            tbody.innerHTML = transactions.map(t => {
-                const date = new Date(t.created_at);
-                const formattedDate = date.toLocaleDateString('de-DE');
-                const formattedTime = date.toLocaleTimeString('de-DE');
-                
-// Storniert-Badge
-                const cancelledBadge = t.cancelled ? 
-                    `<span style="background: #fed7d7; color: #c53030; padding: 2px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold; margin-left: 8px;">❌ STORNIERT</span>` : 
-                    '';
-                
-                // Lösch-Button nur für nicht abgerechnete und nicht stornierte Transaktionen
-                const deleteBtn = !t.is_billed && !t.billing_id && !t.cancelled ? 
-                    `<button class="btn btn-danger" onclick="deleteTransaction(${t.id}, '${t.product_name} - ${t.total.toFixed(2)}€')" style="padding: 5px 10px; font-size: 0.8em;">🗑️</button>` : 
-                    t.cancelled ? '<span style="color: #e53e3e; font-size: 0.85em;">🚫 Storniert</span>' :
-                    '<span style="color: #38a169; font-size: 0.85em;">✅ Abgerechnet</span>';
-                
-                // Zeile ausgrauen wenn storniert
-                const rowStyle = t.cancelled ? 'style="opacity: 0.5; background: #f9f9f9;"' : '';
-                
-                return `
-                    <tr ${rowStyle}>
-                        <td>${formattedDate}<br><small>${formattedTime}</small></td>
-                        <td>${t.user_name}${cancelledBadge}</td>
-                        <td>${t.product_name}</td>
-                        <td>${t.quantity}</td>
-                        <td>${t.price.toFixed(2)}€</td>
-                        <td><strong>${t.total.toFixed(2)}€</strong></td>
-                        <td>${t.payment_method === 'balance' ? 'Saldo' : t.payment_method}</td>
-                        <td>${deleteBtn}</td>
-                    </tr>
-                `;            }).join('');
+function renderTransactions() {
+    const tbody = document.querySelector('#transactionTable tbody');
+    
+    if (transactions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px; color: #666;">Keine Transaktionen gefunden</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = transactions.map(t => {
+        const date = new Date(t.created_at);
+        const formattedDate = date.toLocaleDateString('de-DE');
+        const formattedTime = date.toLocaleTimeString('de-DE');
+        
+        // Storniert-Badge
+        const cancelledBadge = t.cancelled ? 
+            `<span style="background: #fed7d7; color: #c53030; padding: 2px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold; margin-left: 8px;">✖ STORNIERT</span>` : 
+            '';
+        
+        // ⚠️ NEU: Nachgetragen-Badge
+        const retriedBadge = t.retried ? 
+            `<span style="background: #fef5e7; color: #d68910; padding: 2px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold; margin-left: 8px;">⚠️ NACHGETRAGEN</span>` : 
+            '';
+        
+        // Lösch-Button nur für nicht abgerechnete und nicht stornierte Transaktionen
+        const deleteBtn = !t.is_billed && !t.billing_id && !t.cancelled ? 
+            `<button class="btn btn-danger" onclick="deleteTransaction(${t.id}, '${t.product_name} - ${t.total.toFixed(2)}€')" style="padding: 5px 10px; font-size: 0.8em;">🗑️</button>` : 
+            t.cancelled ? '<span style="color: #e53e3e; font-size: 0.85em;">🚫 Storniert</span>' :
+            '<span style="color: #38a169; font-size: 0.85em;">✅ Abgerechnet</span>';
+        
+        // Zeile ausgrauen wenn storniert, gelb-Tönung wenn nachgetragen
+        let rowStyle = '';
+        if (t.cancelled) {
+            rowStyle = 'style="opacity: 0.5; background: #f9f9f9;"';
+        } else if (t.retried) {
+            rowStyle = 'style="background: #fffbf0;"';
         }
         
+        // ⚠️ NEU: Zeitstempel-Anzeige mit Original-Zeit bei nachgetragenen Transaktionen
+        let dateDisplay = `${formattedDate}<br><small>${formattedTime}</small>`;
+        if (t.retried && t.original_timestamp) {
+            const originalDate = new Date(t.original_timestamp);
+            dateDisplay += `<br><small style="color: #d68910;">📅 Original: ${originalDate.toLocaleDateString('de-DE')} ${originalDate.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'})}</small>`;
+        }
+        
+        return `
+            <tr ${rowStyle}>
+                <td>${dateDisplay}</td>
+                <td>${t.user_name}${cancelledBadge}${retriedBadge}</td>
+                <td>${t.product_name}</td>
+                <td>${t.quantity}</td>
+                <td>${t.price.toFixed(2)}€</td>
+                <td><strong>${t.total.toFixed(2)}€</strong></td>
+                <td>${t.payment_method === 'balance' ? 'Saldo' : t.payment_method}</td>
+                <td>${deleteBtn}</td>
+            </tr>
+        `;
+    }).join('');
+}        
 function filterTransactions() {
     currentPage = 0; // Zurück auf Seite 1
     loadTransactions(); // Neu laden mit aktuellen Filtern
