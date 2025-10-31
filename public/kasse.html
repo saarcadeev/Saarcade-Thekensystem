@@ -1224,8 +1224,8 @@ try {
                    <!-- <button class="category-btn" data-category="schnaps">🥃 Spirituosen</button> -->
                         <button class="category-btn" data-category="snacks">🍿 Snacks</button>
                         <button class="category-btn" data-category="heissgetraenke">☕ Heißgetränke</button>
-                        <button class="category-btn" data-category="Geschenkgutscheine">🎁 Geschenkgutscheine</button>
-                        <button class="category-btn" data-category="Verzehrkarten">💳 Verzehrkarten</button>
+                        <button class="category-btn" data-category="geschenkgutscheine">🎁 Geschenkgutscheine</button>
+                        <button class="category-btn" data-category="verzehrkarten">💳 Verzehrkarten</button>
                     </div>
                 </div>
                 
@@ -2410,7 +2410,7 @@ function addToCart(productId, fromBarcode = false) {
             const product = products.find(p => p.id === productId);
             
             // Wenn Geschenkgutschein, Modal öffnen statt direkt hinzuzufügen
-            if (product && product.category === 'Geschenkgutscheine') {
+            if (product && product.category === 'geschenkgutscheine') {
                 openVoucherModal(product);
                 return;
             }
