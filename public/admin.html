@@ -1272,8 +1272,8 @@ body {
                 <label style="margin: 0;">Filter:</label>
                 <select id="voucherCategoryFilter" onchange="filterVouchers()" style="padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
                     <option value="all">Alle</option>
-                    <option value="Geschenkgutscheine">🎁 Geschenkgutscheine</option>
-                    <option value="Verzehrkarten">💳 Verzehrkarten</option>
+                    <option value="geschenkgutscheine">🎁 Geschenkgutscheine</option>
+                    <option value="verzehrkarten">💳 Verzehrkarten</option>
                 </select>
             </div>
         </div>
@@ -1797,8 +1797,8 @@ body {
                                 <option value="schnaps">🥃 Spirituosen</option>
                                 <option value="snacks">🍿 Snacks</option>
                                 <option value="heissgetraenke">☕ Heißgetränke</option>
-                                <option value="Geschenkgutscheine">🎁 Geschenkgutscheine</option>
-                                <option value="Verzehrkarten">💳 Verzehrkarten</option>
+                                <option value="geschenkgutscheine">🎁 Geschenkgutscheine</option>
+                                <option value="verzehrkarten">💳 Verzehrkarten</option>
                                 <option value="sonstiges">📦 Sonstiges</option>
                             </select>
                         </div>
@@ -6846,7 +6846,7 @@ tbody.innerHTML = filtered.map((voucher, index) => {
         const dateStr = date.toLocaleDateString('de-DE');
         const timeStr = date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
         
-        const categoryIcon = voucher.category === 'Geschenkgutscheine' ? '🎁' : '💳';
+        const categoryIcon = voucher.category === 'geschenkgutscheine' ? '🎁' : '💳';
         const isCompleted = voucher.ticket_shop_completed || false;
         
         return `
