@@ -2460,6 +2460,134 @@ function addToCart(productId, fromBarcode = false) {
             setScannerMode('product');
         }
 
+// ============ FEHLERHAFTE TRANSAKTIONEN SPEICHERN ============
+function saveFailedTransaction(transactionData, error) {
+    try {
+        const failedTransactions = JSON.parse(localStorage.getItem('failedTransactions') || '[]');
+        failedTransactions.push({
+            timestamp: new Date().toISOString(),
+            user: transactionData.userName,
+            userId: transactionData.userId,
+            items: transactionData.items,
+            total: transactionData.total,
+            error: error.message,
+            tablet: localStorage.getItem('kasseLogin') || 'unbekannt'
+        });
+        localStorage.setItem('failedTransactions', JSON.stringify(failedTransactions));
+        
+        // Badge-Counter aktualisieren
+        updateFailedTransactionsBadge();
+    } catch (e) {
+        console.error('Fehler beim Speichern der fehlgeschlagenen Transaktion:', e);
+    }
+}
+
+function updateFailedTransactionsBadge() {
+    const failedTransactions = JSON.parse(localStorage.getItem('failedTransactions') || '[]');
+    let badge = document.getElementById('failedTransactionsBadge');
+    
+    if (failedTransactions.length > 0) {
+        if (!badge) {
+            badge = document.createElement('span');
+            badge.id = 'failedTransactionsBadge';
+            badge.style.cssText = 'position: fixed; top: 10px; right: 10px; background: #e53e3e; color: white; padding: 8px 12px; border-radius: 20px; font-weight: bold; z-index: 10000; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.3);';
+            badge.onclick = showFailedTransactions;
+            document.body.appendChild(badge);
+        }
+        badge.textContent = `⚠️ ${failedTransactions.length} Fehler`;
+        badge.style.display = 'block';
+    } else if (badge) {
+        badge.style.display = 'none';
+    }
+}
+
+function showFailedTransactions() {
+    const failedTransactions = JSON.parse(localStorage.getItem('failedTransactions') || '[]');
+    
+    if (failedTransactions.length === 0) {
+        alert('Keine fehlgeschlagenen Transaktionen vorhanden.');
+        return;
+    }
+    
+    let html = `
+        <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 10001; display: flex; align-items: center; justify-content: center;" onclick="this.remove()">
+            <div style="background: white; padding: 30px; border-radius: 12px; max-width: 800px; max-height: 80vh; overflow-y: auto;" onclick="event.stopPropagation()">
+                <h2 style="color: #e53e3e; margin-bottom: 20px;">⚠️ Fehlgeschlagene Transaktionen (${failedTransactions.length})</h2>
+                <p style="margin-bottom: 20px; color: #666;">Diese Transaktionen konnten nicht in der Datenbank gespeichert werden und müssen manuell nachgetragen werden!</p>
+    `;
+    
+    failedTransactions.forEach((tx, index) => {
+        const date = new Date(tx.timestamp);
+        html += `
+            <div style="border: 2px solid #e53e3e; padding: 15px; margin-bottom: 15px; border-radius: 8px; background: #fff5f5;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <strong style="color: #e53e3e;">#${index + 1} - ${tx.user}</strong>
+                    <span style="color: #666;">${date.toLocaleString('de-DE')}</span>
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <strong>Artikel:</strong><br>
+                    ${tx.items.map(item => `${item.quantity}x ${item.productName} (${item.total.toFixed(2)}€)`).join('<br>')}
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <strong>Gesamt:</strong> ${tx.total.toFixed(2)}€
+                </div>
+                <div style="color: #666; font-size: 0.9em;">
+                    <strong>Fehler:</strong> ${tx.error}<br>
+                    <strong>Tablet:</strong> ${tx.tablet}
+                </div>
+            </div>
+        `;
+    });
+    
+    html += `
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button onclick="exportFailedTransactions()" style="flex: 1; padding: 12px; background: #4299e1; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                        📥 Als Text exportieren
+                    </button>
+                    <button onclick="if(confirm('Wirklich alle fehlgeschlagenen Transaktionen löschen?\\n\\nNUR löschen wenn sie manuell nachgetragen wurden!')) { localStorage.removeItem('failedTransactions'); updateFailedTransactionsBadge(); this.closest('div[style*=fixed]').remove(); }" style="flex: 1; padding: 12px; background: #48bb78; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                        ✅ Alle löschen
+                    </button>
+                    <button onclick="this.closest('div[style*=fixed]').remove()" style="padding: 12px 20px; background: #666; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                        Schließen
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function exportFailedTransactions() {
+    const failedTransactions = JSON.parse(localStorage.getItem('failedTransactions') || '[]');
+    
+    let text = '=== FEHLGESCHLAGENE TRANSAKTIONEN ===\n';
+    text += `Exportiert am: ${new Date().toLocaleString('de-DE')}\n\n`;
+    
+    failedTransactions.forEach((tx, index) => {
+        const date = new Date(tx.timestamp);
+        text += `\n--- Transaktion #${index + 1} ---\n`;
+        text += `Zeitpunkt: ${date.toLocaleString('de-DE')}\n`;
+        text += `Benutzer: ${tx.user} (ID: ${tx.userId})\n`;
+        text += `Tablet: ${tx.tablet}\n`;
+        text += `Artikel:\n`;
+        tx.items.forEach(item => {
+            text += `  - ${item.quantity}x ${item.productName} (${item.total.toFixed(2)}€)\n`;
+        });
+        text += `GESAMT: ${tx.total.toFixed(2)}€\n`;
+        text += `Fehler: ${tx.error}\n`;
+    });
+    
+    // Text in Zwischenablage kopieren
+    navigator.clipboard.writeText(text).then(() => {
+        alert('✅ Liste in Zwischenablage kopiert!\n\nJetzt kannst du sie per WhatsApp, E-Mail etc. verschicken.');
+    }).catch(() => {
+        // Fallback: Text in neuem Fenster anzeigen
+        const win = window.open('', '_blank');
+        win.document.write('<pre>' + text + '</pre>');
+    });
+}
+
 async function checkout() {
     if (cart.length === 0 || isProcessing) {
         return;
@@ -2469,7 +2597,7 @@ async function checkout() {
     updateCartView();
     showStatus('Verarbeite Transaktion...', 'loading');
     
-try {
+    try {
         const items = cart.map(cartItem => {
             const product = products.find(p => p.id === cartItem.productId);
             const price = currentUser.role === 'member' ? product.member_price : product.guest_price;
@@ -2483,9 +2611,10 @@ try {
                 total: itemTotal
             };
         });
-
+        
+        // Total berechnen als Summe aller Items
         const total = items.reduce((sum, item) => sum + item.total, 0);
-    
+        
         const transactionData = {
             userId: currentUser.id,
             userName: `${currentUser.first_name} ${currentUser.last_name}`,
@@ -2498,9 +2627,9 @@ try {
         if (currentUser.role === 'bartender') {
             const cashHelperCheckbox = document.getElementById('cashHelperCheckbox');
             if (cashHelperCheckbox && cashHelperCheckbox.checked) {
-                isProcessing = false; // Wichtig: Processing-Flag zurücksetzen
+                isProcessing = false;
                 openCashPaymentModal(transactionData, total);
-                return; // HIER wird NICHT gebucht, nur Modal geöffnet
+                return;
             }
             // Wenn Kassierhilfe deaktiviert: Direkte Buchung OHNE Session-Reset
             const result = await createTransaction(transactionData);
@@ -2515,9 +2644,8 @@ try {
             
             clearCart();
             updateUserInfo();
-            // KEIN resetSession() - Barkeeper bleibt eingeloggt!
             
-            return; // Wichtig: Hier beenden, nicht weitermachen
+            return;
         }
         
 // Normale Mitglieder: Direkte Buchung
@@ -2535,7 +2663,6 @@ try {
                 const product = products.find(p => p.id === cartItem.productId);
                 const price = currentUser.role === 'member' ? product.member_price : product.guest_price;
                 
-         // Finde die passende Transaction für diesen Artikel
                 const matchingTransaction = result.transactions?.find(t => 
                     t.product_id === cartItem.productId && t.user_id === currentUser.id
                 );
@@ -2571,15 +2698,72 @@ try {
             resetSession();
             showStatus('Session beendet - Nächster Kunde', 'info');
         }, 750);
+        
     } catch (error) {
-        showStatus('Fehler beim Abschließen des Kaufs', 'error');
-        console.error('Checkout-Fehler:', error);
+        // KRITISCHER FEHLER - Transaktion konnte nicht gespeichert werden!
+        console.error('🚨 CHECKOUT FEHLER:', error);
+        console.error('Fehlgeschlagene Transaktion:', {
+            user: `${currentUser.first_name} ${currentUser.last_name}`,
+            userId: currentUser.id,
+            items: cart,
+            timestamp: new Date().toISOString()
+        });
+        
+        // Speichere die fehlgeschlagene Transaktion lokal
+        const items = cart.map(cartItem => {
+            const product = products.find(p => p.id === cartItem.productId);
+            const price = currentUser.role === 'member' ? product.member_price : product.guest_price;
+            return {
+                productId: cartItem.productId,
+                productName: product.name,
+                quantity: cartItem.quantity,
+                price: price,
+                total: price * cartItem.quantity
+            };
+        });
+        
+        const total = items.reduce((sum, item) => sum + item.total, 0);
+        
+        saveFailedTransaction({
+            userId: currentUser.id,
+            userName: `${currentUser.first_name} ${currentUser.last_name}`,
+            items: items,
+            total: total
+        }, error);
+        
+        // Zeige permanente Fehlermeldung
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #e53e3e; color: white; padding: 30px; border-radius: 12px; z-index: 10000; max-width: 90%; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.3);';
+        errorDiv.innerHTML = `
+            <h2 style="margin-bottom: 15px;">⚠️ FEHLER: Transaktion nicht gespeichert!</h2>
+            <p style="margin-bottom: 10px; font-size: 1.1em;"><strong>Benutzer:</strong> ${currentUser.first_name} ${currentUser.last_name}</p>
+            <p style="margin-bottom: 10px; font-size: 1.1em;"><strong>Betrag:</strong> ${total.toFixed(2)}€</p>
+            <p style="margin-bottom: 20px; font-size: 0.9em; opacity: 0.9;">Die Transaktion wurde lokal gespeichert und muss später manuell nachgetragen werden.</p>
+            <button onclick="this.parentElement.remove(); showFailedTransactions();" style="background: white; color: #e53e3e; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1em; margin-right: 10px;">
+                📋 Fehler-Liste anzeigen
+            </button>
+            <button onclick="this.parentElement.remove();" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid white; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1em;">
+                Fortfahren
+            </button>
+        `;
+        document.body.appendChild(errorDiv);
+        
+        showStatus('⚠️ Transaktion fehlgeschlagen - siehe Fehler-Badge', 'error');
+        
+        // Warenkorb leeren und Session zurücksetzen, damit weiter gearbeitet werden kann
+        clearCart();
+        setTimeout(() => {
+            resetSession();
+        }, 100);
+        
     } finally {
         isProcessing = false;
         updateCartView();
     }
-} 
-        
+}
+
+// Beim Laden der Seite Badge aktualisieren
+window.addEventListener('load', updateFailedTransactionsBadge);        
 function resetSession() {
             currentUser = null;
             cart = [];
