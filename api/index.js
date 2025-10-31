@@ -687,7 +687,7 @@ if (path === '/transactions' && method === 'GET') {
             const transactions = [];
             let totalAmount = 0;
             
-            for (const item of transactionData.items) {
+for (const item of transactionData.items) {
                 const transaction = {
                     user_id: transactionData.userId,
                     user_name: transactionData.userName,
@@ -696,9 +696,11 @@ if (path === '/transactions' && method === 'GET') {
                     quantity: item.quantity,
                     price: item.price,
                     total: item.total,
-                    payment_method: transactionData.paymentMethod || 'balance'
+                    payment_method: transactionData.paymentMethod || 'balance',
+                    retried: transactionData.retried || false,  // ← NEU
+                    original_timestamp: transactionData.originalTimestamp || null  // ← NEU
                 };
-                
+    
                 transactions.push(transaction);
                 totalAmount += item.total;
                 
