@@ -1392,21 +1392,65 @@ try {
 <button class="btn btn-danger" onclick="clearCashAmount()" style="padding: 10px; font-size: 1em;">↺</button>
     </div>
 
-    <div style="text-align: center; margin-top: 20px; display: flex; gap: 10px;">
-        <button class="btn btn-secondary" onclick="cancelCashPayment()" style="flex: 1; padding: 12px;">
-            Abbrechen
+    <div style="text-align: center; margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
+        <button class="btn btn-success" onclick="completeCashPayment()" id="completeCashBtn" disabled style="padding: 12px; font-size: 1.05em;">
+            ✅ Barzahlung abschließen
         </button>
-        <button class="btn btn-success" onclick="completeCashPayment()" id="completeCashBtn" disabled style="flex: 2; padding: 12px; font-size: 1.05em;">
-            ✅ Zahlung abschließen
+        
+        <button class="btn" onclick="completeVoucherCardPayment()" style="padding: 12px; font-size: 1.05em; background: #f59e0b; color: white;">
+            🎫 Als Verzehrkarte buchen
+        </button>
+        
+        <button class="btn btn-secondary" onclick="cancelCashPayment()" style="padding: 12px;">
+            Abbrechen
         </button>
     </div>
 </div>
             <div style="margin-top: 15px; padding: 10px; background: #fff5e6; border-radius: 6px; text-align: center; font-size: 0.85em; color: #666;">
                 💡 Tipp: Scan CHECKOUT-Barcode für passende Zahlung
             </div>
+</div>
+    </div>
+</div>
+
+<!-- Neues Modal: Zahlungsart-Auswahl für Barkeeper -->
+<div id="paymentMethodModal" class="modal">
+    <div class="modal-content" style="max-width: 450px;">
+        <div class="modal-header">
+            <h3>💳 Zahlungsart wählen</h3>
+        </div>
+        <div class="modal-body">
+            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+                <div style="font-size: 0.9em; color: #666; margin-bottom: 5px;">Gesamtbetrag:</div>
+                <div style="font-size: 2.2em; font-weight: bold; color: #667eea;" id="paymentMethodTotal">0.00€</div>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <button class="btn btn-success" onclick="selectPaymentMethod('cash')" style="padding: 20px; font-size: 1.1em; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <span style="font-size: 1.5em;">💰</span>
+                    <span>Barverkauf</span>
+                </button>
+                
+                <button class="btn" onclick="selectPaymentMethod('voucher_card')" style="padding: 20px; font-size: 1.1em; background: #f59e0b; color: white; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <span style="font-size: 1.5em;">🎫</span>
+                    <span>Verzehrkarte</span>
+                </button>
+            </div>
+            
+            <div style="margin-top: 20px; text-align: center;">
+                <button class="btn btn-secondary" onclick="closePaymentMethodModal()" style="padding: 12px 30px;">
+                    Abbrechen
+                </button>
+            </div>
+            
+            <div style="margin-top: 15px; padding: 12px; background: #fff5e6; border-radius: 6px; font-size: 0.85em; color: #666;">
+                💡 <strong>Barverkauf:</strong> Kunde zahlt bar (wird zur Kasse addiert)<br>
+                💡 <strong>Verzehrkarte:</strong> Getränke wurden bereits bezahlt (nur zählen)
+            </div>
         </div>
     </div>
-</div>    
+</div>
+
     <script>
         // ============ GLOBALE VARIABLEN ============
         let currentUser = null;
@@ -1420,7 +1464,8 @@ try {
         let specialBarcodes = {
             checkout: 'CHECKOUT123',
             cancel: 'CANCEL123',
-            reset: 'RESET123'
+            reset: 'RESET123',
+            voucherCard: 'VOUCHER123'
         };
         let pendingUserForPin = null; // Benutzer der PIN-Eingabe wartet
         let currentVoucherProduct = null; // Für Gutschein-Modal
@@ -1679,6 +1724,7 @@ async function apiCall(endpoint, options = {}) {
                 if (settings.checkout_barcode) specialBarcodes.checkout = settings.checkout_barcode;
                 if (settings.cancel_barcode) specialBarcodes.cancel = settings.cancel_barcode;
                 if (settings.reset_barcode) specialBarcodes.reset = settings.reset_barcode;
+                if (settings.voucher_card_barcode) specialBarcodes.voucherCard = settings.voucher_card_barcode;
                 
                 console.log('Spezial-Barcodes geladen:', specialBarcodes);
             } catch (error) {
@@ -2798,29 +2844,20 @@ window.addEventListener('load', updateFailedTransactionsBadge);
             paymentMethod: 'balance'
         };
         
-// NEUE LOGIK: Barkeeper bekommen Barzahlungs-Dialog OHNE Buchung (nur wenn Kassierhilfe aktiviert)
+// NEUE LOGIK: Barkeeper bekommen verschiedene Dialoge je nach Kassierhilfe
         if (currentUser.role === 'bartender') {
             const cashHelperCheckbox = document.getElementById('cashHelperCheckbox');
             if (cashHelperCheckbox && cashHelperCheckbox.checked) {
+                // Mit Kassierhilfe: Barzahlungs-Dialog mit Wechselgeld-Berechnung
                 isProcessing = false;
                 openCashPaymentModal(transactionData, total);
                 return;
+            } else {
+                // Ohne Kassierhilfe: Zahlungsart-Auswahl (Bar/Verzehrkarte)
+                isProcessing = false;
+                openPaymentMethodModal(transactionData, total);
+                return;
             }
-            // Wenn Kassierhilfe deaktiviert: Direkte Buchung OHNE Session-Reset
-            const result = await createTransaction(transactionData);
-            currentUser.balance = result.newBalance;
-            
-            const userIndex = users.findIndex(u => u.id === currentUser.id);
-            if (userIndex !== -1) {
-                users[userIndex].balance = result.newBalance;
-            }
-            
-            showStatus(`✅ Kauf über ${total.toFixed(2)}€ abgeschlossen!`, 'success');
-            
-            clearCart();
-            updateUserInfo();
-            
-            return;
         }
         
 // Normale Mitglieder: Direkte Buchung
@@ -3010,6 +3047,71 @@ if (trimmedBarcode === specialBarcodes.checkout.toUpperCase()) {
             if (trimmedBarcode === specialBarcodes.reset.toUpperCase()) {
                 showStatus('🔄 Session zurückgesetzt', 'info');
                 resetSession();
+                return;
+            }
+            
+            if (trimmedBarcode === specialBarcodes.voucherCard.toUpperCase()) {
+                // Verzehrkarten-Barcode: Direkter Checkout mit paymentMethod: 'voucher_card'
+                if (cart.length === 0) {
+                    showStatus('Warenkorb ist leer - nichts zu buchen', 'error');
+                    return;
+                }
+                
+                if (!currentUser || currentUser.role !== 'bartender') {
+                    showStatus('Verzehrkarten-Checkout nur fuer Barkeeper verfuegbar', 'error');
+                    return;
+                }
+                
+                showStatus('Verzehrkarten-Checkout wird verarbeitet...', 'loading');
+                
+                // Erstelle Transaction Data mit voucher_card payment method
+                const items = cart.map(cartItem => {
+                    const product = products.find(p => p.id === cartItem.productId);
+                    const price = currentUser.role === 'member' ? product.member_price : product.guest_price;
+                    const itemTotal = price * cartItem.quantity;
+                    
+                    return {
+                        productId: cartItem.productId,
+                        productName: product.name,
+                        quantity: cartItem.quantity,
+                        price: price,
+                        total: itemTotal
+                    };
+                });
+                
+                const total = items.reduce((sum, item) => sum + item.total, 0);
+                
+                const transactionData = {
+                    userId: currentUser.id,
+                    userName: `${currentUser.first_name} ${currentUser.last_name}`,
+                    items: items,
+                    total: total,
+                    paymentMethod: 'voucher_card'
+                };
+                
+                try {
+                    const result = await createTransaction(transactionData);
+                    currentUser.balance = result.newBalance;
+                    
+                    const userIndex = users.findIndex(u => u.id === currentUser.id);
+                    if (userIndex !== -1) {
+                        users[userIndex].balance = result.newBalance;
+                    }
+                    
+                    showStatus('Verzehrkarten-Verkauf gebucht (' + items.length + ' Artikel)', 'success');
+                    
+                    clearCart();
+                    updateUserInfo();
+                    setScannerMode('product');
+                    
+                } catch (error) {
+                    showStatus('Fehler beim Verarbeiten der Verzehrkarte', 'error');
+                    console.error('Voucher card checkout error:', error);
+                    
+                    // Speichere fehlgeschlagene Transaktion
+                    saveFailedTransaction(transactionData, error);
+                }
+                
                 return;
             }
 
@@ -3334,6 +3436,151 @@ async function completeCashPayment() {
         isProcessing = false;
         completeBtn.disabled = false;
         completeBtn.textContent = originalText;
+    }
+}
+
+}
+}
+
+async function completeVoucherCardPayment() {
+    if (!pendingCashTransaction) return;
+    
+    if (!confirm('Als Verzehrkarte buchen?\n\nDie Getränke wurden bereits bezahlt und werden nur gezählt (keine Geldeinnahme).')) {
+        return;
+    }
+    
+    showStatus('Verarbeite Verzehrkarten-Buchung...', 'loading');
+    
+    try {
+        // Setze payment method auf voucher_card
+        pendingCashTransaction.paymentMethod = 'voucher_card';
+        
+        const result = await createTransaction(pendingCashTransaction);
+        currentUser.balance = result.newBalance;
+        
+        const userIndex = users.findIndex(u => u.id === currentUser.id);
+        if (userIndex !== -1) {
+            users[userIndex].balance = result.newBalance;
+        }
+        
+        showStatus('Verzehrkarten-Verkauf gebucht (' + pendingCashTransaction.items.length + ' Artikel)', 'success');
+        
+        closeModal('cashPaymentModal');
+        pendingCashTransaction = null;
+        
+        clearCart();
+        updateUserInfo();
+        setScannerMode('product');
+        
+        setTimeout(() => {
+            const barcodeInput = document.getElementById('barcodeInput');
+            if (barcodeInput) {
+                barcodeInput.focus();
+            }
+        }, 300);
+        
+    } catch (error) {
+        showStatus('Fehler beim Abschliessen der Buchung', 'error');
+        console.error('Voucher card payment error:', error);
+        
+        // Speichere fehlgeschlagene Transaktion
+        saveFailedTransaction(pendingCashTransaction, error);
+    } finally {
+        isProcessing = false;
+    }
+}
+
+// ============ PAYMENT METHOD MODAL (Barkeeper ohne Kassierhilfe) ============
+
+let pendingPaymentTransaction = null;
+
+function openPaymentMethodModal(transactionData, totalAmount) {
+    pendingPaymentTransaction = transactionData;
+    
+    const modal = document.getElementById('paymentMethodModal');
+    const totalEl = document.getElementById('paymentMethodTotal');
+    
+    totalEl.textContent = `${totalAmount.toFixed(2)}€`;
+    modal.style.display = 'block';
+    
+    setTimeout(() => {
+        modal.querySelector('.modal-content').style.animation = 'slideIn 0.3s ease';
+    }, 10);
+}
+
+function closePaymentMethodModal() {
+    const modal = document.getElementById('paymentMethodModal');
+    modal.style.display = 'none';
+    pendingPaymentTransaction = null;
+    isProcessing = false;
+    updateCartView();
+}
+
+async function selectPaymentMethod(method) {
+    if (!pendingPaymentTransaction) return;
+    
+    closePaymentMethodModal();
+    
+    // Setze payment method
+    pendingPaymentTransaction.paymentMethod = method;
+    
+    showStatus('Verarbeite Transaktion...', 'loading');
+    
+    try {
+        const result = await createTransaction(pendingPaymentTransaction);
+        currentUser.balance = result.newBalance;
+        
+        const userIndex = users.findIndex(u => u.id === currentUser.id);
+        if (userIndex !== -1) {
+            users[userIndex].balance = result.newBalance;
+        }
+        
+        if (method === 'cash') {
+            showStatus('Barverkauf ueber ' + pendingPaymentTransaction.total.toFixed(2) + ' Euro abgeschlossen!', 'success');
+        } else if (method === 'voucher_card') {
+            showStatus('Verzehrkarten-Verkauf gebucht (' + pendingPaymentTransaction.items.length + ' Artikel)', 'success');
+        }
+        
+        clearCart();
+        updateUserInfo();
+        setScannerMode('product');
+        
+        setTimeout(() => {
+            const barcodeInput = document.getElementById('barcodeInput');
+            if (barcodeInput) {
+                barcodeInput.focus();
+            }
+        }, 300);
+        
+    } catch (error) {
+        showStatus('Fehler beim Abschliessen der Transaktion', 'error');
+        console.error('Payment error:', error);
+        
+        // Speichere fehlgeschlagene Transaktion
+        const items = cart.map(cartItem => {
+            const product = products.find(p => p.id === cartItem.productId);
+            const price = currentUser.role === 'member' ? product.member_price : product.guest_price;
+            return {
+                productId: cartItem.productId,
+                productName: product.name,
+                quantity: cartItem.quantity,
+                price: price,
+                total: price * cartItem.quantity
+            };
+        });
+        
+        const total = items.reduce((sum, item) => sum + item.total, 0);
+        
+        saveFailedTransaction({
+            userId: currentUser.id,
+            userName: `${currentUser.first_name} ${currentUser.last_name}`,
+            items: items,
+            total: total,
+            paymentMethod: method
+        }, error);
+    } finally {
+        isProcessing = false;
+        pendingPaymentTransaction = null;
     }
 }
 
