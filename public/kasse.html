@@ -3398,6 +3398,9 @@ async function completeCashPayment() {
     completeBtn.textContent = '⏳ Verarbeite...';
     
     try {
+        // Setze payment method auf cash für Barverkäufe
+        pendingCashTransaction.paymentMethod = 'cash';
+        
         const result = await createTransaction(pendingCashTransaction);
         currentUser.balance = result.newBalance;
         
