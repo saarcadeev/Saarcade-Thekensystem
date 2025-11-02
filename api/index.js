@@ -750,18 +750,15 @@ if (item.productId && item.productId > 0) {
             
             if (transactionError) throw transactionError;
 
-            // Benutzersaldo aktualisieren - UNTERSCHIEDLICH je nach paymentMethod
+            // Benutzersaldo aktualisieren
             let newBalance;
             const paymentMethod = transactionData.paymentMethod || 'balance';
             
-            if (paymentMethod === 'cash') {
-                // Barverkauf: Geld kommt REIN, Saldo wird ERHÖHT
-                newBalance = user.balance + totalAmount;
-            } else if (paymentMethod === 'voucher_card') {
-                // Verzehrkarte: Kein Geld, Saldo bleibt GLEICH
+            if (paymentMethod === 'voucher_card') {
+                // Verzehrkarte: Kein Geld, Saldo bleibt GLEICH (nur Getränke zählen)
                 newBalance = user.balance;
             } else {
-                // Normal (balance): Geld geht RAUS, Saldo wird VERRINGERT
+                // Alle anderen: Saldo wird NEGATIVER (Verkauf/Schuld)
                 newBalance = user.balance - totalAmount;
             }
             
