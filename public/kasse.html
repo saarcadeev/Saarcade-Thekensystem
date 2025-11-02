@@ -1263,9 +1263,14 @@ try {
                 
                 <div id="cartTotal" style="display: none;"></div>
                 
-                <div style="margin-top: 10px; display: flex; gap: 10px;">
-                    <button class="btn btn-danger" onclick="clearCart()" id="clearBtn" disabled style="flex: 1;">🗑️ Leeren</button>
-                    <button class="btn" onclick="resetSession()" style="flex: 1;">🔄 Reset</button>
+                <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;">
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-danger" onclick="clearCart()" id="clearBtn" disabled style="flex: 1;">🗑️ Leeren</button>
+                        <button class="btn" onclick="resetSession()" style="flex: 1;">🔄 Reset</button>
+                    </div>
+                    <button class="btn" onclick="openVoucherRefundModal()" id="refundBtn" style="background: #e53e3e; color: white; display: none;">
+                        🔙 Karten-Rückgabe
+                    </button>
                 </div>
             </div>
         </div>
@@ -1410,6 +1415,36 @@ try {
                 💡 Tipp: Scan CHECKOUT-Barcode für passende Zahlung
             </div>
 </div>
+    </div>
+</div>
+
+<!-- Neues Modal: Verzehrkarten-Rückgabe -->
+<div id="voucherRefundModal" class="modal">
+    <div class="modal-content" style="max-width: 450px;">
+        <div class="modal-header">
+            <h3>🔙 Verzehrkarte Rückgabe</h3>
+        </div>
+        <div class="modal-body">
+            <div style="background: #fff5e6; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <p style="margin: 0; color: #666;">Der Kunde gibt eine Verzehrkarte zurück und erhält den Restbetrag bar zurück.</p>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label>Rückgabebetrag (€)</label>
+                <input type="number" id="refundAmount" step="0.01" min="0" placeholder="0.00" 
+                       style="text-align: center; font-size: 1.3em; font-weight: bold; padding: 12px; width: 100%; border: 2px solid #e2e8f0; border-radius: 6px;">
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button class="btn btn-danger" onclick="completeVoucherRefund()" style="padding: 15px; font-size: 1.05em;">
+                    ✅ Rückgabe durchführen
+                </button>
+                
+                <button class="btn btn-secondary" onclick="closeVoucherRefundModal()" style="padding: 12px;">
+                    Abbrechen
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -1918,10 +1953,13 @@ window.debugImageDisplay = debugImageDisplay;
             
             // Kassierhilfe-Toggle ein/ausblenden
             const cashHelperToggle = document.getElementById('cashHelperToggle');
+            const refundBtn = document.getElementById('refundBtn');
             if (currentUser.role === 'bartender') {
                 cashHelperToggle.classList.add('show');
+                if (refundBtn) refundBtn.style.display = 'block';
             } else {
                 cashHelperToggle.classList.remove('show');
+                if (refundBtn) refundBtn.style.display = 'none';
             }
         }
         
@@ -3487,6 +3525,97 @@ async function completeVoucherCardPayment() {
         saveFailedTransaction(pendingCashTransaction, error);
     } finally {
         isProcessing = false;
+    }
+}
+
+// ============ VERZEHRKARTEN-RÜCKGABE ============
+
+function openVoucherRefundModal() {
+    if (!currentUser) {
+        showStatus('Bitte zuerst Barkeeper-Account auswaehlen', 'error');
+        return;
+    }
+    
+    if (currentUser.role !== 'bartender') {
+        showStatus('Rueckgabe nur fuer Barkeeper verfuegbar', 'error');
+        return;
+    }
+    
+    const modal = document.getElementById('voucherRefundModal');
+    const refundInput = document.getElementById('refundAmount');
+    
+    refundInput.value = '';
+    modal.style.display = 'block';
+    
+    setTimeout(() => {
+        refundInput.focus();
+    }, 300);
+}
+
+function closeVoucherRefundModal() {
+    const modal = document.getElementById('voucherRefundModal');
+    modal.style.display = 'none';
+    document.getElementById('refundAmount').value = '';
+}
+
+async function completeVoucherRefund() {
+    const refundAmount = parseFloat(document.getElementById('refundAmount').value);
+    
+    if (!refundAmount || refundAmount <= 0) {
+        showStatus('Bitte gueltigen Rueckgabebetrag eingeben', 'error');
+        return;
+    }
+    
+    if (!currentUser) {
+        showStatus('Kein Benutzer ausgewaehlt', 'error');
+        return;
+    }
+    
+    if (!confirm('Verzehrkarten-Rueckgabe ueber ' + refundAmount.toFixed(2) + ' Euro durchfuehren?')) {
+        return;
+    }
+    
+    showStatus('Verarbeite Rueckgabe...', 'loading');
+    
+    try {
+        // Erstelle Rückgabe-Transaktion
+        const transactionData = {
+            userId: currentUser.id,
+            userName: currentUser.first_name + ' ' + currentUser.last_name,
+            items: [{
+                productId: 0,
+                productName: 'Verzehrkarte Rueckgabe',
+                quantity: 1,
+                price: refundAmount,
+                total: refundAmount
+            }],
+            total: refundAmount,
+            paymentMethod: 'voucher_refund'
+        };
+        
+        const result = await createTransaction(transactionData);
+        currentUser.balance = result.newBalance;
+        
+        const userIndex = users.findIndex(u => u.id === currentUser.id);
+        if (userIndex !== -1) {
+            users[userIndex].balance = result.newBalance;
+        }
+        
+        showStatus('Verzehrkarten-Rueckgabe ueber ' + refundAmount.toFixed(2) + ' Euro durchgefuehrt', 'success');
+        
+        closeVoucherRefundModal();
+        
+        clearCart();
+        updateUserInfo();
+        setScannerMode('product');
+        
+        setTimeout(() => {
+            document.getElementById('barcodeInput').focus();
+        }, 300);
+        
+    } catch (error) {
+        showStatus('Fehler bei der Rueckgabe', 'error');
+        console.error('Voucher refund error:', error);
     }
 }
 
