@@ -3497,14 +3497,24 @@ function openPaymentMethodModal(transactionData, totalAmount) {
     const modal = document.getElementById('paymentMethodModal');
     const totalEl = document.getElementById('paymentMethodTotal');
     
+    if (!modal || !totalEl) {
+        console.error('PaymentMethodModal nicht gefunden!');
+        return;
+    }
+    
     totalEl.textContent = `${totalAmount.toFixed(2)}€`;
     modal.style.display = 'block';
     
+    console.log('✅ PaymentMethodModal geöffnet, pendingPaymentTransaction:', pendingPaymentTransaction);
+    
     setTimeout(() => {
-        modal.querySelector('.modal-content').style.animation = 'slideIn 0.3s ease';
+        const modalContent = modal.querySelector('.modal-content');
+        if (modalContent) {
+            modalContent.style.animation = 'slideIn 0.3s ease';
+        }
     }, 10);
 }
-
+        
 function closePaymentMethodModal() {
     const modal = document.getElementById('paymentMethodModal');
     modal.style.display = 'none';
@@ -3514,17 +3524,26 @@ function closePaymentMethodModal() {
 }
 
 async function selectPaymentMethod(method) {
-    if (!pendingPaymentTransaction) return;
+    console.log('🔍 selectPaymentMethod aufgerufen mit:', method, 'pendingPaymentTransaction:', pendingPaymentTransaction);
     
+    if (!pendingPaymentTransaction) {
+        console.error('❌ pendingPaymentTransaction ist null!');
+        showStatus('Fehler: Keine Transaktion vorhanden', 'error');
+        closePaymentMethodModal();
+        return;
+    }
+    
+    // WICHTIG: Speichere die Transaktion BEVOR das Modal geschlossen wird
+    const transactionData = pendingPaymentTransaction;
     closePaymentMethodModal();
     
     // Setze payment method
-    pendingPaymentTransaction.paymentMethod = method;
+    transactionData.paymentMethod = method;
     
     showStatus('Verarbeite Transaktion...', 'loading');
     
     try {
-        const result = await createTransaction(pendingPaymentTransaction);
+        const result = await createTransaction(transactionData);
         currentUser.balance = result.newBalance;
         
         const userIndex = users.findIndex(u => u.id === currentUser.id);
@@ -3568,16 +3587,9 @@ async function selectPaymentMethod(method) {
         
         const total = items.reduce((sum, item) => sum + item.total, 0);
         
-        saveFailedTransaction({
-            userId: currentUser.id,
-            userName: `${currentUser.first_name} ${currentUser.last_name}`,
-            items: items,
-            total: total,
-            paymentMethod: method
-        }, error);
+        saveFailedTransaction(transactionData, error);
     } finally {
         isProcessing = false;
-        pendingPaymentTransaction = null;
     }
 }
 
