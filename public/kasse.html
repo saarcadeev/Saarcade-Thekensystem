@@ -3483,10 +3483,6 @@ async function completeCashPayment() {
 async function completeVoucherCardPayment() {
     if (!pendingCashTransaction) return;
     
-    if (!confirm('Als Verzehrkarte buchen?\n\nDie Getränke wurden bereits bezahlt und werden nur gezählt (keine Geldeinnahme).')) {
-        return;
-    }
-    
     showStatus('Verarbeite Verzehrkarten-Buchung...', 'loading');
     
     try {
