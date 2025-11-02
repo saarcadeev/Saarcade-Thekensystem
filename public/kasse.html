@@ -82,9 +82,6 @@
         }
 
         .cash-helper-toggle {
-            position: absolute;
-            top: 15px;
-            right: 15px;
             display: none;
             align-items: center;
             gap: 8px;
@@ -93,7 +90,6 @@
             border-radius: 6px;
             border: 2px solid #e2e8f0;
             font-size: 0.9em;
-            z-index: 100;
         }
 
         .cash-helper-toggle.show {
@@ -1162,21 +1158,22 @@ try {
     <div class="container">
         <div class="header" style="position: relative;">
             <h1>🎮 Saarcade e.V. Kassensystem</h1>
-
-<!-- Kassierhilfe Toggle (nur für Barkeeper sichtbar) -->
-        <div class="cash-helper-toggle" id="cashHelperToggle">
-            <input type="checkbox" id="cashHelperCheckbox" checked>
-            <label for="cashHelperCheckbox">💰 Kassierhilfe</label>
-        </div>
             
             <div class="header-main">
                 <div class="scanner-pin-area">
                     <div class="scanner-status-row">
+                        <!-- Kassierhilfe Toggle (nur für Barkeeper sichtbar) -->
+                        <div class="cash-helper-toggle" id="cashHelperToggle" style="position: relative; top: auto; right: auto;">
+                            <input type="checkbox" id="cashHelperCheckbox" checked>
+                            <label for="cashHelperCheckbox">💰 Kassierhilfe</label>
+                        </div>
+                        
                         <div class="pin-button-container">
                             <button class="btn" id="pinChangeBtn" onclick="openPinModal()" style="width: 100%; font-size: 0.8em;">
                                 🔐 PIN
                             </button>
                         </div>
+                        
                         <div class="scanner-status" id="scannerStatus">
                             🔍 Bereit für Barcode-Scanner
                         </div>
@@ -1268,8 +1265,8 @@ try {
                         <button class="btn btn-danger" onclick="clearCart()" id="clearBtn" disabled style="flex: 1;">🗑️ Leeren</button>
                         <button class="btn" onclick="resetSession()" style="flex: 1;">🔄 Reset</button>
                     </div>
-                    <button class="btn" onclick="openVoucherRefundModal()" id="refundBtn" style="background: #e53e3e; color: white; display: none;">
-                        🔙 Karten-Rückgabe
+                    <button class="btn btn-success" onclick="openVoucherRefundModal()" id="refundBtn" style="display: none;">
+                        🔙 Verzehrkarten-Rückgabe
                     </button>
                 </div>
             </div>
@@ -3564,10 +3561,6 @@ async function completeVoucherRefund() {
     
     if (!currentUser) {
         showStatus('Kein Benutzer ausgewaehlt', 'error');
-        return;
-    }
-    
-    if (!confirm('Verzehrkarten-Rueckgabe ueber ' + refundAmount.toFixed(2) + ' Euro durchfuehren?')) {
         return;
     }
     
