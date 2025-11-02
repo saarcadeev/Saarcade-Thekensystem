@@ -757,6 +757,9 @@ if (item.productId && item.productId > 0) {
             if (paymentMethod === 'voucher_card') {
                 // Verzehrkarte: Kein Geld, Saldo bleibt GLEICH (nur Getränke zählen)
                 newBalance = user.balance;
+            } else if (paymentMethod === 'voucher_refund') {
+                // Verzehrkarten-Rückgabe: Geld geht RAUS, Saldo wird POSITIVER (weniger negativ)
+                newBalance = user.balance + totalAmount;
             } else {
                 // Alle anderen: Saldo wird NEGATIVER (Verkauf/Schuld)
                 newBalance = user.balance - totalAmount;
