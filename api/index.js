@@ -750,8 +750,21 @@ if (item.productId && item.productId > 0) {
             
             if (transactionError) throw transactionError;
 
-            // Benutzersaldo aktualisieren
-            const newBalance = user.balance - totalAmount;
+            // Benutzersaldo aktualisieren - UNTERSCHIEDLICH je nach paymentMethod
+            let newBalance;
+            const paymentMethod = transactionData.paymentMethod || 'balance';
+            
+            if (paymentMethod === 'cash') {
+                // Barverkauf: Geld kommt REIN, Saldo wird ERHÖHT
+                newBalance = user.balance + totalAmount;
+            } else if (paymentMethod === 'voucher_card') {
+                // Verzehrkarte: Kein Geld, Saldo bleibt GLEICH
+                newBalance = user.balance;
+            } else {
+                // Normal (balance): Geld geht RAUS, Saldo wird VERRINGERT
+                newBalance = user.balance - totalAmount;
+            }
+            
             const { error: balanceError } = await supabase
                 .from('users')
                 .update({ balance: newBalance })
