@@ -3575,11 +3575,11 @@ async function completeVoucherRefund() {
     
     try {
         // Erstelle Rückgabe-Transaktion
-        const transactionData = {
+       const transactionData = {
             userId: currentUser.id,
             userName: currentUser.first_name + ' ' + currentUser.last_name,
             items: [{
-                productId: 0,
+                productId: null,
                 productName: 'Verzehrkarte Rueckgabe',
                 quantity: 1,
                 price: refundAmount,
