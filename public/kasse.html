@@ -3553,9 +3553,9 @@ async function selectPaymentMethod(method) {
         }
         
         if (method === 'cash') {
-            showStatus('Barverkauf ueber ' + pendingPaymentTransaction.total.toFixed(2) + ' Euro abgeschlossen!', 'success');
+            showStatus('Barverkauf ueber ' + transactionData.total.toFixed(2) + ' Euro abgeschlossen!', 'success');
         } else if (method === 'voucher_card') {
-            showStatus('Verzehrkarten-Verkauf gebucht (' + pendingPaymentTransaction.items.length + ' Artikel)', 'success');
+            showStatus('Verzehrkarten-Verkauf gebucht (' + transactionData.items.length + ' Artikel)', 'success');
         }
         
         clearCart();
