@@ -1426,10 +1426,26 @@ try {
                 <p style="margin: 0; color: #666;">Der Kunde gibt eine Verzehrkarte zurück und erhält den Restbetrag bar zurück.</p>
             </div>
             
-            <div class="form-group" style="margin-bottom: 20px;">
+           <div class="form-group" style="margin-bottom: 20px;">
                 <label>Rückgabebetrag (€)</label>
-                <input type="number" id="refundAmount" step="0.01" min="0" placeholder="0.00" 
-                       style="text-align: center; font-size: 1.3em; font-weight: bold; padding: 12px; width: 100%; border: 2px solid #e2e8f0; border-radius: 6px;">
+                <input type="text" id="refundAmount" placeholder="0.00" readonly
+                       style="text-align: center; font-size: 1.8em; font-weight: bold; padding: 15px; width: 100%; border: 2px solid #48bb78; border-radius: 6px; background: #f0fff4;">
+            </div>
+            
+            <!-- Numpad für Betragseingabe -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px;">
+                <button class="btn btn-secondary" onclick="addRefundDigit('1')" style="padding: 15px; font-size: 1.2em;">1</button>
+                <button class="btn btn-secondary" onclick="addRefundDigit('2')" style="padding: 15px; font-size: 1.2em;">2</button>
+                <button class="btn btn-secondary" onclick="addRefundDigit('3')" style="padding: 15px; font-size: 1.2em;">3</button>
+                <button class="btn btn-secondary" onclick="addRefundDigit('4')" style="padding: 15px; font-size: 1.2em;">4</button>
+                <button class="btn btn-secondary" onclick="addRefundDigit('5')" style="padding: 15px; font-size: 1.2em;">5</button>
+                <button class="btn btn-secondary" onclick="addRefundDigit('6')" style="padding: 15px; font-size: 1.2em;">6</button>
+                <button class="btn btn-secondary" onclick="addRefundDigit('7')" style="padding: 15px; font-size: 1.2em;">7</button>
+                <button class="btn btn-secondary" onclick="addRefundDigit('8')" style="padding: 15px; font-size: 1.2em;">8</button>
+                <button class="btn btn-secondary" onclick="addRefundDigit('9')" style="padding: 15px; font-size: 1.2em;">9</button>
+                <button class="btn btn-secondary" onclick="addRefundDigit('.')" style="padding: 15px; font-size: 1.2em;">.</button>
+                <button class="btn btn-secondary" onclick="addRefundDigit('0')" style="padding: 15px; font-size: 1.2em;">0</button>
+                <button class="btn btn-danger" onclick="clearRefundAmount()" style="padding: 15px; font-size: 1.2em;">⌫</button>
             </div>
             
             <div style="display: flex; flex-direction: column; gap: 10px;">
@@ -3549,6 +3565,41 @@ function closeVoucherRefundModal() {
     const modal = document.getElementById('voucherRefundModal');
     modal.style.display = 'none';
     document.getElementById('refundAmount').value = '';
+}
+
+function addRefundDigit(digit) {
+    const input = document.getElementById('refundAmount');
+    const currentValue = input.value;
+    
+    // Verhindere mehrere Dezimalpunkte
+    if (digit === '.' && currentValue.includes('.')) {
+        return;
+    }
+    
+    // Verhindere führende Nullen (außer 0.)
+    if (currentValue === '0' && digit !== '.') {
+        input.value = digit;
+        return;
+    }
+    
+    // Maximal 2 Dezimalstellen
+    if (currentValue.includes('.')) {
+        const decimals = currentValue.split('.')[1];
+        if (decimals && decimals.length >= 2) {
+            return;
+        }
+    }
+    
+    input.value = currentValue + digit;
+}
+
+function clearRefundAmount() {
+    const input = document.getElementById('refundAmount');
+    const currentValue = input.value;
+    
+    if (currentValue.length > 0) {
+        input.value = currentValue.slice(0, -1);
+    }
 }
 
 async function completeVoucherRefund() {
