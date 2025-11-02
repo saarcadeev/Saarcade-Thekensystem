@@ -3573,20 +3573,6 @@ async function selectPaymentMethod(method) {
         console.error('Payment error:', error);
         
         // Speichere fehlgeschlagene Transaktion
-        const items = cart.map(cartItem => {
-            const product = products.find(p => p.id === cartItem.productId);
-            const price = currentUser.role === 'member' ? product.member_price : product.guest_price;
-            return {
-                productId: cartItem.productId,
-                productName: product.name,
-                quantity: cartItem.quantity,
-                price: price,
-                total: price * cartItem.quantity
-            };
-        });
-        
-        const total = items.reduce((sum, item) => sum + item.total, 0);
-        
         saveFailedTransaction(transactionData, error);
     } finally {
         isProcessing = false;
