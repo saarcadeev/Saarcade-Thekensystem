@@ -3518,7 +3518,8 @@ function openPaymentMethodModal(transactionData, totalAmount) {
 function closePaymentMethodModal() {
     const modal = document.getElementById('paymentMethodModal');
     modal.style.display = 'none';
-    pendingPaymentTransaction = null;
+    // NICHT hier auf null setzen - wird in selectPaymentMethod gemacht
+    // pendingPaymentTransaction = null;
     isProcessing = false;
     updateCartView();
 }
@@ -3568,7 +3569,7 @@ async function selectPaymentMethod(method) {
             }
         }, 300);
         
-    } catch (error) {
+} catch (error) {
         showStatus('Fehler beim Abschliessen der Transaktion', 'error');
         console.error('Payment error:', error);
         
@@ -3576,6 +3577,7 @@ async function selectPaymentMethod(method) {
         saveFailedTransaction(transactionData, error);
     } finally {
         isProcessing = false;
+        pendingPaymentTransaction = null;
     }
 }
 
