@@ -4063,13 +4063,21 @@ function showMemberTransactionsModal(unbilledTransactions, userBillings) {
             <div style="background: white; padding: 30px; border-radius: 12px; max-width: 800px; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3);" onclick="event.stopPropagation()">
                 <h2 style="margin-top: 0; color: #667eea;">📋 Transaktionen: ${currentUser.first_name} ${currentUser.last_name}</h2>
                 
+// Berechne Geldfluss-Summe
+                const cashFlowTotal = unbilledTransactions.reduce((sum, t) => {
+                    if (t.payment_method === 'voucher_card') return sum; // kein Geldfluss
+                    if (t.payment_method === 'voucher_refund') return sum - t.total; // Geld raus
+                    return sum + t.total; // normale Verkäufe
+                }, 0);
+                
+                html += `
 <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                     <p><strong>Aktueller Saldo:</strong> <span style="color: ${currentUser.balance >= 0 ? '#38a169' : '#e53e3e'}; font-weight: bold; font-size: 1.2em;">${currentUser.balance.toFixed(2)}€</span></p>
-                    <p><strong>Nicht abgerechnet:</strong> ${unbilledTransactions.length} Transaktionen - ${totalAmount.toFixed(2)}€</p>
+                    <p><strong>Nicht abgerechnet:</strong> ${unbilledTransactions.length} Transaktionen - ${cashFlowTotal.toFixed(2)}€ Geldfluss</p>
                     <p><strong>Abgerechnete Perioden:</strong> ${userBillings.length}</p>
                 </div>
                 
-                <h3 style="color: #667eea; margin-top: 20px; margin-bottom: 10px;">📝 Aktuelle Transaktionen (nicht abgerechnet)</h3>
+                <h3 style="color: #667eea; margin-top: 20px; margin-bottom: 10px;">📋 Aktuelle Transaktionen (nicht abgerechnet)</h3>
                 
                 `;
     
@@ -4084,6 +4092,7 @@ if (unbilledTransactions.length === 0) {
                         <th style="padding: 12px; text-align: left;">Produkt</th>
                         <th style="padding: 12px; text-align: center;">Menge</th>
                         <th style="padding: 12px; text-align: right;">Betrag</th>
+                        <th style="padding: 12px; text-align: right;">Geldfluss</th>
                         <th style="padding: 12px; text-align: center;">Aktion</th>
                     </tr>
                 </thead>
@@ -4095,12 +4104,25 @@ if (unbilledTransactions.length === 0) {
             const formattedDate = date.toLocaleDateString('de-DE');
             const formattedTime = date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
             
+            // Berechne tatsächlichen Geldfluss
+            let cashFlow = t.total;
+            let cashFlowColor = '#2d3748';
+            
+            if (t.payment_method === 'voucher_card') {
+                cashFlow = 0; // Verzehrkarte eingelöst = kein Geldfluss
+                cashFlowColor = '#718096';
+            } else if (t.payment_method === 'voucher_refund') {
+                cashFlow = -t.total; // Rückgabe = Geld raus
+                cashFlowColor = '#e53e3e';
+            }
+            
             html += `
                 <tr style="border-bottom: 1px solid #e2e8f0;">
                     <td style="padding: 10px;">${formattedDate}<br><small style="color: #666;">${formattedTime}</small></td>
                     <td style="padding: 10px;">${t.product_name}</td>
                     <td style="padding: 10px; text-align: center;">${t.quantity}x</td>
                     <td style="padding: 10px; text-align: right; font-weight: bold;">${t.total.toFixed(2)}€</td>
+                    <td style="padding: 10px; text-align: right; font-weight: bold; color: ${cashFlowColor};">${cashFlow.toFixed(2)}€</td>
                     <td style="padding: 10px; text-align: center;">
                         <button onclick="deleteMemberTransaction(${t.id}, '${t.product_name.replace(/'/g, "\\'")}', ${t.total}, ${t.quantity}, ${t.product_id})" 
                                 style="background: #e53e3e; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
