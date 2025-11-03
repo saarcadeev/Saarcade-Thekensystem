@@ -3593,11 +3593,14 @@ async function openCashClosingModal() {
             !t.cancelled
         );
         
-        // Kategorisiere Transaktionen
-        const cashSales = todayTransactions.filter(t => t.payment_method === 'cash');
+       // Kategorisiere Transaktionen
         const voucherSales = todayTransactions.filter(t => 
             t.payment_method === 'cash' && 
             products.find(p => p.id === t.product_id && p.category === 'verzehrkarten')
+        );
+        const cashSales = todayTransactions.filter(t => 
+            t.payment_method === 'cash' && 
+            !products.find(p => p.id === t.product_id && p.category === 'verzehrkarten')
         );
         const voucherRedemptions = todayTransactions.filter(t => t.payment_method === 'voucher_card');
         const voucherRefunds = todayTransactions.filter(t => t.payment_method === 'voucher_refund');
