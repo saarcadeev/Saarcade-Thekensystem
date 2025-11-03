@@ -4520,10 +4520,15 @@ function showUserBillingHistory(user, billingGroups, unbilledTransactions) {
     `;
     
     // Nicht abgerechnete Transaktionen
-    if (unbilledTransactions.length > 0) {
+   if (unbilledTransactions.length > 0) {
         const unbilledTotal = unbilledTransactions.reduce((sum, t) => sum + t.total, 0);
+        const unbilledCashFlow = unbilledTransactions.reduce((sum, t) => {
+            if (t.payment_method === 'voucher_card') return sum; // kein Geldfluss
+            if (t.payment_method === 'voucher_refund') return sum - t.total; // Geld raus
+            return sum + t.total; // normale Verkäufe
+        }, 0);
         html += `
-            <h3 style="color: #ed8936; margin-bottom: 15px;">⚠️ Noch nicht abgerechnet (${unbilledTransactions.length} Transaktionen - ${unbilledTotal.toFixed(2)}€)</h3>
+            <h3 style="color: #ed8936; margin-bottom: 15px;">⚠️ Noch nicht abgerechnet (${unbilledTransactions.length} Transaktionen - ${unbilledCashFlow.toFixed(2)}€ Geldfluss)</h3>
             
             <div style="margin-bottom: 15px;">
               <button class="btn btn-warning" onclick='exportTransactionsByIds([${unbilledTransactions.map(t => t.id).join(",")}], "${user.first_name}", "${user.last_name}", "nicht_abgerechnet")'>
@@ -4540,12 +4545,25 @@ function showUserBillingHistory(user, billingGroups, unbilledTransactions) {
                             <th>Menge</th>
                             <th>Preis</th>
                             <th>Gesamt</th>
+                            <th>Geldfluss</th>
                             <th>Aktion</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${unbilledTransactions.map(t => {
                             const date = new Date(t.created_at);
+                            // Berechne tatsächlichen Geldfluss
+                            let cashFlow = t.total;
+                            let cashFlowColor = '#2d3748';
+                            
+                            if (t.payment_method === 'voucher_card') {
+                                cashFlow = 0; // Verzehrkarte eingelöst = kein Geldfluss
+                                cashFlowColor = '#718096';
+                            } else if (t.payment_method === 'voucher_refund') {
+                                cashFlow = -t.total; // Rückgabe = Geld raus
+                                cashFlowColor = '#e53e3e';
+                            }
+                            
                             return `
                                 <tr>
                                     <td>${date.toLocaleDateString('de-DE')}<br><small>${date.toLocaleTimeString('de-DE')}</small></td>
@@ -4553,6 +4571,7 @@ function showUserBillingHistory(user, billingGroups, unbilledTransactions) {
                                     <td>${t.quantity}</td>
                                     <td>${t.price.toFixed(2)}€</td>
                                     <td><strong>${t.total.toFixed(2)}€</strong></td>
+                                    <td style="color: ${cashFlowColor}; font-weight: bold;">${cashFlow.toFixed(2)}€</td>
                                     <td>
                                         <button class="btn btn-danger" onclick="deleteTransactionFromModal(${t.id}, '${user.first_name}', '${user.last_name}')" style="padding: 3px 8px; font-size: 0.75em;">
                                             🗑️
@@ -4563,8 +4582,11 @@ function showUserBillingHistory(user, billingGroups, unbilledTransactions) {
                         }).join('')}
                         <tr style="background: #fff5e6; font-weight: bold;">
                             <td colspan="4" style="text-align: right;">Summe:</td>
-                            <td colspan="2">${unbilledTotal.toFixed(2)}€</td>
-                        </tr>                    </tbody>
+                            <td>${unbilledTotal.toFixed(2)}€</td>
+                            <td style="color: #2d3748; font-weight: bold;">${unbilledCashFlow.toFixed(2)}€</td>
+                            <td></td>
+                        </tr>                    
+                    </tbody>
                 </table>
             </div>
             <hr style="margin: 20px 0; border: none; border-top: 2px solid #e2e8f0;">
