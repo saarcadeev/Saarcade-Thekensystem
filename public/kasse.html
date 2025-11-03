@@ -1265,8 +1265,11 @@ try {
                         <button class="btn btn-danger" onclick="clearCart()" id="clearBtn" disabled style="flex: 1;">🗑️ Leeren</button>
                         <button class="btn" onclick="resetSession()" style="flex: 1;">🔄 Reset</button>
                     </div>
-                    <button class="btn btn-success" onclick="openVoucherRefundModal()" id="refundBtn" style="display: none;">
+                   <button class="btn btn-success" onclick="openVoucherRefundModal()" id="refundBtn" style="display: none;">
                         🔙 Verzehrkarten-Rückgabe
+                    </button>
+                    <button class="btn" onclick="openCashClosingModal()" id="cashClosingBtn" style="background: #667eea; color: white; display: none;">
+                        📊 Kassenabschluss
                     </button>
                 </div>
             </div>
@@ -1412,6 +1415,30 @@ try {
                 💡 Tipp: Scan CHECKOUT-Barcode für passende Zahlung
             </div>
 </div>
+    </div>
+</div>
+
+<!-- Neues Modal: Kassenabschluss -->
+<div id="cashClosingModal" class="modal">
+    <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+            <h3>📊 Kassenabschluss</h3>
+            <span class="close" onclick="closeCashClosingModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div id="cashClosingContent" style="font-family: monospace; line-height: 1.6;">
+                <!-- Wird dynamisch gefüllt -->
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-success" onclick="exportCashClosing()" style="flex: 1; padding: 12px;">
+                    📄 Als Text exportieren
+                </button>
+                <button class="btn btn-secondary" onclick="closeCashClosingModal()" style="flex: 1; padding: 12px;">
+                    Schließen
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -1965,14 +1992,17 @@ window.debugImageDisplay = debugImageDisplay;
             `;
             
             // Kassierhilfe-Toggle ein/ausblenden
-            const cashHelperToggle = document.getElementById('cashHelperToggle');
+           const cashHelperToggle = document.getElementById('cashHelperToggle');
             const refundBtn = document.getElementById('refundBtn');
+            const cashClosingBtn = document.getElementById('cashClosingBtn');
             if (currentUser.role === 'bartender') {
                 cashHelperToggle.classList.add('show');
                 if (refundBtn) refundBtn.style.display = 'block';
+                if (cashClosingBtn) cashClosingBtn.style.display = 'block';
             } else {
                 cashHelperToggle.classList.remove('show');
                 if (refundBtn) refundBtn.style.display = 'none';
+                if (cashClosingBtn) cashClosingBtn.style.display = 'none';
             }
         }
         
@@ -3535,6 +3565,209 @@ async function completeVoucherCardPayment() {
     } finally {
         isProcessing = false;
     }
+}
+
+// ============ KASSENABSCHLUSS ============
+
+let cashClosingData = null;
+
+async function openCashClosingModal() {
+    if (!currentUser || currentUser.role !== 'bartender') {
+        showStatus('Kassenabschluss nur fuer Barkeeper verfuegbar', 'error');
+        return;
+    }
+    
+    showStatus('Lade Transaktionsdaten...', 'loading');
+    
+    try {
+        // Hole alle Transaktionen des Barkeepers von heute
+        const response = await apiCall('/api/transactions?limit=10000');
+        const allTransactions = Array.isArray(response) ? response : (response.transactions || []);
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const todayTransactions = allTransactions.filter(t => 
+            t.user_id === currentUser.id && 
+            new Date(t.created_at) >= today &&
+            !t.cancelled
+        );
+        
+        // Kategorisiere Transaktionen
+        const cashSales = todayTransactions.filter(t => t.payment_method === 'cash');
+        const voucherSales = todayTransactions.filter(t => 
+            t.payment_method === 'cash' && 
+            products.find(p => p.id === t.product_id && p.category === 'verzehrkarten')
+        );
+        const voucherRedemptions = todayTransactions.filter(t => t.payment_method === 'voucher_card');
+        const voucherRefunds = todayTransactions.filter(t => t.payment_method === 'voucher_refund');
+        
+        // Berechne Summen
+        const cashSalesTotal = cashSales.reduce((sum, t) => sum + t.total, 0);
+        const cashSalesCount = cashSales.length;
+        const cashSalesItems = cashSales.reduce((sum, t) => sum + t.quantity, 0);
+        
+        const voucherSalesTotal = voucherSales.reduce((sum, t) => sum + t.total, 0);
+        const voucherSalesCount = voucherSales.length;
+        
+        const voucherRedemptionsCount = voucherRedemptions.length;
+        const voucherRedemptionsItems = voucherRedemptions.reduce((sum, t) => sum + t.quantity, 0);
+        
+        const voucherRefundsTotal = voucherRefunds.reduce((sum, t) => sum + t.total, 0);
+        const voucherRefundsCount = voucherRefunds.length;
+        
+        // SOLL-Bestand berechnen
+        const sollAmount = cashSalesTotal + voucherSalesTotal - voucherRefundsTotal;
+        
+        // Erstelle Übersicht
+        const now = new Date();
+        const content = `
+<div style="padding: 10px;">
+    <div style="text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #667eea;">
+        <h2 style="margin: 0; color: #667eea;">📊 KASSENABSCHLUSS</h2>
+        <p style="margin: 5px 0; color: #666;">Barkeeper: ${currentUser.first_name} ${currentUser.last_name}</p>
+        <p style="margin: 5px 0; color: #666;">${now.toLocaleDateString('de-DE')} - ${now.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'})} Uhr</p>
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+        <h3 style="color: #48bb78; margin-bottom: 10px;">💰 BARVERKÄUFE</h3>
+        <div style="padding-left: 15px;">
+            <p>Anzahl: <strong>${cashSalesCount} Transaktionen</strong></p>
+            <p>Getränke: <strong>${cashSalesItems} Stück</strong></p>
+            <p>Summe: <strong style="color: #48bb78;">${cashSalesTotal.toFixed(2)} €</strong></p>
+        </div>
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+        <h3 style="color: #f59e0b; margin-bottom: 10px;">🎫 VERZEHRKARTEN VERKAUFT</h3>
+        <div style="padding-left: 15px;">
+            <p>Anzahl: <strong>${voucherSalesCount} Karten</strong></p>
+            <p>Summe: <strong style="color: #f59e0b;">${voucherSalesTotal.toFixed(2)} €</strong></p>
+        </div>
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+        <h3 style="color: #667eea; margin-bottom: 10px;">🎫 VERZEHRKARTEN EINGELÖST</h3>
+        <div style="padding-left: 15px;">
+            <p>Anzahl: <strong>${voucherRedemptionsCount} Transaktionen</strong></p>
+            <p>Getränke: <strong>${voucherRedemptionsItems} Stück</strong></p>
+            <p style="color: #666; font-style: italic;">Kein Geldfluss</p>
+        </div>
+    </div>
+    
+    ${voucherRefundsCount > 0 ? `
+    <div style="margin-bottom: 20px;">
+        <h3 style="color: #e53e3e; margin-bottom: 10px;">🔙 VERZEHRKARTEN RÜCKGABEN</h3>
+        <div style="padding-left: 15px;">
+            <p>Anzahl: <strong>${voucherRefundsCount} Rückgaben</strong></p>
+            <p>Summe: <strong style="color: #e53e3e;">-${voucherRefundsTotal.toFixed(2)} €</strong></p>
+        </div>
+    </div>
+    ` : ''}
+    
+    <div style="margin-top: 25px; padding: 15px; background: #fff5e6; border-radius: 8px; border: 2px solid #f59e0b;">
+        <h3 style="color: #f59e0b; margin-bottom: 15px; text-align: center;">💵 SOLL-IST-VERGLEICH</h3>
+        <table style="width: 100%; font-size: 1.1em;">
+            <tr><td>Barverkäufe:</td><td style="text-align: right;"><strong>${cashSalesTotal.toFixed(2)} €</strong></td></tr>
+            <tr><td>Karten verkauft:</td><td style="text-align: right;"><strong>${voucherSalesTotal.toFixed(2)} €</strong></td></tr>
+            ${voucherRefundsCount > 0 ? `<tr><td>Karten Rückgaben:</td><td style="text-align: right;"><strong style="color: #e53e3e;">-${voucherRefundsTotal.toFixed(2)} €</strong></td></tr>` : ''}
+            <tr style="border-top: 2px solid #f59e0b;"><td style="padding-top: 10px;"><strong>SOLL in Kasse:</strong></td><td style="text-align: right; padding-top: 10px;"><strong style="font-size: 1.3em; color: #f59e0b;">${sollAmount.toFixed(2)} €</strong></td></tr>
+        </table>
+    </div>
+</div>
+        `;
+        
+        document.getElementById('cashClosingContent').innerHTML = content;
+        
+        cashClosingData = {
+            sollAmount: sollAmount,
+            cashSalesTotal: cashSalesTotal,
+            cashSalesCount: cashSalesCount,
+            cashSalesItems: cashSalesItems,
+            voucherSalesTotal: voucherSalesTotal,
+            voucherSalesCount: voucherSalesCount,
+            voucherRedemptionsCount: voucherRedemptionsCount,
+            voucherRedemptionsItems: voucherRedemptionsItems,
+            voucherRefundsTotal: voucherRefundsTotal,
+            voucherRefundsCount: voucherRefundsCount,
+            timestamp: now.toISOString()
+        };
+        
+        const modal = document.getElementById('cashClosingModal');
+        modal.style.display = 'block';
+        
+        showStatus('Kassenabschluss geladen', 'success');
+        
+    } catch (error) {
+        showStatus('Fehler beim Laden der Daten', 'error');
+        console.error('Cash closing error:', error);
+    }
+}
+
+function closeCashClosingModal() {
+    const modal = document.getElementById('cashClosingModal');
+    modal.style.display = 'none';
+    cashClosingData = null;
+}
+
+function exportCashClosing() {
+    if (!cashClosingData) return;
+    
+    const now = new Date(cashClosingData.timestamp);
+    
+    let text = '═══════════════════════════════════════\n';
+    text += '          📊 KASSENABSCHLUSS\n';
+    text += '═══════════════════════════════════════\n\n';
+    text += `Barkeeper: ${currentUser.first_name} ${currentUser.last_name}\n`;
+    text += `Datum: ${now.toLocaleDateString('de-DE')}\n`;
+    text += `Uhrzeit: ${now.toLocaleTimeString('de-DE')}\n\n`;
+    text += '───────────────────────────────────────\n';
+    text += '💰 BARVERKÄUFE\n';
+    text += '───────────────────────────────────────\n';
+    text += `Anzahl: ${cashClosingData.cashSalesCount} Transaktionen\n`;
+    text += `Getränke: ${cashClosingData.cashSalesItems} Stück\n`;
+    text += `Summe: ${cashClosingData.cashSalesTotal.toFixed(2)} €\n\n`;
+    text += '───────────────────────────────────────\n';
+    text += '🎫 VERZEHRKARTEN VERKAUFT\n';
+    text += '───────────────────────────────────────\n';
+    text += `Anzahl: ${cashClosingData.voucherSalesCount} Karten\n`;
+    text += `Summe: ${cashClosingData.voucherSalesTotal.toFixed(2)} €\n\n`;
+    text += '───────────────────────────────────────\n';
+    text += '🎫 VERZEHRKARTEN EINGELÖST\n';
+    text += '───────────────────────────────────────\n';
+    text += `Anzahl: ${cashClosingData.voucherRedemptionsCount} Transaktionen\n`;
+    text += `Getränke: ${cashClosingData.voucherRedemptionsItems} Stück\n`;
+    text += `(Kein Geldfluss)\n\n`;
+    
+    if (cashClosingData.voucherRefundsCount > 0) {
+        text += '───────────────────────────────────────\n';
+        text += '🔙 VERZEHRKARTEN RÜCKGABEN\n';
+        text += '───────────────────────────────────────\n';
+        text += `Anzahl: ${cashClosingData.voucherRefundsCount} Rückgaben\n`;
+        text += `Summe: -${cashClosingData.voucherRefundsTotal.toFixed(2)} €\n\n`;
+    }
+    
+    text += '═══════════════════════════════════════\n';
+    text += '💵 SOLL-IST-VERGLEICH\n';
+    text += '═══════════════════════════════════════\n';
+    text += `Barverkäufe:        ${cashClosingData.cashSalesTotal.toFixed(2)} €\n`;
+    text += `Karten verkauft:    ${cashClosingData.voucherSalesTotal.toFixed(2)} €\n`;
+    if (cashClosingData.voucherRefundsCount > 0) {
+        text += `Karten Rückgaben:  -${cashClosingData.voucherRefundsTotal.toFixed(2)} €\n`;
+    }
+    text += '───────────────────────────────────────\n';
+    text += `SOLL in Kasse:      ${cashClosingData.sollAmount.toFixed(2)} €\n`;
+    text += '═══════════════════════════════════════\n';
+    
+    // In Zwischenablage kopieren
+    navigator.clipboard.writeText(text).then(() => {
+        showStatus('Kassenabschluss in Zwischenablage kopiert!', 'success');
+    }).catch(() => {
+        // Fallback: In neuem Fenster öffnen
+        const win = window.open('', '_blank');
+        win.document.write('<pre>' + text + '</pre>');
+        showStatus('Kassenabschluss in neuem Fenster geoeffnet', 'success');
+    });
 }
 
 // ============ VERZEHRKARTEN-RÜCKGABE ============
