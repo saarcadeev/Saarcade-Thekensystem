@@ -4058,20 +4058,19 @@ async function showMemberTransactions() {
 function showMemberTransactionsModal(unbilledTransactions, userBillings) {
    const totalAmount = unbilledTransactions.reduce((sum, t) => sum + t.total, 0);
     
+    // Berechne Geldfluss-Summe
+    const cashFlowTotal = unbilledTransactions.reduce((sum, t) => {
+        if (t.payment_method === 'voucher_card') return sum; // kein Geldfluss
+        if (t.payment_method === 'voucher_refund') return sum - t.total; // Geld raus
+        return sum + t.total; // normale Verkäufe
+    }, 0);
+    
     let html = `
         <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center;" onclick="this.remove()">
             <div style="background: white; padding: 30px; border-radius: 12px; max-width: 800px; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3);" onclick="event.stopPropagation()">
                 <h2 style="margin-top: 0; color: #667eea;">📋 Transaktionen: ${currentUser.first_name} ${currentUser.last_name}</h2>
                 
-// Berechne Geldfluss-Summe
-                const cashFlowTotal = unbilledTransactions.reduce((sum, t) => {
-                    if (t.payment_method === 'voucher_card') return sum; // kein Geldfluss
-                    if (t.payment_method === 'voucher_refund') return sum - t.total; // Geld raus
-                    return sum + t.total; // normale Verkäufe
-                }, 0);
-                
-                html += `
-<div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                     <p><strong>Aktueller Saldo:</strong> <span style="color: ${currentUser.balance >= 0 ? '#38a169' : '#e53e3e'}; font-weight: bold; font-size: 1.2em;">${currentUser.balance.toFixed(2)}€</span></p>
                     <p><strong>Nicht abgerechnet:</strong> ${unbilledTransactions.length} Transaktionen - ${cashFlowTotal.toFixed(2)}€ Geldfluss</p>
                     <p><strong>Abgerechnete Perioden:</strong> ${userBillings.length}</p>
