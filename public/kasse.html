@@ -1235,7 +1235,7 @@ try {
                     <div id="noUserMessage" style="display: none;">
                         <div>👤</div>
                         <h3>Bitte zuerst Mitglied auswählen</h3>
-                        <p>Mitgliedsausweis scannen oder Namen eingeben</p>
+                        <p>Mitgliedsausweis scannen</p>
                     </div>
                     
                     <div class="products-grid" id="productsGrid" style="display: none;">
@@ -1653,12 +1653,12 @@ function getActiveInput() {
             switch(scannerMode) {
                 case 'user':
                     statusEl.className = 'scanner-status user-mode';
-                    statusEl.textContent = '👤 MITGLIED SCANNEN oder Namen eingeben';
-                    inputEl.placeholder = 'Mitgliedsausweis scannen oder Namen eingeben...';
+                    statusEl.textContent = '👤 MITGLIED SCANNEN';
+                    inputEl.placeholder = 'Mitgliedsausweis scannen';
                     break;
                 case 'product':
                     statusEl.className = 'scanner-status product-mode';
-                    statusEl.textContent = '🍺 GETRÄNKE SCANNEN oder klicken';
+                    statusEl.textContent = '🍺 GETRÄNKE SCANNEN';
                     inputEl.placeholder = 'Getränke-Barcode oder CHECKOUT scannen...';
                     break;
             }
@@ -3580,30 +3580,28 @@ async function openCashClosingModal() {
     showStatus('Lade Transaktionsdaten...', 'loading');
     
     try {
-        // Hole alle Transaktionen des Barkeepers von heute
+       // Hole alle nicht abgerechneten Transaktionen des Barkeepers
         const response = await apiCall('/api/transactions?limit=10000');
         const allTransactions = Array.isArray(response) ? response : (response.transactions || []);
         
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        const todayTransactions = allTransactions.filter(t => 
+        const unbilledTransactions = allTransactions.filter(t => 
             t.user_id === currentUser.id && 
-            new Date(t.created_at) >= today &&
+            !t.is_billed &&
+            !t.billing_id &&
             !t.cancelled
         );
         
        // Kategorisiere Transaktionen
-        const voucherSales = todayTransactions.filter(t => 
+        const voucherSales = unbilledTransactions.filter(t =>
             t.payment_method === 'cash' && 
             products.find(p => p.id === t.product_id && p.category === 'verzehrkarten')
         );
-        const cashSales = todayTransactions.filter(t => 
+        const cashSales = unbilledTransactions.filter(t =>
             t.payment_method === 'cash' && 
             !products.find(p => p.id === t.product_id && p.category === 'verzehrkarten')
         );
-        const voucherRedemptions = todayTransactions.filter(t => t.payment_method === 'voucher_card');
-        const voucherRefunds = todayTransactions.filter(t => t.payment_method === 'voucher_refund');
+        const voucherRedemptions = unbilledTransactions.filter(t => t.payment_method === 'voucher_card');
+        const voucherRefunds = unbilledTransactions.filter(t => t.payment_method === 'voucher_refund');
         
         // Berechne Summen
         const cashSalesTotal = cashSales.reduce((sum, t) => sum + t.total, 0);
