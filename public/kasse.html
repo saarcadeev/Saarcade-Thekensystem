@@ -3615,6 +3615,7 @@ async function openCashClosingModal() {
         
         const voucherRedemptionsCount = voucherRedemptions.length;
         const voucherRedemptionsItems = voucherRedemptions.reduce((sum, t) => sum + t.quantity, 0);
+        const voucherRedemptionsValue = voucherRedemptions.reduce((sum, t) => sum + t.total, 0);
         
         const voucherRefundsTotal = voucherRefunds.reduce((sum, t) => sum + t.total, 0);
         const voucherRefundsCount = voucherRefunds.length;
