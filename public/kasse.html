@@ -3615,7 +3615,6 @@ async function openCashClosingModal() {
         
         const voucherRedemptionsCount = voucherRedemptions.length;
         const voucherRedemptionsItems = voucherRedemptions.reduce((sum, t) => sum + t.quantity, 0);
-        const voucherRedemptionsValue = voucherRedemptions.reduce((sum, t) => sum + t.total, 0);
         
         const voucherRefundsTotal = voucherRefunds.reduce((sum, t) => sum + t.total, 0);
         const voucherRefundsCount = voucherRefunds.length;
@@ -3692,7 +3691,6 @@ async function openCashClosingModal() {
             voucherSalesCount: voucherSalesCount,
             voucherRedemptionsCount: voucherRedemptionsCount,
             voucherRedemptionsItems: voucherRedemptionsItems,
-            voucherRedemptionsValue: voucherRedemptionsValue,
             voucherRefundsTotal: voucherRefundsTotal,
             voucherRefundsCount: voucherRefundsCount,
             timestamp: now.toISOString()
@@ -3751,17 +3749,6 @@ function exportCashClosing() {
         text += `Anzahl: ${cashClosingData.voucherRefundsCount} Rückgaben\n`;
         text += `Summe: -${cashClosingData.voucherRefundsTotal.toFixed(2)} €\n\n`;
     }
-    
-    text += '═══════════════════════════════════════\n';
-    text += '🎫 VERZEHRKARTEN-ÜBERSICHT\n';
-    text += '═══════════════════════════════════════\n';
-    text += `Verkaufte Karten:     +${cashClosingData.voucherSalesTotal.toFixed(2)} €\n`;
-    if (cashClosingData.voucherRefundsCount > 0) {
-        text += `Rückgaben:            -${cashClosingData.voucherRefundsTotal.toFixed(2)} €\n`;
-    }
-    text += `Eingelöste Getränke:  -${cashClosingData.voucherRedemptionsValue.toFixed(2)} € (${cashClosingData.voucherRedemptionsItems} Stück)\n`;
-    text += '───────────────────────────────────────\n';
-    text += `Noch offenes Guthaben: ${(cashClosingData.voucherSalesTotal - cashClosingData.voucherRefundsTotal - cashClosingData.voucherRedemptionsValue).toFixed(2)} €\n\n`;
     
     text += '═══════════════════════════════════════\n';
     text += '💵 SOLL-IST-VERGLEICH\n';
