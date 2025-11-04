@@ -3226,7 +3226,7 @@ function openProductModal(productId = null) {
                 available: document.getElementById('productAvailable').checked
             };
             
-            if (!productData.name || productData.member_price <= 0 || productData.guest_price <= 0) {
+            if (!productData.name || productData.member_price === undefined || productData.guest_price === undefined) {
                 showAlert('Bitte alle Pflichtfelder korrekt ausfüllen', 'error');
                 return;
             }
