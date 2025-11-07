@@ -858,19 +858,22 @@ if (item.productId && item.productId > 0) {
                 }
             }
 
-            // SALDO KORRIGIEREN: Geld zurückbuchen
-            const { data: user } = await supabase
-                .from('users')
-                .select('balance')
-                .eq('id', transaction.user_id)
-                .single();
-
-            if (user) {
-                const newBalance = user.balance + transaction.total;
-                await supabase
+            // SALDO KORRIGIEREN: Nur wenn echtes Geld geflossen ist
+            // Bei Verzehrkarten-Einlösungen (voucher_card) NICHT den Saldo ändern!
+            if (transaction.payment_method !== 'voucher_card') {
+                const { data: user } = await supabase
                     .from('users')
-                    .update({ balance: newBalance })
-                    .eq('id', transaction.user_id);
+                    .select('balance')
+                    .eq('id', transaction.user_id)
+                    .single();
+
+                if (user) {
+                    const newBalance = user.balance + transaction.total;
+                    await supabase
+                        .from('users')
+                        .update({ balance: newBalance })
+                        .eq('id', transaction.user_id);
+                }
             }
             
             return res.status(200).json({ 
