@@ -5836,10 +5836,22 @@ async function exportUserPeriodCSV(userId, billingId) {
     
     const total = transactions.reduce((sum, t) => sum + t.total, 0);
     
+    // Berechne Geldfluss-Summe
+    const cashFlowTotal = transactions.reduce((sum, t) => {
+        if (t.payment_method === 'voucher_card') return sum; // kein Geldfluss
+        if (t.payment_method === 'voucher_refund') return sum - t.total; // Geld raus
+        return sum + t.total; // normale Verkäufe
+    }, 0);
+    
     const csv = [
-        ['Mitglied', 'Periode', 'Datum', 'Uhrzeit', 'Produkt', 'Menge', 'Preis', 'Gesamt'].join(';'),
+        ['Mitglied', 'Periode', 'Datum', 'Uhrzeit', 'Produkt', 'Menge', 'Preis', 'Gesamt', 'Geldfluss'].join(';'),
         ...transactions.map(t => {
             const date = new Date(t.created_at);
+            
+            // Berechne Geldfluss für diese Transaktion
+            let cashFlow = t.total;
+            if (t.payment_method === 'voucher_card') cashFlow = 0;
+            if (t.payment_method === 'voucher_refund') cashFlow = -t.total;
             
 return [
     `${firstName} ${lastName}`,
@@ -5850,10 +5862,11 @@ return [
     t.quantity,
     `=${t.price.toFixed(2).replace('.', ',')}`,
     `=${t.total.toFixed(2).replace('.', ',')}`,
+    `=${cashFlow.toFixed(2).replace('.', ',')}`,
 ].join(';');
         }),
         // Summenzeile
-['', '', '', '', '', '', 'GESAMT:', `="${total.toFixed(2).replace('.', ',')}"`].join(';')
+['', '', '', '', '', '', 'GESAMT:', `="${total.toFixed(2).replace('.', ',')}"`, `="${cashFlowTotal.toFixed(2).replace('.', ',')}"`].join(';')
     ].join('\n');
     
     const fileName = `${firstName}_${lastName}_${periodLabel}.csv`.replace(/[^a-zA-Z0-9_-]/g, '_');
