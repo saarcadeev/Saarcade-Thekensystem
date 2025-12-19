@@ -4415,11 +4415,11 @@ async function toggleCashHelper() {
             })
         });
         
-        showSuccess(enabled ? 'Kassierhilfe aktiviert' : 'Kassierhilfe deaktiviert');
+        showStatus(enabled ? 'Kassierhilfe aktiviert' : 'Kassierhilfe deaktiviert', 'success');
     } catch (error) {
         console.error('Fehler beim Speichern:', error);
         checkbox.checked = !enabled; // Zurücksetzen bei Fehler
-        showError('Einstellung konnte nicht gespeichert werden');
+        showStatus('Einstellung konnte nicht gespeichert werden', 'error');
     }
 }
 
@@ -4444,14 +4444,13 @@ async function toggleVoucherSystem() {
             voucherBtn.style.display = enabled ? 'flex' : 'none';
         }
         
-        showSuccess(enabled ? 'Verzehrkarten aktiviert' : 'Verzehrkarten deaktiviert');
+        showStatus(enabled ? 'Verzehrkarten aktiviert' : 'Verzehrkarten deaktiviert', 'success');
     } catch (error) {
         console.error('Fehler beim Speichern:', error);
         checkbox.checked = !enabled; // Zurücksetzen bei Fehler
-        showError('Einstellung konnte nicht gespeichert werden');
+        showStatus('Einstellung konnte nicht gespeichert werden', 'error');
     }
-}
-        
+}        
     </script>
 
 <!-- ON-SCREEN TASTATUR -->
