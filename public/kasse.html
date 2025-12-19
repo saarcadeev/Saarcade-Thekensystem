@@ -1164,8 +1164,14 @@ try {
                     <div class="scanner-status-row">
                         <!-- Kassierhilfe Toggle (nur für Barkeeper sichtbar) -->
                         <div class="cash-helper-toggle" id="cashHelperToggle" style="position: relative; top: auto; right: auto;">
-                            <input type="checkbox" id="cashHelperCheckbox">
+                            <input type="checkbox" id="cashHelperCheckbox" onchange="toggleCashHelper()">
                             <label for="cashHelperCheckbox">💰 Kassierhilfe</label>
+                        </div>
+                        
+                        <!-- Verzehrkarten Toggle (nur für Barkeeper sichtbar) -->
+                        <div class="cash-helper-toggle" id="voucherToggle" style="position: relative; top: auto; right: auto; margin-top: 10px;">
+                            <input type="checkbox" id="voucherSystemCheckbox" onchange="toggleVoucherSystem()">
+                            <label for="voucherSystemCheckbox">🎫 Verzehrkarten</label>
                         </div>
                         
                         <div class="pin-button-container">
@@ -1507,7 +1513,7 @@ try {
                     <span>Barverkauf</span>
                 </button>
                 
-                <button class="btn" onclick="selectPaymentMethod('voucher_card')" style="padding: 20px; font-size: 1.1em; background: #f59e0b; color: white; display: flex; align-items: center; justify-content: center; gap: 10px;">
+               <button id="voucherCardBtn" class="btn" onclick="selectPaymentMethod('voucher_card')" style="padding: 20px; font-size: 1.1em; background: #f59e0b; color: white; display: none; align-items: center; justify-content: center; gap: 10px;">
                     <span style="font-size: 1.5em;">🎫</span>
                     <span>Verzehrkarte</span>
                 </button>
@@ -1801,6 +1807,25 @@ async function apiCall(endpoint, options = {}) {
                 if (settings.cancel_barcode) specialBarcodes.cancel = settings.cancel_barcode;
                 if (settings.reset_barcode) specialBarcodes.reset = settings.reset_barcode;
                 if (settings.voucher_card_barcode) specialBarcodes.voucherCard = settings.voucher_card_barcode;
+                
+                // Kassierhilfe-Toggle Status laden
+                const cashHelperEnabled = settings.cash_helper_enabled === 'true';
+                const cashHelperCheckbox = document.getElementById('cashHelperCheckbox');
+                if (cashHelperCheckbox) {
+                    cashHelperCheckbox.checked = cashHelperEnabled;
+                }
+                
+                // Verzehrkarten-Toggle Status laden
+                const voucherEnabled = settings.voucher_system_enabled === 'true';
+                const voucherCheckbox = document.getElementById('voucherSystemCheckbox');
+                if (voucherCheckbox) {
+                    voucherCheckbox.checked = voucherEnabled;
+                    // Button entsprechend anzeigen/verstecken
+                    const voucherBtn = document.getElementById('voucherCardBtn');
+                    if (voucherBtn) {
+                        voucherBtn.style.display = voucherEnabled ? 'flex' : 'none';
+                    }
+                }
                 
                 console.log('Spezial-Barcodes geladen:', specialBarcodes);
             } catch (error) {
@@ -3067,11 +3092,7 @@ function resetSession() {
             document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelector('[data-category="all"]').classList.add('active');
             
-            // Kassierhilfe-Toggle zurücksetzen
-            const cashHelperCheckbox = document.getElementById('cashHelperCheckbox');
-            if (cashHelperCheckbox) {
-                cashHelperCheckbox.checked = true; // Standard: aktiviert
-            }
+            // Kassierhilfe-Toggle Status wird aus DB geladen (nicht zurücksetzen)
             
             updateUserInfo();
             updateProductsView();
@@ -4376,6 +4397,58 @@ async function showBillingDetails(billingId, billingNumber) {
     } catch (error) {
         console.error('Fehler beim Laden der Abrechnungsdetails:', error);
         showStatus('Fehler beim Laden der Abrechnungsdetails', 'error');
+    }
+}
+
+// ============ KASSIERHILFE TOGGLE ============
+async function toggleCashHelper() {
+    const checkbox = document.getElementById('cashHelperCheckbox');
+    const enabled = checkbox.checked;
+    
+    try {
+        // Setting in Datenbank speichern
+        await apiCall('/api/settings', {
+            method: 'PUT',
+            body: JSON.stringify({
+                key: 'cash_helper_enabled',
+                value: enabled ? 'true' : 'false'
+            })
+        });
+        
+        showSuccess(enabled ? 'Kassierhilfe aktiviert' : 'Kassierhilfe deaktiviert');
+    } catch (error) {
+        console.error('Fehler beim Speichern:', error);
+        checkbox.checked = !enabled; // Zurücksetzen bei Fehler
+        showError('Einstellung konnte nicht gespeichert werden');
+    }
+}
+
+// ============ VERZEHRKARTEN-SYSTEM TOGGLE ============
+async function toggleVoucherSystem() {
+    const checkbox = document.getElementById('voucherSystemCheckbox');
+    const enabled = checkbox.checked;
+    
+    try {
+        // Setting in Datenbank speichern
+        await apiCall('/api/settings', {
+            method: 'PUT',
+            body: JSON.stringify({
+                key: 'voucher_system_enabled',
+                value: enabled ? 'true' : 'false'
+            })
+        });
+        
+        // Button ein/ausblenden
+        const voucherBtn = document.getElementById('voucherCardBtn');
+        if (voucherBtn) {
+            voucherBtn.style.display = enabled ? 'flex' : 'none';
+        }
+        
+        showSuccess(enabled ? 'Verzehrkarten aktiviert' : 'Verzehrkarten deaktiviert');
+    } catch (error) {
+        console.error('Fehler beim Speichern:', error);
+        checkbox.checked = !enabled; // Zurücksetzen bei Fehler
+        showError('Einstellung konnte nicht gespeichert werden');
     }
 }
         
