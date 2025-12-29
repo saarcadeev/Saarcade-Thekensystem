@@ -669,116 +669,87 @@ if (path === '/transactions' && method === 'GET') {
         if (path === '/transactions' && method === 'POST') {
             const transactionData = req.body;
             
+            console.log('📝 Transaction request:', {
+                userId: transactionData.userId,
+                itemCount: transactionData.items?.length,
+                total: transactionData.total
+            });
+            
             // Validierung
             if (!transactionData.userId || !transactionData.items || transactionData.items.length === 0) {
-                return res.status(400).json({ error: 'UngÃ¼ltige Transaktionsdaten' });
+                console.error('❌ Validation failed:', transactionData);
+                return res.status(400).json({ error: 'Ungültige Transaktionsdaten' });
             }
 
-            // Benutzer laden
-            const { data: user, error: userError } = await supabase
-                .from('users')
-                .select('*')
-                .eq('id', transactionData.userId)
-                .single();
-            
-            if (userError) throw userError;
-
-            // Einzelne Transaktionen erstellen und Saldo aktualisieren
-            const transactions = [];
-            let totalAmount = 0;
-            
-for (const item of transactionData.items) {
-                const transaction = {
-                    user_id: transactionData.userId,
-                    user_name: transactionData.userName,
-                    product_id: item.productId,
-                    product_name: item.productName,
-                    quantity: item.quantity,
-                    price: item.price,
-                    total: item.total,
-                    payment_method: transactionData.paymentMethod || 'balance',
-                    retried: transactionData.retried || false,  // ← NEU
-                    original_timestamp: transactionData.originalTimestamp || null  // ← NEU
-                };
-    
-                transactions.push(transaction);
-                totalAmount += item.total;
-                
-// Bestand reduzieren UND Bestandsbewegung aufzeichnen (nur bei echten Produkten)
-if (item.productId && item.productId > 0) {
-    try {
-        const { data: product } = await supabase
-            .from('products')
-            .select('stock, name')
-            .eq('id', item.productId)
-            .single();
-
-        if (product) {
-            const oldStock = product.stock;
-            const newStock = product.stock - item.quantity;
-          
-            // Bestand aktualisieren
-            await supabase
-                .from('products')
-                .update({ stock: newStock })
-                .eq('id', item.productId);
-            
-            // Bestandsbewegung aufzeichnen
-            await supabase
-                .from('stock_movements')
-                .insert({
-                    product_id: item.productId,
-                    product_name: product.name,
-                    movement_type: 'sale',
-                    quantity: -item.quantity,
-                    stock_before: oldStock,
-                    stock_after: newStock,
-                    reason: `Verkauf an ${transactionData.userName}`,
-                    created_by: 'system'
+            try {
+                // Verwende atomare DB-Funktion (schneller und sicherer!)
+                const { data, error } = await supabase.rpc('create_transaction_atomic', {
+                    p_user_id: transactionData.userId,
+                    p_user_name: transactionData.userName,
+                    p_items: transactionData.items,
+                    p_payment_method: transactionData.paymentMethod || 'balance',
+                    p_retried: transactionData.retried || false,
+                    p_original_timestamp: transactionData.originalTimestamp || null
                 });
-        }
-    } catch (stockError) {
-        console.warn('Stock update error:', stockError);
-        }
-    }       
-}              
-            // Transaktionen speichern
-            const { data: savedTransactions, error: transactionError } = await supabase
-                .from('transactions')
-                .insert(transactions)
-                .select();
-            
-            if (transactionError) throw transactionError;
-
-            // Benutzersaldo aktualisieren
-            let newBalance;
-            const paymentMethod = transactionData.paymentMethod || 'balance';
-            
-            if (paymentMethod === 'voucher_card') {
-                // Verzehrkarte: Kein Geld, Saldo bleibt GLEICH (nur Getränke zählen)
-                newBalance = user.balance;
-            } else if (paymentMethod === 'voucher_refund') {
-                // Verzehrkarten-Rückgabe: Geld geht RAUS, Saldo wird POSITIVER (weniger negativ)
-                newBalance = user.balance + totalAmount;
-            } else {
-                // Alle anderen: Saldo wird NEGATIVER (Verkauf/Schuld)
-                newBalance = user.balance - totalAmount;
+                
+                if (error) {
+                    console.error('❌ DB function error:', error);
+                    throw error;
+                }
+                
+                // data ist ein Array mit einem Element, das unser JSONB zurückgibt
+                const result = data;
+                
+                console.log('✅ Transaction created:', {
+                    userId: transactionData.userId,
+                    transactionCount: result.transactions?.length || 0,
+                    newBalance: result.newBalance
+                });
+                
+                return res.status(201).json(result);
+                
+            } catch (error) {
+                console.error('❌ Transaction creation failed:', error);
+                return res.status(500).json({ 
+                    error: 'Transaktion fehlgeschlagen',
+                    message: error.message,
+                    timestamp: new Date().toISOString()
+                });
             }
-            
-            const { error: balanceError } = await supabase
-                .from('users')
-                .update({ balance: newBalance })
-                .eq('id', transactionData.userId);
-            
-            if (balanceError) throw balanceError;
-
-            return res.status(201).json({
-                transactions: savedTransactions,
-                newBalance: newBalance,
-                totalAmount: totalAmount
-            });
         }
 
+// POST /transaction-logs - Log für Debugging speichern
+        if (path === '/transaction-logs' && method === 'POST') {
+            try {
+                const logData = req.body;
+                
+                const { error } = await supabase
+                    .from('transaction_attempt_logs')
+                    .insert({
+                        request_id: logData.requestId,
+                        timestamp: logData.timestamp,
+                        user_id: logData.userId,
+                        user_name: logData.userName,
+                        item_count: logData.itemCount,
+                        total: logData.total,
+                        payment_method: logData.paymentMethod,
+                        status: logData.status,
+                        duration: logData.duration,
+                        error: logData.error,
+                        error_type: logData.errorType,
+                        response_valid: logData.responseValid
+                    });
+                
+                if (error) throw error;
+                
+                return res.status(201).json({ success: true });
+            } catch (error) {
+                // Logging-Fehler nicht weiterwerfen
+                console.warn('Log save failed:', error);
+                return res.status(200).json({ success: false });
+            }
+        }
+        
 // DELETE /transactions/{id} - Transaktion stornieren (SOFT DELETE)
         if (pathParts[0] === 'transactions' && pathParts[1] && method === 'DELETE') {
             const transactionId = parseInt(pathParts[1]);
