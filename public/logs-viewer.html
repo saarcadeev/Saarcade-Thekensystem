@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 Transaction Logs Viewer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+        h1 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 4px solid;
+        }
+        .stat-card.success { border-color: #48bb78; }
+        .stat-card.error { border-color: #e53e3e; }
+        .stat-card.total { border-color: #667eea; }
+        .stat-card h3 {
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+        .stat-card p {
+            color: #718096;
+            font-size: 0.9em;
+        }
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .filters button, .filters select {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            background: #e2e8f0;
+            color: #2d3748;
+        }
+        .filters button:hover {
+            background: #cbd5e0;
+        }
+        .filters button.active {
+            background: #667eea;
+            color: white;
+        }
+        .filters select {
+            min-width: 150px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #2d3748;
+            position: sticky;
+            top: 0;
+        }
+        tr:hover {
+            background: #f7fafc;
+        }
+        .status {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        .status.success {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        .status.error {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+        .status.sending {
+            background: #feebc8;
+            color: #7c2d12;
+        }
+        .export-btn {
+            background: #48bb78;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 20px;
+        }
+        .export-btn:hover {
+            background: #38a169;
+        }
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+            font-size: 1.1em;
+        }
+        .sync-info {
+            background: #bee3f8;
+            border-left: 4px solid #3182ce;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .clear-btn {
+            background: #e53e3e;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        .clear-btn:hover {
+            background: #c53030;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Transaction Logs Viewer</h1>
+        
+        <div class="sync-info">
+            <strong>ℹ️ Hinweis:</strong> Diese Logs sind lokal im Browser gespeichert. Jedes Tablet hat seine eigenen Logs. 
+            Um alle Logs zu sehen, musst du diese Seite auf jedem Tablet öffnen.
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card total">
+                <h3 id="totalCount">0</h3>
+                <p>Gesamt</p>
+            </div>
+            <div class="stat-card success">
+                <h3 id="successCount">0</h3>
+                <p>Erfolgreich</p>
+            </div>
+            <div class="stat-card error">
+                <h3 id="errorCount">0</h3>
+                <p>Fehler</p>
+            </div>
+            <div class="stat-card" style="border-color: #ed8936;">
+                <h3 id="invalidCount">0</h3>
+                <p>Ungültige Response</p>
+            </div>
+        </div>
+        
+        <div class="filters">
+            <button class="active" onclick="filterLogs('all')">Alle</button>
+            <button onclick="filterLogs('error')">Nur Fehler</button>
+            <button onclick="filterLogs('invalid')">Ungültige Responses</button>
+            <button onclick="filterLogs('success')">Nur Erfolgreiche</button>
+            
+            <select id="userFilter" onchange="applyFilters()">
+                <option value="">Alle Benutzer</option>
+            </select>
+            
+            <select id="dateFilter" onchange="applyFilters()">
+                <option value="">Alle Zeiträume</option>
+                <option value="today">Heute</option>
+                <option value="yesterday">Gestern</option>
+                <option value="week">Diese Woche</option>
+                <option value="month">Dieser Monat</option>
+            </select>
+        </div>
+        
+        <div id="tableContainer"></div>
+        
+        <div style="margin-top: 20px; text-align: center;">
+            <button class="export-btn" onclick="exportLogs()">📥 Logs als JSON exportieren</button>
+            <button class="clear-btn" onclick="clearLogs()">🗑️ Logs löschen</button>
+        </div>
+    </div>
+    
+    <script>
+        let allLogs = [];
+        let currentFilter = 'all';
+        
+        function loadLogs() {
+            const logsJson = localStorage.getItem('transactionAttemptLogs');
+            allLogs = logsJson ? JSON.parse(logsJson) : [];
+            
+            // Sortiere neueste zuerst
+            allLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            updateStats();
+            populateFilters();
+            applyFilters();
+        }
+        
+        function updateStats() {
+            const total = allLogs.length;
+            const success = allLogs.filter(l => l.status === 'success').length;
+            const errors = allLogs.filter(l => l.status === 'error').length;
+            const invalid = allLogs.filter(l => l.responseValid === false).length;
+            
+            document.getElementById('totalCount').textContent = total;
+            document.getElementById('successCount').textContent = success;
+            document.getElementById('errorCount').textContent = errors;
+            document.getElementById('invalidCount').textContent = invalid;
+        }
+        
+        function populateFilters() {
+            const users = [...new Set(allLogs.map(l => l.userName).filter(Boolean))];
+            const userFilter = document.getElementById('userFilter');
+            userFilter.innerHTML = '<option value="">Alle Benutzer</option>';
+            users.forEach(user => {
+                userFilter.innerHTML += `<option value="${user}">${user}</option>`;
+            });
+        }
+        
+        function filterLogs(type) {
+            currentFilter = type;
+            document.querySelectorAll('.filters button').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            applyFilters();
+        }
+        
+        function applyFilters() {
+            let filtered = [...allLogs];
+            
+            // Filter nach Status
+            if (currentFilter === 'error') {
+                filtered = filtered.filter(l => l.status === 'error');
+            } else if (currentFilter === 'invalid') {
+                filtered = filtered.filter(l => l.responseValid === false);
+            } else if (currentFilter === 'success') {
+                filtered = filtered.filter(l => l.status === 'success');
+            }
+            
+            // Filter nach Benutzer
+            const userFilter = document.getElementById('userFilter').value;
+            if (userFilter) {
+                filtered = filtered.filter(l => l.userName === userFilter);
+            }
+            
+            // Filter nach Datum
+            const dateFilter = document.getElementById('dateFilter').value;
+            if (dateFilter) {
+                const now = new Date();
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                
+                filtered = filtered.filter(l => {
+                    const logDate = new Date(l.timestamp);
+                    
+                    if (dateFilter === 'today') {
+                        return logDate >= today;
+                    } else if (dateFilter === 'yesterday') {
+                        const yesterday = new Date(today);
+                        yesterday.setDate(yesterday.getDate() - 1);
+                        return logDate >= yesterday && logDate < today;
+                    } else if (dateFilter === 'week') {
+                        const weekAgo = new Date(today);
+                        weekAgo.setDate(weekAgo.getDate() - 7);
+                        return logDate >= weekAgo;
+                    } else if (dateFilter === 'month') {
+                        const monthAgo = new Date(today);
+                        monthAgo.setMonth(monthAgo.getMonth() - 1);
+                        return logDate >= monthAgo;
+                    }
+                    return true;
+                });
+            }
+            
+            displayLogs(filtered);
+        }
+        
+        function displayLogs(logs) {
+            const container = document.getElementById('tableContainer');
+            
+            if (logs.length === 0) {
+                container.innerHTML = '<div class="no-data">📭 Keine Logs gefunden</div>';
+                return;
+            }
+            
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Zeitstempel</th>
+                            <th>Benutzer</th>
+                            <th>Items</th>
+                            <th>Betrag</th>
+                            <th>Status</th>
+                            <th>Dauer</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            logs.forEach(log => {
+                const date = new Date(log.timestamp);
+                const dateStr = date.toLocaleString('de-DE');
+                const statusClass = log.status === 'success' ? 'success' : 
+                                   log.status === 'error' ? 'error' : 'sending';
+                const duration = log.duration ? `${log.duration}ms` : '-';
+                const details = log.error ? `❌ ${log.error}` : 
+                              log.responseValid === false ? '⚠️ Ungültige Response' : '✅';
+                
+                html += `
+                    <tr>
+                        <td>${dateStr}</td>
+                        <td>${log.userName || '-'}</td>
+                        <td>${log.itemCount || 0}</td>
+                        <td>${log.total ? log.total.toFixed(2) + '€' : '-'}</td>
+                        <td><span class="status ${statusClass}">${log.status}</span></td>
+                        <td>${duration}</td>
+                        <td style="font-size: 0.9em;">${details}</td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+        
+        function exportLogs() {
+            const dataStr = JSON.stringify(allLogs, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `transaction-logs-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        function clearLogs() {
+            if (confirm('Wirklich alle Logs löschen? Dies kann nicht rückgängig gemacht werden!')) {
+                localStorage.removeItem('transactionAttemptLogs');
+                allLogs = [];
+                updateStats();
+                applyFilters();
+                alert('Logs gelöscht!');
+            }
+        }
+        
+        // Initial laden
+        loadLogs();
+        
+        // Auto-Refresh alle 5 Sekunden
+        setInterval(loadLogs, 5000);
+    </script>
+</body>
+</html>
