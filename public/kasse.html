@@ -1733,7 +1733,7 @@ async function preloadProductImages(products) {
         
 async function apiCall(endpoint, options = {}) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 Sekunden Timeout
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 8 Sekunden Timeout
     
     try {
         const response = await fetch(endpoint, {
@@ -1858,13 +1858,49 @@ async function apiCall(endpoint, options = {}) {
         }
 
         async function createTransaction(transactionData) {
+            // Pre-Request Logging
+            const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            const requestLog = {
+                requestId: requestId,
+                timestamp: new Date().toISOString(),
+                userId: transactionData.userId,
+                userName: transactionData.userName,
+                itemCount: transactionData.items.length,
+                total: transactionData.total,
+                paymentMethod: transactionData.paymentMethod,
+                status: 'sending'
+            };
+            
+            console.log('🚀 Sende Transaktion:', requestLog);
+            logTransactionAttempt(requestLog);
+            
             try {
+                const startTime = Date.now();
                 const transaction = await apiCall('/api/transactions', {
                     method: 'POST',
                     body: JSON.stringify(transactionData)
                 });
+                const duration = Date.now() - startTime;
+                
+                // Post-Request Logging
+                console.log(`✅ Transaktion erfolgreich (${duration}ms):`, transaction);
+                logTransactionAttempt({
+                    ...requestLog,
+                    status: 'success',
+                    duration: duration,
+                    responseValid: !!(transaction && transaction.transactions && transaction.newBalance !== undefined),
+                    transactionIds: transaction?.transactions?.map(t => t.id)
+                });
+                
                 return transaction;
             } catch (error) {
+                console.error('❌ Transaktion fehlgeschlagen:', error);
+                logTransactionAttempt({
+                    ...requestLog,
+                    status: 'error',
+                    error: error.message,
+                    errorType: error.name
+                });
                 throw error;
             }
         }
@@ -2625,6 +2661,39 @@ function addToCart(productId, fromBarcode = false) {
             setScannerMode('product');
         }
 
+// Persistent Transaction Logging für Debugging
+function logTransactionAttempt(logEntry) {
+    try {
+        const logs = JSON.parse(localStorage.getItem('transactionAttemptLogs') || '[]');
+        logs.push(logEntry);
+        
+        // Nur letzte 500 Logs behalten
+        if (logs.length > 500) {
+            logs.splice(0, logs.length - 500);
+        }
+        
+        localStorage.setItem('transactionAttemptLogs', JSON.stringify(logs));
+        
+        // Auch in DB speichern (fire-and-forget, kein await)
+        if (logEntry.status === 'error' || !logEntry.responseValid) {
+            saveLogToDatabase(logEntry).catch(err => console.warn('Log DB save failed:', err));
+        }
+    } catch (e) {
+        console.error('Logging fehlgeschlagen:', e);
+    }
+}
+
+async function saveLogToDatabase(logEntry) {
+    try {
+        await apiCall('/api/transaction-logs', {
+            method: 'POST',
+            body: JSON.stringify(logEntry)
+        });
+    } catch (error) {
+        // Ignorieren, nur lokales Logging ist kritisch
+    }
+}
+        
 // ============ FEHLERHAFTE TRANSAKTIONEN SPEICHERN & RETRY ============
 function saveFailedTransaction(transactionData, error) {
     try {
@@ -2969,6 +3038,11 @@ window.addEventListener('load', updateFailedTransactionsBadge);
         
 // Normale Mitglieder: Direkte Buchung
         const result = await createTransaction(transactionData);
+        // KRITISCHE VALIDIERUNG: Prüfe ob Transaktion wirklich gespeichert wurde
+        if (!result || !result.transactions || result.transactions.length === 0 || result.newBalance === undefined) {
+            console.error('❌ KRITISCH: Ungültige Server-Response!', result);
+            throw new Error('Transaktion wurde nicht korrekt gespeichert - Server-Response ungültig oder leer');
+        }
         currentUser.balance = result.newBalance;
         
         const userIndex = users.findIndex(u => u.id === currentUser.id);
