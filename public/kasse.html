@@ -3076,6 +3076,13 @@ window.addEventListener('load', updateFailedTransactionsBadge);
     try {
         const items = cart.map(cartItem => {
             const product = products.find(p => p.id === cartItem.productId);
+            
+            // SICHERHEITS-CHECK: Produkt muss existieren
+            if (!product) {
+                console.error('❌ FEHLER: Produkt nicht gefunden!', cartItem.productId);
+                throw new Error(`Produkt ${cartItem.productId} nicht mehr verfügbar. Bitte Warenkorb aktualisieren.`);
+            }
+            
             const price = currentUser.role === 'member' ? product.member_price : product.guest_price;
             const itemTotal = price * cartItem.quantity;
             
@@ -3133,6 +3140,13 @@ window.addEventListener('load', updateFailedTransactionsBadge);
         for (const cartItem of cart) {
             if (cartItem.voucherSerialNumber) {
                 const product = products.find(p => p.id === cartItem.productId);
+                
+                // SICHERHEITS-CHECK
+                if (!product) {
+                    console.warn('⚠️ Produkt für Gutschein nicht gefunden:', cartItem.productId);
+                    continue; // Überspringe diesen Gutschein
+                }
+                
                 const price = currentUser.role === 'member' ? product.member_price : product.guest_price;
                 
                 const matchingTransaction = result.transactions?.find(t => 
@@ -3182,8 +3196,20 @@ window.addEventListener('load', updateFailedTransactionsBadge);
         });
         
         // Speichere die fehlgeschlagene Transaktion lokal
-        const items = cart.map(cartItem => {
+       const items = cart.map(cartItem => {
             const product = products.find(p => p.id === cartItem.productId);
+            
+            // Fallback wenn Produkt nicht gefunden
+            if (!product) {
+                return {
+                    productId: cartItem.productId,
+                    productName: 'Unbekanntes Produkt',
+                    quantity: cartItem.quantity,
+                    price: 0,
+                    total: 0
+                };
+            }
+            
             const price = currentUser.role === 'member' ? product.member_price : product.guest_price;
             return {
                 productId: cartItem.productId,
@@ -3667,6 +3693,13 @@ async function completeCashPayment() {
         pendingCashTransaction.paymentMethod = 'cash';
         
         const result = await createTransaction(pendingCashTransaction);
+        
+        // KRITISCHE VALIDIERUNG
+        if (!result || !result.transactions || result.transactions.length === 0 || result.newBalance === undefined) {
+            console.error('❌ KRITISCH: Ungültige Server-Response!', result);
+            throw new Error('Transaktion wurde nicht korrekt gespeichert - Server-Response ungültig oder leer');
+        }
+        
         currentUser.balance = result.newBalance;
         
         const userIndex = users.findIndex(u => u.id === currentUser.id);
@@ -3717,6 +3750,13 @@ async function completeVoucherCardPayment() {
         pendingCashTransaction.paymentMethod = 'voucher_card';
         
         const result = await createTransaction(pendingCashTransaction);
+        
+        // KRITISCHE VALIDIERUNG
+        if (!result || !result.transactions || result.transactions.length === 0 || result.newBalance === undefined) {
+            console.error('❌ KRITISCH: Ungültige Server-Response!', result);
+            throw new Error('Transaktion wurde nicht korrekt gespeichert - Server-Response ungültig oder leer');
+        }
+        
         currentUser.balance = result.newBalance;
         
         const userIndex = users.findIndex(u => u.id === currentUser.id);
