@@ -4599,7 +4599,84 @@ async function toggleVoucherSystem() {
         checkbox.checked = !enabled; // Zurücksetzen bei Fehler
         showStatus('Einstellung konnte nicht gespeichert werden', 'error');
     }
-}        
+}
+
+// ============ INTELLIGENTER AUTO-REFRESH ============
+// Refresht nur wenn Kasse IDLE ist (sicher, keine Unterbrechung)
+
+let lastActivityTime = Date.now();
+let autoRefreshInterval = null;
+
+// Activity Tracking
+function updateActivityTime() {
+    lastActivityTime = Date.now();
+}
+
+// Event Listeners für Aktivität
+['click', 'keypress', 'touchstart', 'mousemove'].forEach(event => {
+    document.addEventListener(event, updateActivityTime, { passive: true });
+});
+
+// Prüfe ob Kasse im IDLE-Zustand ist
+function isKasseIdle() {
+    const timeSinceLastActivity = Date.now() - lastActivityTime;
+    const idleThreshold = 2 * 60 * 1000; // 2 Minuten
+    
+    return (
+        !currentUser &&           // Kein User eingeloggt
+        cart.length === 0 &&      // Warenkorb leer
+        !isProcessing &&          // Keine Transaktion läuft
+        !isAnyModalOpen() &&      // Keine Modals offen
+        timeSinceLastActivity > idleThreshold  // 2 Min inaktiv
+    );
+}
+
+// Background-Refresh der Daten (ohne Page-Reload)
+async function refreshDataInBackground() {
+    try {
+        console.log('🔄 Background-Refresh gestartet...');
+        
+        // Lade frische Daten
+        await Promise.all([
+            loadUsers(),
+            loadProducts(),
+            loadSettings()
+        ]);
+        
+        console.log('✅ Background-Refresh erfolgreich');
+        showStatus('Daten aktualisiert', 'success');
+        
+        // Lösche alte Caches damit beim nächsten Mal frische Daten geladen werden
+        localStorage.removeItem('cache_users');
+        localStorage.removeItem('cache_products');
+        
+    } catch (error) {
+        console.error('❌ Background-Refresh fehlgeschlagen:', error);
+    }
+}
+
+// Auto-Refresh nur im IDLE-Zustand
+function checkAutoRefresh() {
+    if (isKasseIdle()) {
+        console.log('💤 Kasse ist IDLE - führe Background-Refresh durch');
+        refreshDataInBackground();
+    } else {
+        console.log('⚡ Kasse ist AKTIV - überspringe Refresh');
+    }
+}
+
+// Starte Auto-Refresh Timer (alle 10 Minuten prüfen)
+function startAutoRefresh() {
+    // Prüfe alle 10 Minuten ob Refresh nötig ist
+    autoRefreshInterval = setInterval(checkAutoRefresh, 10 * 60 * 1000);
+    console.log('✅ Auto-Refresh aktiviert (alle 10 Min prüfen, refresh bei 2 Min IDLE)');
+}
+
+// Auto-Refresh beim Laden aktivieren
+window.addEventListener('load', () => {
+    setTimeout(startAutoRefresh, 5000); // 5 Sek nach Laden starten
+});
+        
     </script>
 
 <!-- ON-SCREEN TASTATUR -->
