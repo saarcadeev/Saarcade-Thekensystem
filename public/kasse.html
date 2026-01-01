@@ -2204,12 +2204,13 @@ function updateProductsView() {
         // KORREKTE PRODUKTBILD-LOGIK - nur ein sichtbares Element
         let imageHtml;
         if (product.image_url) {
-            // Wenn URL vorhanden: Bild versuchen zu laden, Icon als verstecktes Fallback
+            // Wenn URL vorhanden: Lazy Loading aktivieren
             const fallbackEmoji = product.image || '📦';
             imageHtml = `
                 <div class="product-image" id="img-container-${product.id}">
-                    <img src="${product.image_url}" 
+                    <img data-src="${product.image_url}" 
                          alt="${product.name}" 
+                         loading="lazy"
                          onload="showImageSuccess(${product.id})"
                          onerror="showImageFallback(${product.id}, '${fallbackEmoji}')"
                          style="display: block;">
