@@ -4665,11 +4665,11 @@ function checkAutoRefresh() {
     }
 }
 
-// Starte Auto-Refresh Timer (alle 10 Minuten prüfen)
+// Starte Auto-Refresh Timer (alle 5 Minuten prüfen)
 function startAutoRefresh() {
     // Prüfe alle 10 Minuten ob Refresh nötig ist
-    autoRefreshInterval = setInterval(checkAutoRefresh, 10 * 60 * 1000);
-    console.log('✅ Auto-Refresh aktiviert (alle 10 Min prüfen, refresh bei 2 Min IDLE)');
+    autoRefreshInterval = setInterval(checkAutoRefresh, 5 * 60 * 1000);
+    console.log('✅ Auto-Refresh aktiviert (alle 5 Min prüfen, refresh bei 2 Min IDLE)');
 }
 
 // Auto-Refresh beim Laden aktivieren
