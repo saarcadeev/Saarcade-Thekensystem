@@ -1533,7 +1533,10 @@ try {
     </div>
 </div>
 
-    <script>
+<script>
+        // ============ BILD-CACHE ============
+        const loadedImages = new Set(); // Trackt welche Bilder bereits geladen wurden
+    
         // ============ GLOBALE VARIABLEN ============
         let currentUser = null;
         let cart = [];
@@ -2018,6 +2021,7 @@ function initLazyLoading() {
                 if (dataSrc) {
                     img.src = dataSrc;
                     img.removeAttribute('data-src');
+                    loadedImages.add(dataSrc); // Als geladen markieren
                     observer.unobserve(img);
                 }
             }
@@ -2204,14 +2208,19 @@ function updateProductsView() {
         // KORREKTE PRODUKTBILD-LOGIK - nur ein sichtbares Element
         let imageHtml;
         if (product.image_url) {
-            // Wenn URL vorhanden: Lazy Loading aktivieren
+            // Wenn URL vorhanden: Prüfe ob Bild bereits geladen wurde
             const fallbackEmoji = product.image || '📦';
+            const imageLoaded = loadedImages.has(product.image_url);
+            
+            // Wenn bereits geladen: direkt src verwenden (Browser nutzt Cache)
+            // Wenn noch nicht geladen: data-src für Lazy Loading
+            const imgAttribute = imageLoaded ? `src="${product.image_url}"` : `data-src="${product.image_url}"`;
+            
             imageHtml = `
                 <div class="product-image" id="img-container-${product.id}">
-                    <img data-src="${product.image_url}" 
+                    <img ${imgAttribute}
                          alt="${product.name}" 
-                         loading="lazy"
-                         onload="showImageSuccess(${product.id})"
+                         onload="showImageSuccess(${product.id}, '${product.image_url}')"
                          onerror="showImageFallback(${product.id}, '${fallbackEmoji}')"
                          style="display: block;">
                     <div id="fallback-${product.id}" style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; font-size: 2.5em;">
@@ -2245,9 +2254,12 @@ function updateProductsView() {
 
         // ============ NEUE HILFSFUNKTIONEN FÜR BILDANZEIGE ============
 
-function showImageSuccess(productId) {
-    // Bild erfolgreich geladen - Fallback bleibt versteckt
-    console.log(`✅ Produktbild ${productId} erfolgreich geladen`);
+function showImageSuccess(productId, imageUrl) {
+    // Bild erfolgreich geladen - merken für zukünftige Renders
+    if (imageUrl) {
+        loadedImages.add(imageUrl);
+    }
+    console.log(`✅ Produktbild ${productId} erfolgreich geladen${imageUrl && loadedImages.has(imageUrl) ? ' (gecacht)' : ''}`);
 }
 
 function showImageFallback(productId, fallbackEmoji) {
