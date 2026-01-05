@@ -1859,6 +1859,13 @@ body {
                         </label>
                     </div>
                     
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="productFavorite">
+                            ⭐ Favorit (wird prominent in der Kasse angezeigt)
+                        </label>
+                    </div>
+                    
                     <div style="text-align: right; margin-top: 20px;">
                         <button type="button" class="btn btn-secondary" onclick="closeModal('productModal')">
                             Abbrechen
@@ -3086,7 +3093,8 @@ function openProductModal(productId = null) {
                     productStock: '0',
                     productMinStock: '5',
                     productBarcodes: '',
-                    productAvailable: true
+                    productAvailable: true,
+                    productFavorite: false
                 };
                 
                 Object.keys(fields).forEach(fieldId => {
@@ -3151,6 +3159,11 @@ function openProductModal(productId = null) {
                         const availableCheckbox = document.getElementById('productAvailable');
                         if (availableCheckbox) {
                             availableCheckbox.checked = product.available !== false;
+                        }
+                        
+                        const favoriteCheckbox = document.getElementById('productFavorite');
+                        if (favoriteCheckbox) {
+                            favoriteCheckbox.checked = product.is_favorite === true;
                         }
                         
                         if (product.image_url && typeof product.image_url === 'string') {
@@ -3224,7 +3237,8 @@ function openProductModal(productId = null) {
                 stock: parseInt(document.getElementById('productStock').value) || 0,
                 min_stock: parseInt(document.getElementById('productMinStock').value) || 0,
                 barcodes: barcodes,
-                available: document.getElementById('productAvailable').checked
+                available: document.getElementById('productAvailable').checked,
+                is_favorite: document.getElementById('productFavorite').checked
             };
             
             if (!productData.name || productData.member_price === undefined || productData.guest_price === undefined) {
