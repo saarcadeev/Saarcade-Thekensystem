@@ -2225,7 +2225,8 @@ function updateProductsView() {
         productsGrid.classList.remove('favorites-grid');
     }
     
-    const filteredProducts = filterProductsByCategory(products.filter(p => p.available));
+    const filteredProducts = filterProductsByCategory(products.filter(p => p.available))
+        .sort((a, b) => (a.sort_order || 999) - (b.sort_order || 999));
     
     if (filteredProducts.length === 0) {
         productsGrid.innerHTML = `
