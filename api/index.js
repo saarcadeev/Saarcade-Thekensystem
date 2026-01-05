@@ -437,7 +437,8 @@ if (pathParts[0] === 'users' && pathParts[1] && method === 'PUT') {
             const { data, error } = await supabase
                 .from('products')
                 .select('*')
-                .order('category, name');
+                .order('sort_order', { ascending: true })
+                .order('name', { ascending: true });
             
             if (error) throw error;
             return res.status(200).json(data || []);
@@ -524,6 +525,7 @@ if (path === '/products' && method === 'POST') {
             barcodes: productData.barcodes || [],  // Array
             available: productData.available !== false,
             is_favorite: productData.is_favorite || false,
+            sort_order: productData.sort_order || 999,
             image_url: productData.image_url || null,
             image_file_path: productData.image_file_path || null
         }])
@@ -573,6 +575,7 @@ if (pathParts[0] === 'products' && pathParts[1] && method === 'PUT') {
             barcodes: productData.barcodes,  // Array
             available: productData.available,
             is_favorite: productData.is_favorite,
+            sort_order: productData.sort_order,
             image_url: productData.image_url,
             image_file_path: productData.image_file_path
         })
