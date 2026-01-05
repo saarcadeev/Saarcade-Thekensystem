@@ -516,13 +516,14 @@ if (path === '/products' && method === 'POST') {
         .insert([{
             name: productData.name,
             category: productData.category || 'sonstiges',
-            image: productData.image || 'ðŸ“¦',
+            image: productData.image || '📦',
             member_price: productData.member_price,
             guest_price: productData.guest_price,
             stock: productData.stock || 0,
             min_stock: productData.min_stock || 5,
             barcodes: productData.barcodes || [],  // Array
             available: productData.available !== false,
+            is_favorite: productData.is_favorite || false,
             image_url: productData.image_url || null,
             image_file_path: productData.image_file_path || null
         }])
@@ -571,6 +572,7 @@ if (pathParts[0] === 'products' && pathParts[1] && method === 'PUT') {
             min_stock: productData.min_stock,
             barcodes: productData.barcodes,  // Array
             available: productData.available,
+            is_favorite: productData.is_favorite,
             image_url: productData.image_url,
             image_file_path: productData.image_file_path
         })
