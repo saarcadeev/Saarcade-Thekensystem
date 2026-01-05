@@ -1083,11 +1083,11 @@ body {
                 
                 <div style="overflow-x: auto;">
                     <table class="data-table" id="productTable">
-<thead>
+                        <thead>
                             <tr>
                                 <th class="checkbox-cell">
-                                    <input type="checkbox" id="selectAllProducts" onchange="toggleSelectAll('products')">
-                                </th>
+                                    <input type="checkbox" id="selectAllProducts" onchange="toggleSelectAll('products')"></th>
+                                <th>🔢 Sort.</th>
                                 <th>Bild</th>
                                 <th>Produkt</th>
                                 <th>Kategorie</th>
@@ -1824,6 +1824,12 @@ body {
                             <label>Gastpreis (€) *</label>
                             <input type="number" id="productGuestPrice" step="0.01" required>
                         </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>🔢 Sortierung (Anzeigereihenfolge)</label>
+                        <input type="number" id="productSortOrder" min="1" value="999">
+                        <small style="color: #666;">Niedrigere Zahlen werden zuerst angezeigt</small>
                     </div>
                     
                     <div class="form-grid">
@@ -3028,7 +3034,7 @@ function renderProducts() {
             updateSelectionInfo('products');
             
             if (products.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 30px; color: #666;">Keine Produktdaten verfügbar</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 30px; color: #666;">Keine Produktdaten verfügbar</td></tr>';
                 return;
             }
     
@@ -3047,12 +3053,14 @@ function renderProducts() {
                 }
                 
                 const availableIcon = product.available ? '✅' : '❌';
+                const sortOrder = product.sort_order || 999;
                 
                 return `
                     <tr>
                         <td class="checkbox-cell">
                             <input type="checkbox" value="${product.id}" onchange="toggleRowSelection(this, 'products')">
                         </td>
+                        <td style="text-align: center; font-weight: bold; color: #666;">${sortOrder}</td>
                         <td class="product-image-cell">${imageHtml}</td>
                         <td>${product.name}</td>
                         <td>${getCategoryText(product.category)}</td>
@@ -3094,7 +3102,8 @@ function openProductModal(productId = null) {
                     productMinStock: '5',
                     productBarcodes: '',
                     productAvailable: true,
-                    productFavorite: false
+                    productFavorite: false,
+                    productSortOrder: '999'
                 };
                 
                 Object.keys(fields).forEach(fieldId => {
@@ -3150,6 +3159,7 @@ function openProductModal(productId = null) {
                         setField('productGuestPrice', (product.guest_price || 0).toFixed(2));
                         setField('productStock', product.stock || 0);
                         setField('productMinStock', product.min_stock || 5);
+                        setField('productSortOrder', product.sort_order || 999);
                         
                         const barcodesValue = product.barcodes 
                             ? (Array.isArray(product.barcodes) ? product.barcodes : [product.barcodes]) 
@@ -3238,7 +3248,8 @@ function openProductModal(productId = null) {
                 min_stock: parseInt(document.getElementById('productMinStock').value) || 0,
                 barcodes: barcodes,
                 available: document.getElementById('productAvailable').checked,
-                is_favorite: document.getElementById('productFavorite').checked
+                is_favorite: document.getElementById('productFavorite').checked,
+                sort_order: parseInt(document.getElementById('productSortOrder').value) || 999
             };
             
             if (!productData.name || productData.member_price === undefined || productData.guest_price === undefined) {
