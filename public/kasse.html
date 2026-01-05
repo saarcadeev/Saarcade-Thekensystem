@@ -480,6 +480,32 @@
             font-size: 1.1em;
         }
 
+        /* ===== FAVORITEN-ANSICHT: GRÖßERE KARTEN (3x2 GRID) ===== */
+        .products-grid.favorites-grid {
+            grid-template-columns: repeat(3, 1fr) !important;
+            grid-template-rows: repeat(2, 1fr) !important;
+            gap: 15px !important;
+        }
+        
+        .products-grid.favorites-grid .product-card {
+            height: 280px !important;
+            padding: 20px !important;
+        }
+        
+        .products-grid.favorites-grid .product-image {
+            width: 180px !important;
+            height: 180px !important;
+            font-size: 3.5em !important;
+        }
+        
+        .products-grid.favorites-grid .product-name {
+            font-size: 1.2em !important;
+        }
+        
+        .products-grid.favorites-grid .product-price {
+            font-size: 1.4em !important;
+        }
+
         .cart-section {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -1221,7 +1247,8 @@ try {
                     <h2>Produkte</h2>
                     <!-- Kategorie-Filter -->
                     <div class="category-filters" id="categoryFilters">
-                        <button class="category-btn active" data-category="all">📦 Alle</button>
+                        <button class="category-btn active" data-category="favoriten">⭐ Favoriten</button>
+                        <button class="category-btn" data-category="all">📦 Alle</button>
                         <button class="category-btn" data-category="bier">🍺 Bier</button>
                         <button class="category-btn" data-category="softdrinks">🥤 Softdrinks</button>
                    <!-- <button class="category-btn" data-category="schnaps">🥃 Spirituosen</button> -->
@@ -1545,7 +1572,7 @@ try {
         let isProcessing = false;
         let scannerMode = 'user';
         let searchTimeout = null;
-        let currentCategory = 'all';
+        let currentCategory = 'favoriten';
         let specialBarcodes = {
             checkout: 'CHECKOUT123',
             cancel: 'CANCEL123',
@@ -2156,9 +2183,11 @@ window.debugImageDisplay = debugImageDisplay;
             if (currentCategory === 'all') {
                 return productsToFilter;
             }
+            if (currentCategory === 'favoriten') {
+                return productsToFilter.filter(product => product.is_favorite === true);
+            }
             return productsToFilter.filter(product => product.category === currentCategory);
         }
-
 // ============ KORRIGIERTE updateProductsView FUNKTION ============
 // Diese Funktion ERSETZT die bestehende in kasse.html
 
@@ -2188,6 +2217,13 @@ function updateProductsView() {
 
     noUserMsg.style.display = 'none';
     productsGrid.style.display = 'grid';
+    
+    // Passe Grid-Layout für Favoriten an
+    if (currentCategory === 'favoriten') {
+        productsGrid.classList.add('favorites-grid');
+    } else {
+        productsGrid.classList.remove('favorites-grid');
+    }
     
     const filteredProducts = filterProductsByCategory(products.filter(p => p.available));
     
@@ -3266,10 +3302,10 @@ function resetSession() {
             currentUser = null;
             cart = [];
             isProcessing = false;
-            currentCategory = 'all';
+            currentCategory = 'favoriten';
             
             document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelector('[data-category="all"]').classList.add('active');
+            document.querySelector('[data-category="favoriten"]').classList.add('active');
             
             // Kassierhilfe-Toggle Status wird aus DB geladen (nicht zurücksetzen)
             
