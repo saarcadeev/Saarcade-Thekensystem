@@ -2781,7 +2781,17 @@ function addToCart(productId, fromBarcode = false) {
 function logTransactionAttempt(logEntry) {
     try {
         const logs = JSON.parse(localStorage.getItem('transactionAttemptLogs') || '[]');
-        logs.push(logEntry);
+        
+        // Suche nach existierendem Log mit gleicher requestId (für Updates)
+        const existingIndex = logs.findIndex(log => log.requestId === logEntry.requestId);
+        
+        if (existingIndex >= 0) {
+            // UPDATE: Bestehenden Eintrag aktualisieren (von 'sending' zu 'success'/'error')
+            logs[existingIndex] = { ...logs[existingIndex], ...logEntry };
+        } else {
+            // INSERT: Neuen Eintrag hinzufügen
+            logs.push(logEntry);
+        }
         
         // Nur letzte 500 Logs behalten
         if (logs.length > 500) {
