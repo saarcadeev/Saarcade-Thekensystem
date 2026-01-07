@@ -2800,8 +2800,10 @@ function logTransactionAttempt(logEntry) {
         
         localStorage.setItem('transactionAttemptLogs', JSON.stringify(logs));
         
-        // ALLE Transaktionen in DB speichern (für bessere Forensik)
-        saveLogToDatabase(logEntry).catch(err => console.warn('Log DB save failed:', err));
+        // Nur finale Status in DB speichern (success/error, nicht sending)
+        if (logEntry.status !== 'sending') {
+            saveLogToDatabase(logEntry).catch(err => console.warn('Log DB save failed:', err));
+        }
     } catch (e) {
         console.error('Logging fehlgeschlagen:', e);
     }
