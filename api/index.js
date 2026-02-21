@@ -170,6 +170,50 @@ module.exports = async (req, res) => {
             }
         }
 
+// ============ PDF UPLOAD ENDPUNKT ============
+        if (path === '/upload-pdf' && method === 'POST') {
+            try {
+                const { pdf, fileName, itemId } = req.body;
+                
+                if (!pdf) {
+                    return res.status(400).json({ error: 'Keine PDF bereitgestellt' });
+                }
+
+                const base64Data = pdf.replace(/^data:application\/pdf;base64,/, '');
+                const pdfBuffer = Buffer.from(base64Data, 'base64');
+                
+                const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
+                const uniqueFileName = `${Date.now()}_${itemId}_${safeName}`;
+                const filePath = `clothing-pdfs/${uniqueFileName}`;
+
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('clothing-pdfs')
+                    .upload(filePath, pdfBuffer, {
+                        contentType: 'application/pdf',
+                        upsert: true
+                    });
+
+                if (uploadError) {
+                    console.error('PDF Upload Error:', uploadError);
+                    return res.status(500).json({ error: 'Fehler beim Hochladen der PDF' });
+                }
+
+                const { data: urlData } = supabase.storage
+                    .from('clothing-pdfs')
+                    .getPublicUrl(filePath);
+
+                return res.status(200).json({
+                    success: true,
+                    pdfUrl: urlData.publicUrl,
+                    filePath: filePath
+                });
+
+            } catch (error) {
+                console.error('PDF upload error:', error);
+                return res.status(500).json({ error: 'Interner Fehler beim PDF-Upload' });
+            }
+        }
+        
 // ============ IMAGE DELETE ENDPUNKT ============
         if (pathParts[0] === 'delete-image' && method === 'DELETE') {
             try {
