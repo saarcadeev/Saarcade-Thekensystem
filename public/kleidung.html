@@ -944,22 +944,39 @@ body {
         <script>
             
 // Passwort-Schutz
-const CLOTHING_PASSWORD = 'saarcade2025'; // ⚠️ Ändere das Passwort hier!
+// Passwort wird serverseitig geprüft
 
-function checkPassword() {
+async function checkPassword() {
     const enteredPassword = document.getElementById('accessPassword').value;
     const errorDiv = document.getElementById('passwordError');
     
-    if (enteredPassword === CLOTHING_PASSWORD) {
-        // Passwort korrekt
-        document.getElementById('passwordOverlay').style.display = 'none';
-        // Passwort im SessionStorage speichern (nur für diese Browser-Sitzung)
-        sessionStorage.setItem('clothingAccess', 'granted');
-    } else {
-        // Passwort falsch
+    if (!enteredPassword) {
         errorDiv.style.display = 'block';
-        document.getElementById('accessPassword').value = '';
-        document.getElementById('accessPassword').focus();
+        errorDiv.textContent = 'Bitte Passwort eingeben';
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/check-clothing-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: enteredPassword })
+        });
+
+        if (response.ok) {
+            document.getElementById('passwordOverlay').style.display = 'none';
+            sessionStorage.setItem('clothingAccess', 'granted');
+        } else {
+            errorDiv.style.display = 'block';
+            errorDiv.textContent = 'Falsches Passwort';
+            document.getElementById('accessPassword').value = '';
+            document.getElementById('accessPassword').focus();
+            setTimeout(() => { errorDiv.style.display = 'none'; }, 3000);
+        }
+    } catch (error) {
+        errorDiv.style.display = 'block';
+        errorDiv.textContent = 'Verbindungsfehler – bitte erneut versuchen';
+        setTimeout(() => { errorDiv.style.display = 'none'; }, 3000);
     }
 }
 
