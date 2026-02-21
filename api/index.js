@@ -213,6 +213,22 @@ module.exports = async (req, res) => {
                 return res.status(500).json({ error: 'Interner Fehler beim PDF-Upload' });
             }
         }
+
+// ============ CLOTHING PASSWORD CHECK ============
+        if (path === '/check-clothing-password' && method === 'POST') {
+            const { password } = req.body;
+            const correct = process.env.CLOTHING_PASSWORD;
+            
+            if (!correct) {
+                return res.status(500).json({ error: 'Passwort nicht konfiguriert' });
+            }
+            
+            if (password === correct) {
+                return res.status(200).json({ success: true });
+            } else {
+                return res.status(401).json({ error: 'Falsches Passwort' });
+            }
+        }
         
 // ============ IMAGE DELETE ENDPUNKT ============
         if (pathParts[0] === 'delete-image' && method === 'DELETE') {
