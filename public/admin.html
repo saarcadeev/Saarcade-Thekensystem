@@ -2162,6 +2162,12 @@ body {
                 </div>
                 
                 <div class="form-group">
+                    <label>Sortierung (000 - 999)</label>
+                    <input type="number" id="clothingSortOrder" min="0" max="999" value="999" placeholder="999">
+                    <small style="color: #666;">Niedrigere Zahl = weiter oben</small>
+                </div>
+
+                <div class="form-group">
                     <label>
                         <input type="checkbox" id="clothingAvailable" checked>
                         Verfügbar für Bestellungen
@@ -3494,6 +3500,7 @@ function openClothingModal(clothingId = null) {
                 document.getElementById('clothingSizes').value = item.sizes ? item.sizes.join('\n') : '';
                 document.getElementById('clothingColors').value = item.colors ? item.colors.join('\n') : '';
                 document.getElementById('clothingAvailable').checked = item.available;
+                document.getElementById('clothingSortOrder').value = item.sort_order ?? 999;
                 
                 // PDF laden, falls vorhanden
                 if (item.pdf_url) {
@@ -3599,7 +3606,8 @@ async function saveClothingItem() {
         available: document.getElementById('clothingAvailable').checked,
         image_url: uploadedImageUrl || document.getElementById('currentClothingImageUrl').value || null,
         image_file_path: document.getElementById('currentClothingImagePath').value || null,
-        pdf_url: document.getElementById('currentClothingPdfUrl').value || null
+        pdf_url: document.getElementById('currentClothingPdfUrl').value || null,
+        sort_order: parseInt(document.getElementById('clothingSortOrder').value) || 999
     };
     
     try {
