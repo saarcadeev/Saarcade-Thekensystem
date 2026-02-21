@@ -1195,7 +1195,7 @@ if (path === '/clothing-billings' && method === 'POST') {
         if (path === '/clothing-items' && method === 'POST') {
             const itemData = req.body;
             
-            if (!itemData.name || !itemData.price) {
+            if (!itemData.name || itemData.price === undefined || itemData.price === null) {
                 return res.status(400).json({ 
                     error: 'Pflichtfelder fehlen: name, price' 
                 });
