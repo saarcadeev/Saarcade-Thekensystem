@@ -2110,6 +2110,7 @@ body {
                 <input type="hidden" id="clothingId" value="">
                 <input type="hidden" id="currentClothingImageUrl" value="">
                 <input type="hidden" id="currentClothingImagePath" value="">
+                <input type="hidden" id="currentClothingPdfUrl" value="">
                 
                 <div class="form-group">
                     <label>Artikelfoto</label>
@@ -2167,6 +2168,17 @@ body {
                     </label>
                 </div>
                 
+                <div class="form-group">
+                    <label>📄 Produktinfo-PDF (optional)</label>
+                    <div id="clothingPdfArea" style="border: 2px dashed #cbd5e0; border-radius: 8px; padding: 15px; text-align: center; cursor: pointer;" onclick="document.getElementById('clothingPdfInput').click()">
+                        <input type="file" id="clothingPdfInput" accept="application/pdf" style="display: none;" onchange="handleClothingPdfSelect(event)">
+                        <div id="clothingPdfStatus">📄 Klicken um PDF hochzuladen</div>
+                    </div>
+                    <div id="clothingPdfActions" style="display: none; margin-top: 8px;">
+                        <button type="button" class="btn btn-secondary" style="font-size: 0.85em;" onclick="removeClothingPdf()">🗑️ PDF entfernen</button>
+                    </div>
+                </div>
+
                 <div style="text-align: right; margin-top: 20px;">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('clothingModal')">
                         Abbrechen
@@ -2283,6 +2295,42 @@ body {
             }
         }
 
+// ============ PDF UPLOAD FUNCTIONS ============
+        let currentPdfFile = null;
+
+        function handleClothingPdfSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (file.type !== 'application/pdf') {
+                showAlert('Bitte nur PDF-Dateien hochladen', 'error');
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                showAlert('PDF darf maximal 5MB groß sein', 'error');
+                return;
+            }
+            currentPdfFile = file;
+            document.getElementById('clothingPdfStatus').textContent = `📄 ${file.name} (wird beim Speichern hochgeladen)`;
+            document.getElementById('clothingPdfActions').style.display = 'block';
+        }
+
+        function removeClothingPdf() {
+            currentPdfFile = null;
+            document.getElementById('currentClothingPdfUrl').value = '';
+            document.getElementById('clothingPdfStatus').textContent = '📄 Klicken um PDF hochzuladen';
+            document.getElementById('clothingPdfActions').style.display = 'none';
+            document.getElementById('clothingPdfInput').value = '';
+        }
+
+        async function uploadPdfToAPI(pdfFile, itemId) {
+            const base64 = await fileToBase64(pdfFile);
+            const result = await apiCall('/api/upload-pdf', {
+                method: 'POST',
+                body: JSON.stringify({ pdf: base64, fileName: pdfFile.name, itemId: itemId })
+            });
+            return result;
+        }
+    
         // ============ PHOTO UPLOAD UI FUNCTIONS ============
         
         function triggerFileInput() {
@@ -3428,6 +3476,10 @@ function openClothingModal(clothingId = null) {
         
         currentImageFile = null;
         uploadedImageUrl = null;
+        currentPdfFile = null;
+        document.getElementById('currentClothingPdfUrl').value = '';
+        document.getElementById('clothingPdfStatus').textContent = '📄 Klicken um PDF hochzuladen';
+        document.getElementById('clothingPdfActions').style.display = 'none';
         
         if (clothingId) {
             // Bearbeiten
@@ -3443,6 +3495,18 @@ function openClothingModal(clothingId = null) {
                 document.getElementById('clothingColors').value = item.colors ? item.colors.join('\n') : '';
                 document.getElementById('clothingAvailable').checked = item.available;
                 
+                // PDF laden, falls vorhanden
+                if (item.pdf_url) {
+                    document.getElementById('currentClothingPdfUrl').value = item.pdf_url;
+                    const pdfName = item.pdf_url.split('/').pop();
+                    document.getElementById('clothingPdfStatus').innerHTML = `✅ <a href="${item.pdf_url}" target="_blank">${pdfName}</a>`;
+                    document.getElementById('clothingPdfActions').style.display = 'block';
+                } else {
+                    document.getElementById('currentClothingPdfUrl').value = '';
+                    document.getElementById('clothingPdfStatus').textContent = '📄 Klicken um PDF hochzuladen';
+                    document.getElementById('clothingPdfActions').style.display = 'none';
+                }
+
                 // Bild laden, falls vorhanden
                 if (item.image_url) {
                     document.getElementById('currentClothingImageUrl').value = item.image_url;
@@ -3534,7 +3598,8 @@ async function saveClothingItem() {
         colors: colors,
         available: document.getElementById('clothingAvailable').checked,
         image_url: uploadedImageUrl || document.getElementById('currentClothingImageUrl').value || null,
-        image_file_path: document.getElementById('currentClothingImagePath').value || null
+        image_file_path: document.getElementById('currentClothingImagePath').value || null,
+        pdf_url: document.getElementById('currentClothingPdfUrl').value || null
     };
     
     try {
@@ -3546,6 +3611,12 @@ async function saveClothingItem() {
             const uploadResult = await uploadImageToAPI(currentImageFile, clothingId || 'new');
             clothingData.image_url = uploadResult.imageUrl;
             clothingData.image_file_path = uploadResult.filePath;
+        }
+
+        // PDF hochladen, falls vorhanden
+        if (currentPdfFile) {
+            const pdfResult = await uploadPdfToAPI(currentPdfFile, clothingId || 'new');
+            clothingData.pdf_url = pdfResult.pdfUrl;
         }
         
         if (clothingId) {
