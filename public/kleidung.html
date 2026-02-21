@@ -1688,6 +1688,10 @@ function openProductModal(productId) {
             pdfLinkContainer.style.display = 'none';
         }
     }
+
+    // Bild oder Emoji
+    const imageContainer = document.getElementById('modalProductImage');
+    if (product.image_url) {
         imageContainer.innerHTML = `<img src="${product.image_url}" alt="${product.name}" style="max-width: 200px; max-height: 200px; border-radius: 12px;">`;
     } else {
         imageContainer.innerHTML = `<div style="font-size: 5em;">${product.emoji || '👕'}</div>`;
