@@ -1251,12 +1251,20 @@ grid.innerHTML = clothingItems.map(item => {
              <div class="product-emoji">${item.emoji || '👕'}</div>
            </div>`;
     
+    const pdfButton = item.pdf_url
+        ? `<a href="${item.pdf_url}" target="_blank" onclick="event.stopPropagation()" 
+              style="display:inline-block; margin-top: 6px; font-size: 0.8em; color: #667eea; text-decoration: none;">
+              📄 Produktinfo
+           </a>`
+        : '';
+
     return `
         <div class="product-card" onclick="openProductModal(${item.id})">
             ${imageDisplay}
             <div class="product-info">
                 <div class="product-name">${item.name}</div>
                 <div class="product-price">${item.price.toFixed(2)} €</div>
+                ${pdfButton}
             </div>
         </div>
     `;
@@ -1670,9 +1678,16 @@ function openProductModal(productId) {
     document.getElementById('modalProductName').textContent = product.name;
     document.getElementById('modalProductPrice').textContent = `${product.price.toFixed(2)} €`;
     
-    // Bild oder Emoji
-    const imageContainer = document.getElementById('modalProductImage');
-    if (product.image_url) {
+    // PDF-Link
+    const pdfLinkContainer = document.getElementById('modalPdfLink');
+    if (pdfLinkContainer) {
+        if (product.pdf_url) {
+            pdfLinkContainer.innerHTML = `<a href="${product.pdf_url}" target="_blank" style="color: #667eea; font-size: 0.9em; text-decoration: none;">📄 Produktinfo als PDF öffnen</a>`;
+            pdfLinkContainer.style.display = 'block';
+        } else {
+            pdfLinkContainer.style.display = 'none';
+        }
+    }
         imageContainer.innerHTML = `<img src="${product.image_url}" alt="${product.name}" style="max-width: 200px; max-height: 200px; border-radius: 12px;">`;
     } else {
         imageContainer.innerHTML = `<div style="font-size: 5em;">${product.emoji || '👕'}</div>`;
@@ -1802,6 +1817,7 @@ function addToCartFromModal() {
         <span class="close" onclick="closeProductModal()">&times;</span>
         <h2 id="modalProductName"></h2>
         <div id="modalProductImage" style="text-align: center; margin: 20px 0;"></div>
+        <div id="modalPdfLink" style="text-align: center; margin-bottom: 15px; display: none;"></div>
         <div style="text-align: center; font-size: 1.5em; font-weight: bold; color: #667eea; margin-bottom: 20px;">
             <span id="modalProductPrice"></span>
         </div>
