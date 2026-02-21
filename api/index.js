@@ -1152,6 +1152,7 @@ if (path === '/clothing-billings' && method === 'POST') {
                     available: itemData.available !== false,
                     image_url: itemData.image_url || null,
                     image_file_path: itemData.image_file_path || null,
+                    pdf_url: itemData.pdf_url || null,
                     sort_order: itemData.sort_order || 0
                 }])
                 .select()
@@ -1179,6 +1180,7 @@ if (path === '/clothing-billings' && method === 'POST') {
             if (itemData.available !== undefined) updateData.available = itemData.available;
             if (itemData.image_url !== undefined) updateData.image_url = itemData.image_url;
             if (itemData.image_file_path !== undefined) updateData.image_file_path = itemData.image_file_path;
+            if (itemData.pdf_url !== undefined) updateData.pdf_url = itemData.pdf_url;
             if (itemData.sort_order !== undefined) updateData.sort_order = itemData.sort_order;
 
             const { data, error } = await supabase
