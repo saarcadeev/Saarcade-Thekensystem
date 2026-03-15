@@ -3748,50 +3748,33 @@ function renderOrders() {
         return;
     }
     
-    tbody.innerHTML = orders.map(order => {
-        const date = new Date(order.created_at);
-        const statusColors = {
-            'pending': '#f39c12',
-            'paid': '#27ae60',
-            'confirmed': '#3498db',
-            'shipped': '#9b59b6',
-            'completed': '#95a5a6',
-            'cancelled': '#e74c3c'
-        };
-        const statusTexts = {
-            'pending': '⏳ Ausstehend',
-            'paid': '✅ Bezahlt',
-            'confirmed': '📋 Bestätigt',
-            'shipped': '🚚 Versandt',
-            'completed': '✔️ Abgeschlossen',
-            'cancelled': '❌ Storniert'
-        };
-        const paymentIcons = {
-            'sepa': '💳 SEPA',
-            'transfer': '🏦 Überweisung',
-            'paypal': '💰 PayPal'
-        };
-        
-// Artikel formatieren
-const itemsList = order.items ? order.items.map(item => {
-    const details = [];
-    if (item.size) details.push(`Gr. ${item.size}`);
-    if (item.color) details.push(item.color);
-    const detailsText = details.length > 0 ? ` (${details.join(', ')})` : '';
-    return `${item.quantity}x ${item.name}${detailsText}`;
-}).join('<br>') : '-';
+    const paymentIcons = {
+        'sepa': '💳 SEPA',
+        'transfer': '🏦 Überweisung',
+        'paypal': '💰 PayPal'
+    };
 
-return `
-    <tr>
-        <td class="checkbox-cell">
-            <input type="checkbox" value="${order.id}" onchange="toggleRowSelection(this, 'orders')">
-        </td>
-        <td><code>#${order.id}</code></td>
-        <td style="font-size: 0.85em;">${date.toLocaleDateString('de-DE')} ${date.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'})}</td>
-        <td><strong>${order.member_name}</strong></td>
-        <td style="font-size: 0.85em; line-height: 1.6;">${itemsList}</td>
-        <td><strong>${order.total.toFixed(2)} €</strong></td>
-        <td>${paymentIcons[order.payment_method] || order.payment_method}</td>
+    const renderRow = (order, grayed = false) => {
+        const date = new Date(order.created_at);
+        const itemsList = order.items ? order.items.map(item => {
+            const details = [];
+            if (item.size) details.push(`Gr. ${item.size}`);
+            if (item.color) details.push(item.color);
+            const detailsText = details.length > 0 ? ` (${details.join(', ')})` : '';
+            return `${item.quantity}x ${item.name}${detailsText}`;
+        }).join('<br>') : '-';
+
+        return `
+            <tr style="${grayed ? 'opacity: 0.5;' : ''}">
+                <td class="checkbox-cell">
+                    <input type="checkbox" value="${order.id}" onchange="toggleRowSelection(this, 'orders')">
+                </td>
+                <td><code>#${order.id}</code></td>
+                <td style="font-size: 0.85em;">${date.toLocaleDateString('de-DE')} ${date.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'})}</td>
+                <td><strong>${order.member_name}</strong></td>
+                <td style="font-size: 0.85em; line-height: 1.6;">${itemsList}</td>
+                <td><strong>${order.total.toFixed(2)} €</strong></td>
+                <td>${paymentIcons[order.payment_method] || order.payment_method}</td>
                 <td style="text-align: center;">
                     ${order.status === 'paid' || order.status === 'shipped' || order.status === 'completed' ? '✅' : '❌'}
                 </td>
@@ -3800,7 +3783,21 @@ return `
                 </td>
             </tr>
         `;
-    }).join('');
+    };
+
+    const openOrders = orders.filter(o => o.status !== 'shipped' && o.status !== 'completed' && o.status !== 'cancelled');
+    const doneOrders = orders.filter(o => o.status === 'shipped' || o.status === 'completed' || o.status === 'cancelled');
+
+    let html = openOrders.map(o => renderRow(o, false)).join('');
+
+    if (doneOrders.length > 0) {
+        html += `<tr><td colspan="9" style="background: #f1f5f9; color: #64748b; font-size: 0.85em; padding: 8px 15px; font-weight: 600;">
+            ── Erledigte / Stornierte Bestellungen (${doneOrders.length}) ──
+        </td></tr>`;
+        html += doneOrders.map(o => renderRow(o, true)).join('');
+    }
+
+    tbody.innerHTML = html;
 }
 
 async function markSelectedOrdersAsPaid() {
