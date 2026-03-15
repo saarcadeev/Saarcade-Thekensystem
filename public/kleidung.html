@@ -820,7 +820,10 @@ body {
         <div class="main-content">
             <div class="left-column">
                 <!-- Alerts -->
-                <div id="alertContainer"></div>
+                <div id="<div id="alertContainer"></div>
+                <div style="background: #fef3cd; border: 1px solid #f6c23e; border-radius: 8px; padding: 12px 16px; margin-bottom: 15px; font-size: 0.95em;">
+                    📅 <strong>Bestellschluss: Samstag, 28. März 2025</strong> – Bestellungen danach können nicht mehr berücksichtigt werden.
+                </div>
 
                 <!-- Schritt 1: Mitgliedersuche -->
                 <div class="section">
@@ -1050,8 +1053,7 @@ function validatePin() {
         
         // SEPA-Status und PIN-Status anzeigen
         const pinStatus = '🔒 PIN gesetzt';
-        const sepaStatus = selectedMember.sepaActive ? '✅ SEPA-Mandat vorhanden' : '⚠️ Kein SEPA-Mandat';
-        let detailsText = `${sepaStatus} • ${pinStatus}`;
+        let detailsText = pinStatus;
         
         document.getElementById('selectedMemberDetails').textContent = detailsText;
         document.getElementById('selectedMember').classList.add('active');
