@@ -3824,6 +3824,8 @@ function exportOrdersToExcel() {
     }
 
     // Alle Artikel + Größen sammeln (nur aus aktiven Bestellungen)
+    const activeOrders = orders.filter(o => o.status !== 'cancelled' && o.status !== 'shipped' && o.status !== 'completed');
+
     const articleSizes = {};
     activeOrders.forEach(order => {
         if (!order.items) return;
@@ -3856,7 +3858,6 @@ function exportOrdersToExcel() {
     const headerRow2 = ['', ...columns.map(c => c.size)];
 
     // Datenzeilen
-    const activeOrders = orders.filter(o => o.status !== 'cancelled' && o.status !== 'shipped' && o.status !== 'completed');
     const dataRows = activeOrders.map(order => {
         const row = [order.member_name];
         // Artikel dieser Bestellung zusammenfassen
