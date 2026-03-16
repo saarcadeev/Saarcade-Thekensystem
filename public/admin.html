@@ -3823,9 +3823,9 @@ function exportOrdersToExcel() {
         return;
     }
 
-    // Alle Artikel + Größen sammeln
+    // Alle Artikel + Größen sammeln (nur aus aktiven Bestellungen)
     const articleSizes = {};
-    orders.forEach(order => {
+    activeOrders.forEach(order => {
         if (!order.items) return;
         order.items.forEach(item => {
             if (!articleSizes[item.name]) articleSizes[item.name] = new Set();
@@ -3834,7 +3834,7 @@ function exportOrdersToExcel() {
     });
 
     // Spalten aufbauen: Name + je Artikel/Größe eine Spalte
-    const sizeOrder = ['XS','S','M','L','XL','XXL','3XL'];
+    const sizeOrder = ['XS','S','M','L','XL','XXL','3XL','4XL','5XL'];
     const columns = []; // { article, size, label }
     Object.keys(articleSizes).sort().forEach(article => {
         const sizes = [...articleSizes[article]].sort((a, b) => {
