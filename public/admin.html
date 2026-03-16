@@ -740,6 +740,9 @@ body {
         }
         
     </style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
 </head>
 <body>
 
@@ -1702,6 +1705,9 @@ body {
             </button>
             <button class="btn btn-secondary" onclick="loadOrders()" id="loadOrdersBtn">
                 🔄 Neu laden
+            </button>
+            <button class="btn" onclick="exportOrdersToExcel()" style="background: #1d6f42; color: white;">
+                📊 Excel exportieren
             </button>
             <div class="selection-info" id="orderSelectionInfo">0 ausgewählt</div>
         </div>
@@ -3756,13 +3762,24 @@ function renderOrders() {
 
     const renderRow = (order, grayed = false) => {
         const date = new Date(order.created_at);
-        const itemsList = order.items ? order.items.map(item => {
-            const details = [];
-            if (item.size) details.push(`Gr. ${item.size}`);
-            if (item.color) details.push(item.color);
-            const detailsText = details.length > 0 ? ` (${details.join(', ')})` : '';
-            return `${item.quantity}x ${item.name}${detailsText}`;
-        }).join('<br>') : '-';
+        const itemsList = order.items ? (() => {
+            const merged = {};
+            order.items.forEach(item => {
+                const key = `${item.name}||${item.size || ''}||${item.color || ''}`;
+                if (merged[key]) {
+                    merged[key].quantity += item.quantity;
+                } else {
+                    merged[key] = { ...item };
+                }
+            });
+            return Object.values(merged).map(item => {
+                const details = [];
+                if (item.size) details.push(`Gr. ${item.size}`);
+                if (item.color) details.push(item.color);
+                const detailsText = details.length > 0 ? ` (${details.join(', ')})` : '';
+                return `${item.quantity}x ${item.name}${detailsText}`;
+            }).join('<br>');
+        })() : '-';
 
         return `
             <tr style="${grayed ? 'opacity: 0.5;' : ''}">
@@ -3800,6 +3817,76 @@ function renderOrders() {
     tbody.innerHTML = html;
 }
 
+function exportOrdersToExcel() {
+    if (orders.length === 0) {
+        showAlert('Keine Bestellungen zum Exportieren', 'error');
+        return;
+    }
+
+    // Alle Artikel + Größen sammeln
+    const articleSizes = {};
+    orders.forEach(order => {
+        if (!order.items) return;
+        order.items.forEach(item => {
+            if (!articleSizes[item.name]) articleSizes[item.name] = new Set();
+            if (item.size) articleSizes[item.name].add(item.size);
+        });
+    });
+
+    // Spalten aufbauen: Name + je Artikel/Größe eine Spalte
+    const sizeOrder = ['XS','S','M','L','XL','XXL','3XL'];
+    const columns = []; // { article, size, label }
+    Object.keys(articleSizes).sort().forEach(article => {
+        const sizes = [...articleSizes[article]].sort((a, b) => {
+            const ai = sizeOrder.indexOf(a), bi = sizeOrder.indexOf(b);
+            return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+        });
+        sizes.forEach(size => columns.push({ article, size, label: `${article} ${size}` }));
+    });
+
+    // Header-Zeilen (zweizeilig wie im Muster)
+    const headerRow1 = ['Name', ...Object.keys(articleSizes).sort().flatMap(article => {
+        const sizes = [...articleSizes[article]].sort((a, b) => {
+            const ai = sizeOrder.indexOf(a), bi = sizeOrder.indexOf(b);
+            return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+        });
+        return sizes.map((_, i) => i === 0 ? article : '');
+    })];
+
+    const headerRow2 = ['', ...columns.map(c => c.size)];
+
+    // Datenzeilen
+    const activeOrders = orders.filter(o => o.status !== 'cancelled');
+    const dataRows = activeOrders.map(order => {
+        const row = [order.member_name];
+        // Artikel dieser Bestellung zusammenfassen
+        const merged = {};
+        (order.items || []).forEach(item => {
+            const key = `${item.name}||${item.size || ''}`;
+            merged[key] = (merged[key] || 0) + item.quantity;
+        });
+        columns.forEach(col => {
+            const key = `${col.article}||${col.size}`;
+            row.push(merged[key] || '');
+        });
+        return row;
+    });
+
+    // Worksheet erstellen
+    const wsData = [headerRow1, headerRow2, ...dataRows];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // Spaltenbreiten
+    ws['!cols'] = [{ wch: 25 }, ...columns.map(() => ({ wch: 5 }))];
+
+    // Workbook erstellen und herunterladen
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Bestellungen');
+    const datum = new Date().toLocaleDateString('de-DE').replace(/\./g, '-');
+    XLSX.writeFile(wb, `Kleidungsbestellungen_${datum}.xlsx`);
+    showAlert('Excel-Datei wird heruntergeladen', 'success');
+}
+    
 async function markSelectedOrdersAsPaid() {
     if (selectedOrders.length === 0) {
         showAlert('Bitte mindestens eine Bestellung auswählen', 'error');
@@ -5115,13 +5202,24 @@ function renderClothingBillingOrders() {
     // Hole User-Daten für IBANs
     tbody.innerHTML = clothingBillingOrders.map(order => {
         const date = new Date(order.created_at);
-        const itemsList = order.items ? order.items.map(item => {
-            const details = [];
-            if (item.size) details.push(`Gr. ${item.size}`);
-            if (item.color) details.push(item.color);
-            const detailsText = details.length > 0 ? ` (${details.join(', ')})` : '';
-            return `${item.quantity}x ${item.name}${detailsText}`;
-        }).join('<br>') : '-';
+        const itemsList = order.items ? (() => {
+            const merged = {};
+            order.items.forEach(item => {
+                const key = `${item.name}||${item.size || ''}||${item.color || ''}`;
+                if (merged[key]) {
+                    merged[key].quantity += item.quantity;
+                } else {
+                    merged[key] = { ...item };
+                }
+            });
+            return Object.values(merged).map(item => {
+                const details = [];
+                if (item.size) details.push(`Gr. ${item.size}`);
+                if (item.color) details.push(item.color);
+                const detailsText = details.length > 0 ? ` (${details.join(', ')})` : '';
+                return `${item.quantity}x ${item.name}${detailsText}`;
+            }).join('<br>');
+        })() : '-';
 
         return `
             <tr>
