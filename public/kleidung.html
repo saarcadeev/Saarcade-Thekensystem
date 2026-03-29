@@ -1580,16 +1580,17 @@ try {
 
 // PayPal-Info
 if (orderResult.payment_method === 'paypal') {
-    const paypalAccount = settings.paypal_account || 'paypal@saarcade.de';
+    const paypalAccount = settings.paypal_account || 'saarcade';
+    const paypalAmount = orderResult.total.toFixed(2);
+    const paypalNote = encodeURIComponent(`Kleidung ${orderResult.member_name} #${orderResult.id}`);
+    const paypalLink = `https://www.paypal.com/paypalme/${paypalAccount}/${paypalAmount}EUR?note=${paypalNote}`;
     orderDetailsContainer.innerHTML += `
         <div style="margin-top: 20px; padding: 15px; background: #fef5e7; border-radius: 8px; text-align: left;">
             <strong>💰 PayPal</strong><br>
-            Verwende den QR-Code unten oder zahle direkt an:<br>
-            <strong>PayPal:</strong> ${paypalAccount}<br>
-            <br>
-            <strong>⚠️ Wichtig:</strong><br>
-            • Bitte als <strong>"Zahlungen an Freunde und Familie"</strong> zahlen<br>
-            • <strong>Verwendungszweck:</strong> Vereinskleidung ${orderResult.member_name} #${orderResult.id}
+            Scanne den QR-Code oder klicke den Link:<br>
+            <a href="${paypalLink}" target="_blank" style="color: #003087; word-break: break-all;">${paypalLink}</a><br><br>
+            <strong>Betrag:</strong> ${paypalAmount} €<br>
+            <strong>Verwendungszweck:</strong> Kleidung ${orderResult.member_name} #${orderResult.id}
         </div>
     `;
 }
@@ -1662,9 +1663,10 @@ EUR${amount}
 ${purpose}`;
                 
             } else if (orderResult.payment_method === 'paypal') {
-                // PayPal.Me Link (muss in Einstellungen konfiguriert werden)
                 const paypalAccount = settings.paypal_account || 'saarcade';
-                qrData = `https://paypal.me/${paypalAccount}/${orderResult.total.toFixed(2)}`;
+                const amount = orderResult.total.toFixed(2);
+                const note = encodeURIComponent(`Kleidung ${orderResult.member_name} #${orderResult.id}`);
+                qrData = `https://www.paypal.com/paypalme/${paypalAccount}/${amount}EUR?note=${note}`;
             }
 
             // Prüfe ob QRCode Library geladen ist
