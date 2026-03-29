@@ -933,18 +933,20 @@ body {
 
     <!-- Erfolgs-Modal -->
     <div class="modal" id="successModal">
-        <div class="modal-content" style="max-width: 700px;">
+        <div class="modal-content" style="max-width: 700px; text-align: center;">
             <h2>✅ Bestellung erfolgreich!</h2>
             
             <div class="order-details" id="orderDetailsContainer"></div>
             
-<div class="qr-code-container" id="qrCodeContainer" style="display: none;">
-    <p style="margin-bottom: 5px; margin-top: 5px; font-weight: 600; font-size: 0.9em;">QR-Code für die Zahlung:</p>
-    <div class="qr-code" id="qrCode"></div>
-</div>
+            <div class="qr-code-container" id="qrCodeContainer" style="display: none;">
+                <p style="margin-bottom: 5px; margin-top: 5px; font-weight: 600; font-size: 0.9em;">QR-Code für die Zahlung:</p>
+                <div class="qr-code" id="qrCode" style="display: flex; justify-content: center;"></div>
+            </div>
 
-            <button class="btn btn-primary" onclick="closeModal()" style="margin-top: 20px;">
-                🏠 Zurück zur Startseite
+            <div style="margin-top: 20px; font-size: 4em; font-weight: bold; color: #667eea; line-height: 1;" id="modalCountdown">5</div>
+            <p style="color: #888; font-size: 0.85em; margin-top: 5px;">Seite wird automatisch zurückgesetzt</p>
+            <button class="btn btn-primary" onclick="closeModal()" style="margin-top: 15px;">
+                🏠 Jetzt zurücksetzen
             </button>
         </div>
     </div>
@@ -1513,6 +1515,7 @@ try {
             const modal = document.getElementById('successModal');
             const orderDetailsContainer = document.getElementById('orderDetailsContainer');
             const qrCodeContainer = document.getElementById('qrCodeContainer');
+            document.getElementById('qrCode').innerHTML = '';
 
             // Zahlungsart-Namen
             const paymentNames = {
@@ -1600,6 +1603,20 @@ if (orderResult.payment_method === 'paypal') {
             }
 
             modal.classList.add('active');
+
+            let secondsLeft = 5;
+            const countdownEl = document.getElementById('modalCountdown');
+            if (countdownEl) countdownEl.textContent = secondsLeft;
+
+            clearInterval(window.modalCountdownTimer);
+            window.modalCountdownTimer = setInterval(() => {
+                secondsLeft--;
+                if (countdownEl) countdownEl.textContent = secondsLeft;
+                if (secondsLeft <= 0) {
+                    clearInterval(window.modalCountdownTimer);
+                    closeModal();
+                }
+            }, 1000);
         }
 
         function formatIBAN(iban) {
