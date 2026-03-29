@@ -944,9 +944,9 @@ body {
             </div>
 
             <div style="margin-top: 20px; font-size: 4em; font-weight: bold; color: #667eea; line-height: 1;" id="modalCountdown">5</div>
-            <p style="color: #888; font-size: 0.85em; margin-top: 5px;">Seite wird automatisch zurückgesetzt</p>
+            <p id="modalCountdownText" style="color: #888; font-size: 0.85em; margin-top: 5px;">Seite wird automatisch zurückgesetzt</p>
             <button class="btn btn-primary" onclick="closeModal()" style="margin-top: 15px;">
-                🏠 Jetzt zurücksetzen
+                ✖️ Fenster schließen
             </button>
         </div>
     </div>
@@ -1602,21 +1602,30 @@ if (orderResult.payment_method === 'paypal') {
                 qrCodeContainer.style.display = 'none';
             }
 
-            modal.classList.add('active');
+           modal.classList.add('active');
 
-            let secondsLeft = 5;
             const countdownEl = document.getElementById('modalCountdown');
-            if (countdownEl) countdownEl.textContent = secondsLeft;
+            const countdownText = document.getElementById('modalCountdownText');
 
-            clearInterval(window.modalCountdownTimer);
-            window.modalCountdownTimer = setInterval(() => {
-                secondsLeft--;
-                if (countdownEl) countdownEl.textContent = secondsLeft;
-                if (secondsLeft <= 0) {
-                    clearInterval(window.modalCountdownTimer);
-                    closeModal();
-                }
-            }, 1000);
+            if (orderResult.payment_method === 'sepa') {
+                // Bei SEPA: Countdown, da keine weiteren Infos nötig
+                let secondsLeft = 5;
+                if (countdownEl) { countdownEl.textContent = secondsLeft; countdownEl.style.display = 'block'; }
+                if (countdownText) countdownText.style.display = 'block';
+                clearInterval(window.modalCountdownTimer);
+                window.modalCountdownTimer = setInterval(() => {
+                    secondsLeft--;
+                    if (countdownEl) countdownEl.textContent = secondsLeft;
+                    if (secondsLeft <= 0) {
+                        clearInterval(window.modalCountdownTimer);
+                        closeModal();
+                    }
+                }, 1000);
+            } else {
+                // Bei Überweisung/PayPal: kein Auto-Close, Infos müssen gelesen werden
+                if (countdownEl) countdownEl.style.display = 'none';
+                if (countdownText) countdownText.style.display = 'none';
+            }
         }
 
         function formatIBAN(iban) {
