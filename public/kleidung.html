@@ -1580,7 +1580,7 @@ try {
 
 // PayPal-Info
 if (orderResult.payment_method === 'paypal') {
-    const paypalAccount = settings.paypal_account || 'saarcade@example.com';
+    const paypalAccount = settings.paypal_account || 'paypal@saarcade.de';
     orderDetailsContainer.innerHTML += `
         <div style="margin-top: 20px; padding: 15px; background: #fef5e7; border-radius: 8px; text-align: left;">
             <strong>💰 PayPal</strong><br>
@@ -1588,8 +1588,8 @@ if (orderResult.payment_method === 'paypal') {
             <strong>PayPal:</strong> ${paypalAccount}<br>
             <br>
             <strong>⚠️ Wichtig:</strong><br>
-            • Bitte als <strong>"Geld an Freunde senden"</strong> zahlen<br>
-            • <strong>Verwendungszweck:</strong> Kleidung ${orderResult.member_name} #${orderResult.id}
+            • Bitte als <strong>"Zahlungen an Freunde und Familie"</strong> zahlen<br>
+            • <strong>Verwendungszweck:</strong> Vereinskleidung ${orderResult.member_name} #${orderResult.id}
         </div>
     `;
 }
