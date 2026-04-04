@@ -1452,6 +1452,9 @@ body {
                     <button class="btn btn-secondary" onclick="loadBillingHistory()">
                         📜 Abrechnungshistorie anzeigen
                     </button>
+                    <button class="btn btn-success" onclick="openMonthlyExportModal()" style="background: #1d6f42;">
+                        📅 Monatsexport XLSX
+                    </button>
                 </div>
 
                 <div id="openBalancesSection" style="margin-bottom: 30px;">
@@ -1513,6 +1516,50 @@ body {
                 </table>
             </div>
         </div>
+
+<!-- Modal: Monatlicher XLSX-Export -->
+<div id="monthlyExportModal" class="modal" style="display:none;">
+    <div class="modal-content" style="max-width: 420px;">
+        <div class="modal-header">
+            <h3>📅 Monatlicher Getränke-Export</h3>
+            <button class="modal-close" onclick="closeMonthlyExportModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <p style="margin-bottom: 20px; color: #666;">
+                Exportiert alle Getränke-Transaktionen der Mitglieder (Rolle: Mitglied) für den gewählten Monat als Excel-Datei.
+            </p>
+            <div style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 130px;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 600;">Monat</label>
+                    <select id="monthlyExportMonth" class="form-control">
+                        <option value="1">Januar</option>
+                        <option value="2">Februar</option>
+                        <option value="3">März</option>
+                        <option value="4">April</option>
+                        <option value="5">Mai</option>
+                        <option value="6">Juni</option>
+                        <option value="7">Juli</option>
+                        <option value="8">August</option>
+                        <option value="9">September</option>
+                        <option value="10">Oktober</option>
+                        <option value="11">November</option>
+                        <option value="12">Dezember</option>
+                    </select>
+                </div>
+                <div style="flex: 1; min-width: 110px;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 600;">Jahr</label>
+                    <input type="number" id="monthlyExportYear" class="form-control" min="2020" max="2099" style="width: 100%;">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 15px 20px; border-top: 1px solid #e2e8f0;">
+            <button class="btn btn-secondary" onclick="closeMonthlyExportModal()">Abbrechen</button>
+            <button class="btn btn-success" onclick="exportMonthlyXlsx()" style="background: #1d6f42;">
+                📥 Exportieren
+            </button>
+        </div>
+    </div>
+</div>
 
 <!-- Kleidungsabrechnung Tab -->
 <div id="clothing-billing" class="page-content" style="display: none;">
@@ -6072,6 +6119,131 @@ return [
     const fileName = `${firstName}_${lastName}_${periodLabel}.csv`.replace(/[^a-zA-Z0-9_-]/g, '_');
     downloadFile(csv, fileName, 'text/csv');
     showAlert(`CSV für ${periodLabel} exportiert`, 'success');
+}
+
+// ============ MONATLICHER XLSX-EXPORT ============
+
+function openMonthlyExportModal() {
+    const now = new Date();
+    document.getElementById('monthlyExportMonth').value = now.getMonth() + 1;
+    document.getElementById('monthlyExportYear').value = now.getFullYear();
+    document.getElementById('monthlyExportModal').style.display = 'flex';
+}
+
+function closeMonthlyExportModal() {
+    document.getElementById('monthlyExportModal').style.display = 'none';
+}
+
+async function exportMonthlyXlsx() {
+    const month = parseInt(document.getElementById('monthlyExportMonth').value);
+    const year = parseInt(document.getElementById('monthlyExportYear').value);
+
+    if (!month || !year || year < 2020 || year > 2099) {
+        showAlert('Bitte gültigen Monat und Jahr eingeben.', 'error');
+        return;
+    }
+
+    showLoading(true);
+    try {
+        // Alle Transaktionen holen
+        const txResponse = await apiCall('/api/transactions?limit=10000');
+        const allTx = txResponse.transactions || txResponse;
+
+        // Alle Nutzer holen (für Rollen-Filter)
+        const allUsers = await apiCall('/api/users');
+        const memberIds = new Set(
+            allUsers.filter(u => u.role === 'member').map(u => u.id)
+        );
+
+        // Nach Monat und Mitglieder-Rolle filtern
+        const filtered = allTx.filter(t => {
+            const d = new Date(t.created_at);
+            return d.getFullYear() === year &&
+                   (d.getMonth() + 1) === month &&
+                   memberIds.has(t.user_id);
+        });
+
+        if (filtered.length === 0) {
+            showAlert(`Keine Transaktionen von Mitgliedern im gewählten Monat gefunden.`, 'info');
+            showLoading(false);
+            return;
+        }
+
+        // Monatsname für Dateiname und Header
+        const monthNames = ['Januar','Februar','März','April','Mai','Juni',
+                            'Juli','August','September','Oktober','November','Dezember'];
+        const monthLabel = `${monthNames[month - 1]} ${year}`;
+
+        // Header-Zeile
+        const header = ['Mitglied', 'Datum', 'Uhrzeit', 'Produkt', 'Menge', 'Einzelpreis (€)', 'Gesamt (€)', 'Zahlungsart', 'Abgerechnet'];
+
+        // Sortierung: Nachname, Vorname, dann Datum
+        filtered.sort((a, b) => {
+            const nameA = (a.user_name || '').toLowerCase();
+            const nameB = (b.user_name || '').toLowerCase();
+            if (nameA < nameB) return -1;
+            if (nameA > nameB) return 1;
+            return new Date(a.created_at) - new Date(b.created_at);
+        });
+
+        const rows = filtered.map(t => {
+            const d = new Date(t.created_at);
+            const paymentLabel = {
+                balance: 'Saldo',
+                cash: 'Bar',
+                voucher_card: 'Gutscheinkarte',
+                voucher_refund: 'Gutscheinrückgabe'
+            }[t.payment_method] || t.payment_method;
+
+            return [
+                t.user_name || '',
+                d.toLocaleDateString('de-DE'),
+                d.toLocaleTimeString('de-DE'),
+                t.product_name || '',
+                t.quantity,
+                parseFloat(t.price.toFixed(2)),
+                parseFloat(t.total.toFixed(2)),
+                paymentLabel,
+                t.billing_id ? 'Ja' : 'Nein'
+            ];
+        });
+
+        // Summenzeile
+        const totalSum = filtered.reduce((s, t) => s + t.total, 0);
+        const sumRow = ['', '', '', 'GESAMT', '', '', parseFloat(totalSum.toFixed(2)), '', ''];
+
+        // Workbook erstellen
+        const wb = XLSX.utils.book_new();
+        const wsData = [header, ...rows, [], sumRow];
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+        // Spaltenbreiten
+        ws['!cols'] = [
+            { wch: 24 }, // Mitglied
+            { wch: 12 }, // Datum
+            { wch: 10 }, // Uhrzeit
+            { wch: 22 }, // Produkt
+            { wch: 8  }, // Menge
+            { wch: 16 }, // Einzelpreis
+            { wch: 13 }, // Gesamt
+            { wch: 16 }, // Zahlungsart
+            { wch: 12 }, // Abgerechnet
+        ];
+
+        XLSX.utils.book_append_sheet(wb, ws, monthLabel.replace(' ', '_'));
+
+        const fileName = `Getraenke_Mitglieder_${monthNames[month - 1]}_${year}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+
+        closeMonthlyExportModal();
+        showAlert(`✅ Export erfolgreich: ${filtered.length} Transaktionen für ${monthLabel}`, 'success');
+
+    } catch (error) {
+        console.error('Fehler beim Monatsexport:', error);
+        showAlert('Fehler beim Monatsexport: ' + error.message, 'error');
+    } finally {
+        showLoading(false);
+    }
 }
 
 // ============ STOCK MOVEMENT FUNCTIONS ============
