@@ -997,13 +997,15 @@ if (path === '/transactions' && method === 'GET') {
                 return res.status(400).json({ error: 'UngÃ¼ltige Bestell-ID' });
             }
 
+            // Nur die Felder updaten, die tatsächlich mitgesendet wurden
+            const updateFields = { updated_at: new Date().toISOString() };
+            if (updateData.status !== undefined) updateFields.status = updateData.status;
+            if (updateData.notes !== undefined) updateFields.notes = updateData.notes;
+            if (updateData.payment_method !== undefined) updateFields.payment_method = updateData.payment_method;
+
             const { data, error } = await supabase
                 .from('clothing_orders')
-                .update({
-                    status: updateData.status,
-                    notes: updateData.notes,
-                    updated_at: new Date().toISOString()
-                })
+                .update(updateFields)
                 .eq('id', orderId)
                 .select()
                 .single();
