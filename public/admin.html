@@ -1744,6 +1744,9 @@ body {
             <button class="btn" onclick="markSelectedOrdersAsShipped()" id="markShippedBtn" disabled style="background: #9b59b6; color: white;">
                 🚚 Als ausgeliefert markieren
             </button>
+            <button class="btn" onclick="editSelectedOrder()" id="editOrderBtn" disabled style="background: #e67e22; color: white;">
+                ✏️ Bearbeiten
+            </button>
             <button class="btn btn-warning" onclick="viewOrderDetails()" id="viewOrderDetailsBtn" disabled>
                 👁️ Details anzeigen
             </button>
@@ -2744,6 +2747,7 @@ function updateSelectionInfo(type) {
 
         document.getElementById('markPaidBtn').disabled = count === 0;
         document.getElementById('markShippedBtn').disabled = count === 0;
+        document.getElementById('editOrderBtn').disabled = count !== 1;
         document.getElementById('viewOrderDetailsBtn').disabled = count !== 1;
         document.getElementById('deleteOrderBtn').disabled = count === 0;
     }
@@ -3828,8 +3832,10 @@ function renderOrders() {
             }).join('<br>');
         })() : '-';
 
+        // Zeilenhintergrund: Orange-Ton wenn ausgeliefert aber noch nicht bezahlt
+        const rowBg = (!grayed && order.status === 'shipped') ? 'background: #fff3cd;' : '';
         return `
-            <tr style="${grayed ? 'opacity: 0.5;' : ''}">
+            <tr style="${grayed ? 'opacity: 0.5;' : rowBg}">
                 <td class="checkbox-cell">
                     <input type="checkbox" value="${order.id}" onchange="toggleRowSelection(this, 'orders')">
                 </td>
@@ -3840,7 +3846,7 @@ function renderOrders() {
                 <td><strong>${order.total.toFixed(2)} €</strong></td>
                 <td>${paymentIcons[order.payment_method] || order.payment_method}</td>
                 <td style="text-align: center;">
-                    ${order.status === 'paid' || order.status === 'shipped' || order.status === 'completed' ? '✅' : '❌'}
+                    ${order.status === 'paid' || order.status === 'completed' ? '✅' : '❌'}
                 </td>
                 <td style="text-align: center;">
                     ${order.status === 'shipped' || order.status === 'completed' ? '✅' : '❌'}
@@ -3849,8 +3855,9 @@ function renderOrders() {
         `;
     };
 
-    const openOrders = orders.filter(o => o.status !== 'shipped' && o.status !== 'completed' && o.status !== 'cancelled');
-    const doneOrders = orders.filter(o => o.status === 'shipped' || o.status === 'completed' || o.status === 'cancelled');
+    // 'shipped' = ausgeliefert aber noch nicht bezahlt → bleibt in den offenen Bestellungen
+    const openOrders = orders.filter(o => o.status !== 'completed' && o.status !== 'cancelled');
+    const doneOrders = orders.filter(o => o.status === 'completed' || o.status === 'cancelled');
 
     let html = openOrders.map(o => renderRow(o, false)).join('');
 
@@ -3952,18 +3959,21 @@ async function markSelectedOrdersAsPaid() {
     
     try {
         for (const orderId of selectedOrders) {
+            const order = orders.find(o => o.id === orderId);
+            // Wenn bereits ausgeliefert → direkt auf completed setzen
+            const newStatus = (order && order.status === 'shipped') ? 'completed' : 'paid';
             await apiCall(`/api/clothing-orders/${orderId}`, {
                 method: 'PUT',
                 body: JSON.stringify({
-                    status: 'paid',
-                    notes: 'Als bezahlt markiert'
+                    status: newStatus,
+                    notes: newStatus === 'completed' ? 'Als bezahlt markiert (war bereits ausgeliefert → erledigt)' : 'Als bezahlt markiert'
                 })
             });
         }
         
         showAlert(`${selectedOrders.length} Bestellung(en) als bezahlt markiert`, 'success');
         loadOrders();
-        loadPendingClothingOrders(); // Dashboard aktualisieren
+        loadPendingClothingOrders();
         
     } catch (error) {
         showAlert('Fehler beim Aktualisieren der Bestellungen', 'error');
@@ -3974,17 +3984,6 @@ async function markSelectedOrdersAsPaid() {
 async function markSelectedOrdersAsShipped() {
     if (selectedOrders.length === 0) {
         showAlert('Bitte mindestens eine Bestellung auswählen', 'error');
-        return;
-    }
-    
-    // Prüfe, ob alle ausgewählten Bestellungen bereits bezahlt sind
-    const unpaidOrders = selectedOrders.filter(id => {
-        const order = orders.find(o => o.id === id);
-        return order && order.status === 'pending';
-    });
-    
-    if (unpaidOrders.length > 0) {
-        showAlert('⚠️ Einige Bestellungen sind noch nicht als bezahlt markiert!', 'error');
         return;
     }
     
@@ -3999,18 +3998,21 @@ async function markSelectedOrdersAsShipped() {
     
     try {
         for (const orderId of selectedOrders) {
+            const order = orders.find(o => o.id === orderId);
+            // Wenn bereits bezahlt → direkt auf completed setzen
+            const newStatus = (order && order.status === 'paid') ? 'completed' : 'shipped';
             await apiCall(`/api/clothing-orders/${orderId}`, {
                 method: 'PUT',
                 body: JSON.stringify({
-                    status: 'shipped',
-                    notes: 'Als ausgeliefert markiert'
+                    status: newStatus,
+                    notes: newStatus === 'completed' ? 'Als ausgeliefert markiert (war bereits bezahlt → erledigt)' : 'Als ausgeliefert markiert (Zahlung noch ausstehend)'
                 })
             });
         }
         
         showAlert(`${selectedOrders.length} Bestellung(en) als ausgeliefert markiert`, 'success');
         loadOrders();
-        loadPendingClothingOrders(); // Dashboard aktualisieren
+        loadPendingClothingOrders();
         
     } catch (error) {
         showAlert('Fehler beim Aktualisieren der Bestellungen', 'error');
@@ -4099,6 +4101,90 @@ function viewOrderDetails() {
     document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
 
+function editSelectedOrder() {
+    if (selectedOrders.length !== 1) {
+        showAlert('Bitte genau eine Bestellung auswählen', 'error');
+        return;
+    }
+    
+    const orderId = selectedOrders[0];
+    const order = orders.find(o => o.id === orderId);
+    
+    if (!order) {
+        showAlert('Bestellung nicht gefunden', 'error');
+        return;
+    }
+    
+    const paymentOptions = [
+        { value: 'sepa', label: '💳 SEPA-Lastschrift' },
+        { value: 'transfer', label: '🏦 Banküberweisung' },
+        { value: 'paypal', label: '💰 PayPal' }
+    ];
+    
+    const paymentSelect = paymentOptions.map(opt =>
+        `<option value="${opt.value}" ${order.payment_method === opt.value ? 'selected' : ''}>${opt.label}</option>`
+    ).join('');
+    
+    const modalHtml = `
+        <div id="editOrderModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000;" onclick="if(event.target===this)this.remove()">
+            <div style="background: white; padding: 30px; border-radius: 12px; max-width: 500px; width: 90%;" onclick="event.stopPropagation()">
+                <h2 style="margin-top: 0; color: #e67e22;">✏️ Bestellung #${order.id} bearbeiten</h2>
+                
+                <div style="background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9em; color: #555;">
+                    <strong>${order.member_name}</strong> · ${order.total.toFixed(2)} € · ${order.items.length} Artikel
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 6px;">Zahlungsart</label>
+                    <select id="editPaymentMethod" style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 1em;">
+                        ${paymentSelect}
+                    </select>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 6px;">Notizen</label>
+                    <textarea id="editOrderNotes" rows="3" style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.95em; resize: vertical;">${order.notes || ''}</textarea>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button onclick="document.getElementById('editOrderModal').remove()" style="flex: 1; padding: 12px; background: #e2e8f0; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                        Abbrechen
+                    </button>
+                    <button onclick="saveOrderEdit(${order.id})" style="flex: 2; padding: 12px; background: #e67e22; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 1em;">
+                        💾 Speichern
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+async function saveOrderEdit(orderId) {
+    const paymentMethod = document.getElementById('editPaymentMethod').value;
+    const notes = document.getElementById('editOrderNotes').value.trim();
+    
+    try {
+        await apiCall(`/api/clothing-orders/${orderId}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                payment_method: paymentMethod,
+                notes: notes || null
+            })
+        });
+        
+        document.getElementById('editOrderModal').remove();
+        showAlert('✅ Bestellung erfolgreich gespeichert', 'success');
+        loadOrders();
+        loadPendingClothingOrders();
+        
+    } catch (error) {
+        showAlert('Fehler beim Speichern: ' + error.message, 'error');
+        console.error('Error:', error);
+    }
+}
+    
 async function deleteSelectedOrders() {
     if (selectedOrders.length === 0) {
         showAlert('Bitte mindestens eine Bestellung auswählen', 'error');
