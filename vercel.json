@@ -37,6 +37,10 @@
       "dest": "/public/kleidung.html"
     },
     {
+      "src": "/kleidung-verwaltung",
+      "dest": "/public/kleidung-verwaltung.html"
+    },
+    {
       "src": "/(.*)",
       "dest": "/public/$1"
     }
