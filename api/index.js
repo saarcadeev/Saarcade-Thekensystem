@@ -1002,6 +1002,7 @@ if (path === '/transactions' && method === 'GET') {
             if (updateData.status !== undefined) updateFields.status = updateData.status;
             if (updateData.notes !== undefined) updateFields.notes = updateData.notes;
             if (updateData.payment_method !== undefined) updateFields.payment_method = updateData.payment_method;
+            if (updateData.items !== undefined) updateFields.items = updateData.items;
 
             const { data, error } = await supabase
                 .from('clothing_orders')
