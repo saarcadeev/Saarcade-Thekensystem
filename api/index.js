@@ -1660,6 +1660,63 @@ if (pathParts[0] === 'users' && pathParts[1] && method === 'GET') {
             }
         }
         
+        // ============ FREE SHIRTS ============
+        // GET /free-shirts - Alle Einträge
+        if (path === '/free-shirts' && method === 'GET') {
+            const { data, error } = await supabase
+                .from('free_shirts')
+                .select('*')
+                .order('created_at', { ascending: false });
+            if (error) throw error;
+            return res.status(200).json(data || []);
+        }
+
+        // POST /free-shirts - Neuer Eintrag
+        if (path === '/free-shirts' && method === 'POST') {
+            const { first_name, last_name, size, color, notes } = req.body;
+            if (!first_name || !last_name) {
+                return res.status(400).json({ error: 'Vorname und Nachname erforderlich' });
+            }
+            const { data, error } = await supabase
+                .from('free_shirts')
+                .insert([{ first_name, last_name, size: size || null, color: color || null, notes: notes || null }])
+                .select()
+                .single();
+            if (error) throw error;
+            return res.status(201).json(data);
+        }
+
+        // PUT /free-shirts/{id} - Eintrag aktualisieren (z.B. ausgeliefert)
+        if (pathParts[0] === 'free-shirts' && pathParts[1] && method === 'PUT') {
+            const shirtId = parseInt(pathParts[1]);
+            if (isNaN(shirtId)) return res.status(400).json({ error: 'Ungültige ID' });
+            const updateData = req.body;
+            const fields = { updated_at: new Date().toISOString() };
+            if (updateData.delivered !== undefined)    fields.delivered    = updateData.delivered;
+            if (updateData.delivered_at !== undefined) fields.delivered_at = updateData.delivered_at;
+            if (updateData.notes !== undefined)        fields.notes        = updateData.notes;
+            const { data, error } = await supabase
+                .from('free_shirts')
+                .update(fields)
+                .eq('id', shirtId)
+                .select()
+                .single();
+            if (error) throw error;
+            return res.status(200).json(data);
+        }
+
+        // DELETE /free-shirts/{id} - Eintrag löschen
+        if (pathParts[0] === 'free-shirts' && pathParts[1] && method === 'DELETE') {
+            const shirtId = parseInt(pathParts[1]);
+            if (isNaN(shirtId)) return res.status(400).json({ error: 'Ungültige ID' });
+            const { error } = await supabase
+                .from('free_shirts')
+                .delete()
+                .eq('id', shirtId);
+            if (error) throw error;
+            return res.status(200).json({ message: 'Eintrag gelöscht' });
+        }
+
         // ============ 404 - ENDPUNKT NICHT GEFUNDEN ============
         return res.status(404).json({ 
             error: 'Endpunkt nicht gefunden',
