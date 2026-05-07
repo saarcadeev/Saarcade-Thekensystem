@@ -258,6 +258,51 @@
         .btn-deliver:hover { opacity: 0.85; }
         .btn-deliver:disabled { opacity: 0.4; cursor: not-allowed; }
 
+        .btn-edit {
+            padding: 7px 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: opacity 0.2s;
+        }
+        .btn-edit:hover { opacity: 0.85; }
+
+        /* ===== EDIT MODAL ===== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 8000;
+        }
+        .modal-box {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            width: 420px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .modal-box h3 { color: #2d3748; margin-bottom: 20px; font-size: 1.2em; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-cancel {
+            padding: 10px 20px;
+            background: #e2e8f0;
+            color: #4a5568;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 600;
+            flex: 1;
+        }
+        .btn-cancel:hover { background: #cbd5e0; }
         .btn-delete {
             padding: 7px 12px;
             background: #e53e3e;
@@ -333,12 +378,19 @@
 
         /* ===== ITEMS DISPLAY ===== */
         .items-list {
-            font-size: 0.85em;
-            line-height: 1.6;
+            font-size: 1em;
+            line-height: 1.8;
         }
 
-        .items-list .item-line { color: #2d3748; }
-        .items-list .item-detail { color: #718096; }
+        .items-list .item-line {
+            color: #2d3748;
+            font-weight: 600;
+            font-size: 1.05em;
+        }
+        .items-list .item-detail {
+            color: #4a5568;
+            font-size: 0.95em;
+        }
 
         /* ===== EMPTY STATE ===== */
         .empty-state {
@@ -509,6 +561,19 @@
     </div>
 </div>
 
+<!-- EDIT ORDER MODAL -->
+<div class="modal-overlay" id="editOrderModal" style="display:none;">
+    <div class="modal-box" style="max-width:500px; width:95%;">
+        <h3>✏️ Bestellung ändern</h3>
+        <p style="color:#718096; font-size:0.88em; margin-bottom:16px;">Größe und Farbe der Artikel anpassen</p>
+        <div id="editOrderItems"></div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeEditOrder()">Abbrechen</button>
+            <button class="btn-primary" onclick="saveEditOrder()" style="flex:2;">💾 Speichern</button>
+        </div>
+    </div>
+</div>
+
 <!-- ALERT -->
 <div class="alert" id="globalAlert"></div>
 
@@ -666,19 +731,18 @@ function renderOrders() {
         const badgeHtml = statusBadge(o.status);
         const canDeliver = o.status !== 'completed' && o.status !== 'cancelled';
         const actionHtml = canDeliver
-            ? `<button class="btn-deliver" onclick="markOrderDelivered(${o.id})">✓ Ausgeliefert</button>`
-            : (o.status === 'completed' ? '<span style="color:#15803d;font-size:0.85em;">✓ Erledigt</span>' : '<span style="color:#999;font-size:0.85em;">Storniert</span>');
-
-        const total = typeof o.total === 'number' ? o.total.toFixed(2) + ' €' : '–';
-        const paymentLabels = { sepa: '🏦 SEPA', transfer: '💳 Überweisung', paypal: '💰 PayPal', bar: '💵 Bar' };
-        const payLabel = paymentLabels[o.payment_method] || o.payment_method || '–';
+            ? `<div style="display:flex;gap:6px;flex-wrap:wrap;">
+                 <button class="btn-deliver" onclick="markOrderDelivered(${o.id})">✓ Ausgeliefert</button>
+                 <button class="btn-edit" onclick="openEditOrder(${o.id})">✏️ Ändern</button>
+               </div>`
+            : (o.status === 'completed'
+                ? '<span style="color:#15803d;font-size:0.85em;">✓ Erledigt</span>'
+                : '<span style="color:#999;font-size:0.85em;">Storniert</span>');
 
         return `<tr class="${o.status === 'completed' ? 'delivered' : ''}">
             <td style="white-space:nowrap;">${date}</td>
             <td><strong>${escHtml(o.member_name || '–')}</strong></td>
             <td><div class="items-list">${itemsHtml}</div></td>
-            <td style="white-space:nowrap;">${payLabel}</td>
-            <td><strong>${total}</strong></td>
             <td>${badgeHtml}</td>
             <td>${actionHtml}</td>
         </tr>`;
@@ -691,8 +755,6 @@ function renderOrders() {
                     <th>Datum</th>
                     <th>Mitglied</th>
                     <th>Artikel</th>
-                    <th>Zahlung</th>
-                    <th>Summe</th>
                     <th>Status</th>
                     <th>Aktion</th>
                 </tr>
@@ -740,6 +802,72 @@ async function markOrderDelivered(id) {
     }
 }
 
+// ===== EDIT ORDER MODAL =====
+let editOrderId = null;
+
+function openEditOrder(id) {
+    const order = allOrders.find(o => o.id === id);
+    if (!order) return;
+    editOrderId = id;
+
+    const items = Array.isArray(order.items) ? order.items : [];
+    const SIZES = ['XS','S','M','L','XL','XXL','3XL'];
+
+    const itemsHtml = items.map((item, idx) => `
+        <div style="background:#f7fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-bottom:10px;">
+            <div style="font-weight:600; margin-bottom:8px;">👕 ${escHtml(item.name || item.product_name || 'Artikel ' + (idx+1))}</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div>
+                    <label style="font-size:0.82em; font-weight:600; color:#4a5568; display:block; margin-bottom:4px;">Größe</label>
+                    <select id="edit-size-${idx}" style="width:100%; padding:8px; border:2px solid #e2e8f0; border-radius:6px; font-size:0.95em;">
+                        <option value="">– wählen –</option>
+                        ${SIZES.map(s => `<option value="${s}" ${item.size === s ? 'selected' : ''}>${s}</option>`).join('')}
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size:0.82em; font-weight:600; color:#4a5568; display:block; margin-bottom:4px;">Farbe</label>
+                    <input type="text" id="edit-color-${idx}" value="${escHtml(item.color || '')}"
+                        style="width:100%; padding:8px; border:2px solid #e2e8f0; border-radius:6px; font-size:0.95em;">
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+    document.getElementById('editOrderItems').innerHTML = itemsHtml ||
+        '<p style="color:#999;">Keine Artikel in dieser Bestellung.</p>';
+    document.getElementById('editOrderModal').style.display = 'flex';
+}
+
+function closeEditOrder() {
+    document.getElementById('editOrderModal').style.display = 'none';
+    editOrderId = null;
+}
+
+async function saveEditOrder() {
+    const order = allOrders.find(o => o.id === editOrderId);
+    if (!order) return;
+
+    const items = Array.isArray(order.items) ? order.items : [];
+    const updatedItems = items.map((item, idx) => ({
+        ...item,
+        size:  document.getElementById('edit-size-' + idx)?.value  || item.size,
+        color: document.getElementById('edit-color-' + idx)?.value || item.color,
+    }));
+
+    try {
+        await apiCall('/clothing-orders/' + editOrderId, {
+            method: 'PUT',
+            body: JSON.stringify({ items: updatedItems })
+        });
+        order.items = updatedItems;
+        closeEditOrder();
+        renderOrders();
+        showAlert('✓ Bestellung aktualisiert', 'success');
+    } catch (e) {
+        showAlert('❌ Fehler: ' + e.message, 'error');
+    }
+}
+    
 // ===== FREE SHIRTS =====
 async function loadFreeShirts() {
     document.getElementById('freeShirtsContent').innerHTML = '<div class="loading">⏳ Lade Liste…</div>';
