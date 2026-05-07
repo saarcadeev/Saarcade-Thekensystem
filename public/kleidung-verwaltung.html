@@ -329,6 +329,38 @@
         }
         .btn-primary:hover { opacity: 0.9; }
 
+/* ===== MEMBER AUTOCOMPLETE ===== */
+        .member-search-wrap {
+            position: relative;
+        }
+
+        .member-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #667eea;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+        }
+
+        .member-dropdown.active { display: block; }
+
+        .member-option {
+            padding: 9px 12px;
+            cursor: pointer;
+            font-size: 0.9em;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.15s;
+        }
+        .member-option:hover { background: #f0f4ff; }
+        .member-option:last-child { border-bottom: none; }
+        
         /* ===== ADD FORM (Admin only) ===== */
         .add-section {
             background: #f7fafc;
@@ -509,13 +541,16 @@
         <div class="add-section" id="addFreeShirtSection" style="display:none;">
             <h3>➕ Neues Freimitglied hinzufügen</h3>
             <div class="add-form">
-                <div class="form-group">
-                    <label>Vorname *</label>
-                    <input type="text" id="newFirstName" placeholder="Max">
-                </div>
-                <div class="form-group">
-                    <label>Nachname *</label>
-                    <input type="text" id="newLastName" placeholder="Mustermann">
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>Mitglied suchen *</label>
+                    <div class="member-search-wrap">
+                        <input type="text" id="newMemberSearch" placeholder="Name eingeben…" autocomplete="off"
+                            oninput="handleFreeShirtMemberSearch(this.value)">
+                        <div class="member-dropdown" id="freeShirtDropdown"></div>
+                    </div>
+                    <input type="hidden" id="newFirstName">
+                    <input type="hidden" id="newLastName">
+                    <small id="selectedMemberHint" style="color:#667eea; font-size:0.82em; margin-top:4px; display:none;"></small>
                 </div>
                 <div class="form-group">
                     <label>Größe</label>
@@ -965,6 +1000,62 @@ async function markShirtDelivered(id) {
     }
 }
 
+// ===== MEMBER SEARCH FOR FREE SHIRTS =====
+let freeShirtMembers = [];
+
+async function handleFreeShirtMemberSearch(query) {
+    const dropdown = document.getElementById('freeShirtDropdown');
+    // Auswahl zurücksetzen
+    document.getElementById('newFirstName').value = '';
+    document.getElementById('newLastName').value = '';
+    document.getElementById('selectedMemberHint').style.display = 'none';
+
+    if (query.length < 2) {
+        dropdown.classList.remove('active');
+        return;
+    }
+
+    try {
+        if (freeShirtMembers.length === 0) {
+            freeShirtMembers = await apiCall('/users');
+        }
+        const q = query.toLowerCase();
+        const filtered = freeShirtMembers.filter(m =>
+            `${m.first_name} ${m.last_name}`.toLowerCase().includes(q)
+        );
+
+        if (filtered.length === 0) {
+            dropdown.innerHTML = '<div class="member-option" style="color:#999;">Keine Mitglieder gefunden</div>';
+        } else {
+            dropdown.innerHTML = filtered.slice(0, 8).map(m =>
+                `<div class="member-option" onclick="selectFreeShirtMember('${escHtml(m.first_name)}', '${escHtml(m.last_name)}')">
+                    ${escHtml(m.first_name)} ${escHtml(m.last_name)}
+                </div>`
+            ).join('');
+        }
+        dropdown.classList.add('active');
+    } catch (e) {
+        dropdown.classList.remove('active');
+    }
+}
+
+function selectFreeShirtMember(firstName, lastName) {
+    document.getElementById('newMemberSearch').value = `${firstName} ${lastName}`;
+    document.getElementById('newFirstName').value = firstName;
+    document.getElementById('newLastName').value = lastName;
+    document.getElementById('freeShirtDropdown').classList.remove('active');
+    const hint = document.getElementById('selectedMemberHint');
+    hint.textContent = `✓ ${firstName} ${lastName} ausgewählt`;
+    hint.style.display = 'block';
+}
+
+// Dropdown schließen bei Klick außerhalb
+document.addEventListener('click', e => {
+    if (!e.target.closest('.member-search-wrap')) {
+        document.getElementById('freeShirtDropdown')?.classList.remove('active');
+    }
+});
+    
 async function addFreeShirt() {
     const firstName = document.getElementById('newFirstName').value.trim();
     const lastName  = document.getElementById('newLastName').value.trim();
