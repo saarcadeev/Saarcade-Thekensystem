@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>👕 Kleidungsverwaltung – Saarcade</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: 20px 20px 0 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            padding-bottom: 80px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .header-logo {
+            background: white;
+            padding: 10px;
+            border-radius: 12px 12px 0 0;
+            flex-shrink: 0;
+        }
+
+        .header-logo img {
+            max-width: 120px;
+            height: auto;
+            display: block;
+        }
+
+        .header-text { flex: 1; }
+        .header h1 { font-size: 1.6em; margin-bottom: 4px; }
+        .header p { opacity: 0.9; font-size: 0.9em; }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+
+        .logout-btn {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.4);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.2s;
+        }
+        .logout-btn:hover { background: rgba(255,255,255,0.25); }
+
+        /* ===== LOGIN OVERLAY ===== */
+        .login-overlay {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .login-box {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            width: 380px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        .login-box h2 { color: #2d3748; margin-bottom: 8px; font-size: 1.5em; }
+        .login-box p { color: #666; margin-bottom: 25px; font-size: 0.9em; }
+
+        .login-box input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1em;
+            margin-bottom: 14px;
+            transition: border-color 0.2s;
+        }
+        .login-box input:focus { outline: none; border-color: #667eea; }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .login-btn:hover { opacity: 0.9; }
+
+        .login-error {
+            color: #e53e3e;
+            margin-top: 12px;
+            font-size: 0.9em;
+            font-weight: 600;
+            display: none;
+        }
+
+        /* ===== TABS ===== */
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e2e8f0;
+            padding: 0 30px;
+            background: #f8fafc;
+        }
+
+        .tab-btn {
+            padding: 16px 28px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            color: #718096;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+        .tab-btn.active { color: #667eea; border-bottom-color: #667eea; }
+        .tab-btn:hover:not(.active) { color: #4a5568; }
+
+        .tab-content { display: none; padding: 30px; }
+        .tab-content.active { display: block; }
+
+        /* ===== FILTER BAR ===== */
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 18px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #4a5568;
+            transition: all 0.2s;
+        }
+        .filter-btn.active {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+        .filter-btn:hover:not(.active) { border-color: #667eea; color: #667eea; }
+
+        .filter-count {
+            background: #e2e8f0;
+            color: #4a5568;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.8em;
+            margin-left: 5px;
+        }
+        .filter-btn.active .filter-count { background: rgba(255,255,255,0.3); color: white; }
+
+        .filter-right { margin-left: auto; }
+
+        /* ===== TABLE ===== */
+        .table-wrapper { overflow-x: auto; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+
+        thead th {
+            background: #f7fafc;
+            padding: 12px 14px;
+            text-align: left;
+            font-weight: 700;
+            color: #4a5568;
+            border-bottom: 2px solid #e2e8f0;
+            white-space: nowrap;
+        }
+
+        tbody td {
+            padding: 12px 14px;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: middle;
+        }
+
+        tbody tr:hover { background: #f8fafc; }
+        tbody tr.delivered { opacity: 0.55; }
+
+        /* ===== STATUS BADGES ===== */
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.82em;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .badge-pending  { background: #fef9c3; color: #854d0e; }
+        .badge-confirmed { background: #dbeafe; color: #1e40af; }
+        .badge-shipped  { background: #e0f2fe; color: #0369a1; }
+        .badge-completed { background: #dcfce7; color: #15803d; }
+        .badge-cancelled { background: #fee2e2; color: #b91c1c; }
+        .badge-open     { background: #fef9c3; color: #854d0e; }
+        .badge-delivered { background: #dcfce7; color: #15803d; }
+
+        /* ===== ACTION BUTTONS ===== */
+        .btn-deliver {
+            padding: 7px 14px;
+            background: linear-gradient(135deg, #34d399, #10b981);
+            color: white;
+            border: none;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: opacity 0.2s;
+        }
+        .btn-deliver:hover { opacity: 0.85; }
+        .btn-deliver:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .btn-delete {
+            padding: 7px 12px;
+            background: #e53e3e;
+            color: white;
+            border: none;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+        .btn-delete:hover { opacity: 0.85; }
+
+        .btn-primary {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+        .btn-primary:hover { opacity: 0.9; }
+
+        /* ===== ADD FORM (Admin only) ===== */
+        .add-section {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .add-section h3 {
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-size: 1em;
+            font-weight: 700;
+        }
+
+        .add-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto auto auto auto;
+            gap: 10px;
+            align-items: end;
+        }
+
+        @media (max-width: 900px) {
+            .add-form { grid-template-columns: 1fr 1fr; }
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.82em;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 5px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 9px 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 7px;
+            font-size: 0.9em;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus,
+        .form-group select:focus { outline: none; border-color: #667eea; }
+
+        /* ===== ITEMS DISPLAY ===== */
+        .items-list {
+            font-size: 0.85em;
+            line-height: 1.6;
+        }
+
+        .items-list .item-line { color: #2d3748; }
+        .items-list .item-detail { color: #718096; }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            color: #a0aec0;
+        }
+        .empty-state .empty-icon { font-size: 3em; margin-bottom: 15px; }
+        .empty-state p { font-size: 1em; }
+
+        /* ===== ALERT ===== */
+        .alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 14px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95em;
+            z-index: 9000;
+            opacity: 0;
+            transform: translateX(30px);
+            transition: all 0.3s;
+            max-width: 320px;
+        }
+        .alert.show { opacity: 1; transform: translateX(0); }
+        .alert-success { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+        .alert-error   { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+
+        /* ===== LOADING ===== */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+            font-size: 1em;
+        }
+
+        .section-subtitle {
+            color: #718096;
+            font-size: 0.88em;
+            margin-bottom: 20px;
+        }
+
+        .home-btn {
+            color: white;
+            text-decoration: none;
+            font-size: 1.2em;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+        .home-btn:hover { opacity: 1; }
+    </style>
+</head>
+<body>
+
+<!-- LOGIN OVERLAY -->
+<div class="login-overlay" id="loginOverlay">
+    <div class="login-box">
+        <div style="font-size: 3em; margin-bottom: 10px;">👕</div>
+        <h2>Kleidungsverwaltung</h2>
+        <p>Saarcade e.V. – Bitte anmelden</p>
+        <input type="text" id="loginUsername" placeholder="Benutzername" autocomplete="username">
+        <input type="password" id="loginPassword" placeholder="Passwort" autocomplete="current-password">
+        <button class="login-btn" onclick="doLogin()">✓ Anmelden</button>
+        <div class="login-error" id="loginError">❌ Anmeldung fehlgeschlagen</div>
+    </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="container">
+    <div class="header">
+        <a href="/" class="home-btn" title="Zur Startseite">🏠</a>
+        <div class="header-logo">
+            <img src="Saarcade-Logo.png" alt="Saarcade e.V.">
+        </div>
+        <div class="header-text">
+            <h1>👕 Kleidungsverwaltung</h1>
+            <p>Bestellungen und Freimitglieder-Shirts verwalten</p>
+        </div>
+        <div class="header-actions">
+            <div class="user-badge" id="userBadge">–</div>
+            <button class="logout-btn" onclick="doLogout()">Abmelden</button>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('orders')">📦 Kleidungsbestellungen</button>
+        <button class="tab-btn" onclick="switchTab('freeshirts')">🎁 Freimitglieder-Shirts</button>
+    </div>
+
+    <!-- TAB: Kleidungsbestellungen -->
+    <div class="tab-content active" id="tab-orders">
+        <div class="filter-bar">
+            <button class="filter-btn active" onclick="setOrderFilter('all')" id="f-all">
+                Alle <span class="filter-count" id="cnt-all">0</span>
+            </button>
+            <button class="filter-btn" onclick="setOrderFilter('open')" id="f-open">
+                Offen <span class="filter-count" id="cnt-open">0</span>
+            </button>
+            <button class="filter-btn" onclick="setOrderFilter('completed')" id="f-completed">
+                Ausgeliefert <span class="filter-count" id="cnt-completed">0</span>
+            </button>
+            <div class="filter-right">
+                <button class="btn-primary" onclick="loadOrders()">🔄 Aktualisieren</button>
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+            <div id="ordersContent"><div class="loading">⏳ Lade Bestellungen…</div></div>
+        </div>
+    </div>
+
+    <!-- TAB: Freimitglieder-Shirts -->
+    <div class="tab-content" id="tab-freeshirts">
+        <!-- Add-Form (nur Admin) -->
+        <div class="add-section" id="addFreeShirtSection" style="display:none;">
+            <h3>➕ Neues Freimitglied hinzufügen</h3>
+            <div class="add-form">
+                <div class="form-group">
+                    <label>Vorname *</label>
+                    <input type="text" id="newFirstName" placeholder="Max">
+                </div>
+                <div class="form-group">
+                    <label>Nachname *</label>
+                    <input type="text" id="newLastName" placeholder="Mustermann">
+                </div>
+                <div class="form-group">
+                    <label>Größe</label>
+                    <select id="newSize">
+                        <option value="">– wählen –</option>
+                        <option>XS</option><option>S</option><option>M</option>
+                        <option>L</option><option>XL</option><option>XXL</option><option>3XL</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Farbe</label>
+                    <input type="text" id="newColor" placeholder="z.B. Schwarz">
+                </div>
+                <div class="form-group">
+                    <label>Notiz</label>
+                    <input type="text" id="newNotes" placeholder="Optional">
+                </div>
+                <div class="form-group">
+                    <label>&nbsp;</label>
+                    <button class="btn-primary" onclick="addFreeShirt()">➕ Hinzufügen</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="filter-bar">
+            <button class="filter-btn active" onclick="setShirtFilter('all')" id="sf-all">
+                Alle <span class="filter-count" id="scnt-all">0</span>
+            </button>
+            <button class="filter-btn" onclick="setShirtFilter('open')" id="sf-open">
+                Ausstehend <span class="filter-count" id="scnt-open">0</span>
+            </button>
+            <button class="filter-btn" onclick="setShirtFilter('delivered')" id="sf-delivered">
+                Ausgeliefert <span class="filter-count" id="scnt-delivered">0</span>
+            </button>
+            <div class="filter-right">
+                <button class="btn-primary" onclick="loadFreeShirts()">🔄 Aktualisieren</button>
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+            <div id="freeShirtsContent"><div class="loading">⏳ Lade Liste…</div></div>
+        </div>
+    </div>
+</div>
+
+<!-- ALERT -->
+<div class="alert" id="globalAlert"></div>
+
+<script>
+// ===== AUTH =====
+let currentUser = null;
+let orderFilter = 'all';
+let shirtFilter = 'all';
+let allOrders = [];
+let allShirts = [];
+
+function getSession() {
+    const s = sessionStorage.getItem('kleidungVerwaltung');
+    return s ? JSON.parse(s) : null;
+}
+
+function saveSession(user) {
+    sessionStorage.setItem('kleidungVerwaltung', JSON.stringify(user));
+}
+
+function clearSession() {
+    sessionStorage.removeItem('kleidungVerwaltung');
+}
+
+async function doLogin() {
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const errEl = document.getElementById('loginError');
+
+    if (!username || !password) {
+        errEl.textContent = '❌ Bitte Benutzername und Passwort eingeben';
+        errEl.style.display = 'block';
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            errEl.textContent = '❌ ' + (data.error || 'Anmeldung fehlgeschlagen');
+            errEl.style.display = 'block';
+            document.getElementById('loginPassword').value = '';
+            return;
+        }
+
+        // Nur admin und kleidung dürfen rein
+        const role = data.user.role;
+        if (role !== 'admin' && role !== 'kleidung') {
+            errEl.textContent = '❌ Keine Berechtigung für diesen Bereich';
+            errEl.style.display = 'block';
+            document.getElementById('loginPassword').value = '';
+            return;
+        }
+
+        currentUser = data.user;
+        saveSession(currentUser);
+        onLoggedIn();
+
+    } catch (e) {
+        errEl.textContent = '❌ Verbindungsfehler';
+        errEl.style.display = 'block';
+    }
+}
+
+function doLogout() {
+    clearSession();
+    currentUser = null;
+    document.getElementById('loginOverlay').style.display = 'flex';
+    document.getElementById('loginPassword').value = '';
+    document.getElementById('loginError').style.display = 'none';
+}
+
+function onLoggedIn() {
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('userBadge').textContent =
+        '👤 ' + currentUser.username + (currentUser.role === 'admin' ? ' (Admin)' : '');
+
+    // Add-Form nur für Admins
+    if (currentUser.role === 'admin') {
+        document.getElementById('addFreeShirtSection').style.display = 'block';
+    }
+
+    loadOrders();
+    loadFreeShirts();
+}
+
+// ===== API =====
+async function apiCall(endpoint, options = {}) {
+    const res = await fetch('/api' + endpoint, {
+        headers: { 'Content-Type': 'application/json', ...options.headers },
+        ...options
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'API Fehler');
+    }
+    return res.json();
+}
+
+// ===== TABS =====
+function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    event.target.classList.add('active');
+}
+
+// ===== ORDERS =====
+async function loadOrders() {
+    document.getElementById('ordersContent').innerHTML = '<div class="loading">⏳ Lade Bestellungen…</div>';
+    try {
+        allOrders = await apiCall('/clothing-orders');
+        renderOrders();
+    } catch (e) {
+        document.getElementById('ordersContent').innerHTML =
+            '<div class="empty-state"><div class="empty-icon">⚠️</div><p>Fehler: ' + e.message + '</p></div>';
+    }
+}
+
+function setOrderFilter(f) {
+    orderFilter = f;
+    document.querySelectorAll('[id^="f-"]').forEach(b => b.classList.remove('active'));
+    document.getElementById('f-' + f).classList.add('active');
+    renderOrders();
+}
+
+function renderOrders() {
+    const isCompleted = o => o.status === 'completed';
+    const isCancelled = o => o.status === 'cancelled';
+
+    const filtered = allOrders.filter(o => {
+        if (orderFilter === 'open')      return !isCompleted(o) && !isCancelled(o);
+        if (orderFilter === 'completed') return isCompleted(o);
+        return true;
+    });
+
+    document.getElementById('cnt-all').textContent       = allOrders.length;
+    document.getElementById('cnt-open').textContent      = allOrders.filter(o => !isCompleted(o) && !isCancelled(o)).length;
+    document.getElementById('cnt-completed').textContent = allOrders.filter(o => isCompleted(o)).length;
+
+    if (filtered.length === 0) {
+        document.getElementById('ordersContent').innerHTML =
+            '<div class="empty-state"><div class="empty-icon">📭</div><p>Keine Bestellungen gefunden.</p></div>';
+        return;
+    }
+
+    const rows = filtered.map(o => {
+        const date = new Date(o.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
+        const itemsHtml = formatItems(o.items);
+        const badgeHtml = statusBadge(o.status);
+        const canDeliver = o.status !== 'completed' && o.status !== 'cancelled';
+        const actionHtml = canDeliver
+            ? `<button class="btn-deliver" onclick="markOrderDelivered(${o.id})">✓ Ausgeliefert</button>`
+            : (o.status === 'completed' ? '<span style="color:#15803d;font-size:0.85em;">✓ Erledigt</span>' : '<span style="color:#999;font-size:0.85em;">Storniert</span>');
+
+        const total = typeof o.total === 'number' ? o.total.toFixed(2) + ' €' : '–';
+        const paymentLabels = { sepa: '🏦 SEPA', transfer: '💳 Überweisung', paypal: '💰 PayPal', bar: '💵 Bar' };
+        const payLabel = paymentLabels[o.payment_method] || o.payment_method || '–';
+
+        return `<tr class="${o.status === 'completed' ? 'delivered' : ''}">
+            <td style="white-space:nowrap;">${date}</td>
+            <td><strong>${escHtml(o.member_name || '–')}</strong></td>
+            <td><div class="items-list">${itemsHtml}</div></td>
+            <td style="white-space:nowrap;">${payLabel}</td>
+            <td><strong>${total}</strong></td>
+            <td>${badgeHtml}</td>
+            <td>${actionHtml}</td>
+        </tr>`;
+    }).join('');
+
+    document.getElementById('ordersContent').innerHTML = `
+        <table>
+            <thead>
+                <tr>
+                    <th>Datum</th>
+                    <th>Mitglied</th>
+                    <th>Artikel</th>
+                    <th>Zahlung</th>
+                    <th>Summe</th>
+                    <th>Status</th>
+                    <th>Aktion</th>
+                </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+        </table>`;
+}
+
+function formatItems(items) {
+    if (!Array.isArray(items) || items.length === 0) return '<span style="color:#999;">–</span>';
+    return items.map(item => {
+        const parts = [item.name || item.product_name];
+        if (item.color) parts.push(item.color);
+        if (item.size)  parts.push(item.size);
+        const qty = item.quantity > 1 ? ` ×${item.quantity}` : '';
+        return `<div class="item-line">👕 ${escHtml(parts[0])}${qty}</div>`
+             + (parts.length > 1 ? `<div class="item-detail" style="padding-left:18px;">${escHtml(parts.slice(1).join(' · '))}</div>` : '');
+    }).join('');
+}
+
+function statusBadge(status) {
+    const map = {
+        pending:   ['badge-pending',   '⏳ Offen'],
+        confirmed: ['badge-confirmed', '✅ Bestätigt'],
+        shipped:   ['badge-shipped',   '🚚 Versendet'],
+        completed: ['badge-completed', '✓ Ausgeliefert'],
+        cancelled: ['badge-cancelled', '✗ Storniert'],
+    };
+    const [cls, label] = map[status] || ['', status];
+    return `<span class="badge ${cls}">${label}</span>`;
+}
+
+async function markOrderDelivered(id) {
+    try {
+        await apiCall('/clothing-orders/' + id, {
+            method: 'PUT',
+            body: JSON.stringify({ status: 'completed' })
+        });
+        const order = allOrders.find(o => o.id === id);
+        if (order) order.status = 'completed';
+        renderOrders();
+        showAlert('✓ Bestellung als ausgeliefert markiert', 'success');
+    } catch (e) {
+        showAlert('❌ Fehler: ' + e.message, 'error');
+    }
+}
+
+// ===== FREE SHIRTS =====
+async function loadFreeShirts() {
+    document.getElementById('freeShirtsContent').innerHTML = '<div class="loading">⏳ Lade Liste…</div>';
+    try {
+        allShirts = await apiCall('/free-shirts');
+        renderFreeShirts();
+    } catch (e) {
+        document.getElementById('freeShirtsContent').innerHTML =
+            '<div class="empty-state"><div class="empty-icon">⚠️</div><p>Fehler: ' + e.message + '</p></div>';
+    }
+}
+
+function setShirtFilter(f) {
+    shirtFilter = f;
+    document.querySelectorAll('[id^="sf-"]').forEach(b => b.classList.remove('active'));
+    document.getElementById('sf-' + f).classList.add('active');
+    renderFreeShirts();
+}
+
+function renderFreeShirts() {
+    const filtered = allShirts.filter(s => {
+        if (shirtFilter === 'open')      return !s.delivered;
+        if (shirtFilter === 'delivered') return s.delivered;
+        return true;
+    });
+
+    document.getElementById('scnt-all').textContent       = allShirts.length;
+    document.getElementById('scnt-open').textContent      = allShirts.filter(s => !s.delivered).length;
+    document.getElementById('scnt-delivered').textContent = allShirts.filter(s => s.delivered).length;
+
+    if (filtered.length === 0) {
+        document.getElementById('freeShirtsContent').innerHTML =
+            '<div class="empty-state"><div class="empty-icon">📭</div><p>Keine Einträge gefunden.</p></div>';
+        return;
+    }
+
+    const isAdmin = currentUser && currentUser.role === 'admin';
+
+    const rows = filtered.map(s => {
+        const delivDate = s.delivered && s.delivered_at
+            ? new Date(s.delivered_at).toLocaleDateString('de-DE')
+            : '';
+        const statusHtml = s.delivered
+            ? `<span class="badge badge-delivered">✓ Ausgeliefert${delivDate ? '<br><small>' + delivDate + '</small>' : ''}</span>`
+            : `<span class="badge badge-open">⏳ Ausstehend</span>`;
+        const actionHtml = !s.delivered
+            ? `<button class="btn-deliver" onclick="markShirtDelivered(${s.id})">✓ Ausgeliefert</button>`
+            : '<span style="color:#15803d;font-size:0.85em;">✓ Erledigt</span>';
+        const deleteBtn = isAdmin
+            ? `<button class="btn-delete" onclick="deleteFreeShirt(${s.id})" title="Eintrag löschen" style="margin-left:6px;">🗑️</button>`
+            : '';
+
+        const addDate = new Date(s.created_at).toLocaleDateString('de-DE');
+
+        return `<tr class="${s.delivered ? 'delivered' : ''}">
+            <td><strong>${escHtml(s.first_name)} ${escHtml(s.last_name)}</strong></td>
+            <td>${escHtml(s.size || '–')}</td>
+            <td>${escHtml(s.color || '–')}</td>
+            <td style="color:#718096;font-size:0.85em;">${escHtml(s.notes || '–')}</td>
+            <td style="color:#999;font-size:0.82em;">${addDate}</td>
+            <td>${statusHtml}</td>
+            <td style="white-space:nowrap;">${actionHtml}${deleteBtn}</td>
+        </tr>`;
+    }).join('');
+
+    document.getElementById('freeShirtsContent').innerHTML = `
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Größe</th>
+                    <th>Farbe</th>
+                    <th>Notiz</th>
+                    <th>Eingetragen</th>
+                    <th>Status</th>
+                    <th>Aktion</th>
+                </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+        </table>`;
+}
+
+async function markShirtDelivered(id) {
+    try {
+        await apiCall('/free-shirts/' + id, {
+            method: 'PUT',
+            body: JSON.stringify({ delivered: true, delivered_at: new Date().toISOString() })
+        });
+        const s = allShirts.find(s => s.id === id);
+        if (s) { s.delivered = true; s.delivered_at = new Date().toISOString(); }
+        renderFreeShirts();
+        showAlert('✓ Shirt als ausgeliefert markiert', 'success');
+    } catch (e) {
+        showAlert('❌ Fehler: ' + e.message, 'error');
+    }
+}
+
+async function addFreeShirt() {
+    const firstName = document.getElementById('newFirstName').value.trim();
+    const lastName  = document.getElementById('newLastName').value.trim();
+    const size      = document.getElementById('newSize').value;
+    const color     = document.getElementById('newColor').value.trim();
+    const notes     = document.getElementById('newNotes').value.trim();
+
+    if (!firstName || !lastName) {
+        showAlert('❌ Vorname und Nachname sind Pflichtfelder', 'error');
+        return;
+    }
+
+    try {
+        const newEntry = await apiCall('/free-shirts', {
+            method: 'POST',
+            body: JSON.stringify({ first_name: firstName, last_name: lastName, size, color, notes })
+        });
+        allShirts.unshift(newEntry);
+        // Felder leeren
+        ['newFirstName','newLastName','newColor','newNotes'].forEach(id =>
+            document.getElementById(id).value = '');
+        document.getElementById('newSize').value = '';
+        renderFreeShirts();
+        showAlert('✓ Eintrag hinzugefügt', 'success');
+    } catch (e) {
+        showAlert('❌ Fehler: ' + e.message, 'error');
+    }
+}
+
+async function deleteFreeShirt(id) {
+    if (!confirm('Diesen Eintrag wirklich löschen?')) return;
+    try {
+        await apiCall('/free-shirts/' + id, { method: 'DELETE' });
+        allShirts = allShirts.filter(s => s.id !== id);
+        renderFreeShirts();
+        showAlert('✓ Eintrag gelöscht', 'success');
+    } catch (e) {
+        showAlert('❌ Fehler: ' + e.message, 'error');
+    }
+}
+
+// ===== HELPERS =====
+function escHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+let alertTimer;
+function showAlert(msg, type) {
+    const el = document.getElementById('globalAlert');
+    el.textContent = msg;
+    el.className = 'alert alert-' + type + ' show';
+    clearTimeout(alertTimer);
+    alertTimer = setTimeout(() => { el.classList.remove('show'); }, 3500);
+}
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', () => {
+    // Enter-Taste im Login
+    ['loginUsername','loginPassword'].forEach(id => {
+        document.getElementById(id).addEventListener('keypress', e => {
+            if (e.key === 'Enter') doLogin();
+        });
+    });
+
+    const session = getSession();
+    if (session) {
+        currentUser = session;
+        onLoggedIn();
+    } else {
+        document.getElementById('loginOverlay').style.display = 'flex';
+        document.getElementById('loginUsername').focus();
+    }
+});
+</script>
+</body>
+</html>
