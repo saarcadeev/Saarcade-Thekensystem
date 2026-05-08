@@ -548,9 +548,16 @@
                             oninput="handleFreeShirtMemberSearch(this.value)">
                         <div class="member-dropdown" id="freeShirtDropdown"></div>
                     </div>
-                    <input type="hidden" id="newFirstName">
-                    <input type="hidden" id="newLastName">
-                    <small id="selectedMemberHint" style="color:#667eea; font-size:0.82em; margin-top:4px; display:none;"></small>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px;">
+                        <div>
+                            <label style="font-size:0.82em; font-weight:600; color:#4a5568; display:block; margin-bottom:4px;">Vorname *</label>
+                            <input type="text" id="newFirstName" placeholder="Vorname">
+                        </div>
+                        <div>
+                            <label style="font-size:0.82em; font-weight:600; color:#4a5568; display:block; margin-bottom:4px;">Nachname *</label>
+                            <input type="text" id="newLastName" placeholder="Nachname">
+                        </div>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Größe</label>
