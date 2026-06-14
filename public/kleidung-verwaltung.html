@@ -92,6 +92,7 @@
             border-radius: 20px;
             padding: 40px;
             width: 380px;
+            max-width: calc(100vw - 40px);
             box-shadow: 0 30px 80px rgba(0,0,0,0.3);
             text-align: center;
         }
@@ -474,6 +475,79 @@
             transition: opacity 0.2s;
         }
         .home-btn:hover { opacity: 1; }
+
+        /* ===== MOBILE ===== */
+        @media (max-width: 640px) {
+            body { padding: 10px 10px 0 10px; }
+
+            .header {
+                padding: 12px 14px;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+            .header-logo { display: none; }
+            .header h1 { font-size: 1.2em; }
+            .header-actions { gap: 8px; }
+            .user-badge { font-size: 0.8em; padding: 6px 10px; }
+            .logout-btn { font-size: 0.8em; padding: 6px 10px; }
+
+            .tabs { padding: 0 10px; overflow-x: auto; }
+            .tab-btn { padding: 14px 16px; font-size: 0.9em; white-space: nowrap; }
+
+            .tab-content { padding: 14px 12px; }
+
+            .filter-bar { gap: 6px; }
+            .filter-btn { padding: 10px 14px; font-size: 0.88em; }
+            .filter-right { margin-left: 0; width: 100%; }
+            .filter-right .btn-primary { width: 100%; padding: 11px; }
+
+            /* Tabelle → Cards */
+            .table-wrapper table thead { display: none; }
+            .table-wrapper table,
+            .table-wrapper tbody,
+            .table-wrapper tr,
+            .table-wrapper td { display: block; width: 100%; }
+
+            .table-wrapper tbody tr {
+                background: white;
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                margin-bottom: 12px;
+                padding: 14px;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            }
+            .table-wrapper tbody tr.delivered { opacity: 0.6; }
+
+            .table-wrapper tbody td {
+                padding: 4px 0;
+                border: none;
+                font-size: 0.92em;
+            }
+            .table-wrapper tbody td:before {
+                content: attr(data-label);
+                font-weight: 700;
+                color: #718096;
+                font-size: 0.78em;
+                text-transform: uppercase;
+                display: block;
+                margin-bottom: 2px;
+            }
+            .table-wrapper tbody td[data-label=""] { margin-top: 10px; }
+
+            /* Aktionsbuttons im Card volle Breite */
+            .btn-deliver, .btn-edit { padding: 11px 14px; font-size: 0.9em; }
+            .table-wrapper tbody td div[style*="flex"] {
+                flex-direction: column;
+            }
+            .table-wrapper tbody td div[style*="flex"] button {
+                width: 100%;
+            }
+
+            .modal-box { padding: 20px 16px; }
+
+            .add-section { padding: 14px; }
+            .add-form { grid-template-columns: 1fr !important; }
+        }
     </style>
 </head>
 <body>
@@ -782,11 +856,11 @@ function renderOrders() {
                 : '<span style="color:#999;font-size:0.85em;">Storniert</span>');
 
         return `<tr class="${o.status === 'completed' ? 'delivered' : ''}">
-            <td style="white-space:nowrap;">${date}</td>
-            <td><strong>${escHtml(o.member_name || '–')}</strong></td>
-            <td><div class="items-list">${itemsHtml}</div></td>
-            <td>${badgeHtml}</td>
-            <td>${actionHtml}</td>
+            <td data-label="Datum" style="white-space:nowrap;">${date}</td>
+            <td data-label="Mitglied"><strong>${escHtml(o.member_name || '–')}</strong></td>
+            <td data-label="Artikel"><div class="items-list">${itemsHtml}</div></td>
+            <td data-label="Status">${badgeHtml}</td>
+            <td data-label="">${actionHtml}</td>
         </tr>`;
     }).join('');
 
@@ -965,13 +1039,13 @@ function renderFreeShirts() {
         const addDate = new Date(s.created_at).toLocaleDateString('de-DE');
 
         return `<tr class="${s.delivered ? 'delivered' : ''}">
-            <td><strong>${escHtml(s.first_name)} ${escHtml(s.last_name)}</strong></td>
-            <td>${escHtml(s.size || '–')}</td>
-            <td>${escHtml(s.color || '–')}</td>
-            <td style="color:#718096;font-size:0.85em;">${escHtml(s.notes || '–')}</td>
-            <td style="color:#999;font-size:0.82em;">${addDate}</td>
-            <td>${statusHtml}</td>
-            <td style="white-space:nowrap;">${actionHtml}${deleteBtn}</td>
+            <td data-label="Name"><strong>${escHtml(s.first_name)} ${escHtml(s.last_name)}</strong></td>
+            <td data-label="Größe">${escHtml(s.size || '–')}</td>
+            <td data-label="Farbe">${escHtml(s.color || '–')}</td>
+            <td data-label="Notiz" style="color:#718096;font-size:0.85em;">${escHtml(s.notes || '–')}</td>
+            <td data-label="Eingetragen" style="color:#999;font-size:0.82em;">${addDate}</td>
+            <td data-label="Status">${statusHtml}</td>
+            <td data-label="">${actionHtml}${deleteBtn}</td>
         </tr>`;
     }).join('');
 
