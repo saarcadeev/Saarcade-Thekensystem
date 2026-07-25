@@ -1702,8 +1702,7 @@ if (pathParts[0] === 'users' && pathParts[1] && method === 'GET') {
             const { data, error } = await supabase
                 .from('clothing_stock')
                 .select('*, clothing_items(name, emoji)')
-                .order('clothing_item_id')
-                .order('size');
+ .order('clothing_item_id, size');
             if (error) throw error;
             return res.status(200).json(data || []);
         }
