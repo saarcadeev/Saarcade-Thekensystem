@@ -320,27 +320,24 @@
 </div>
 
     <div class="main-container">
-        <!-- Hauptanwendungen -->
-        <div class="main-apps">
-            <!-- Kassensystem -->
-            <div class="main-card kasse-card">
-                <div>
-                    <div class="demo-icon">🛒</div>
-                    <h2>Kassensystem</h2>
-                    <p><strong>Frontend für Mitglieder und Kassierer</strong><br><br>
-                    • Barcode-Scanner Integration<br>
-                    • Intuitive Benutzer- und Produktsuche<br>
-                    • Warenkorb und Abrechnung<br>
-                    • Integrierte Kassier-Funktion</p>
+<!-- Kassensystem – volle Breite -->
+        <div class="main-card kasse-card" style="min-height:auto;">
+            <div style="display:flex;align-items:center;gap:30px;flex-wrap:wrap;">
+                <div class="demo-icon" style="margin-bottom:0;">🛒</div>
+                <div style="flex:1;min-width:200px;">
+                    <h2 style="text-align:left;margin-bottom:8px;">Kassensystem</h2>
+                    <p style="margin-bottom:0;"><strong>Frontend für Mitglieder und Kassierer</strong> · Barcode-Scanner · Produktsuche · Warenkorb · Kassenfunktion</p>
                 </div>
-                <a href="/kasse" class="demo-button">🎮 Kasse öffnen</a>
+                <a href="/kasse" class="demo-button" style="width:auto;padding:15px 35px;flex-shrink:0;">🎮 Kasse öffnen</a>
             </div>
+        </div>
 
-            <!-- Admin-Dashboard -->
+        <!-- Admin-Bereich – zweispaltig -->
+        <div class="main-apps">
             <div class="main-card admin-card">
                 <div>
                     <div class="demo-icon">⚙️</div>
-                    <h2>Admin-Dashboard</h2>
+                    <h2>Getränke & Mitglieder</h2>
                     <p><strong>Backend für Kassenwart und Verwaltung</strong><br><br>
                     • Benutzer- und Produktverwaltung<br>
                     • SEPA-Export für Lastschriften<br>
@@ -349,8 +346,20 @@
                 </div>
                 <a href="/admin" class="demo-button">🔐 Admin-Bereich</a>
             </div>
-        </div>
 
+            <div class="main-card" style="border-color:rgba(240,147,251,0.3);">
+                <div>
+                    <div class="demo-icon">👕</div>
+                    <h2>Kleidungsverwaltung</h2>
+                    <p><strong>Artikel, Bestand und Bestellungen</strong><br><br>
+                    • Artikel und Größen pflegen<br>
+                    • Bestand buchen und verwalten<br>
+                    • Bestellungen und Auslieferung<br>
+                    • Abrechnung offener Posten</p>
+                </div>
+                <a href="/admin-kleidung" class="demo-button" style="background:linear-gradient(135deg,#f093fb,#f5576c);">👕 Kleidung Admin</a>
+            </div>
+        </div>
         <!-- Tools-Bereich -->
         <div class="tools-section">
             <div class="tools-header">
