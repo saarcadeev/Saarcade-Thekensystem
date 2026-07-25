@@ -272,13 +272,32 @@
         <h3 id="articleModalTitle">Neuer Artikel</h3>
         <p class="modal-sub">Kleidungsartikel anlegen oder bearbeiten</p>
         <input type="hidden" id="articleId">
+        <input type="hidden" id="articleImageUrl">
+        <input type="hidden" id="articleImagePath">
+
+        <!-- Bildupload -->
+        <div class="form-group">
+            <label>Produktbild</label>
+            <div id="articleImagePreview" style="text-align:center;margin-bottom:8px;display:none;">
+                <img id="articleImageTag" src="" style="max-height:120px;max-width:100%;border-radius:8px;border:1px solid #e2e8f0;">
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+                <label style="display:inline-block;padding:8px 14px;background:#e2e8f0;border-radius:7px;cursor:pointer;font-size:0.88em;font-weight:600;color:#4a5568;">
+                    📷 Bild hochladen
+                    <input type="file" id="articleImageFile" accept="image/*" style="display:none;" onchange="previewArticleImage(this)">
+                </label>
+                <button type="button" class="btn-danger btn-sm" id="articleRemoveImageBtn" onclick="removeArticleImage()" style="display:none;">✕ Bild entfernen</button>
+                <span id="articleImageStatus" style="font-size:0.82em;color:#718096;"></span>
+            </div>
+        </div>
+
         <div class="form-row">
             <div class="form-group">
                 <label>Name *</label>
                 <input type="text" id="articleName" placeholder="z.B. T-Shirt Schwarz">
             </div>
             <div class="form-group">
-                <label>Emoji</label>
+                <label>Emoji (Fallback ohne Bild)</label>
                 <input type="text" id="articleEmoji" placeholder="👕" maxlength="4">
             </div>
         </div>
@@ -295,16 +314,14 @@
                 </select>
             </div>
         </div>
-        <div class="form-group">
-            <label>Verfügbare Größen</label>
-            <div class="size-checkboxes">
-                <label class="size-check"><input type="checkbox" value="XS" name="size"> XS</label>
-                <label class="size-check"><input type="checkbox" value="S" name="size"> S</label>
-                <label class="size-check"><input type="checkbox" value="M" name="size"> M</label>
-                <label class="size-check"><input type="checkbox" value="L" name="size"> L</label>
-                <label class="size-check"><input type="checkbox" value="XL" name="size"> XL</label>
-                <label class="size-check"><input type="checkbox" value="XXL" name="size"> XXL</label>
-                <label class="size-check"><input type="checkbox" value="3XL" name="size"> 3XL</label>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Verfügbare Größen (eine pro Zeile)</label>
+                <textarea id="articleSizes" rows="4" placeholder="XS&#10;S&#10;M&#10;L&#10;XL&#10;XXL" style="resize:vertical;"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Verfügbare Farben (eine pro Zeile)</label>
+                <textarea id="articleColors" rows="4" placeholder="Schwarz&#10;Grau" style="resize:vertical;"></textarea>
             </div>
         </div>
         <div class="modal-actions">
@@ -469,8 +486,11 @@ function renderArticles() {
     const rows = allArticles.map(a => {
         const sizes = (a.sizes || []).join(', ') || '–';
         const avail = a.available ? '<span class="badge badge-ok">✅ Aktiv</span>' : '<span class="badge badge-zero">❌ Inaktiv</span>';
+        const imgHtml = a.image_url
+            ? `<img src="${escHtml(a.image_url)}" style="height:40px;width:40px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;">`
+            : `<span style="font-size:1.5em;">${escHtml(a.emoji||'👕')}</span>`;
         return `<tr>
-            <td style="font-size:1.5em;text-align:center;">${escHtml(a.emoji||'👕')}</td>
+            <td style="text-align:center;">${imgHtml}</td>
             <td><strong>${escHtml(a.name)}</strong></td>
             <td><strong>${(a.price||0).toFixed(2)} €</strong></td>
             <td style="font-size:0.85em;color:#4a5568;">${escHtml(sizes)}</td>
@@ -495,8 +515,20 @@ function openArticleModal(id = null) {
     document.getElementById('articleEmoji').value = article?.emoji || '👕';
     document.getElementById('articlePrice').value = article?.price || '';
     document.getElementById('articleAvailable').value = String(article?.available !== false);
-    const checkedSizes = new Set(article?.sizes || ['S','M','L','XL']);
-    document.querySelectorAll('input[name="size"]').forEach(cb => { cb.checked = checkedSizes.has(cb.value); });
+    document.getElementById('articleSizes').value = (article?.sizes || ['S','M','L','XL']).join('\n');
+    document.getElementById('articleColors').value = (article?.colors || []).join('\n');
+    document.getElementById('articleImageUrl').value = article?.image_url || '';
+    document.getElementById('articleImagePath').value = article?.image_file_path || '';
+    document.getElementById('articleImageFile').value = '';
+    document.getElementById('articleImageStatus').textContent = '';
+    if (article?.image_url) {
+        document.getElementById('articleImageTag').src = article.image_url;
+        document.getElementById('articleImagePreview').style.display = 'block';
+        document.getElementById('articleRemoveImageBtn').style.display = 'inline-block';
+    } else {
+        document.getElementById('articleImagePreview').style.display = 'none';
+        document.getElementById('articleRemoveImageBtn').style.display = 'none';
+    }
     document.getElementById('articleModal').style.display = 'flex';
     document.getElementById('articleName').focus();
 }
@@ -509,12 +541,35 @@ async function saveArticle() {
     const price = parseFloat(document.getElementById('articlePrice').value);
     const emoji = document.getElementById('articleEmoji').value.trim() || '👕';
     const available = document.getElementById('articleAvailable').value === 'true';
-    const sizes = [...document.querySelectorAll('input[name="size"]:checked')].map(cb => cb.value);
+    const sizes  = document.getElementById('articleSizes').value.split('\n').map(s => s.trim()).filter(Boolean);
+    const colors = document.getElementById('articleColors').value.split('\n').map(s => s.trim()).filter(Boolean);
 
     if (!name) { showAlert('❌ Name ist Pflichtfeld', 'error'); return; }
     if (isNaN(price) || price < 0) { showAlert('❌ Ungültiger Preis', 'error'); return; }
 
-    const payload = { name, emoji, price, available, sizes };
+    // Bild ggf. zuerst hochladen
+    const imageFile = document.getElementById('articleImageFile').files[0];
+    let image_url   = document.getElementById('articleImageUrl').value || null;
+    let image_file_path = document.getElementById('articleImagePath').value || null;
+    if (imageFile) {
+        document.getElementById('articleImageStatus').textContent = '⏳ Bild wird hochgeladen…';
+        try {
+            const formData = new FormData();
+            formData.append('image', imageFile);
+            const uploadRes = await fetch('/api/upload-image', { method: 'POST', body: formData });
+            if (!uploadRes.ok) throw new Error('Upload fehlgeschlagen');
+            const uploadData = await uploadRes.json();
+            image_url = uploadData.url;
+            image_file_path = uploadData.filePath;
+            document.getElementById('articleImageStatus').textContent = '';
+        } catch(e) {
+            showAlert('❌ Bildupload fehlgeschlagen: ' + e.message, 'error');
+            document.getElementById('articleImageStatus').textContent = '';
+            return;
+        }
+    }
+
+    const payload = { name, emoji, price, available, sizes, colors, image_url, image_file_path };
     try {
         if (id) {
             await apiCall('/clothing-items/' + id, { method: 'PUT', body: JSON.stringify(payload) });
@@ -529,6 +584,28 @@ async function saveArticle() {
     } catch(e) { showAlert('❌ ' + e.message, 'error'); }
 }
 
+function previewArticleImage(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        document.getElementById('articleImageTag').src = e.target.result;
+        document.getElementById('articleImagePreview').style.display = 'block';
+        document.getElementById('articleRemoveImageBtn').style.display = 'inline-block';
+        document.getElementById('articleImageStatus').textContent = file.name;
+    };
+    reader.readAsDataURL(file);
+}
+
+function removeArticleImage() {
+    document.getElementById('articleImageFile').value = '';
+    document.getElementById('articleImageUrl').value = '';
+    document.getElementById('articleImagePath').value = '';
+    document.getElementById('articleImagePreview').style.display = 'none';
+    document.getElementById('articleRemoveImageBtn').style.display = 'none';
+    document.getElementById('articleImageStatus').textContent = '';
+}
+    
 async function deleteArticle(id) {
     const a = allArticles.find(x => x.id === id);
     if (!confirm(`Artikel "${a?.name}" wirklich löschen? Alle zugehörigen Bestandsdaten werden ebenfalls gelöscht.`)) return;
