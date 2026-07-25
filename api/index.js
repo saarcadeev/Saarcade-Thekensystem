@@ -996,13 +996,48 @@ if (path === '/transactions' && method === 'GET') {
             if (isNaN(orderId)) {
                 return res.status(400).json({ error: 'UngÃ¼ltige Bestell-ID' });
             }
-
-            // Nur die Felder updaten, die tatsächlich mitgesendet wurden
+// Nur die Felder updaten, die tatsächlich mitgesendet wurden
             const updateFields = { updated_at: new Date().toISOString() };
             if (updateData.status !== undefined) updateFields.status = updateData.status;
             if (updateData.notes !== undefined) updateFields.notes = updateData.notes;
             if (updateData.payment_method !== undefined) updateFields.payment_method = updateData.payment_method;
             if (updateData.items !== undefined) updateFields.items = updateData.items;
+            if (updateData.billed !== undefined) updateFields.billed = updateData.billed;
+
+            // Bei Auslieferung: Bestand automatisch reduzieren + Datum setzen
+            if (updateData.status === 'completed') {
+                updateFields.delivered_at = new Date().toISOString();
+                const { data: currentOrder } = await supabase
+                    .from('clothing_orders')
+                    .select('items, status')
+                    .eq('id', orderId)
+                    .single();
+                if (currentOrder && currentOrder.status !== 'completed' && Array.isArray(currentOrder.items)) {
+                    const reductions = {};
+                    for (const item of currentOrder.items) {
+                        if (item.product_id && item.size) {
+                            const key = `${item.product_id}__${item.size}`;
+                            reductions[key] = (reductions[key] || 0) + (item.quantity || 1);
+                        }
+                    }
+                    for (const key of Object.keys(reductions)) {
+                        const [itemId, size] = key.split('__');
+                        const { data: stockRow } = await supabase
+                            .from('clothing_stock')
+                            .select('id, quantity')
+                            .eq('clothing_item_id', parseInt(itemId))
+                            .eq('size', size)
+                            .single();
+                        if (stockRow) {
+                            const newQty = Math.max(0, stockRow.quantity - reductions[key]);
+                            await supabase
+                                .from('clothing_stock')
+                                .update({ quantity: newQty, updated_at: new Date().toISOString() })
+                                .eq('id', stockRow.id);
+                        }
+                    }
+                }
+            }
 
             const { data, error } = await supabase
                 .from('clothing_orders')
@@ -1015,8 +1050,7 @@ if (path === '/transactions' && method === 'GET') {
             return res.status(200).json(data);
         }
 
-        // DELETE /clothing-orders/{id} - Bestellung lÃ¶schen
-        if (pathParts[0] === 'clothing-orders' && pathParts[1] && method === 'DELETE') {
+        // DELETE /clothing-orders/{id} - Bestellung löschen        if (pathParts[0] === 'clothing-orders' && pathParts[1] && method === 'DELETE') {
             const orderId = parseInt(pathParts[1]);
             
             if (isNaN(orderId)) {
@@ -1660,7 +1694,72 @@ if (pathParts[0] === 'users' && pathParts[1] && method === 'GET') {
                 });
             }
         }
-        
+
+// ============ CLOTHING STOCK ENDPUNKTE ============
+
+        // GET /clothing-stock - Alle Bestände mit Artikelname
+        if (path === '/clothing-stock' && method === 'GET') {
+            const { data, error } = await supabase
+                .from('clothing_stock')
+                .select('*, clothing_items(name, emoji)')
+                .order('clothing_item_id')
+                .order('size');
+            if (error) throw error;
+            return res.status(200).json(data || []);
+        }
+
+        // POST /clothing-stock/book - Zugang buchen (Upsert)
+        if (path === '/clothing-stock/book' && method === 'POST') {
+            const { clothing_item_id, size, quantity } = req.body;
+            if (!clothing_item_id || !size || quantity === undefined) {
+                return res.status(400).json({ error: 'clothing_item_id, size und quantity erforderlich' });
+            }
+            const qty = parseInt(quantity);
+            if (isNaN(qty) || qty <= 0) return res.status(400).json({ error: 'Ungültige Menge' });
+            const { data: existing } = await supabase
+                .from('clothing_stock')
+                .select('id, quantity')
+                .eq('clothing_item_id', clothing_item_id)
+                .eq('size', size)
+                .single();
+            let result;
+            if (existing) {
+                const { data, error } = await supabase
+                    .from('clothing_stock')
+                    .update({ quantity: existing.quantity + qty, updated_at: new Date().toISOString() })
+                    .eq('id', existing.id)
+                    .select('*, clothing_items(name, emoji)')
+                    .single();
+                if (error) throw error;
+                result = data;
+            } else {
+                const { data, error } = await supabase
+                    .from('clothing_stock')
+                    .insert([{ clothing_item_id, size, quantity: qty }])
+                    .select('*, clothing_items(name, emoji)')
+                    .single();
+                if (error) throw error;
+                result = data;
+            }
+            return res.status(200).json(result);
+        }
+
+        // PUT /clothing-stock/{id} - Bestand direkt setzen
+        if (pathParts[0] === 'clothing-stock' && pathParts[1] && pathParts[1] !== 'book' && method === 'PUT') {
+            const stockId = parseInt(pathParts[1]);
+            if (isNaN(stockId)) return res.status(400).json({ error: 'Ungültige ID' });
+            const { quantity } = req.body;
+            if (quantity === undefined) return res.status(400).json({ error: 'quantity erforderlich' });
+            const { data, error } = await supabase
+                .from('clothing_stock')
+                .update({ quantity: parseInt(quantity), updated_at: new Date().toISOString() })
+                .eq('id', stockId)
+                .select('*, clothing_items(name, emoji)')
+                .single();
+            if (error) throw error;
+            return res.status(200).json(data);
+        }
+    
         // ============ FREE SHIRTS ============
         // GET /free-shirts - Alle Einträge
         if (path === '/free-shirts' && method === 'GET') {
