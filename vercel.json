@@ -36,11 +36,14 @@
       "src": "/kleidung",
       "dest": "/public/kleidung.html"
     },
-    {
+{
       "src": "/kleidung-verwaltung",
       "dest": "/public/kleidung-verwaltung.html"
     },
     {
+      "src": "/admin-kleidung",
+      "dest": "/public/admin-kleidung.html"
+    },    {
       "src": "/(.*)",
       "dest": "/public/$1"
     }
