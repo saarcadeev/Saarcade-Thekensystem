@@ -1050,8 +1050,8 @@ if (path === '/transactions' && method === 'GET') {
             return res.status(200).json(data);
         }
 
-        // DELETE /clothing-orders/{id} - Bestellung löschen        if (pathParts[0] === 'clothing-orders' && pathParts[1] && method === 'DELETE') {
-            const orderId = parseInt(pathParts[1]);
+// DELETE /clothing-orders/{id} - Bestellung löschen
+        if (pathParts[0] === 'clothing-orders' && pathParts[1] && method === 'DELETE') {            const orderId = parseInt(pathParts[1]);
             
             if (isNaN(orderId)) {
                 return res.status(400).json({ error: 'UngÃ¼ltige Bestell-ID' });
