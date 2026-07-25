@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>👕 Kleidung Admin – Saarcade</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: 20px 20px 0 20px;
+        }
+        .container {
+            max-width: 1500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            padding-bottom: 80px;
+        }
+        .header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .header-logo { background: white; padding: 10px; border-radius: 12px 12px 0 0; flex-shrink: 0; }
+        .header-logo img { max-width: 120px; height: auto; display: block; }
+        .header-text { flex: 1; }
+        .header h1 { font-size: 1.6em; margin-bottom: 4px; }
+        .header p { opacity: 0.9; font-size: 0.9em; }
+        .header-actions { display: flex; align-items: center; gap: 15px; }
+        .user-badge { background: rgba(255,255,255,0.2); padding: 8px 14px; border-radius: 20px; font-size: 0.9em; }
+        .logout-btn { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.4); color: white; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.9em; transition: background 0.2s; }
+        .logout-btn:hover { background: rgba(255,255,255,0.25); }
+        .home-btn { color: white; text-decoration: none; font-size: 1.2em; opacity: 0.8; transition: opacity 0.2s; }
+        .home-btn:hover { opacity: 1; }
+
+        /* LOGIN */
+        .login-overlay { position: fixed; inset: 0; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .login-box { background: white; border-radius: 20px; padding: 40px; width: 380px; box-shadow: 0 30px 80px rgba(0,0,0,0.3); text-align: center; }
+        .login-box h2 { color: #2d3748; margin-bottom: 8px; font-size: 1.5em; }
+        .login-box p { color: #666; margin-bottom: 25px; font-size: 0.9em; }
+        .login-box input { width: 100%; padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1em; margin-bottom: 14px; transition: border-color 0.2s; }
+        .login-box input:focus { outline: none; border-color: #f093fb; }
+        .login-btn { width: 100%; padding: 14px; background: linear-gradient(135deg, #f093fb, #f5576c); color: white; border: none; border-radius: 8px; font-size: 1em; font-weight: 600; cursor: pointer; }
+        .login-btn:hover { opacity: 0.9; }
+        .login-error { color: #e53e3e; margin-top: 12px; font-size: 0.9em; font-weight: 600; display: none; }
+
+        /* TABS */
+        .tabs { display: flex; border-bottom: 2px solid #e2e8f0; padding: 0 30px; background: #f8fafc; overflow-x: auto; }
+        .tab-btn { padding: 16px 24px; border: none; background: none; cursor: pointer; font-size: 0.95em; font-weight: 600; color: #718096; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.2s; white-space: nowrap; }
+        .tab-btn.active { color: #f5576c; border-bottom-color: #f5576c; }
+        .tab-btn:hover:not(.active) { color: #4a5568; }
+        .tab-content { display: none; padding: 25px 30px; }
+        .tab-content.active { display: block; }
+
+        /* FILTER / ACTION BAR */
+        .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; flex-wrap: wrap; }
+        .filter-btn { padding: 8px 18px; border: 2px solid #e2e8f0; background: white; border-radius: 20px; cursor: pointer; font-size: 0.9em; font-weight: 600; color: #4a5568; transition: all 0.2s; }
+        .filter-btn.active { background: #f5576c; border-color: #f5576c; color: white; }
+        .filter-btn:hover:not(.active) { border-color: #f5576c; color: #f5576c; }
+        .filter-count { background: #e2e8f0; color: #4a5568; padding: 2px 8px; border-radius: 10px; font-size: 0.8em; margin-left: 5px; }
+        .filter-btn.active .filter-count { background: rgba(255,255,255,0.3); color: white; }
+        .filter-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+
+        /* BUTTONS */
+        .btn-primary { padding: 9px 18px; background: linear-gradient(135deg, #f093fb, #f5576c); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.9em; font-weight: 600; transition: opacity 0.2s; white-space: nowrap; }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-secondary { padding: 9px 18px; background: #e2e8f0; color: #4a5568; border: none; border-radius: 8px; cursor: pointer; font-size: 0.9em; font-weight: 600; transition: background 0.2s; white-space: nowrap; }
+        .btn-secondary:hover { background: #cbd5e0; }
+        .btn-success { padding: 7px 13px; background: linear-gradient(135deg, #34d399, #10b981); color: white; border: none; border-radius: 7px; cursor: pointer; font-size: 0.83em; font-weight: 600; transition: opacity 0.2s; white-space: nowrap; }
+        .btn-success:hover { opacity: 0.85; }
+        .btn-warning { padding: 7px 13px; background: #f6ad55; color: white; border: none; border-radius: 7px; cursor: pointer; font-size: 0.83em; font-weight: 600; transition: opacity 0.2s; white-space: nowrap; }
+        .btn-warning:hover { opacity: 0.85; }
+        .btn-danger { padding: 7px 13px; background: #e53e3e; color: white; border: none; border-radius: 7px; cursor: pointer; font-size: 0.83em; font-weight: 600; transition: opacity 0.2s; }
+        .btn-danger:hover { opacity: 0.85; }
+        .btn-sm { padding: 5px 10px; font-size: 0.8em; }
+
+        /* TABLE */
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        thead th { background: #f7fafc; padding: 11px 13px; text-align: left; font-weight: 700; color: #4a5568; border-bottom: 2px solid #e2e8f0; white-space: nowrap; cursor: default; }
+        thead th.sortable { cursor: pointer; user-select: none; }
+        thead th.sortable:hover { background: #edf2f7; }
+        tbody td { padding: 11px 13px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+        tbody tr:hover { background: #fdf8ff; }
+        tbody tr.delivered { opacity: 0.5; }
+
+        /* BADGES */
+        .badge { display: inline-block; padding: 3px 9px; border-radius: 12px; font-size: 0.82em; font-weight: 600; white-space: nowrap; }
+        .badge-pending   { background: #fef9c3; color: #854d0e; }
+        .badge-confirmed { background: #dbeafe; color: #1e40af; }
+        .badge-shipped   { background: #e0f2fe; color: #0369a1; }
+        .badge-completed { background: #dcfce7; color: #15803d; }
+        .badge-cancelled { background: #fee2e2; color: #b91c1c; }
+        .badge-low       { background: #fee2e2; color: #b91c1c; }
+        .badge-ok        { background: #dcfce7; color: #15803d; }
+        .badge-zero      { background: #f3f4f6; color: #6b7280; }
+
+        /* STOCK QUANTITY */
+        .qty-display { display: inline-flex; align-items: center; gap: 8px; }
+        .qty-num { font-size: 1.1em; font-weight: 700; min-width: 30px; text-align: center; }
+        .qty-low  { color: #e53e3e; }
+        .qty-ok   { color: #38a169; }
+        .qty-zero { color: #a0aec0; }
+
+        /* MODALS */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 8000; padding: 20px; }
+        .modal-box { background: white; border-radius: 16px; padding: 30px; width: 100%; max-width: 520px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto; }
+        .modal-box h3 { color: #2d3748; margin-bottom: 6px; font-size: 1.2em; }
+        .modal-box .modal-sub { color: #718096; font-size: 0.88em; margin-bottom: 20px; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 22px; }
+        .btn-cancel { padding: 10px 20px; background: #e2e8f0; color: #4a5568; border: none; border-radius: 8px; cursor: pointer; font-size: 0.95em; font-weight: 600; flex: 1; }
+        .btn-cancel:hover { background: #cbd5e0; }
+
+        /* FORM */
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 0.83em; font-weight: 600; color: #4a5568; margin-bottom: 5px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 9px 12px; border: 2px solid #e2e8f0; border-radius: 7px; font-size: 0.95em; font-family: inherit; transition: border-color 0.2s; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #f093fb; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .size-checkboxes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+        .size-check { display: flex; align-items: center; gap: 5px; background: #f7fafc; border: 2px solid #e2e8f0; border-radius: 8px; padding: 6px 10px; cursor: pointer; transition: all 0.2s; font-size: 0.9em; font-weight: 600; }
+        .size-check input { width: auto; margin: 0; }
+        .size-check:has(input:checked) { background: #fdf0f8; border-color: #f093fb; color: #c53030; }
+
+        /* SUMMARY CARDS */
+        .summary-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .summary-card { background: #f7fafc; border: 2px solid #e2e8f0; border-radius: 12px; padding: 16px; text-align: center; }
+        .summary-card .s-value { font-size: 1.8em; font-weight: 700; color: #2d3748; }
+        .summary-card .s-label { font-size: 0.82em; color: #718096; margin-top: 4px; }
+        .summary-card.highlight { border-color: #f093fb; background: #fdf0f8; }
+        .summary-card.highlight .s-value { color: #c53030; }
+
+        /* PAYMENT ICONS */
+        .pay-sepa     { color: #1e40af; }
+        .pay-transfer { color: #0369a1; }
+        .pay-paypal   { color: #1e3a8a; }
+        .pay-bar      { color: #15803d; }
+
+        /* MISC */
+        .empty-state { text-align: center; padding: 50px; color: #a0aec0; }
+        .empty-state .empty-icon { font-size: 3em; margin-bottom: 15px; }
+        .loading { text-align: center; padding: 40px; color: #718096; }
+        .alert { position: fixed; top: 20px; right: 20px; padding: 14px 20px; border-radius: 10px; font-weight: 600; font-size: 0.95em; z-index: 9000; opacity: 0; transform: translateX(30px); transition: all 0.3s; max-width: 320px; }
+        .alert.show { opacity: 1; transform: translateX(0); }
+        .alert-success { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+        .alert-error   { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+        .total-row td { font-weight: 700; background: #f7fafc; border-top: 2px solid #e2e8f0; }
+        .action-group { display: flex; gap: 5px; flex-wrap: wrap; }
+
+        select#sortOrder { padding: 8px 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 0.88em; font-weight: 600; color: #4a5568; background: white; cursor: pointer; }
+        select#sortOrder:focus { outline: none; border-color: #f093fb; }
+    </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-overlay" id="loginOverlay">
+    <div class="login-box">
+        <div style="font-size:3em;margin-bottom:10px;">👕</div>
+        <h2>Kleidung Admin</h2>
+        <p>Saarcade e.V. – Nur für Administratoren</p>
+        <input type="text" id="loginUsername" placeholder="Benutzername" autocomplete="username">
+        <input type="password" id="loginPassword" placeholder="Passwort" autocomplete="current-password">
+        <button class="login-btn" onclick="doLogin()">✓ Anmelden</button>
+        <div class="login-error" id="loginError">❌ Anmeldung fehlgeschlagen</div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="header">
+        <a href="/" class="home-btn" title="Startseite">🏠</a>
+        <div class="header-logo">
+            <img src="Saarcade-Logo.png" alt="Saarcade e.V.">
+        </div>
+        <div class="header-text">
+            <h1>👕 Kleidung Admin</h1>
+            <p>Artikel · Bestand · Bestellungen · Abrechnung</p>
+        </div>
+        <div class="header-actions">
+            <div class="user-badge" id="userBadge">–</div>
+            <button class="logout-btn" onclick="doLogout()">Abmelden</button>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('artikel', this)">🏷️ Artikel</button>
+        <button class="tab-btn" onclick="switchTab('bestand', this)">📦 Bestand</button>
+        <button class="tab-btn" onclick="switchTab('bestellungen', this)">📋 Bestellungen</button>
+        <button class="tab-btn" onclick="switchTab('unbezahlt', this)" id="tabUnbezahlt">💶 Unbezahlt</button>
+    </div>
+
+    <!-- TAB: ARTIKEL -->
+    <div class="tab-content active" id="tab-artikel">
+        <div class="filter-bar">
+            <span style="color:#4a5568;font-weight:600;">Kleidungsartikel</span>
+            <div class="filter-right">
+                <button class="btn-secondary" onclick="loadArticles()">🔄 Aktualisieren</button>
+                <button class="btn-primary" onclick="openArticleModal()">➕ Neuer Artikel</button>
+            </div>
+        </div>
+        <div class="table-wrapper">
+            <div id="artikelContent"><div class="loading">⏳ Lade Artikel…</div></div>
+        </div>
+    </div>
+
+    <!-- TAB: BESTAND -->
+    <div class="tab-content" id="tab-bestand">
+        <div class="filter-bar">
+            <select id="stockFilterItem" onchange="renderStock()" style="padding:8px 12px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9em;font-weight:600;color:#4a5568;background:white;max-width:250px;">
+                <option value="">Alle Artikel</option>
+            </select>
+            <div class="filter-right">
+                <button class="btn-secondary" onclick="loadStock()">🔄 Aktualisieren</button>
+                <button class="btn-primary" onclick="openBookingModal()">➕ Zugang buchen</button>
+            </div>
+        </div>
+        <div id="stockSummary"></div>
+        <div class="table-wrapper">
+            <div id="bestandContent"><div class="loading">⏳ Lade Bestand…</div></div>
+        </div>
+    </div>
+
+    <!-- TAB: BESTELLUNGEN -->
+    <div class="tab-content" id="tab-bestellungen">
+        <div class="filter-bar">
+            <button class="filter-btn active" onclick="setOrderFilter('all', this)">Alle <span class="filter-count" id="cnt-all">0</span></button>
+            <button class="filter-btn" onclick="setOrderFilter('open', this)">Offen <span class="filter-count" id="cnt-open">0</span></button>
+            <button class="filter-btn" onclick="setOrderFilter('completed', this)">Ausgeliefert <span class="filter-count" id="cnt-completed">0</span></button>
+            <button class="filter-btn" onclick="setOrderFilter('cancelled', this)">Storniert <span class="filter-count" id="cnt-cancelled">0</span></button>
+            <div class="filter-right">
+                <select id="sortOrder" onchange="renderOrders()">
+                    <option value="date_desc">↓ Bestelldatum</option>
+                    <option value="date_asc">↑ Bestelldatum</option>
+                    <option value="delivery_desc">↓ Auslieferung</option>
+                    <option value="delivery_asc">↑ Auslieferung</option>
+                </select>
+                <button class="btn-secondary" onclick="loadOrders()">🔄 Aktualisieren</button>
+            </div>
+        </div>
+        <div class="table-wrapper">
+            <div id="bestellungenContent"><div class="loading">⏳ Lade Bestellungen…</div></div>
+        </div>
+    </div>
+
+    <!-- TAB: UNBEZAHLT -->
+    <div class="tab-content" id="tab-unbezahlt">
+        <div class="filter-bar">
+            <span style="color:#4a5568;font-size:0.9em;">Ausgelieferte Bestellungen, die noch nicht abgerechnet wurden.</span>
+            <div class="filter-right">
+                <button class="btn-secondary" onclick="loadOrders()">🔄 Aktualisieren</button>
+            </div>
+        </div>
+        <div id="unbezahltSummary"></div>
+        <div class="table-wrapper">
+            <div id="unbezahltContent"><div class="loading">⏳ Lade Daten…</div></div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: ARTIKEL BEARBEITEN -->
+<div class="modal-overlay" id="articleModal" style="display:none;">
+    <div class="modal-box">
+        <h3 id="articleModalTitle">Neuer Artikel</h3>
+        <p class="modal-sub">Kleidungsartikel anlegen oder bearbeiten</p>
+        <input type="hidden" id="articleId">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Name *</label>
+                <input type="text" id="articleName" placeholder="z.B. T-Shirt Schwarz">
+            </div>
+            <div class="form-group">
+                <label>Emoji</label>
+                <input type="text" id="articleEmoji" placeholder="👕" maxlength="4">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Preis (€) *</label>
+                <input type="number" id="articlePrice" placeholder="0.00" min="0" step="0.01">
+            </div>
+            <div class="form-group">
+                <label>Verfügbar</label>
+                <select id="articleAvailable">
+                    <option value="true">✅ Ja</option>
+                    <option value="false">❌ Nein</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Verfügbare Größen</label>
+            <div class="size-checkboxes">
+                <label class="size-check"><input type="checkbox" value="XS" name="size"> XS</label>
+                <label class="size-check"><input type="checkbox" value="S" name="size"> S</label>
+                <label class="size-check"><input type="checkbox" value="M" name="size"> M</label>
+                <label class="size-check"><input type="checkbox" value="L" name="size"> L</label>
+                <label class="size-check"><input type="checkbox" value="XL" name="size"> XL</label>
+                <label class="size-check"><input type="checkbox" value="XXL" name="size"> XXL</label>
+                <label class="size-check"><input type="checkbox" value="3XL" name="size"> 3XL</label>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeArticleModal()">Abbrechen</button>
+            <button class="btn-primary" onclick="saveArticle()" style="flex:2;">💾 Speichern</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: ZUGANG BUCHEN -->
+<div class="modal-overlay" id="bookingModal" style="display:none;">
+    <div class="modal-box">
+        <h3>📦 Zugang buchen</h3>
+        <p class="modal-sub">Neuen Wareneingang eintragen</p>
+        <div class="form-group">
+            <label>Artikel *</label>
+            <select id="bookingItem" onchange="updateBookingSizes()">
+                <option value="">– Artikel wählen –</option>
+            </select>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Größe *</label>
+                <select id="bookingSize">
+                    <option value="">– erst Artikel wählen –</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Menge *</label>
+                <input type="number" id="bookingQty" placeholder="z.B. 5" min="1" step="1">
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeBookingModal()">Abbrechen</button>
+            <button class="btn-primary" onclick="saveBooking()" style="flex:2;">✓ Zugang buchen</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: BESTAND KORRIGIEREN -->
+<div class="modal-overlay" id="correctionModal" style="display:none;">
+    <div class="modal-box">
+        <h3>✏️ Bestand korrigieren</h3>
+        <p class="modal-sub" id="correctionLabel">–</p>
+        <input type="hidden" id="correctionStockId">
+        <div class="form-group">
+            <label>Neuer Bestand</label>
+            <input type="number" id="correctionQty" min="0" step="1">
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeCorrectionModal()">Abbrechen</button>
+            <button class="btn-primary" onclick="saveCorrection()" style="flex:2;">💾 Speichern</button>
+        </div>
+    </div>
+</div>
+
+<div class="alert" id="globalAlert"></div>
+
+<script>
+// ===== STATE =====
+let currentUser = null;
+let allArticles = [];
+let allStock = [];
+let allOrders = [];
+let orderFilter = 'all';
+
+// ===== AUTH =====
+function getSession() { const s = sessionStorage.getItem('kleidungAdmin'); return s ? JSON.parse(s) : null; }
+function saveSession(u) { sessionStorage.setItem('kleidungAdmin', JSON.stringify(u)); }
+function clearSession() { sessionStorage.removeItem('kleidungAdmin'); }
+
+async function doLogin() {
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const errEl = document.getElementById('loginError');
+    if (!username || !password) { errEl.textContent = '❌ Bitte Benutzername und Passwort eingeben'; errEl.style.display = 'block'; return; }
+    try {
+        const res = await fetch('/api/login', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({username, password}) });
+        const data = await res.json();
+        if (!res.ok) { errEl.textContent = '❌ ' + (data.error || 'Anmeldung fehlgeschlagen'); errEl.style.display = 'block'; document.getElementById('loginPassword').value = ''; return; }
+        if (data.user.role !== 'admin') { errEl.textContent = '❌ Nur Administratoren haben Zugang'; errEl.style.display = 'block'; document.getElementById('loginPassword').value = ''; return; }
+        currentUser = data.user;
+        saveSession(currentUser);
+        onLoggedIn();
+    } catch(e) { errEl.textContent = '❌ Verbindungsfehler'; errEl.style.display = 'block'; }
+}
+
+function doLogout() { clearSession(); currentUser = null; document.getElementById('loginOverlay').style.display = 'flex'; document.getElementById('loginPassword').value = ''; document.getElementById('loginError').style.display = 'none'; }
+
+function onLoggedIn() {
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('userBadge').textContent = '👤 ' + currentUser.username;
+    loadArticles();
+    loadStock();
+    loadOrders();
+}
+
+// ===== API =====
+async function apiCall(endpoint, options = {}) {
+    const res = await fetch('/api' + endpoint, { headers: {'Content-Type':'application/json', ...options.headers}, ...options });
+    if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'API Fehler'); }
+    return res.json();
+}
+
+// ===== TABS =====
+function switchTab(tab, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    if (btn) btn.classList.add('active');
+}
+
+// ===== HELPERS =====
+function escHtml(str) { return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtDate(dt) { return dt ? new Date(dt).toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'numeric'}) : '–'; }
+function fmtDateTime(dt) { return dt ? new Date(dt).toLocaleString('de-DE', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '–'; }
+
+let alertTimer;
+function showAlert(msg, type) {
+    const el = document.getElementById('globalAlert');
+    el.textContent = msg; el.className = 'alert alert-' + type + ' show';
+    clearTimeout(alertTimer); alertTimer = setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+function statusBadge(status) {
+    const map = { pending: ['badge-pending','⏳ Offen'], confirmed: ['badge-confirmed','✅ Bestätigt'], shipped: ['badge-shipped','🚚 Versendet'], completed: ['badge-completed','✓ Ausgeliefert'], cancelled: ['badge-cancelled','✗ Storniert'] };
+    const [cls, label] = map[status] || ['','–'];
+    return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function payLabel(pm) {
+    const map = { sepa: '🏦 SEPA', transfer: '💳 Überweisung', paypal: '💰 PayPal', bar: '💵 Bar' };
+    return map[pm] || pm || '–';
+}
+
+function formatItems(items) {
+    if (!Array.isArray(items) || !items.length) return '<span style="color:#999;">–</span>';
+    return items.map(i => {
+        const detail = [i.color, i.size].filter(Boolean).join(' · ');
+        const qty = i.quantity > 1 ? ` ×${i.quantity}` : '';
+        return `<div><strong>${escHtml(i.name || i.product_name || '?')}${qty}</strong>${detail ? `<br><small style="color:#718096;">${escHtml(detail)}</small>` : ''}</div>`;
+    }).join('');
+}
+
+// ===== ARTIKEL =====
+async function loadArticles() {
+    document.getElementById('artikelContent').innerHTML = '<div class="loading">⏳ Lade Artikel…</div>';
+    try {
+        allArticles = await apiCall('/clothing-items');
+        renderArticles();
+        populateArticleSelects();
+    } catch(e) {
+        document.getElementById('artikelContent').innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>${e.message}</p></div>`;
+    }
+}
+
+function renderArticles() {
+    if (!allArticles.length) {
+        document.getElementById('artikelContent').innerHTML = '<div class="empty-state"><div class="empty-icon">👕</div><p>Noch keine Artikel angelegt.</p></div>';
+        return;
+    }
+    const rows = allArticles.map(a => {
+        const sizes = (a.sizes || []).join(', ') || '–';
+        const avail = a.available ? '<span class="badge badge-ok">✅ Aktiv</span>' : '<span class="badge badge-zero">❌ Inaktiv</span>';
+        return `<tr>
+            <td style="font-size:1.5em;text-align:center;">${escHtml(a.emoji||'👕')}</td>
+            <td><strong>${escHtml(a.name)}</strong></td>
+            <td><strong>${(a.price||0).toFixed(2)} €</strong></td>
+            <td style="font-size:0.85em;color:#4a5568;">${escHtml(sizes)}</td>
+            <td>${avail}</td>
+            <td><div class="action-group">
+                <button class="btn-warning btn-sm" onclick="openArticleModal(${a.id})">✏️ Bearb.</button>
+                <button class="btn-danger btn-sm" onclick="deleteArticle(${a.id})">🗑️</button>
+            </div></td>
+        </tr>`;
+    }).join('');
+    document.getElementById('artikelContent').innerHTML = `<table>
+        <thead><tr><th></th><th>Name</th><th>Preis</th><th>Größen</th><th>Status</th><th>Aktion</th></tr></thead>
+        <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function openArticleModal(id = null) {
+    const article = id ? allArticles.find(a => a.id === id) : null;
+    document.getElementById('articleModalTitle').textContent = article ? 'Artikel bearbeiten' : 'Neuer Artikel';
+    document.getElementById('articleId').value = id || '';
+    document.getElementById('articleName').value = article?.name || '';
+    document.getElementById('articleEmoji').value = article?.emoji || '👕';
+    document.getElementById('articlePrice').value = article?.price || '';
+    document.getElementById('articleAvailable').value = String(article?.available !== false);
+    const checkedSizes = new Set(article?.sizes || ['S','M','L','XL']);
+    document.querySelectorAll('input[name="size"]').forEach(cb => { cb.checked = checkedSizes.has(cb.value); });
+    document.getElementById('articleModal').style.display = 'flex';
+    document.getElementById('articleName').focus();
+}
+
+function closeArticleModal() { document.getElementById('articleModal').style.display = 'none'; }
+
+async function saveArticle() {
+    const id = document.getElementById('articleId').value;
+    const name = document.getElementById('articleName').value.trim();
+    const price = parseFloat(document.getElementById('articlePrice').value);
+    const emoji = document.getElementById('articleEmoji').value.trim() || '👕';
+    const available = document.getElementById('articleAvailable').value === 'true';
+    const sizes = [...document.querySelectorAll('input[name="size"]:checked')].map(cb => cb.value);
+
+    if (!name) { showAlert('❌ Name ist Pflichtfeld', 'error'); return; }
+    if (isNaN(price) || price < 0) { showAlert('❌ Ungültiger Preis', 'error'); return; }
+
+    const payload = { name, emoji, price, available, sizes };
+    try {
+        if (id) {
+            await apiCall('/clothing-items/' + id, { method: 'PUT', body: JSON.stringify(payload) });
+            showAlert('✓ Artikel aktualisiert', 'success');
+        } else {
+            await apiCall('/clothing-items', { method: 'POST', body: JSON.stringify(payload) });
+            showAlert('✓ Artikel angelegt', 'success');
+        }
+        closeArticleModal();
+        await loadArticles();
+        await loadStock();
+    } catch(e) { showAlert('❌ ' + e.message, 'error'); }
+}
+
+async function deleteArticle(id) {
+    const a = allArticles.find(x => x.id === id);
+    if (!confirm(`Artikel "${a?.name}" wirklich löschen? Alle zugehörigen Bestandsdaten werden ebenfalls gelöscht.`)) return;
+    try {
+        await apiCall('/clothing-items/' + id, { method: 'DELETE' });
+        showAlert('✓ Artikel gelöscht', 'success');
+        await loadArticles();
+        await loadStock();
+    } catch(e) { showAlert('❌ ' + e.message, 'error'); }
+}
+
+// ===== BESTAND =====
+async function loadStock() {
+    document.getElementById('bestandContent').innerHTML = '<div class="loading">⏳ Lade Bestand…</div>';
+    try {
+        allStock = await apiCall('/clothing-stock');
+        renderStock();
+    } catch(e) {
+        document.getElementById('bestandContent').innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>${e.message}</p></div>`;
+    }
+}
+
+function renderStock() {
+    const filterItem = document.getElementById('stockFilterItem')?.value || '';
+    const filtered = filterItem ? allStock.filter(s => String(s.clothing_item_id) === filterItem) : allStock;
+
+    // Summary
+    const totalItems = filtered.length;
+    const totalQty = filtered.reduce((sum, s) => sum + (s.quantity || 0), 0);
+    const lowCount = filtered.filter(s => s.quantity > 0 && s.quantity <= 2).length;
+    const zeroCount = filtered.filter(s => s.quantity === 0).length;
+    document.getElementById('stockSummary').innerHTML = `<div class="summary-cards">
+        <div class="summary-card"><div class="s-value">${totalItems}</div><div class="s-label">Varianten</div></div>
+        <div class="summary-card"><div class="s-value">${totalQty}</div><div class="s-label">Stück gesamt</div></div>
+        <div class="summary-card ${lowCount > 0 ? 'highlight' : ''}"><div class="s-value">${lowCount}</div><div class="s-label">Niedrig (≤2)</div></div>
+        <div class="summary-card ${zeroCount > 0 ? 'highlight' : ''}"><div class="s-value">${zeroCount}</div><div class="s-label">Ausverkauft</div></div>
+    </div>`;
+
+    if (!filtered.length) {
+        document.getElementById('bestandContent').innerHTML = '<div class="empty-state"><div class="empty-icon">📦</div><p>Kein Bestand vorhanden. Bitte zuerst einen Zugang buchen.</p></div>';
+        return;
+    }
+
+    const rows = filtered.map(s => {
+        const name = s.clothing_items?.name || '–';
+        const emoji = s.clothing_items?.emoji || '👕';
+        const qty = s.quantity || 0;
+        const qtyClass = qty === 0 ? 'qty-zero' : qty <= 2 ? 'qty-low' : 'qty-ok';
+        const badgeHtml = qty === 0 ? '<span class="badge badge-zero">Ausverkauft</span>' :
+                          qty <= 2  ? '<span class="badge badge-low">Niedrig</span>' :
+                                      '<span class="badge badge-ok">OK</span>';
+        return `<tr>
+            <td>${escHtml(emoji)} <strong>${escHtml(name)}</strong></td>
+            <td><span class="badge badge-confirmed">${escHtml(s.size)}</span></td>
+            <td><div class="qty-display"><span class="qty-num ${qtyClass}">${qty}</span>${badgeHtml}</div></td>
+            <td style="color:#999;font-size:0.82em;">${fmtDate(s.updated_at)}</td>
+            <td><div class="action-group">
+                <button class="btn-success btn-sm" onclick="openBookingModal(${s.clothing_item_id}, '${escHtml(s.size)}')">+ Zugang</button>
+                <button class="btn-warning btn-sm" onclick="openCorrectionModal(${s.id}, '${escHtml(name)} ${escHtml(s.size)}', ${qty})">✏️ Korr.</button>
+            </div></td>
+        </tr>`;
+    }).join('');
+
+    document.getElementById('bestandContent').innerHTML = `<table>
+        <thead><tr><th>Artikel</th><th>Größe</th><th>Bestand</th><th>Zuletzt geändert</th><th>Aktion</th></tr></thead>
+        <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function populateArticleSelects() {
+    // Stock filter dropdown
+    const filterSel = document.getElementById('stockFilterItem');
+    const currentVal = filterSel?.value || '';
+    if (filterSel) {
+        filterSel.innerHTML = '<option value="">Alle Artikel</option>' +
+            allArticles.map(a => `<option value="${a.id}" ${String(a.id) === currentVal ? 'selected' : ''}>${escHtml(a.emoji||'👕')} ${escHtml(a.name)}</option>`).join('');
+    }
+    // Booking modal dropdown
+    const bookSel = document.getElementById('bookingItem');
+    if (bookSel) {
+        bookSel.innerHTML = '<option value="">– Artikel wählen –</option>' +
+            allArticles.filter(a => a.available !== false).map(a =>
+                `<option value="${a.id}" data-sizes="${(a.sizes||[]).join(',')}">${escHtml(a.emoji||'👕')} ${escHtml(a.name)}</option>`
+            ).join('');
+    }
+}
+
+function openBookingModal(preItemId = null, preSize = null) {
+    populateArticleSelects();
+    if (preItemId) {
+        document.getElementById('bookingItem').value = preItemId;
+        updateBookingSizes();
+        if (preSize) setTimeout(() => { document.getElementById('bookingSize').value = preSize; }, 50);
+    }
+    document.getElementById('bookingQty').value = '';
+    document.getElementById('bookingModal').style.display = 'flex';
+}
+
+function closeBookingModal() { document.getElementById('bookingModal').style.display = 'none'; }
+
+function updateBookingSizes() {
+    const sel = document.getElementById('bookingItem');
+    const opt = sel.options[sel.selectedIndex];
+    const sizes = opt?.dataset?.sizes ? opt.dataset.sizes.split(',').filter(Boolean) : [];
+    const sizeSel = document.getElementById('bookingSize');
+    sizeSel.innerHTML = sizes.length
+        ? sizes.map(s => `<option value="${s}">${s}</option>`).join('')
+        : '<option value="">– keine Größen –</option>';
+}
+
+async function saveBooking() {
+    const itemId = parseInt(document.getElementById('bookingItem').value);
+    const size   = document.getElementById('bookingSize').value;
+    const qty    = parseInt(document.getElementById('bookingQty').value);
+    if (!itemId || !size) { showAlert('❌ Bitte Artikel und Größe wählen', 'error'); return; }
+    if (isNaN(qty) || qty <= 0) { showAlert('❌ Bitte eine gültige Menge eingeben', 'error'); return; }
+    try {
+        await apiCall('/clothing-stock/book', { method: 'POST', body: JSON.stringify({ clothing_item_id: itemId, size, quantity: qty }) });
+        closeBookingModal();
+        showAlert(`✓ ${qty} Stück gebucht`, 'success');
+        await loadStock();
+    } catch(e) { showAlert('❌ ' + e.message, 'error'); }
+}
+
+function openCorrectionModal(stockId, label, currentQty) {
+    document.getElementById('correctionStockId').value = stockId;
+    document.getElementById('correctionLabel').textContent = label + ' – aktuell: ' + currentQty + ' Stück';
+    document.getElementById('correctionQty').value = currentQty;
+    document.getElementById('correctionModal').style.display = 'flex';
+    document.getElementById('correctionQty').focus();
+}
+function closeCorrectionModal() { document.getElementById('correctionModal').style.display = 'none'; }
+
+async function saveCorrection() {
+    const stockId = document.getElementById('correctionStockId').value;
+    const qty = parseInt(document.getElementById('correctionQty').value);
+    if (isNaN(qty) || qty < 0) { showAlert('❌ Ungültige Menge', 'error'); return; }
+    try {
+        await apiCall('/clothing-stock/' + stockId, { method: 'PUT', body: JSON.stringify({ quantity: qty }) });
+        closeCorrectionModal();
+        showAlert('✓ Bestand korrigiert', 'success');
+        await loadStock();
+    } catch(e) { showAlert('❌ ' + e.message, 'error'); }
+}
+
+// ===== BESTELLUNGEN =====
+async function loadOrders() {
+    document.getElementById('bestellungenContent').innerHTML = '<div class="loading">⏳ Lade Bestellungen…</div>';
+    document.getElementById('unbezahltContent').innerHTML = '<div class="loading">⏳ Lade Daten…</div>';
+    try {
+        allOrders = await apiCall('/clothing-orders');
+        renderOrders();
+        renderUnbilled();
+    } catch(e) {
+        document.getElementById('bestellungenContent').innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>${e.message}</p></div>`;
+        document.getElementById('unbezahltContent').innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>${e.message}</p></div>`;
+    }
+}
+
+function setOrderFilter(f, btn) {
+    orderFilter = f;
+    document.querySelectorAll('#tab-bestellungen .filter-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    renderOrders();
+}
+
+function getSortedFiltered() {
+    const isOpen = o => !['completed','cancelled'].includes(o.status);
+    let list = allOrders.filter(o => {
+        if (orderFilter === 'open')      return isOpen(o);
+        if (orderFilter === 'completed') return o.status === 'completed';
+        if (orderFilter === 'cancelled') return o.status === 'cancelled';
+        return true;
+    });
+    const sort = document.getElementById('sortOrder')?.value || 'date_desc';
+    list.sort((a, b) => {
+        if (sort === 'date_asc')      return new Date(a.created_at) - new Date(b.created_at);
+        if (sort === 'delivery_desc') return new Date(b.delivered_at||0) - new Date(a.delivered_at||0);
+        if (sort === 'delivery_asc')  return new Date(a.delivered_at||0) - new Date(b.delivered_at||0);
+        return new Date(b.created_at) - new Date(a.created_at); // date_desc default
+    });
+    return list;
+}
+
+function renderOrders() {
+    const isOpen = o => !['completed','cancelled'].includes(o.status);
+    document.getElementById('cnt-all').textContent       = allOrders.length;
+    document.getElementById('cnt-open').textContent      = allOrders.filter(isOpen).length;
+    document.getElementById('cnt-completed').textContent = allOrders.filter(o => o.status === 'completed').length;
+    document.getElementById('cnt-cancelled').textContent = allOrders.filter(o => o.status === 'cancelled').length;
+
+    const unbilledCount = allOrders.filter(o => o.status === 'completed' && !o.billed).length;
+    document.getElementById('tabUnbezahlt').textContent = unbilledCount > 0
+        ? `💶 Unbezahlt (${unbilledCount})`
+        : '💶 Unbezahlt';
+
+    const list = getSortedFiltered();
+    if (!list.length) {
+        document.getElementById('bestellungenContent').innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>Keine Bestellungen gefunden.</p></div>';
+        return;
+    }
+
+    const rows = list.map(o => {
+        const canDeliver = isOpen(o);
+        const actionHtml = canDeliver
+            ? `<div class="action-group">
+                <button class="btn-success btn-sm" onclick="markDelivered(${o.id})">✓ Ausgeliefert</button>
+                <button class="btn-danger btn-sm" onclick="cancelOrder(${o.id})">✗ Stornieren</button>
+               </div>`
+            : (o.status === 'completed'
+                ? `<span style="color:#15803d;font-size:0.82em;">✓ Erledigt</span>`
+                : `<span style="color:#999;font-size:0.82em;">Storniert</span>`);
+        const billedHtml = o.status === 'completed'
+            ? (o.billed
+                ? '<span class="badge badge-ok">✓ Abgerechnet</span>'
+                : `<button class="btn-warning btn-sm" onclick="markBilled(${o.id})">Als abger. mark.</button>`)
+            : '–';
+
+        return `<tr class="${o.status==='completed'?'delivered':''}">
+            <td style="white-space:nowrap;font-size:0.85em;">${fmtDate(o.created_at)}</td>
+            <td><strong>${escHtml(o.member_name||'–')}</strong></td>
+            <td>${formatItems(o.items)}</td>
+            <td>${payLabel(o.payment_method)}</td>
+            <td><strong>${(o.total||0).toFixed(2)} €</strong></td>
+            <td>${statusBadge(o.status)}</td>
+            <td style="white-space:nowrap;font-size:0.85em;">${fmtDate(o.delivered_at)}</td>
+            <td>${billedHtml}</td>
+            <td>${actionHtml}</td>
+        </tr>`;
+    }).join('');
+
+    document.getElementById('bestellungenContent').innerHTML = `<table>
+        <thead><tr>
+            <th>Bestellt</th><th>Mitglied</th><th>Artikel</th>
+            <th>Zahlung</th><th>Summe</th><th>Status</th>
+            <th>Ausgeliefert</th><th>Abrechnung</th><th>Aktion</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+    </table>`;
+}
+
+async function markDelivered(id) {
+    try {
+        await apiCall('/clothing-orders/' + id, { method: 'PUT', body: JSON.stringify({ status: 'completed' }) });
+        const o = allOrders.find(x => x.id === id);
+        if (o) { o.status = 'completed'; o.delivered_at = new Date().toISOString(); }
+        renderOrders();
+        renderUnbilled();
+        await loadStock(); // Bestand nach Abbuchung neu laden
+        showAlert('✓ Ausgeliefert – Bestand wurde aktualisiert', 'success');
+    } catch(e) { showAlert('❌ ' + e.message, 'error'); }
+}
+
+async function cancelOrder(id) {
+    if (!confirm('Bestellung wirklich stornieren?')) return;
+    try {
+        await apiCall('/clothing-orders/' + id, { method: 'PUT', body: JSON.stringify({ status: 'cancelled' }) });
+        const o = allOrders.find(x => x.id === id);
+        if (o) o.status = 'cancelled';
+        renderOrders();
+        showAlert('✓ Bestellung storniert', 'success');
+    } catch(e) { showAlert('❌ ' + e.message, 'error'); }
+}
+
+async function markBilled(id) {
+    try {
+        await apiCall('/clothing-orders/' + id, { method: 'PUT', body: JSON.stringify({ billed: true }) });
+        const o = allOrders.find(x => x.id === id);
+        if (o) o.billed = true;
+        renderOrders();
+        renderUnbilled();
+        showAlert('✓ Als abgerechnet markiert', 'success');
+    } catch(e) { showAlert('❌ ' + e.message, 'error'); }
+}
+
+// ===== UNBEZAHLT =====
+function renderUnbilled() {
+    const list = allOrders.filter(o => o.status === 'completed' && !o.billed);
+    const total = list.reduce((sum, o) => sum + (o.total || 0), 0);
+
+    document.getElementById('unbezahltSummary').innerHTML = `<div class="summary-cards">
+        <div class="summary-card ${list.length > 0 ? 'highlight' : ''}">
+            <div class="s-value">${list.length}</div>
+            <div class="s-label">Offene Posten</div>
+        </div>
+        <div class="summary-card ${total > 0 ? 'highlight' : ''}">
+            <div class="s-value">${total.toFixed(2)} €</div>
+            <div class="s-label">Ausstehend gesamt</div>
+        </div>
+    </div>`;
+
+    if (!list.length) {
+        document.getElementById('unbezahltContent').innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><p>Alle ausgelieferten Bestellungen sind abgerechnet.</p></div>';
+        return;
+    }
+
+    const rows = list.map(o => `<tr>
+        <td style="white-space:nowrap;">${fmtDate(o.delivered_at)}</td>
+        <td><strong>${escHtml(o.member_name||'–')}</strong></td>
+        <td>${formatItems(o.items)}</td>
+        <td>${payLabel(o.payment_method)}</td>
+        <td><strong>${(o.total||0).toFixed(2)} €</strong></td>
+        <td><button class="btn-success btn-sm" onclick="markBilled(${o.id})">✓ Abgerechnet</button></td>
+    </tr>`).join('');
+
+    document.getElementById('unbezahltContent').innerHTML = `<table>
+        <thead><tr><th>Ausgeliefert</th><th>Mitglied</th><th>Artikel</th><th>Zahlung</th><th>Summe</th><th>Aktion</th></tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot><tr class="total-row"><td colspan="4">Gesamt</td><td>${total.toFixed(2)} €</td><td></td></tr></tfoot>
+    </table>`;
+}
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', () => {
+    ['loginUsername','loginPassword'].forEach(id => {
+        document.getElementById(id).addEventListener('keypress', e => { if (e.key === 'Enter') doLogin(); });
+    });
+    const session = getSession();
+    if (session) { currentUser = session; onLoggedIn(); }
+    else { document.getElementById('loginOverlay').style.display = 'flex'; document.getElementById('loginUsername').focus(); }
+});
+</script>
+</body>
+</html>
