@@ -2682,6 +2682,33 @@ async function searchUsers(query) {
             currentVoucherProduct = null;
         }
 
+        // Numpad im Gutschein-Modal: schreibt ins zuletzt angetippte Feld
+        let activeVoucherField = 'voucherSerialNumber';
+
+        function addVoucherDigit(digit) {
+            const input = document.getElementById(activeVoucherField);
+            if (input.value.length >= input.maxLength) return;
+            input.value += digit;
+
+            // Nach 4 Ziffern automatisch zur Hologramm-Nummer springen
+            if (activeVoucherField === 'voucherSerialNumber' && input.value.length === input.maxLength) {
+                document.getElementById('voucherHologramNumber').focus();
+            } else {
+                input.focus();
+            }
+        }
+
+        function removeVoucherDigit() {
+            const input = document.getElementById(activeVoucherField);
+            input.value = input.value.slice(0, -1);
+            input.focus();
+        }
+
+            const input = document.getElementById(activeVoucherField);
+            input.value = '';
+            input.focus();
+        }
+
         function confirmVoucherNumbers() {
             const serialNumber = document.getElementById('voucherSerialNumber').value.trim();
             const hologramNumber = document.getElementById('voucherHologramNumber').value.trim();
@@ -4808,7 +4835,11 @@ window.addEventListener('load', () => {
                 <label for="voucherSerialNumber">Laufende Gutscheinnummer (4-stellig) *</label>
                 <input 
                     type="text" 
-                    id="voucherSerialNumber" 
+                    id="voucherSerialNumber"
+                    inputmode="none"
+                    autocomplete="off"
+                    onfocus="activeVoucherField = this.id"
+                    oninput="this.value = this.value.replace(/\D/g, '')"
                     maxlength="4"
                     placeholder="0001"
                     style="width: 100%; padding: 12px; font-size: 1.3em; text-align: center; border: 2px solid #e2e8f0; border-radius: 8px;"
@@ -4821,7 +4852,11 @@ window.addEventListener('load', () => {
     <label for="voucherHologramNumber">Hologramm-Nummer (6-stellig) *</label>
     <input 
         type="text" 
-        id="voucherHologramNumber" 
+        id="voucherHologramNumber"
+        inputmode="none"
+        autocomplete="off"
+        onfocus="activeVoucherField = this.id"
+        oninput="this.value = this.value.replace(/\D/g, '')"
         maxlength="6"
         placeholder="123456"
         style="width: 100%; padding: 12px; font-size: 1.3em; text-align: center; border: 2px solid #e2e8f0; border-radius: 8px;"
@@ -4830,6 +4865,22 @@ window.addEventListener('load', () => {
     >
 </div>
             
+            <!-- Numpad für Gutschein-Nummern (Tablet ohne Tastatur) -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 20px;">
+                <button type="button" class="btn btn-secondary" onclick="addVoucherDigit('1')" style="padding: 15px; font-size: 1.2em;">1</button>
+                <button type="button" class="btn btn-secondary" onclick="addVoucherDigit('2')" style="padding: 15px; font-size: 1.2em;">2</button>
+                <button type="button" class="btn btn-secondary" onclick="addVoucherDigit('3')" style="padding: 15px; font-size: 1.2em;">3</button>
+                <button type="button" class="btn btn-secondary" onclick="addVoucherDigit('4')" style="padding: 15px; font-size: 1.2em;">4</button>
+                <button type="button" class="btn btn-secondary" onclick="addVoucherDigit('5')" style="padding: 15px; font-size: 1.2em;">5</button>
+                <button type="button" class="btn btn-secondary" onclick="addVoucherDigit('6')" style="padding: 15px; font-size: 1.2em;">6</button>
+                <button type="button" class="btn btn-secondary" onclick="addVoucherDigit('7')" style="padding: 15px; font-size: 1.2em;">7</button>
+                <button type="button" class="btn btn-secondary" onclick="addVoucherDigit('8')" style="padding: 15px; font-size: 1.2em;">8</button>
+                <button type="button" class="btn btn-secondary" onclick="addVoucherDigit('9')" style="padding: 15px; font-size: 1.2em;">9</button>
+                <button type="button" class="btn btn-secondary" onclick="clearVoucherField()" style="padding: 15px; font-size: 1em;">C</button>
+                <button type="button" class="btn btn-secondary" onclick="addVoucherDigit('0')" style="padding: 15px; font-size: 1.2em;">0</button>
+                <button type="button" class="btn btn-danger" onclick="removeVoucherDigit()" style="padding: 15px; font-size: 1.2em;">⌫</button>
+            </div>
+
             <div style="background: #fff5e6; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9em;">
                 ℹ️ Diese Nummern dienen zur eindeutigen Identifikation des Gutscheins.
             </div>
