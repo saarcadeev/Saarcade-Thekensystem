@@ -124,8 +124,8 @@
         <tr class="sep"><td>Tageseinnahmen</td><td class="num">${euro(c.revenue_counted)}</td></tr>
         <tr><td>Einnahmen gemäß Tablet</td><td class="num">${euro(c.revenue_system)}</td></tr>
         <tr><td class="small" colspan="2">
-            davon Barverkäufe ${euro(b.cash_sales_total)} (${b.cash_sales_count || 0} Buchungen),
-            Verzehrkarten ${euro(b.voucher_sales_total)} (${b.voucher_sales_count || 0})${b.voucher_refunds_count ? `, Rückgaben −${euro(b.voucher_refunds_total)} (${b.voucher_refunds_count})` : ''}
+            davon Barverkäufe ${euro(b.cash_sales_total)} (${b.cash_sales_count || 0} Buchungen)${b.voucher_sales_count ? `,
+            Verzehrkarten ${euro(b.voucher_sales_total)} (${b.voucher_sales_count})` : ''}${b.voucher_refunds_count ? `, Rückgaben −${euro(b.voucher_refunds_total)} (${b.voucher_refunds_count})` : ''}
         </td></tr>
         <tr class="sep"><td>Differenz (+/-)</td><td class="num">${signed(diff)}</td></tr>
     </table>

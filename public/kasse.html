@@ -1562,7 +1562,7 @@ try {
             ✅ Barzahlung abschließen
         </button>
         
-        <button class="btn" onclick="completeVoucherCardPayment()" style="padding: 12px; font-size: 1.05em; background: #f59e0b; color: white;">
+        <button class="btn" onclick="completeVoucherCardPayment()" id="completeVoucherCardBtn" style="padding: 12px; font-size: 1.05em; background: #f59e0b; color: white;">
             🎫 Als Verzehrkarte buchen
         </button>
         
@@ -2178,12 +2178,9 @@ async function loadProducts() {
                 const voucherCheckbox = document.getElementById('voucherSystemCheckbox');
                 if (voucherCheckbox) {
                     voucherCheckbox.checked = voucherEnabled;
-                    // Button entsprechend anzeigen/verstecken
-                    const voucherBtn = document.getElementById('voucherCardBtn');
-                    if (voucherBtn) {
-                        voucherBtn.style.display = voucherEnabled ? 'flex' : 'none';
-                    }
                 }
+                // Sichtbarkeit hängt am Barkeeper-Account, nicht mehr an dieser Einstellung
+                applyVoucherVisibility();
                 
                 console.log('Spezial-Barcodes geladen:', specialBarcodes);
             } catch (error) {
@@ -2418,12 +2415,41 @@ window.debugImageDisplay = debugImageDisplay;
             const cashClosingBtn = document.getElementById('cashClosingBtn');
             if (currentUser.role === 'bartender') {
                 cashHelperToggle.classList.add('show');
-                if (refundBtn) refundBtn.style.display = 'block';
                 if (cashClosingBtn) cashClosingBtn.style.display = 'block';
             } else {
                 cashHelperToggle.classList.remove('show');
-                if (refundBtn) refundBtn.style.display = 'none';
                 if (cashClosingBtn) cashClosingBtn.style.display = 'none';
+            }
+            applyVoucherVisibility();
+        }
+
+        // Verzehrkarten nur für freigeschaltete Barkeeper-Accounts (Admin: Mitglied bearbeiten)
+        const VOUCHER_CATEGORIES = ['verzehrkarten', 'restzahlungen'];
+
+        function hasVoucherAccess() {
+            return !!currentUser && currentUser.role === 'bartender' && currentUser.voucher_access === true;
+        }
+
+        function applyVoucherVisibility() {
+            const allowed = hasVoucherAccess();
+
+            const refundBtn = document.getElementById('refundBtn');
+            if (refundBtn) refundBtn.style.display = allowed ? 'block' : 'none';
+
+            const voucherCardBtn = document.getElementById('voucherCardBtn');
+            if (voucherCardBtn) voucherCardBtn.style.display = allowed ? 'flex' : 'none';
+
+            const completeVoucherCardBtn = document.getElementById('completeVoucherCardBtn');
+            if (completeVoucherCardBtn) completeVoucherCardBtn.style.display = allowed ? '' : 'none';
+
+            VOUCHER_CATEGORIES.forEach(category => {
+                const categoryBtn = document.querySelector(`.category-btn[data-category="${category}"]`);
+                if (categoryBtn) categoryBtn.style.display = allowed ? '' : 'none';
+            });
+
+            // Falls gerade eine Verzehrkarten-Kategorie offen war, zurück zu den Favoriten
+            if (!allowed && VOUCHER_CATEGORIES.includes(currentCategory)) {
+                document.querySelector('.category-btn[data-category="favoriten"]').click();
             }
         }
         
@@ -2442,6 +2468,9 @@ window.debugImageDisplay = debugImageDisplay;
         }
 
         function filterProductsByCategory(productsToFilter) {
+            if (!hasVoucherAccess()) {
+                productsToFilter = productsToFilter.filter(product => !VOUCHER_CATEGORIES.includes(product.category));
+            }
             if (currentCategory === 'all') {
                 return productsToFilter;
             }
@@ -3070,6 +3099,12 @@ function addToCart(productId, fromBarcode = false) {
 
             const product = products.find(p => p.id === productId);
             
+            // Verzehrkarten (z. B. per Barcode gescannt) nur für freigeschaltete Accounts
+            if (product && VOUCHER_CATEGORIES.includes(product.category) && !hasVoucherAccess()) {
+                showStatus('Verzehrkarten sind für diesen Account nicht freigeschaltet', 'error');
+                return;
+            }
+
             // Wenn Geschenkgutschein, Modal öffnen statt direkt hinzuzufügen
             if (product && product.category === 'geschenkgutscheine') {
                 openVoucherModal(product);
@@ -3730,8 +3765,8 @@ if (trimmedBarcode === specialBarcodes.checkout.toUpperCase()) {
                     return;
                 }
                 
-                if (!currentUser || currentUser.role !== 'bartender') {
-                    showStatus('Verzehrkarten-Checkout nur fuer Barkeeper verfuegbar', 'error');
+                if (!hasVoucherAccess()) {
+                    showStatus('Verzehrkarten sind für diesen Account nicht freigeschaltet', 'error');
                     return;
                 }
                 
@@ -4235,7 +4270,10 @@ async function openCashClosingModal() {
         
         // SOLL-Bestand berechnen
         const sollAmount = cashSalesTotal + voucherSalesTotal - voucherRefundsTotal;
-        
+
+        // Verzehrkarten-Abschnitte nur bei freigeschalteten Accounts oder wenn es Buchungen gibt
+        const showVoucher = hasVoucherAccess() || voucherSalesCount > 0 || voucherRedemptionsCount > 0 || voucherRefundsCount > 0;
+
         // Erstelle Übersicht
         const now = new Date();
         const content = `
@@ -4254,7 +4292,8 @@ async function openCashClosingModal() {
             <p>Summe: <strong style="color: #48bb78;">${cashSalesTotal.toFixed(2)} €</strong></p>
         </div>
     </div>
-    
+
+    ${showVoucher ? `
     <div style="margin-bottom: 20px;">
         <h3 style="color: #f59e0b; margin-bottom: 10px;">🎫 VERZEHRKARTEN VERKAUFT</h3>
         <div style="padding-left: 15px;">
@@ -4291,12 +4330,13 @@ async function openCashClosingModal() {
             <tr style="border-top: 2px solid #667eea;"><td style="padding-top: 10px;"><strong>Noch offenes Guthaben:</strong></td><td style="text-align: right; padding-top: 10px;"><strong style="font-size: 1.2em; color: #667eea;">${(voucherSalesTotal - voucherRefundsTotal - voucherRedemptionsValue).toFixed(2)} €</strong></td></tr>
         </table>
     </div>
-    
+    ` : ''}
+
     <div style="margin-top: 25px; padding: 15px; background: #fff5e6; border-radius: 8px; border: 2px solid #f59e0b;">
         <h3 style="color: #f59e0b; margin-bottom: 15px; text-align: center;">💵 SOLL-IST-VERGLEICH</h3>
         <table style="width: 100%; font-size: 1.1em;">
             <tr><td>Barverkäufe:</td><td style="text-align: right;"><strong>${cashSalesTotal.toFixed(2)} €</strong></td></tr>
-            <tr><td>Karten verkauft:</td><td style="text-align: right;"><strong>${voucherSalesTotal.toFixed(2)} €</strong></td></tr>
+            ${showVoucher ? `<tr><td>Karten verkauft:</td><td style="text-align: right;"><strong>${voucherSalesTotal.toFixed(2)} €</strong></td></tr>` : ''}
             ${voucherRefundsCount > 0 ? `<tr><td>Karten Rückgaben:</td><td style="text-align: right;"><strong style="color: #e53e3e;">-${voucherRefundsTotal.toFixed(2)} €</strong></td></tr>` : ''}
             <tr style="border-top: 2px solid #f59e0b;"><td style="padding-top: 10px;"><strong>SOLL in Kasse:</strong></td><td style="text-align: right; padding-top: 10px;"><strong style="font-size: 1.3em; color: #f59e0b;">${sollAmount.toFixed(2)} €</strong></td></tr>
         </table>
@@ -4318,6 +4358,7 @@ async function openCashClosingModal() {
             voucherRedemptionsValue: voucherRedemptionsValue,
             voucherRefundsTotal: voucherRefundsTotal,
             voucherRefundsCount: voucherRefundsCount,
+            showVoucher: showVoucher,
             timestamp: now.toISOString()
         };
         
@@ -4355,6 +4396,9 @@ function exportCashClosing() {
     text += `Anzahl: ${cashClosingData.cashSalesCount} Transaktionen\n`;
     text += `Getränke: ${cashClosingData.cashSalesItems} Stück\n`;
     text += `Summe: ${cashClosingData.cashSalesTotal.toFixed(2)} €\n\n`;
+
+    // Verzehrkarten-Abschnitte nur wenn relevant (siehe openCashClosingModal)
+    if (cashClosingData.showVoucher) {
     text += '───────────────────────────────────────\n';
     text += '🎫 VERZEHRKARTEN VERKAUFT\n';
     text += '───────────────────────────────────────\n';
@@ -4385,12 +4429,15 @@ function exportCashClosing() {
     text += `Eingelöste Getränke:  -${cashClosingData.voucherRedemptionsValue.toFixed(2)} € (${cashClosingData.voucherRedemptionsItems} Stück)\n`;
     text += '───────────────────────────────────────\n';
     text += `Noch offenes Guthaben: ${(cashClosingData.voucherSalesTotal - cashClosingData.voucherRefundsTotal - cashClosingData.voucherRedemptionsValue).toFixed(2)} €\n\n`;
-    
+    }
+
     text += '═══════════════════════════════════════\n';
     text += '💵 SOLL-IST-VERGLEICH\n';
     text += '═══════════════════════════════════════\n';
     text += `Barverkäufe:        ${cashClosingData.cashSalesTotal.toFixed(2)} €\n`;
-    text += `Karten verkauft:    ${cashClosingData.voucherSalesTotal.toFixed(2)} €\n`;
+    if (cashClosingData.showVoucher) {
+        text += `Karten verkauft:    ${cashClosingData.voucherSalesTotal.toFixed(2)} €\n`;
+    }
     if (cashClosingData.voucherRefundsCount > 0) {
         text += `Karten Rückgaben:  -${cashClosingData.voucherRefundsTotal.toFixed(2)} €\n`;
     }
@@ -4690,8 +4737,8 @@ function openVoucherRefundModal() {
         return;
     }
     
-    if (currentUser.role !== 'bartender') {
-        showStatus('Rueckgabe nur fuer Barkeeper verfuegbar', 'error');
+    if (!hasVoucherAccess()) {
+        showStatus('Verzehrkarten sind für diesen Account nicht freigeschaltet', 'error');
         return;
     }
     

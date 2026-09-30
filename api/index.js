@@ -296,7 +296,7 @@ const { data: unbilledTransactions } = await supabase
         if (path === '/users' && method === 'GET') {
             const { data, error } = await supabase
                 .from('users')
-                .select('id, first_name, last_name, email, role, balance, sepa_active, iban, barcodes, user_pin, pin_require_for_name_search, pin_require_for_barcode')
+                .select('id, first_name, last_name, email, role, balance, sepa_active, iban, barcodes, user_pin, pin_require_for_name_search, pin_require_for_barcode, voucher_access')
                 .order('first_name');
             
             if (error) throw error;
@@ -409,7 +409,8 @@ if (path === '/users' && method === 'POST') {
             iban: userData.iban || null,
             user_pin: null,
             pin_require_for_name_search: false,
-            pin_require_for_barcode: false
+            pin_require_for_barcode: false,
+            voucher_access: userData.voucher_access || false
         }])
         .select()
         .single();
@@ -456,7 +457,8 @@ if (pathParts[0] === 'users' && pathParts[1] && method === 'PUT') {
             iban: userData.iban,
             user_pin: userData.user_pin,
             pin_require_for_name_search: userData.pin_require_for_name_search,
-            pin_require_for_barcode: userData.pin_require_for_barcode
+            pin_require_for_barcode: userData.pin_require_for_barcode,
+            voucher_access: userData.voucher_access
         })
         .eq('id', userId)
         .select()
