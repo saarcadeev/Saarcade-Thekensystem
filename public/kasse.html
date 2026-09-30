@@ -1692,8 +1692,11 @@ try {
                 <button type="button" class="btn btn-secondary" onclick="closeCashCountModal()" style="flex: 1; padding: 12px;">
                     Abbrechen
                 </button>
-                <button type="button" class="btn btn-success" id="ccSaveBtn" onclick="saveCashCount()" style="flex: 2; padding: 12px;">
+                <button type="button" class="btn btn-success" id="ccSaveBtn" onclick="saveCashCount(false)" style="flex: 2; padding: 12px;">
                     💾 Abrechnung speichern
+                </button>
+                <button type="button" class="btn" id="ccSavePrintBtn" onclick="saveCashCount(true)" style="flex: 2; padding: 12px; background: #667eea; color: white;">
+                    🖨️ Abrechnung drucken und speichern
                 </button>
             </div>
         </div>
@@ -4444,6 +4447,7 @@ function openCashCountModal() {
     document.getElementById('ccHandoverName').value = '';
     document.getElementById('ccClosingName').value = '';
     document.getElementById('ccSaveBtn').disabled = false;
+    document.getElementById('ccSavePrintBtn').disabled = false;
 
     document.getElementById('cashCountModal').style.display = 'block';
     updateCashCount();
@@ -4559,7 +4563,7 @@ function updateCashCount() {
     return { cash, change, revenue, diff };
 }
 
-async function saveCashCount() {
+async function saveCashCount(withPrint = false) {
     const eventName = document.getElementById('ccEventName').value.trim();
     const handoverName = document.getElementById('ccHandoverName').value.trim();
     const closingName = document.getElementById('ccClosingName').value.trim();
@@ -4583,15 +4587,16 @@ async function saveCashCount() {
         return;
     }
 
-    const saveBtn = document.getElementById('ccSaveBtn');
-    saveBtn.disabled = true;
+    const saveBtns = [document.getElementById('ccSaveBtn'), document.getElementById('ccSavePrintBtn')];
+    saveBtns.forEach(btn => btn.disabled = true);
+
 
     // Datum in lokaler Zeit (nicht UTC), damit späte Abrechnungen nicht auf den Folgetag rutschen
     const now = new Date();
     const closingDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
     try {
-        await apiCall('/api/cash-closings', {
+        const saved = await apiCall('/api/cash-closings', {
             method: 'POST',
             body: JSON.stringify({
                 event_name: eventName,
@@ -4611,12 +4616,16 @@ async function saveCashCount() {
             })
         });
 
+        if (withPrint) {
+            printCashClosingReceipt(saved);
+        }
+
         showStatus('🧾 Barkassen-Abrechnung gespeichert', 'success');
         closeCashCountModal();
     } catch (error) {
         console.error('Cash count save error:', error);
         showStatus('Fehler beim Speichern der Abrechnung', 'error');
-        saveBtn.disabled = false;
+        saveBtns.forEach(btn => btn.disabled = false);
     }
 }
 
@@ -5424,6 +5433,7 @@ window.addEventListener('load', () => {
         </div>
     </div>
 </div>
-    
+
+<script src="/barkasse-beleg.js"></script>
 </body>
 </html>
