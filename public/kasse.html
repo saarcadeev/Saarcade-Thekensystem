@@ -3540,10 +3540,16 @@ window.addEventListener('load', updateFailedTransactionsBadge);
                 isProcessing = false;
                 openCashPaymentModal(transactionData, total);
                 return;
-            } else {
-                // Ohne Kassierhilfe: Zahlungsart-Auswahl (Bar/Verzehrkarte)
+            } else if (hasVoucherAccess()) {
+                // Ohne Kassierhilfe, mit Verzehrkarten: Zahlungsart-Auswahl (Bar/Verzehrkarte)
                 isProcessing = false;
                 openPaymentMethodModal(transactionData, total);
+                return;
+            } else {
+                // Ohne Kassierhilfe, ohne Verzehrkarten: direkt als Barverkauf buchen
+                isProcessing = false;
+                pendingPaymentTransaction = transactionData;
+                await selectPaymentMethod('cash');
                 return;
             }
         }
@@ -4901,7 +4907,11 @@ async function selectPaymentMethod(method) {
     // WICHTIG: Speichere die Transaktion BEVOR das Modal geschlossen wird
     const transactionData = pendingPaymentTransaction;
     closePaymentMethodModal();
-    
+
+    // Während der Buchung keinen zweiten Checkout zulassen (wird im finally wieder freigegeben)
+    isProcessing = true;
+    updateCartView();
+
     // Setze payment method
     transactionData.paymentMethod = method;
     
@@ -4942,6 +4952,7 @@ async function selectPaymentMethod(method) {
     } finally {
         isProcessing = false;
         pendingPaymentTransaction = null;
+        updateCartView();
     }
 }
 
