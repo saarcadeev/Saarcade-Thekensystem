@@ -1688,7 +1688,23 @@ try {
                 </div>
             </div>
 
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <!-- Meldungen direkt im Fenster (die Statuszeile liegt hinter dem Modal) -->
+            <div id="ccMessage" style="display: none; margin-top: 15px; padding: 12px; border-radius: 8px; font-weight: 600;"></div>
+
+            <!-- Rückfrage vor dem Speichern (statt confirm(), das manche Tablet-Browser unterdrücken) -->
+            <div id="ccConfirm" style="display: none; margin-top: 15px; padding: 15px; border-radius: 8px; background: #eef2ff; border: 2px solid #667eea;">
+                <div id="ccConfirmText" style="margin-bottom: 12px;"></div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="btn btn-secondary" onclick="cancelCashCountSave()" style="flex: 1; padding: 12px;">
+                        Zurück
+                    </button>
+                    <button type="button" class="btn btn-success" id="ccConfirmBtn" onclick="confirmCashCountSave()" style="flex: 2; padding: 12px;">
+                        ✓ Ja, speichern
+                    </button>
+                </div>
+            </div>
+
+            <div id="ccButtons" style="display: flex; gap: 10px; margin-top: 20px;">
                 <button type="button" class="btn btn-secondary" onclick="closeCashCountModal()" style="flex: 1; padding: 12px;">
                     Abbrechen
                 </button>
@@ -4446,8 +4462,9 @@ function openCashCountModal() {
     document.getElementById('ccDate').value = new Date().toLocaleDateString('de-DE');
     document.getElementById('ccHandoverName').value = '';
     document.getElementById('ccClosingName').value = '';
-    document.getElementById('ccSaveBtn').disabled = false;
-    document.getElementById('ccSavePrintBtn').disabled = false;
+    document.getElementById('ccMessage').style.display = 'none';
+    document.getElementById('ccConfirm').style.display = 'none';
+    document.getElementById('ccButtons').style.display = 'flex';
 
     document.getElementById('cashCountModal').style.display = 'block';
     updateCashCount();
@@ -4570,26 +4587,60 @@ async function saveCashCount(withPrint = false) {
     const result = updateCashCount();
 
     if (!eventName) {
-        showStatus('Bitte Veranstaltung eintragen', 'error');
+        showCashCountMessage('Bitte Veranstaltung eintragen.', 'error');
         return;
     }
     if (!closingName) {
-        showStatus('Bitte Namen bei "Abrechnung Kasse" eintragen', 'error');
+        showCashCountMessage('Bitte Namen bei „Abrechnung Kasse“ eintragen.', 'error');
         return;
     }
     if (result.cash.total === 0) {
-        showStatus('Bitte zuerst die Kasse zählen', 'error');
+        showCashCountMessage('Bitte zuerst die Kasse zählen.', 'error');
         return;
     }
 
+    // Rückfrage im Fenster anzeigen, gespeichert wird erst in confirmCashCountSave()
+    ccPendingPrint = withPrint;
     const diffText = `${result.diff > 0 ? '+' : ''}${formatEuro(result.diff)}`;
-    if (!confirm(`Abrechnung speichern?\n\nTageseinnahmen: ${formatEuro(result.revenue)}\nLaut Kasse: ${formatEuro(ccSoll)}\nDifferenz: ${diffText}`)) {
-        return;
-    }
+    document.getElementById('ccConfirmText').innerHTML = `
+        <strong>Abrechnung ${withPrint ? 'drucken und ' : ''}speichern?</strong><br>
+        Tageseinnahmen: <strong>${formatEuro(result.revenue)}</strong> ·
+        Laut Kasse: <strong>${formatEuro(ccSoll)}</strong> ·
+        Differenz: <strong>${diffText}</strong>`;
+    document.getElementById('ccConfirmBtn').textContent = withPrint ? '🖨️ Ja, drucken und speichern' : '✓ Ja, speichern';
+    document.getElementById('ccMessage').style.display = 'none';
+    document.getElementById('ccButtons').style.display = 'none';
+    const confirmBox = document.getElementById('ccConfirm');
+    confirmBox.style.display = 'block';
+    confirmBox.scrollIntoView({ block: 'end', behavior: 'smooth' });
+}
 
-    const saveBtns = [document.getElementById('ccSaveBtn'), document.getElementById('ccSavePrintBtn')];
-    saveBtns.forEach(btn => btn.disabled = true);
+let ccPendingPrint = false;
 
+function showCashCountMessage(text, type) {
+    const box = document.getElementById('ccMessage');
+    box.textContent = text;
+    box.style.background = type === 'error' ? '#fed7d7' : '#c6f6d5';
+    box.style.color = '#1a202c';
+    box.style.display = 'block';
+    box.scrollIntoView({ block: 'end', behavior: 'smooth' });
+}
+
+function cancelCashCountSave() {
+    document.getElementById('ccConfirm').style.display = 'none';
+    document.getElementById('ccButtons').style.display = 'flex';
+}
+
+async function confirmCashCountSave() {
+    const withPrint = ccPendingPrint;
+    const eventName = document.getElementById('ccEventName').value.trim();
+    const handoverName = document.getElementById('ccHandoverName').value.trim();
+    const closingName = document.getElementById('ccClosingName').value.trim();
+    const result = updateCashCount();
+
+    const confirmBtn = document.getElementById('ccConfirmBtn');
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = '⏳ Speichere...';
 
     // Datum in lokaler Zeit (nicht UTC), damit späte Abrechnungen nicht auf den Folgetag rutschen
     const now = new Date();
@@ -4624,8 +4675,10 @@ async function saveCashCount(withPrint = false) {
         closeCashCountModal();
     } catch (error) {
         console.error('Cash count save error:', error);
-        showStatus('Fehler beim Speichern der Abrechnung', 'error');
-        saveBtns.forEach(btn => btn.disabled = false);
+        cancelCashCountSave();
+        showCashCountMessage(`Fehler beim Speichern: ${error.message}`, 'error');
+    } finally {
+        confirmBtn.disabled = false;
     }
 }
 
