@@ -9,7 +9,8 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            /* Saarcade-Neon-Look: dunkler Hintergrund in Magenta/Violett/Blau wie im Logo */
+            background: linear-gradient(135deg, #2a0530 0%, #1a0b3d 55%, #0b1a45 100%);
             min-height: 100vh;
             max-height: 100vh; /* NEU */
             overflow: hidden; /* NEU */
@@ -26,11 +27,11 @@
         /* Optimierte Header-Struktur */
         .header {
             background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
+            /* backdrop-filter entfernt: zu rechenintensiv für den Raspberry Pi */
             border-radius: 12px;
             padding: 15px;
             margin-bottom: 10px;
-            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            box-shadow: 0 4px 12px rgba(31, 38, 135, 0.25);
             position: relative;
             z-index: 1000; /* Neuer hoher z-index */
         }
@@ -162,7 +163,7 @@
         }
 
         .workflow-step.active {
-            background: #667eea;
+            background: #e6007e;
             color: white;
         }
 
@@ -175,7 +176,7 @@
             width: 100%;
             padding: 12px 20px;
             font-size: 1.1em;
-            border: 3px solid #667eea;
+            border: 3px solid #e6007e;
             border-radius: 8px;
             outline: none;
             font-family: 'Courier New', monospace;
@@ -254,7 +255,7 @@
             left: 0;
             right: 0;
             background: white;
-            border: 2px solid #667eea;
+            border: 2px solid #e6007e;
             border-radius: 8px;
             max-height: 300px;
             overflow-y: auto;
@@ -283,7 +284,7 @@
         .dropdown-avatar {
             width: 35px;
             height: 35px;
-            background: #667eea;
+            background: #e6007e;
             color: white;
             border-radius: 50%;
             display: flex;
@@ -345,7 +346,7 @@
             background: rgba(255, 255, 255, 0.95);
             border-radius: 15px;
             padding: 15px;
-            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            box-shadow: 0 4px 12px rgba(31, 38, 135, 0.25);
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -399,13 +400,13 @@
         }
 
         .category-btn.active {
-            background: #667eea;
+            background: #e6007e;
             color: white;
-            border-color: #667eea;
+            border-color: #e6007e;
         }
 
         .category-btn:hover {
-            border-color: #667eea;
+            border-color: #e6007e;
             transform: translateY(-1px);
         }
 
@@ -435,9 +436,9 @@
         }
 
         .product-card:hover {
-            border-color: #667eea;
+            border-color: #e6007e;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+            box-shadow: 0 4px 12px rgba(230, 0, 126, 0.2);
         }
 
         .product-card.just-added {
@@ -475,7 +476,7 @@
         }
 
         .product-price {
-            color: #667eea;
+            color: #e6007e;
             font-weight: bold;
             font-size: 1.1em;
         }
@@ -508,10 +509,10 @@
 
         .cart-section {
             background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
+            /* backdrop-filter entfernt: zu rechenintensiv für den Raspberry Pi */
             border-radius: 15px;
             padding: 15px;
-            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            box-shadow: 0 4px 12px rgba(31, 38, 135, 0.25);
             display: flex;
             flex-direction: column;
         }
@@ -541,7 +542,7 @@
         }
 
         .cart-total {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: linear-gradient(135deg, #e6007e, #7b2cbf);
             color: white;
             padding: 15px;
             border-radius: 15px;
@@ -555,7 +556,7 @@
 
         .cart-total:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 4px 15px rgba(230, 0, 126, 0.3);
         }
 
         .cart-total.processing {
@@ -570,7 +571,7 @@
         }
 
         .btn {
-            background: #667eea;
+            background: #e6007e;
             color: white;
             border: none;
             padding: 10px 15px;
@@ -583,7 +584,7 @@
         }
 
         .btn:hover {
-            background: #5a67d8;
+            background: #b8006a;
             transform: translateY(-1px);
         }
 
@@ -919,8 +920,8 @@
             top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            backdrop-filter: blur(3px);
+            background-color: rgba(0,0,0,0.6);
+            /* backdrop-filter entfernt: zu rechenintensiv für den Raspberry Pi */
         }
 
 .modal-content {
@@ -930,13 +931,13 @@
     border-radius: 12px;
     width: 90%;
     max-width: 600px;
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
     max-height: 96vh;
     overflow-y: auto;
 }
 
         .modal-header {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: linear-gradient(135deg, #e6007e, #7b2cbf);
             color: white;
             padding: 15px 20px;
             border-radius: 12px 12px 0 0;
@@ -1000,8 +1001,8 @@
 
         .form-group input:focus, .form-group select:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: #e6007e;
+            box-shadow: 0 0 0 3px rgba(230, 0, 126, 0.1);
         }
 const additionalCSS = `
 /* Verbesserte Produktbild-Styles */
@@ -1093,7 +1094,7 @@ const additionalCSS = `
         }
         .cc-title {
             margin: 10px 0 6px;
-            color: #667eea;
+            color: #e6007e;
         }
         .cc-table {
             width: 100%;
@@ -1109,7 +1110,7 @@ const additionalCSS = `
         }
         .cc-table tfoot td {
             font-weight: bold;
-            border-top: 2px solid #667eea;
+            border-top: 2px solid #e6007e;
             border-bottom: none;
         }
         .cc-count {
@@ -1121,8 +1122,8 @@ const additionalCSS = `
             border-radius: 6px;
         }
         .cc-count.cc-active {
-            border-color: #667eea;
-            background: #eef2ff;
+            border-color: #e6007e;
+            background: #fde8f3;
         }
         .cc-side {
             position: sticky;
@@ -1168,7 +1169,7 @@ const additionalCSS = `
             left: 0;
             right: 0;
             background: white;
-            border-top: 3px solid #667eea;
+            border-top: 3px solid #e6007e;
             box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
             padding: 15px;
             z-index: 2000;
@@ -1189,7 +1190,7 @@ const additionalCSS = `
         }
 
         .keyboard-header h3 {
-            color: #667eea;
+            color: #e6007e;
             font-size: 1.1em;
         }
 
@@ -1211,7 +1212,7 @@ const additionalCSS = `
         }
 
         .keyboard-key {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: linear-gradient(135deg, #e6007e, #7b2cbf);
             color: white;
             border: none;
             padding: 15px 10px;
@@ -1225,7 +1226,7 @@ const additionalCSS = `
 
         .keyboard-key:active {
             transform: scale(0.95);
-            background: linear-gradient(135deg, #5a67d8, #6b46a0);
+            background: linear-gradient(135deg, #b8006a, #6b46a0);
         }
 
         .keyboard-key.backspace {
@@ -1239,7 +1240,43 @@ const additionalCSS = `
 
         .keyboard-key.space {
             grid-column: span 4;
-        }       
+        }
+
+        /* ===== SAARCADE-DESIGN (Farben aus dem Logo) =====
+           Magenta #e6007e · Cyan #009fe3 · Gelb #ffcc00 · Violett #7b2cbf
+           Bewusst ohne Blur und ohne Animationen, damit der Raspberry Pi entlastet wird. */
+        .header,
+        .products-section,
+        .cart-section {
+            border: 2px solid #e6007e;
+            box-shadow: 0 0 10px rgba(230, 0, 126, 0.45);
+        }
+
+        .header {
+            border-top: 4px solid #009fe3;
+        }
+
+        .header h1 {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            color: #e6007e;
+        }
+
+        .header h1 .brand-logo {
+            height: 44px;
+            width: auto;
+        }
+
+        .header h1 .brand-sub {
+            color: #7b2cbf;
+            font-weight: 600;
+        }
+
+        .modal-header {
+            border-bottom: 3px solid #ffcc00;
+        }
         `;
         
     </style>
@@ -1277,7 +1314,7 @@ try {
     
     <div class="container">
         <div class="header" style="position: relative;">
-            <h1>🎮 Saarcade e.V. Kassensystem</h1>
+            <h1><img src="/Saarcade-Logo-Farbe.png" alt="Saarcade e.V." class="brand-logo" onerror="this.style.display='none'"> <span class="brand-sub">Kassensystem</span></h1>
             
             <div class="header-main">
                 <div class="scanner-pin-area">
@@ -1396,7 +1433,7 @@ try {
                    <button class="btn btn-success" onclick="openVoucherRefundModal()" id="refundBtn" style="display: none;">
                         🔙 Verzehrkarten-Rückgabe
                     </button>
-                    <button class="btn" onclick="openCashClosingModal()" id="cashClosingBtn" style="background: #667eea; color: white; display: none;">
+                    <button class="btn" onclick="openCashClosingModal()" id="cashClosingBtn" style="background: #e6007e; color: white; display: none;">
                         📊 Kassenabschluss
                     </button>
                 </div>
@@ -1672,7 +1709,7 @@ try {
                         <button type="button" class="btn btn-secondary" onclick="clearCashCountField()" style="padding: 15px; font-size: 1em;">C</button>
                         <button type="button" class="btn btn-secondary" onclick="addCashCountDigit('0')" style="padding: 15px; font-size: 1.2em;">0</button>
                         <button type="button" class="btn btn-danger" onclick="removeCashCountDigit()" style="padding: 15px; font-size: 1.2em;">⌫</button>
-                        <button type="button" class="btn" onclick="nextCashCountField()" style="grid-column: span 3; padding: 15px; font-size: 1.1em; background: #667eea; color: white;">Weiter ➜</button>
+                        <button type="button" class="btn" onclick="nextCashCountField()" style="grid-column: span 3; padding: 15px; font-size: 1.1em; background: #e6007e; color: white;">Weiter ➜</button>
                     </div>
 
                     <div class="cc-result">
@@ -1692,7 +1729,7 @@ try {
             <div id="ccMessage" style="display: none; margin-top: 15px; padding: 12px; border-radius: 8px; font-weight: 600;"></div>
 
             <!-- Rückfrage vor dem Speichern (statt confirm(), das manche Tablet-Browser unterdrücken) -->
-            <div id="ccConfirm" style="display: none; margin-top: 15px; padding: 15px; border-radius: 8px; background: #eef2ff; border: 2px solid #667eea;">
+            <div id="ccConfirm" style="display: none; margin-top: 15px; padding: 15px; border-radius: 8px; background: #fde8f3; border: 2px solid #e6007e;">
                 <div id="ccConfirmText" style="margin-bottom: 12px;"></div>
                 <div style="display: flex; gap: 10px;">
                     <button type="button" class="btn btn-secondary" onclick="cancelCashCountSave()" style="flex: 1; padding: 12px;">
@@ -1711,7 +1748,7 @@ try {
                 <button type="button" class="btn btn-success" id="ccSaveBtn" onclick="saveCashCount(false)" style="flex: 2; padding: 12px;">
                     💾 Abrechnung speichern
                 </button>
-                <button type="button" class="btn" id="ccSavePrintBtn" onclick="saveCashCount(true)" style="flex: 2; padding: 12px; background: #667eea; color: white;">
+                <button type="button" class="btn" id="ccSavePrintBtn" onclick="saveCashCount(true)" style="flex: 2; padding: 12px; background: #e6007e; color: white;">
                     🖨️ Abrechnung drucken und speichern
                 </button>
             </div>
@@ -1774,7 +1811,7 @@ try {
         <div class="modal-body">
             <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
                 <div style="font-size: 0.9em; color: #666; margin-bottom: 5px;">Gesamtbetrag:</div>
-                <div style="font-size: 2.2em; font-weight: bold; color: #667eea;" id="paymentMethodTotal">0.00€</div>
+                <div style="font-size: 2.2em; font-weight: bold; color: #e6007e;" id="paymentMethodTotal">0.00€</div>
             </div>
             
             <div style="display: flex; flex-direction: column; gap: 12px;">
@@ -1977,7 +2014,7 @@ function updateWorkflowSteps() {
     
     // Aktiven Schritt hervorheben
     if (scannerMode === 'user') {
-        document.getElementById('step1').style.background = '#667eea';
+        document.getElementById('step1').style.background = '#e6007e';
         document.getElementById('step1').style.color = 'white';
     } else if (scannerMode === 'product') {
         // NEU: Zeige an wenn Barkeeper-Modus aktiv ist
@@ -1988,10 +2025,10 @@ function updateWorkflowSteps() {
         }
         
         if (cart.length === 0) {
-            document.getElementById('step2').style.background = '#667eea';
+            document.getElementById('step2').style.background = '#e6007e';
             document.getElementById('step2').style.color = 'white';
         } else {
-            document.getElementById('step3').style.background = '#667eea';
+            document.getElementById('step3').style.background = '#e6007e';
             document.getElementById('step3').style.color = 'white';
         }
     }
@@ -2298,7 +2335,12 @@ function initLazyLoading() {
         return; // Keine Lazy-Load Bilder gefunden
     }
     
-    const imageObserver = new IntersectionObserver((entries, observer) => {
+    // Alten Beobachter beenden, sonst sammeln sich bei jedem Neuaufbau weitere an
+    if (window.productImageObserver) {
+        window.productImageObserver.disconnect();
+    }
+
+    const imageObserver = window.productImageObserver = new IntersectionObserver((entries, observer) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 const img = entry.target;
@@ -2659,7 +2701,7 @@ function updateCartView() {
         }
         
         const voucherInfo = item.voucherSerialNumber ? 
-            `<br><small style="color: #667eea; font-weight: 600;">🎁 ${item.voucherSerialNumber} | Hologramm: ${item.voucherHologramNumber}</small>` : '';
+            `<br><small style="color: #e6007e; font-weight: 600;">🎁 ${item.voucherSerialNumber} | Hologramm: ${item.voucherHologramNumber}</small>` : '';
         
         return `
             <div class="cart-item ${item.justAdded ? 'just-added' : ''}">
@@ -3008,7 +3050,7 @@ async function searchUsers(query) {
             
             document.getElementById('voucherProductInfo').innerHTML = `
                 <strong>${product.name}</strong><br>
-                <span style="color: #667eea; font-size: 1.2em;">${product.member_price.toFixed(2)} €</span>
+                <span style="color: #e6007e; font-size: 1.2em;">${product.member_price.toFixed(2)} €</span>
             `;
             
             document.getElementById('voucherSerialNumber').value = '';
@@ -3231,7 +3273,7 @@ function updateFailedTransactionsBadge() {
         if (!badge) {
             badge = document.createElement('span');
             badge.id = 'failedTransactionsBadge';
-            badge.style.cssText = 'position: fixed; top: 10px; right: 10px; background: #e53e3e; color: white; padding: 8px 12px; border-radius: 20px; font-weight: bold; z-index: 10000; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.3); animation: pulse 2s infinite;';
+            badge.style.cssText = 'position: fixed; top: 10px; right: 10px; background: #e53e3e; color: white; padding: 8px 12px; border-radius: 20px; font-weight: bold; z-index: 10000; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.3);'; // ohne Dauer-Animation (Raspberry Pi)
             badge.onclick = showFailedTransactions;
             document.body.appendChild(badge);
             
@@ -3432,7 +3474,7 @@ function showFailedTransactions() {
     }
     
     html += `
-                    <button onclick="exportFailedTransactions()" style="flex: 1; min-width: 150px; padding: 15px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                    <button onclick="exportFailedTransactions()" style="flex: 1; min-width: 150px; padding: 15px; background: #e6007e; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
                         📥 Als Text exportieren
                     </button>
     `;
@@ -4237,7 +4279,8 @@ async function openCashClosingModal() {
     
     try {
        // Hole alle nicht abgerechneten Transaktionen des Barkeepers
-        const response = await apiCall('/api/transactions?limit=10000');
+        // Nur offene Transaktionen dieses Barkeepers laden (Server filtert, entlastet das Tablet)
+        const response = await apiCall(`/api/transactions?user_id=${currentUser.id}&unbilled=true`);
         const allTransactions = Array.isArray(response) ? response : (response.transactions || []);
         
         const unbilledTransactions = allTransactions.filter(t => 
@@ -4284,8 +4327,8 @@ async function openCashClosingModal() {
         const now = new Date();
         const content = `
 <div style="padding: 10px;">
-    <div style="text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #667eea;">
-        <h2 style="margin: 0; color: #667eea;">📊 KASSENABSCHLUSS</h2>
+    <div style="text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #e6007e;">
+        <h2 style="margin: 0; color: #e6007e;">📊 KASSENABSCHLUSS</h2>
         <p style="margin: 5px 0; color: #666;">Barkeeper: ${currentUser.first_name} ${currentUser.last_name}</p>
         <p style="margin: 5px 0; color: #666;">${now.toLocaleDateString('de-DE')} - ${now.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'})} Uhr</p>
     </div>
@@ -4309,7 +4352,7 @@ async function openCashClosingModal() {
     </div>
     
     <div style="margin-bottom: 20px;">
-        <h3 style="color: #667eea; margin-bottom: 10px;">🎫 VERZEHRGUTHABEN EINGELÖST</h3>
+        <h3 style="color: #e6007e; margin-bottom: 10px;">🎫 VERZEHRGUTHABEN EINGELÖST</h3>
         <div style="padding-left: 15px;">
             <p>Anzahl: <strong>${voucherRedemptionsCount} Transaktionen</strong></p>
             <p>Getränke: <strong>${voucherRedemptionsItems} Stück</strong></p>
@@ -4327,13 +4370,13 @@ async function openCashClosingModal() {
     </div>
     ` : ''}
     
-    <div style="margin-bottom: 20px; padding: 15px; background: #e6f7ff; border-radius: 8px; border: 2px solid #667eea;">
-        <h3 style="color: #667eea; margin-bottom: 15px; text-align: center;">🎫 VERZEHRKARTEN-ÜBERSICHT</h3>
+    <div style="margin-bottom: 20px; padding: 15px; background: #e6f7ff; border-radius: 8px; border: 2px solid #e6007e;">
+        <h3 style="color: #e6007e; margin-bottom: 15px; text-align: center;">🎫 VERZEHRKARTEN-ÜBERSICHT</h3>
         <table style="width: 100%; font-size: 1.05em;">
             <tr><td>Verkaufte Karten:</td><td style="text-align: right;"><strong style="color: #48bb78;">+${voucherSalesTotal.toFixed(2)} €</strong></td></tr>
             ${voucherRefundsCount > 0 ? `<tr><td>Rückgaben:</td><td style="text-align: right;"><strong style="color: #e53e3e;">-${voucherRefundsTotal.toFixed(2)} €</strong></td></tr>` : ''}
             <tr><td>Eingelöste Getränke (${voucherRedemptionsItems} Stück):</td><td style="text-align: right;"><strong style="color: #e53e3e;">-${voucherRedemptionsValue.toFixed(2)} €</strong></td></tr>
-            <tr style="border-top: 2px solid #667eea;"><td style="padding-top: 10px;"><strong>Noch offenes Guthaben:</strong></td><td style="text-align: right; padding-top: 10px;"><strong style="font-size: 1.2em; color: #667eea;">${(voucherSalesTotal - voucherRefundsTotal - voucherRedemptionsValue).toFixed(2)} €</strong></td></tr>
+            <tr style="border-top: 2px solid #e6007e;"><td style="padding-top: 10px;"><strong>Noch offenes Guthaben:</strong></td><td style="text-align: right; padding-top: 10px;"><strong style="font-size: 1.2em; color: #e6007e;">${(voucherSalesTotal - voucherRefundsTotal - voucherRedemptionsValue).toFixed(2)} €</strong></td></tr>
         </table>
     </div>
     ` : ''}
@@ -4967,8 +5010,8 @@ async function showMemberTransactions() {
     try {
         showStatus('Lade Transaktionen...', 'loading');
         
-        // Hole alle Transaktionen über die API
-        const response = await apiCall('/api/transactions?limit=10000');
+        // Nur die Transaktionen dieses Mitglieds laden (Server filtert, entlastet das Tablet)
+        const response = await apiCall(`/api/transactions?user_id=${currentUser.id}`);
         const allTransactions = Array.isArray(response) ? response : (response.transactions || []);
         
         // Filtere die Transaktionen für den aktuellen User (nur nicht abgerechnet)
@@ -5035,7 +5078,7 @@ function showMemberTransactionsModal(unbilledTransactions, userBillings) {
     let html = `
         <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center;" onclick="this.remove()">
             <div style="background: white; padding: 30px; border-radius: 12px; max-width: 800px; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3);" onclick="event.stopPropagation()">
-                <h2 style="margin-top: 0; color: #667eea;">📋 Transaktionen: ${currentUser.first_name} ${currentUser.last_name}</h2>
+                <h2 style="margin-top: 0; color: #e6007e;">📋 Transaktionen: ${currentUser.first_name} ${currentUser.last_name}</h2>
                 
                 <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                     <p><strong>Aktueller Saldo:</strong> <span style="color: ${currentUser.balance >= 0 ? '#38a169' : '#e53e3e'}; font-weight: bold; font-size: 1.2em;">${currentUser.balance.toFixed(2)}€</span></p>
@@ -5043,7 +5086,7 @@ function showMemberTransactionsModal(unbilledTransactions, userBillings) {
                     <p><strong>Abgerechnete Perioden:</strong> ${userBillings.length}</p>
                 </div>
                 
-                <h3 style="color: #667eea; margin-top: 20px; margin-bottom: 10px;">📋 Aktuelle Transaktionen (nicht abgerechnet)</h3>
+                <h3 style="color: #e6007e; margin-top: 20px; margin-bottom: 10px;">📋 Aktuelle Transaktionen (nicht abgerechnet)</h3>
                 
                 `;
     
@@ -5107,7 +5150,7 @@ if (unbilledTransactions.length === 0) {
 
 // Abgerechnete Transaktionen anzeigen
     html += `
-        <h3 style="color: #667eea; margin-top: 30px; margin-bottom: 10px; padding-top: 20px; border-top: 2px solid #e2e8f0;">✅ Abgerechnete Perioden</h3>
+        <h3 style="color: #e6007e; margin-top: 30px; margin-bottom: 10px; padding-top: 20px; border-top: 2px solid #e2e8f0;">✅ Abgerechnete Perioden</h3>
     `;
     
     if (userBillings.length === 0) {
@@ -5144,7 +5187,7 @@ userBillings.forEach(billing => {
                     <td style="padding: 10px; text-align: right; font-weight: bold;">${billing.total.toFixed(2)}€</td>
                     <td style="padding: 10px; text-align: center;">
                         <button onclick="event.stopPropagation(); showBillingDetails(${billing.billing_id}, '${billing.billing_number}')" 
-                                style="background: #667eea; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
+                                style="background: #e6007e; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
                             📋 Details
                         </button>
                     </td>
@@ -5161,7 +5204,7 @@ userBillings.forEach(billing => {
     html += `
                 <div style="margin-top: 20px; text-align: center;">
                     <button onclick="this.closest('div[style*=fixed]').remove()" 
-                            style="background: #667eea; color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: 600;">
+                            style="background: #e6007e; color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: 600;">
                         Schließen
                     </button>
                 </div>
@@ -5258,7 +5301,7 @@ async function showBillingDetails(billingId, billingNumber) {
         let html = `
             <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 10000; display: flex; align-items: center; justify-content: center;" onclick="this.remove()">
                 <div style="background: white; padding: 30px; border-radius: 12px; max-width: 800px; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3);" onclick="event.stopPropagation()">
-                    <h2 style="margin-top: 0; color: #667eea;">📋 Details: ${billingNumber}</h2>
+                    <h2 style="margin-top: 0; color: #e6007e;">📋 Details: ${billingNumber}</h2>
                     
                     <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                         <p><strong>Mitglied:</strong> ${currentUser.first_name} ${currentUser.last_name}</p>
@@ -5307,7 +5350,7 @@ async function showBillingDetails(billingId, billingNumber) {
         html += `
                     <div style="margin-top: 20px; text-align: center;">
                         <button onclick="this.closest('div[style*=fixed]').remove()" 
-                                style="background: #667eea; color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: 600;">
+                                style="background: #e6007e; color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: 600;">
                             Schließen
                         </button>
                     </div>

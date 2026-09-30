@@ -697,7 +697,46 @@ if (path === '/transactions' && method === 'GET') {
     const limit = parseInt(url.searchParams.get('limit')) || 100;
     const offset = parseInt(url.searchParams.get('offset')) || 0;
     const filter = url.searchParams.get('filter') || 'all';
-    
+    const userIdParam = url.searchParams.get('user_id');
+
+    // Nur Buchungen eines Accounts (optional nur nicht abgerechnete).
+    // Spart der Kasse das Laden aller Buchungen und umgeht die 1000-Zeilen-Grenze von Supabase.
+    if (userIdParam) {
+        const userId = parseInt(userIdParam);
+        if (isNaN(userId)) {
+            return res.status(400).json({ error: 'Ungültige Benutzer-ID' });
+        }
+        const unbilledOnly = url.searchParams.get('unbilled') === 'true';
+        const pageSize = 1000;
+        let all = [];
+
+        for (let from = 0; ; from += pageSize) {
+            let userQuery = supabase
+                .from('transactions')
+                .select('*')
+                .eq('user_id', userId)
+                .order('created_at', { ascending: false })
+                .range(from, from + pageSize - 1);
+
+            if (unbilledOnly) {
+                userQuery = userQuery.is('billing_id', null).not('is_billed', 'is', true);
+            }
+
+            const { data, error } = await userQuery;
+            if (error) throw error;
+
+            all = all.concat(data || []);
+            if (!data || data.length < pageSize) break;
+        }
+
+        return res.status(200).json({
+            transactions: all,
+            totalCount: all.length,
+            limit: all.length,
+            offset: 0
+        });
+    }
+
     let query = supabase
         .from('transactions')
         .select('*', { count: 'exact' })
