@@ -1325,12 +1325,28 @@ try {
                 <form id="pinForm" style="display: none;">
                     <div class="form-group">
                         <label>Neue PIN (4-stellig)</label>
-                        <input type="password" id="newPin" maxlength="4" placeholder="0000" style="text-align: center; font-size: 1.2em; letter-spacing: 0.2em;">
+                        <input type="password" id="newPin" inputmode="none" autocomplete="off" onfocus="activePinSetupField = this.id" maxlength="4" placeholder="0000" style="text-align: center; font-size: 1.2em; letter-spacing: 0.2em;">
                     </div>
-                    
+
                     <div class="form-group">
                         <label>PIN bestätigen</label>
-                        <input type="password" id="confirmPin" maxlength="4" placeholder="0000" style="text-align: center; font-size: 1.2em; letter-spacing: 0.2em;">
+                        <input type="password" id="confirmPin" inputmode="none" autocomplete="off" onfocus="activePinSetupField = this.id" maxlength="4" placeholder="0000" style="text-align: center; font-size: 1.2em; letter-spacing: 0.2em;">
+                    </div>
+
+                    <!-- Numpad für PIN-Verwaltung (Tablet ohne Tastatur) -->
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px;">
+                        <button type="button" class="btn btn-secondary" onclick="addPinSetupDigit('1')" style="padding: 15px; font-size: 1.2em;">1</button>
+                        <button type="button" class="btn btn-secondary" onclick="addPinSetupDigit('2')" style="padding: 15px; font-size: 1.2em;">2</button>
+                        <button type="button" class="btn btn-secondary" onclick="addPinSetupDigit('3')" style="padding: 15px; font-size: 1.2em;">3</button>
+                        <button type="button" class="btn btn-secondary" onclick="addPinSetupDigit('4')" style="padding: 15px; font-size: 1.2em;">4</button>
+                        <button type="button" class="btn btn-secondary" onclick="addPinSetupDigit('5')" style="padding: 15px; font-size: 1.2em;">5</button>
+                        <button type="button" class="btn btn-secondary" onclick="addPinSetupDigit('6')" style="padding: 15px; font-size: 1.2em;">6</button>
+                        <button type="button" class="btn btn-secondary" onclick="addPinSetupDigit('7')" style="padding: 15px; font-size: 1.2em;">7</button>
+                        <button type="button" class="btn btn-secondary" onclick="addPinSetupDigit('8')" style="padding: 15px; font-size: 1.2em;">8</button>
+                        <button type="button" class="btn btn-secondary" onclick="addPinSetupDigit('9')" style="padding: 15px; font-size: 1.2em;">9</button>
+                        <button type="button" class="btn btn-secondary" onclick="clearPinSetupField()" style="padding: 15px; font-size: 1em;">C</button>
+                        <button type="button" class="btn btn-secondary" onclick="addPinSetupDigit('0')" style="padding: 15px; font-size: 1.2em;">0</button>
+                        <button type="button" class="btn btn-danger" onclick="removePinSetupDigit()" style="padding: 15px; font-size: 1.2em;">⌫</button>
                     </div>
                     
                     <div class="form-group">
@@ -1372,7 +1388,23 @@ try {
                 <div class="form-group">
                     <input type="password" id="pinInput" inputmode="none" maxlength="4" placeholder="0000" style="text-align: center; font-size: 1.5em; letter-spacing: 0.3em; width: 100%;" autofocus>
                 </div>
-                
+
+                <!-- Numpad für PIN-Eingabe (Tablet ohne Tastatur) -->
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                    <button type="button" class="btn btn-secondary" onclick="addPinDigit('1')" style="padding: 15px; font-size: 1.2em;">1</button>
+                    <button type="button" class="btn btn-secondary" onclick="addPinDigit('2')" style="padding: 15px; font-size: 1.2em;">2</button>
+                    <button type="button" class="btn btn-secondary" onclick="addPinDigit('3')" style="padding: 15px; font-size: 1.2em;">3</button>
+                    <button type="button" class="btn btn-secondary" onclick="addPinDigit('4')" style="padding: 15px; font-size: 1.2em;">4</button>
+                    <button type="button" class="btn btn-secondary" onclick="addPinDigit('5')" style="padding: 15px; font-size: 1.2em;">5</button>
+                    <button type="button" class="btn btn-secondary" onclick="addPinDigit('6')" style="padding: 15px; font-size: 1.2em;">6</button>
+                    <button type="button" class="btn btn-secondary" onclick="addPinDigit('7')" style="padding: 15px; font-size: 1.2em;">7</button>
+                    <button type="button" class="btn btn-secondary" onclick="addPinDigit('8')" style="padding: 15px; font-size: 1.2em;">8</button>
+                    <button type="button" class="btn btn-secondary" onclick="addPinDigit('9')" style="padding: 15px; font-size: 1.2em;">9</button>
+                    <button type="button" class="btn btn-secondary" onclick="clearPinDigits()" style="padding: 15px; font-size: 1em;">C</button>
+                    <button type="button" class="btn btn-secondary" onclick="addPinDigit('0')" style="padding: 15px; font-size: 1.2em;">0</button>
+                    <button type="button" class="btn btn-danger" onclick="removePinDigit()" style="padding: 15px; font-size: 1.2em;">⌫</button>
+                </div>
+
                 <div style="text-align: center; margin-top: 20px;">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('pinInputModal')">
                         Abbrechen
@@ -2442,6 +2474,34 @@ function updateCartView() {
     }
 }
         
+        // Numpad in der PIN-Verwaltung: schreibt ins zuletzt angetippte Feld
+        let activePinSetupField = 'newPin';
+
+        function addPinSetupDigit(digit) {
+            const input = document.getElementById(activePinSetupField);
+            if (input.value.length >= 4) return;
+            input.value += digit;
+
+            // Nach 4 Ziffern automatisch zur Bestätigung springen
+            if (activePinSetupField === 'newPin' && input.value.length === 4) {
+                document.getElementById('confirmPin').focus();
+            } else {
+                input.focus();
+            }
+        }
+
+        function removePinSetupDigit() {
+            const input = document.getElementById(activePinSetupField);
+            input.value = input.value.slice(0, -1);
+            input.focus();
+        }
+
+        function clearPinSetupField() {
+            const input = document.getElementById(activePinSetupField);
+            input.value = '';
+            input.focus();
+        }
+
         function closeModal(modalId) {
             document.getElementById(modalId).style.display = 'none';
             if (modalId === 'pinInputModal') {
@@ -2547,7 +2607,8 @@ function requiresPinCheck(user, isFromBarcode = false) {
             
             pinInput.value = '';
             modal.style.display = 'block';
-            
+            closeKeyboard(); // Große Tastatur würde das Numpad verdecken
+
       // Ersetze die letzte setTimeout-Sektion mit:
     setTimeout(() => {
         pinInput.focus();
@@ -2555,6 +2616,27 @@ function requiresPinCheck(user, isFromBarcode = false) {
     }, 300);  // war 100
 }
         
+        // Numpad im PIN-Modal
+        function addPinDigit(digit) {
+            const input = document.getElementById('pinInput');
+            if (input.value.length >= 4) return;
+            input.value += digit;
+
+            // Bei 4 Ziffern automatisch prüfen
+            if (input.value.length === 4) {
+                validatePin();
+            }
+        }
+
+        function removePinDigit() {
+            const input = document.getElementById('pinInput');
+            input.value = input.value.slice(0, -1);
+        }
+
+        function clearPinDigits() {
+            document.getElementById('pinInput').value = '';
+        }
+
         function validatePin() {
             if (!pendingUserForPin) return;
             
