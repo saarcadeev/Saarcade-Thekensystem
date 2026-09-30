@@ -1067,6 +1067,100 @@ const additionalCSS = `
     }
 }
 
+        /* ===== BARKASSEN-ABRECHNUNG ===== */
+        .cc-layout {
+            display: grid;
+            grid-template-columns: 1fr 260px;
+            gap: 20px;
+            align-items: start;
+        }
+        .cc-names {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0 12px;
+        }
+        .cc-text {
+            width: 100%;
+            padding: 10px;
+            font-size: 1.05em;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+        }
+        .cc-tables {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .cc-title {
+            margin: 10px 0 6px;
+            color: #667eea;
+        }
+        .cc-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .cc-table th, .cc-table td {
+            padding: 3px 6px;
+            border-bottom: 1px solid #edf2f7;
+            text-align: right;
+        }
+        .cc-table th:first-child, .cc-table td:first-child {
+            text-align: left;
+        }
+        .cc-table tfoot td {
+            font-weight: bold;
+            border-top: 2px solid #667eea;
+            border-bottom: none;
+        }
+        .cc-count {
+            width: 70px;
+            padding: 6px;
+            font-size: 1.1em;
+            text-align: center;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+        }
+        .cc-count.cc-active {
+            border-color: #667eea;
+            background: #eef2ff;
+        }
+        .cc-side {
+            position: sticky;
+            top: 0;
+        }
+        .cc-result {
+            margin-top: 15px;
+            padding: 12px;
+            background: #fff5e6;
+            border: 2px solid #f59e0b;
+            border-radius: 8px;
+        }
+        .cc-result table {
+            width: 100%;
+        }
+        .cc-result td:last-child {
+            text-align: right;
+            white-space: nowrap;
+        }
+        .cc-result tr.cc-sep td {
+            border-top: 2px solid #f59e0b;
+            padding-top: 4px;
+        }
+        #ccHint {
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 0.9em;
+        }
+        @media (max-width: 800px) {
+            .cc-layout, .cc-tables {
+                grid-template-columns: 1fr;
+            }
+            .cc-side {
+                position: static;
+            }
+        }
+
  /* ===== ON-SCREEN TASTATUR FÜR TABLETS ===== */
         .keyboard-container {
             position: fixed;
@@ -1325,12 +1419,12 @@ try {
                 <form id="pinForm" style="display: none;">
                     <div class="form-group">
                         <label>Neue PIN (4-stellig)</label>
-                        <input type="password" id="newPin" inputmode="none" autocomplete="off" onfocus="activePinSetupField = this.id" maxlength="4" placeholder="0000" style="text-align: center; font-size: 1.2em; letter-spacing: 0.2em;">
+                        <input type="password" id="newPin" inputmode="none" autocomplete="off" onfocus="activePinSetupField = this.id" onclick="activePinSetupField = this.id" maxlength="4" placeholder="0000" style="text-align: center; font-size: 1.2em; letter-spacing: 0.2em;">
                     </div>
 
                     <div class="form-group">
                         <label>PIN bestätigen</label>
-                        <input type="password" id="confirmPin" inputmode="none" autocomplete="off" onfocus="activePinSetupField = this.id" maxlength="4" placeholder="0000" style="text-align: center; font-size: 1.2em; letter-spacing: 0.2em;">
+                        <input type="password" id="confirmPin" inputmode="none" autocomplete="off" onfocus="activePinSetupField = this.id" onclick="activePinSetupField = this.id" maxlength="4" placeholder="0000" style="text-align: center; font-size: 1.2em; letter-spacing: 0.2em;">
                     </div>
 
                     <!-- Numpad für PIN-Verwaltung (Tablet ohne Tastatur) -->
@@ -1497,11 +1591,109 @@ try {
             </div>
             
             <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn" onclick="openCashCountModal()" style="flex: 1; padding: 12px; background: #f59e0b; color: white;">
+                    🧾 Barkasse abrechnen
+                </button>
                 <button class="btn btn-success" onclick="exportCashClosing()" style="flex: 1; padding: 12px;">
                     📄 Als Text exportieren
                 </button>
                 <button class="btn btn-secondary" onclick="closeCashClosingModal()" style="flex: 1; padding: 12px;">
                     Schließen
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Barkassen-Abrechnung (Besuchertag) -->
+<div id="cashCountModal" class="modal">
+    <div class="modal-content" style="max-width: 980px;">
+        <div class="modal-header">
+            <h3>🧾 Barkasse abrechnen</h3>
+            <span class="close" onclick="closeCashCountModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="cc-layout">
+                <div>
+                    <div class="cc-names">
+                        <div class="form-group">
+                            <label>Veranstaltung *</label>
+                            <input type="text" id="ccEventName" class="cc-text" inputmode="none" autocomplete="off" onclick="openKeyboardFor(this)">
+                        </div>
+                        <div class="form-group">
+                            <label>Datum</label>
+                            <input type="text" id="ccDate" class="cc-text" readonly style="background: #f7fafc;">
+                        </div>
+                        <div class="form-group">
+                            <label>Übernahme Kasse (Name)</label>
+                            <input type="text" id="ccHandoverName" class="cc-text" inputmode="none" autocomplete="off" onclick="openKeyboardFor(this)">
+                        </div>
+                        <div class="form-group">
+                            <label>Abrechnung Kasse (Name) *</label>
+                            <input type="text" id="ccClosingName" class="cc-text" inputmode="none" autocomplete="off" onclick="openKeyboardFor(this)">
+                        </div>
+                    </div>
+
+                    <div class="cc-tables">
+                        <div>
+                            <h4 class="cc-title">💶 Kasse gezählt</h4>
+                            <table class="cc-table">
+                                <thead><tr><th>Wert</th><th>Anzahl</th><th>Summe</th></tr></thead>
+                                <tbody id="ccCashRows"></tbody>
+                                <tfoot><tr><td colspan="2">Summe Kasse</td><td id="ccCashTotal">0,00 €</td></tr></tfoot>
+                            </table>
+                        </div>
+                        <div>
+                            <h4 class="cc-title">🪙 Wechselgeld (bleibt in der Kasse)</h4>
+                            <table class="cc-table">
+                                <thead><tr><th>Wert</th><th>Anzahl</th><th>Summe</th></tr></thead>
+                                <tbody id="ccChangeRows"></tbody>
+                                <tfoot><tr><td colspan="2">Wechselgeld gesamt</td><td id="ccChangeTotal">0,00 €</td></tr></tfoot>
+                            </table>
+                            <p style="font-size: 0.85em; color: #666; margin-top: 8px;">
+                                Ins Wechselgeld nur 20 €, 10 €, 5 €, 2 €, 1 € und 0,50 € übernehmen, den Rest abschöpfen.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cc-side">
+                    <!-- Numpad für Zähl-Felder -->
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                        <button type="button" class="btn btn-secondary" onclick="addCashCountDigit('1')" style="padding: 15px; font-size: 1.2em;">1</button>
+                        <button type="button" class="btn btn-secondary" onclick="addCashCountDigit('2')" style="padding: 15px; font-size: 1.2em;">2</button>
+                        <button type="button" class="btn btn-secondary" onclick="addCashCountDigit('3')" style="padding: 15px; font-size: 1.2em;">3</button>
+                        <button type="button" class="btn btn-secondary" onclick="addCashCountDigit('4')" style="padding: 15px; font-size: 1.2em;">4</button>
+                        <button type="button" class="btn btn-secondary" onclick="addCashCountDigit('5')" style="padding: 15px; font-size: 1.2em;">5</button>
+                        <button type="button" class="btn btn-secondary" onclick="addCashCountDigit('6')" style="padding: 15px; font-size: 1.2em;">6</button>
+                        <button type="button" class="btn btn-secondary" onclick="addCashCountDigit('7')" style="padding: 15px; font-size: 1.2em;">7</button>
+                        <button type="button" class="btn btn-secondary" onclick="addCashCountDigit('8')" style="padding: 15px; font-size: 1.2em;">8</button>
+                        <button type="button" class="btn btn-secondary" onclick="addCashCountDigit('9')" style="padding: 15px; font-size: 1.2em;">9</button>
+                        <button type="button" class="btn btn-secondary" onclick="clearCashCountField()" style="padding: 15px; font-size: 1em;">C</button>
+                        <button type="button" class="btn btn-secondary" onclick="addCashCountDigit('0')" style="padding: 15px; font-size: 1.2em;">0</button>
+                        <button type="button" class="btn btn-danger" onclick="removeCashCountDigit()" style="padding: 15px; font-size: 1.2em;">⌫</button>
+                        <button type="button" class="btn" onclick="nextCashCountField()" style="grid-column: span 3; padding: 15px; font-size: 1.1em; background: #667eea; color: white;">Weiter ➜</button>
+                    </div>
+
+                    <div class="cc-result">
+                        <table>
+                            <tr><td>Summe Kasse</td><td id="ccResCash">0,00 €</td></tr>
+                            <tr><td>abzügl. Wechselgeld</td><td id="ccResChange">0,00 €</td></tr>
+                            <tr class="cc-sep"><td><strong>Tageseinnahmen</strong></td><td id="ccResRevenue"><strong>0,00 €</strong></td></tr>
+                            <tr><td>Einnahmen laut Kasse</td><td id="ccResSoll">0,00 €</td></tr>
+                            <tr class="cc-sep"><td><strong>Differenz (+/-)</strong></td><td id="ccResDiff"><strong>0,00 €</strong></td></tr>
+                        </table>
+                        <div id="ccHint" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button type="button" class="btn btn-secondary" onclick="closeCashCountModal()" style="flex: 1; padding: 12px;">
+                    Abbrechen
+                </button>
+                <button type="button" class="btn btn-success" id="ccSaveBtn" onclick="saveCashCount()" style="flex: 2; padding: 12px;">
+                    💾 Abrechnung speichern
                 </button>
             </div>
         </div>
@@ -1627,6 +1819,7 @@ try {
         function closeKeyboard() {
             const keyboard = document.getElementById('onScreenKeyboard');
             keyboard.classList.remove('active');
+            document.getElementById('keyboardTitle').textContent = '⌨️ Mitglied suchen';
         }
         
 function renderKeyboard() {
@@ -1658,7 +1851,25 @@ function renderKeyboard() {
             grid.innerHTML = html;
         }
         
+        // Tastatur für ein bestimmtes Textfeld öffnen (z. B. Namen in der Barkassen-Abrechnung)
+        let keyboardTarget = null;
+
+        function openKeyboardFor(input) {
+            keyboardTarget = input;
+            const label = input.closest('.form-group')?.querySelector('label');
+            document.getElementById('keyboardTitle').textContent = '⌨️ ' + (label ? label.textContent.replace(' *', '') : 'Text eingeben');
+            document.getElementById('onScreenKeyboard').classList.add('active');
+            renderKeyboard();
+            // Feld oberhalb der Tastatur sichtbar halten
+            input.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        }
+
 function getActiveInput() {
+            // Gezielt geöffnete Tastatur (Barkassen-Abrechnung)
+            if (keyboardTarget && document.getElementById('cashCountModal').style.display === 'block') {
+                return keyboardTarget;
+            }
+
             // Prüfe ob PIN-Modal offen ist
             const pinModal = document.getElementById('pinInputModal');
             if (pinModal && pinModal.style.display === 'block') {
@@ -2456,6 +2667,7 @@ function updateCartView() {
                 form.style.display = 'block';
                 document.getElementById('newPin').value = '';
                 document.getElementById('confirmPin').value = '';
+                activePinSetupField = 'newPin';
                 document.getElementById('pinForNameSearch').checked = currentUser.pin_require_for_name_search || false;
                 document.getElementById('pinForBarcode').checked = currentUser.pin_require_for_barcode || false;
             }
@@ -2484,6 +2696,7 @@ function updateCartView() {
 
             // Nach 4 Ziffern automatisch zur Bestätigung springen
             if (activePinSetupField === 'newPin' && input.value.length === 4) {
+                activePinSetupField = 'confirmPin';
                 document.getElementById('confirmPin').focus();
             } else {
                 input.focus();
@@ -2752,6 +2965,7 @@ async function searchUsers(query) {
             
             document.getElementById('voucherSerialNumber').value = '';
             document.getElementById('voucherHologramNumber').value = '';
+            activeVoucherField = 'voucherSerialNumber';
             document.getElementById('voucherModal').style.display = 'block';
             
             setTimeout(() => {
@@ -2774,6 +2988,7 @@ async function searchUsers(query) {
 
             // Nach 4 Ziffern automatisch zur Hologramm-Nummer springen
             if (activeVoucherField === 'voucherSerialNumber' && input.value.length === input.maxLength) {
+                activeVoucherField = 'voucherHologramNumber';
                 document.getElementById('voucherHologramNumber').focus();
             } else {
                 input.focus();
@@ -4175,6 +4390,236 @@ function exportCashClosing() {
     });
 }
 
+// ============ BARKASSEN-ABRECHNUNG ============
+
+const CC_CASH_VALUES = [100, 50, 20, 10, 5, 2, 1, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01];
+const CC_CHANGE_DEFAULTS = { '20': 10, '10': 10, '5': 10, '2': 30, '1': 30, '0.5': 30 }; // = 455 €
+
+let ccSoll = 0;
+let ccSystemBreakdown = {};
+let ccActiveInput = null;
+
+function formatEuro(amount) {
+    return amount.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+}
+
+function formatDenomination(value) {
+    return value >= 1 ? `${value} €` : `${Math.round(value * 100)} ct`;
+}
+
+function openCashCountModal() {
+    if (!cashClosingData) return;
+
+    // SOLL aus dem Kassenabschluss übernehmen
+    ccSoll = cashClosingData.sollAmount;
+    ccSystemBreakdown = {
+        cash_sales_total: cashClosingData.cashSalesTotal,
+        cash_sales_count: cashClosingData.cashSalesCount,
+        voucher_sales_total: cashClosingData.voucherSalesTotal,
+        voucher_sales_count: cashClosingData.voucherSalesCount,
+        voucher_refunds_total: cashClosingData.voucherRefundsTotal,
+        voucher_refunds_count: cashClosingData.voucherRefundsCount
+    };
+    closeCashClosingModal();
+
+    const rowHtml = (group, value, count) => `
+        <tr>
+            <td>${formatDenomination(value)}</td>
+            <td><input type="text" class="cc-count" data-group="${group}" data-value="${value}"
+                       value="${count}" inputmode="none" autocomplete="off" maxlength="4"
+                       onfocus="setCashCountField(this)" onclick="setCashCountField(this)"
+                       oninput="this.value = this.value.replace(/\\D/g, ''); updateCashCount()"></td>
+            <td class="cc-row-sum">–</td>
+        </tr>`;
+
+    document.getElementById('ccCashRows').innerHTML =
+        CC_CASH_VALUES.map(v => rowHtml('cash', v, '')).join('');
+    document.getElementById('ccChangeRows').innerHTML =
+        Object.keys(CC_CHANGE_DEFAULTS)
+            .sort((a, b) => b - a)
+            .map(v => rowHtml('change', parseFloat(v), CC_CHANGE_DEFAULTS[v])).join('');
+
+    document.getElementById('ccEventName').value = 'Besuchertag';
+    document.getElementById('ccDate').value = new Date().toLocaleDateString('de-DE');
+    document.getElementById('ccHandoverName').value = '';
+    document.getElementById('ccClosingName').value = '';
+    document.getElementById('ccSaveBtn').disabled = false;
+
+    document.getElementById('cashCountModal').style.display = 'block';
+    updateCashCount();
+
+    setTimeout(() => {
+        const first = document.querySelector('#ccCashRows .cc-count');
+        setCashCountField(first);
+        first.focus();
+    }, 100);
+}
+
+function closeCashCountModal() {
+    document.getElementById('cashCountModal').style.display = 'none';
+    keyboardTarget = null;
+    ccActiveInput = null;
+    closeKeyboard();
+}
+
+function setCashCountField(input) {
+    // Große Tastatur schließen, Zähl-Felder nutzen das Numpad
+    keyboardTarget = null;
+    closeKeyboard();
+
+    document.querySelectorAll('.cc-count').forEach(el => el.classList.remove('cc-active'));
+    input.classList.add('cc-active');
+    ccActiveInput = input;
+}
+
+function addCashCountDigit(digit) {
+    if (!ccActiveInput) return;
+    if (ccActiveInput.value.length >= 4) return;
+    ccActiveInput.value = (ccActiveInput.value === '0' ? '' : ccActiveInput.value) + digit;
+    updateCashCount();
+    ccActiveInput.focus();
+}
+
+function removeCashCountDigit() {
+    if (!ccActiveInput) return;
+    ccActiveInput.value = ccActiveInput.value.slice(0, -1);
+    updateCashCount();
+    ccActiveInput.focus();
+}
+
+function clearCashCountField() {
+    if (!ccActiveInput) return;
+    ccActiveInput.value = '';
+    updateCashCount();
+    ccActiveInput.focus();
+}
+
+function nextCashCountField() {
+    const fields = Array.from(document.querySelectorAll('.cc-count'));
+    const index = fields.indexOf(ccActiveInput);
+    const next = fields[(index + 1) % fields.length];
+    setCashCountField(next);
+    next.focus();
+}
+
+// Liest eine Gruppe (cash/change) aus: Anzahl je Wert und Summe in Cent
+function readCashCountGroup(group) {
+    const counts = {};
+    let totalCents = 0;
+
+    document.querySelectorAll(`.cc-count[data-group="${group}"]`).forEach(input => {
+        const value = parseFloat(input.dataset.value);
+        const count = parseInt(input.value) || 0;
+        const rowCents = Math.round(value * 100) * count;
+
+        input.closest('tr').querySelector('.cc-row-sum').textContent =
+            count > 0 ? formatEuro(rowCents / 100) : '–';
+
+        if (count > 0) counts[input.dataset.value] = count;
+        totalCents += rowCents;
+    });
+
+    return { counts, total: totalCents / 100 };
+}
+
+function updateCashCount() {
+    const cash = readCashCountGroup('cash');
+    const change = readCashCountGroup('change');
+    const revenue = Math.round((cash.total - change.total) * 100) / 100;
+    const diff = Math.round((revenue - ccSoll) * 100) / 100;
+
+    document.getElementById('ccCashTotal').textContent = formatEuro(cash.total);
+    document.getElementById('ccChangeTotal').textContent = formatEuro(change.total);
+    document.getElementById('ccResCash').textContent = formatEuro(cash.total);
+    document.getElementById('ccResChange').textContent = '− ' + formatEuro(change.total);
+    document.getElementById('ccResRevenue').innerHTML = `<strong>${formatEuro(revenue)}</strong>`;
+    document.getElementById('ccResSoll').textContent = formatEuro(ccSoll);
+
+    const diffColor = diff === 0 ? '#38a169' : (diff > 0 ? '#d69e2e' : '#e53e3e');
+    document.getElementById('ccResDiff').innerHTML =
+        `<strong style="color: ${diffColor};">${diff > 0 ? '+' : ''}${formatEuro(diff)}</strong>`;
+
+    const hint = document.getElementById('ccHint');
+    if (cash.total === 0) {
+        hint.style.display = 'none';
+    } else if (diff > 0) {
+        hint.style.display = 'block';
+        hint.style.background = '#fefcbf';
+        hint.innerHTML = `Überschuss von <strong>${formatEuro(diff)}</strong>: bitte in die Trinkgeldkasse geben.`;
+    } else if (diff < 0) {
+        hint.style.display = 'block';
+        hint.style.background = '#fed7d7';
+        hint.innerHTML = `Fehlbetrag von <strong>${formatEuro(-diff)}</strong>. Bitte Zählung prüfen.`;
+    } else {
+        hint.style.display = 'block';
+        hint.style.background = '#c6f6d5';
+        hint.innerHTML = 'Kasse stimmt. 👍';
+    }
+
+    return { cash, change, revenue, diff };
+}
+
+async function saveCashCount() {
+    const eventName = document.getElementById('ccEventName').value.trim();
+    const handoverName = document.getElementById('ccHandoverName').value.trim();
+    const closingName = document.getElementById('ccClosingName').value.trim();
+    const result = updateCashCount();
+
+    if (!eventName) {
+        showStatus('Bitte Veranstaltung eintragen', 'error');
+        return;
+    }
+    if (!closingName) {
+        showStatus('Bitte Namen bei "Abrechnung Kasse" eintragen', 'error');
+        return;
+    }
+    if (result.cash.total === 0) {
+        showStatus('Bitte zuerst die Kasse zählen', 'error');
+        return;
+    }
+
+    const diffText = `${result.diff > 0 ? '+' : ''}${formatEuro(result.diff)}`;
+    if (!confirm(`Abrechnung speichern?\n\nTageseinnahmen: ${formatEuro(result.revenue)}\nLaut Kasse: ${formatEuro(ccSoll)}\nDifferenz: ${diffText}`)) {
+        return;
+    }
+
+    const saveBtn = document.getElementById('ccSaveBtn');
+    saveBtn.disabled = true;
+
+    // Datum in lokaler Zeit (nicht UTC), damit späte Abrechnungen nicht auf den Folgetag rutschen
+    const now = new Date();
+    const closingDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+    try {
+        await apiCall('/api/cash-closings', {
+            method: 'POST',
+            body: JSON.stringify({
+                event_name: eventName,
+                closing_date: closingDate,
+                bartender_user_id: currentUser ? currentUser.id : null,
+                bartender_name: currentUser ? `${currentUser.first_name} ${currentUser.last_name}` : null,
+                handover_name: handoverName,
+                closing_name: closingName,
+                change_counts: result.change.counts,
+                change_total: result.change.total,
+                cash_counts: result.cash.counts,
+                cash_total: result.cash.total,
+                revenue_counted: result.revenue,
+                revenue_system: ccSoll,
+                difference: result.diff,
+                system_breakdown: ccSystemBreakdown
+            })
+        });
+
+        showStatus('🧾 Barkassen-Abrechnung gespeichert', 'success');
+        closeCashCountModal();
+    } catch (error) {
+        console.error('Cash count save error:', error);
+        showStatus('Fehler beim Speichern der Abrechnung', 'error');
+        saveBtn.disabled = false;
+    }
+}
+
 // ============ VERZEHRKARTEN-RÜCKGABE ============
 
 function openVoucherRefundModal() {
@@ -4892,7 +5337,7 @@ window.addEventListener('load', () => {
 <!-- ON-SCREEN TASTATUR -->
     <div class="keyboard-container" id="onScreenKeyboard">
         <div class="keyboard-header">
-            <h3>⌨️ Mitglied suchen</h3>
+            <h3 id="keyboardTitle">⌨️ Mitglied suchen</h3>
             <button class="keyboard-close" onclick="closeKeyboard()">✕ Schließen</button>
         </div>
         
@@ -4921,7 +5366,7 @@ window.addEventListener('load', () => {
                     id="voucherSerialNumber"
                     inputmode="none"
                     autocomplete="off"
-                    onfocus="activeVoucherField = this.id"
+                    onfocus="activeVoucherField = this.id" onclick="activeVoucherField = this.id"
                     oninput="this.value = this.value.replace(/\D/g, '')"
                     maxlength="4"
                     placeholder="0001"
@@ -4938,7 +5383,7 @@ window.addEventListener('load', () => {
         id="voucherHologramNumber"
         inputmode="none"
         autocomplete="off"
-        onfocus="activeVoucherField = this.id"
+        onfocus="activeVoucherField = this.id" onclick="activeVoucherField = this.id"
         oninput="this.value = this.value.replace(/\D/g, '')"
         maxlength="6"
         placeholder="123456"

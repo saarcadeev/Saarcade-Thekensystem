@@ -1591,7 +1591,72 @@ if (path === '/transactions/mark-billed' && method === 'POST') {
     
     if (error) throw error;
     return res.status(200).json({ message: 'Transaktionen markiert' });
-}        
+}
+
+        // ============ BARKASSEN-ABRECHNUNG ENDPUNKTE ============
+
+// GET /cash-closings - Alle Barkassen-Abrechnungen
+if (path === '/cash-closings' && method === 'GET') {
+    const { data, error } = await supabase
+        .from('cash_closings')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return res.status(200).json(data || []);
+}
+
+// GET /cash-closings/{id} - Einzelne Barkassen-Abrechnung
+if (pathParts[0] === 'cash-closings' && pathParts[1] && method === 'GET') {
+    const closingId = parseInt(pathParts[1]);
+
+    if (isNaN(closingId)) {
+        return res.status(400).json({ error: 'Ungültige ID' });
+    }
+
+    const { data, error } = await supabase
+        .from('cash_closings')
+        .select('*')
+        .eq('id', closingId)
+        .single();
+
+    if (error) throw error;
+    return res.status(200).json(data);
+}
+
+// POST /cash-closings - Neue Barkassen-Abrechnung speichern
+if (path === '/cash-closings' && method === 'POST') {
+    const c = req.body;
+
+    if (!c.event_name || !c.closing_name) {
+        return res.status(400).json({ error: 'Veranstaltung und Name der Abrechnung erforderlich' });
+    }
+
+    const { data, error } = await supabase
+        .from('cash_closings')
+        .insert([{
+            event_name: c.event_name,
+            closing_date: c.closing_date,
+            bartender_user_id: c.bartender_user_id || null,
+            bartender_name: c.bartender_name || null,
+            handover_name: c.handover_name || null,
+            closing_name: c.closing_name,
+            change_counts: c.change_counts || {},
+            change_total: c.change_total || 0,
+            cash_counts: c.cash_counts || {},
+            cash_total: c.cash_total || 0,
+            revenue_counted: c.revenue_counted || 0,
+            revenue_system: c.revenue_system || 0,
+            difference: c.difference || 0,
+            system_breakdown: c.system_breakdown || {}
+        }])
+        .select()
+        .single();
+
+    if (error) throw error;
+    return res.status(201).json(data);
+}
+
         // ============ SEPA ENDPUNKTE ============
         
         // GET /sepa-users - SEPA-fÃ¤hige Benutzer
