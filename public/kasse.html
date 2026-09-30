@@ -1291,6 +1291,46 @@ const additionalCSS = `
         .modal-header {
             border-bottom: 3px solid #ffcc00;
         }
+
+        /* Produktbereich: leicht grau statt grellweiß, Karten heben sich weiß ab */
+        .products-section {
+            background-color: #dedae4;
+        }
+
+        .product-card {
+            background: #ffffff;
+            border-color: #cfc8d8;
+        }
+
+        /* Warenkorb: dunkel wie die Kopfzeile */
+        .cart-section {
+            background: rgba(18, 10, 26, 0.9);
+            color: #f3eaf7;
+        }
+
+        .cart-section h2 {
+            color: #ffffff;
+        }
+
+        .cart-section .cart-item {
+            background: #2a1d33;
+            border: 1px solid #45304f;
+            color: #f3eaf7;
+        }
+
+        .cart-section .cart-item small {
+            color: #cbb8d6;
+        }
+
+        .cart-section .cart-item.just-added {
+            background: #1e3a2a;
+            border: 2px solid #38a169;
+        }
+
+        /* Hinweis "Warenkorb ist leer" (Farbe steht inline im HTML) */
+        .cart-section #cartItems > div:not(.cart-item) {
+            color: #b9a6c6 !important;
+        }
         `;
         
     </style>
