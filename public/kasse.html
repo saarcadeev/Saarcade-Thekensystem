@@ -9,8 +9,15 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            /* Saarcade-Neon-Look: dunkler Hintergrund in Magenta/Violett/Blau wie im Logo */
-            background: linear-gradient(135deg, #2a0530 0%, #1a0b3d 55%, #0b1a45 100%);
+            /* Saarcade-Neon-Look: dunkle Backsteinwand mit Magenta/Blau-Licht wie im Logo.
+               Ziegel als kleine SVG-Kachel (kein Foto), Licht als Verläufe: schont den Raspberry Pi. */
+            background-color: #140c1c;
+            background-image:
+                radial-gradient(ellipse at 10% 15%, rgba(230, 0, 126, 0.55), transparent 55%),
+                radial-gradient(ellipse at 90% 20%, rgba(40, 80, 255, 0.50), transparent 55%),
+                radial-gradient(ellipse at 50% 100%, rgba(123, 44, 191, 0.40), transparent 60%),
+                linear-gradient(to bottom, transparent 60%, rgba(0, 0, 0, 0.55)),
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='50'%3E%3Crect width='120' height='50' fill='%230c0710'/%3E%3Crect x='1' y='1' width='58' height='23' rx='1' fill='%232a1c30'/%3E%3Crect x='61' y='1' width='58' height='23' rx='1' fill='%23241829'/%3E%3Crect x='-29' y='26' width='58' height='23' rx='1' fill='%23261a2c'/%3E%3Crect x='31' y='26' width='58' height='23' rx='1' fill='%232e1f35'/%3E%3Crect x='91' y='26' width='58' height='23' rx='1' fill='%23261a2c'/%3E%3C/svg%3E");
             min-height: 100vh;
             max-height: 100vh; /* NEU */
             overflow: hidden; /* NEU */
@@ -1254,6 +1261,8 @@ const additionalCSS = `
 
         .header {
             border-top: 4px solid #009fe3;
+            /* Kopfzeile dunkel und durchscheinend: hier sieht man die Backsteinwand */
+            background: rgba(12, 6, 18, 0.55);
         }
 
         .header h1 {
@@ -1262,6 +1271,11 @@ const additionalCSS = `
             justify-content: center;
             gap: 12px;
             color: #e6007e;
+        }
+
+        .header h1 .brand-sub {
+            color: #ffcc00 !important;
+            text-shadow: 0 0 8px rgba(255, 204, 0, 0.7);
         }
 
         .header h1 .brand-logo {
