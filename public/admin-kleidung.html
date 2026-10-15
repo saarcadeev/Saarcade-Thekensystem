@@ -200,6 +200,19 @@
 
     <!-- TAB: ARTIKEL -->
     <div class="tab-content active" id="tab-artikel">
+        <!-- Hinweistext für die Bestellseite (Einstellung clothing_order_notice) -->
+        <div style="background:#fef3cd;border:1px solid #f6c23e;border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+            <label for="orderNoticeText" style="display:block;font-weight:700;color:#4a5568;margin-bottom:6px;">
+                📢 Hinweis auf der Bestellseite (gelbe Box)
+            </label>
+            <textarea id="orderNoticeText" rows="2" style="width:100%;padding:8px 10px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.95em;resize:vertical;font-family:inherit;"
+                placeholder="Leer lassen, um keinen Hinweis anzuzeigen"></textarea>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:10px;flex-wrap:wrap;">
+                <span style="font-size:0.82em;color:#718096;">Leeres Feld = kein Hinweis. Zeilenumbrüche werden übernommen.</span>
+                <button class="btn-primary" onclick="saveOrderNotice()">💾 Hinweis speichern</button>
+            </div>
+        </div>
+
         <div class="filter-bar">
             <span style="color:#4a5568;font-weight:600;">Kleidungsartikel</span>
             <div class="filter-right">
@@ -417,6 +430,29 @@ function onLoggedIn() {
     loadArticles();
     loadStock();
     loadOrders();
+    loadOrderNotice();
+}
+
+// ===== HINWEIS BESTELLSEITE =====
+// Bisheriger fester Text der Bestellseite, solange noch nichts gespeichert wurde
+const DEFAULT_ORDER_NOTICE = '📅 Bestellungen werden angenommen, Lieferung frühestens Juni! – Bestellung vom 28.03. ist in Produktion';
+
+async function loadOrderNotice() {
+    try {
+        const settings = await apiCall('/settings');
+        document.getElementById('orderNoticeText').value =
+            typeof settings.clothing_order_notice === 'string' ? settings.clothing_order_notice : DEFAULT_ORDER_NOTICE;
+    } catch(e) {
+        showAlert('❌ Hinweistext konnte nicht geladen werden', 'error');
+    }
+}
+
+async function saveOrderNotice() {
+    const text = document.getElementById('orderNoticeText').value.trim();
+    try {
+        await apiCall('/settings', { method: 'PUT', body: JSON.stringify({ key: 'clothing_order_notice', value: text }) });
+        showAlert(text ? '✓ Hinweis gespeichert' : '✓ Hinweis ausgeblendet', 'success');
+    } catch(e) { showAlert('❌ ' + e.message, 'error'); }
 }
 
 // ===== API =====

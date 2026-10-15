@@ -1553,22 +1553,32 @@ if (path === '/clothing-billings' && method === 'POST') {
             const settingsData = req.body;
             
             try {
-                // Alle vorhandenen Einstellungen lÃ¶schen und neue einfÃ¼gen
-                await supabase.from('settings').delete().neq('id', 0);
-                
-                const settingsArray = Object.entries(settingsData).map(([key, value]) => ({
-                    key,
-                    value: typeof value === 'object' ? JSON.stringify(value) : String(value)
-                }));
-                
-                if (settingsArray.length > 0) {
-                    const { error } = await supabase
-                        .from('settings')
-                        .insert(settingsArray);
-                    
+                // Zwei Formate werden geschickt:
+                //  - Einzelwert aus der Kasse: { key: 'cash_helper_enabled', value: 'true' }
+                //  - Alle Werte aus dem Admin:  { checkout_barcode: '...', creditor_iban: '...', ... }
+                // Früher wurden dabei ALLE Einstellungen gelöscht und nur die geschickten neu angelegt.
+                // Jetzt werden nur die geschickten Werte aktualisiert bzw. ergänzt, nichts wird gelöscht.
+                const isSingle = Object.keys(settingsData).length === 2 &&
+                    typeof settingsData.key === 'string' && 'value' in settingsData;
+                const entries = isSingle
+                    ? [[settingsData.key, settingsData.value]]
+                    : Object.entries(settingsData);
+
+                const { data: existing, error: loadError } = await supabase
+                    .from('settings')
+                    .select('id, key');
+                if (loadError) throw loadError;
+
+                for (const [key, rawValue] of entries) {
+                    const value = typeof rawValue === 'object' ? JSON.stringify(rawValue) : String(rawValue);
+                    const row = (existing || []).find(s => s.key === key);
+
+                    const { error } = row
+                        ? await supabase.from('settings').update({ value }).eq('id', row.id)
+                        : await supabase.from('settings').insert([{ key, value }]);
                     if (error) throw error;
                 }
-                
+
                 return res.status(200).json({ message: 'Einstellungen gespeichert' });
             } catch (error) {
                 console.error('Settings error:', error);
