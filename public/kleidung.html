@@ -461,6 +461,43 @@ body {
             background: #f0f9ff;
         }
 
+        /* Zahlungsarten untereinander, damit der Lastschrift-Hinweis dazwischen passt */
+        .payment-methods {
+            grid-template-columns: 1fr;
+        }
+
+        .payment-method.locked {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .payment-method.locked:hover {
+            border-color: #e2e8f0;
+            transform: none;
+        }
+
+        .payment-hint {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            padding: 12px 14px;
+            background: #e6f6ff;
+            border: 1px solid #90cdf4;
+            border-radius: 10px;
+            font-size: 1em;
+            color: #2a4365;
+            line-height: 1.45;
+            cursor: pointer;
+        }
+
+        .payment-hint input {
+            width: 22px;
+            height: 22px;
+            margin-top: 2px;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
         .payment-method-icon {
             font-size: 2.5em;
             margin-bottom: 10px;
@@ -914,6 +951,16 @@ body {
                             <div class="payment-method-icon">🏦</div>
                             <div class="payment-method-name">SEPA-Lastschrift</div>
                         </div>
+                        <!-- Hinweis mit Haken: Andere Zahlungsarten erst nach Entfernen des Hakens wählbar -->
+                        <label id="paymentHint" class="payment-hint">
+                            <input type="checkbox" id="keepSepa" checked onchange="toggleKeepSepa()">
+                            <span>
+                                <strong>Ja, ich zahle per Lastschrift.</strong><br>
+                                Der Betrag wird eingezogen, sobald wir dir mitteilen, dass deine Kleidung abholbereit ist.
+                                Bitte bleib möglichst bei der Lastschrift. Nur wenn du anders zahlen möchtest:
+                                <strong>Haken entfernen</strong> und Überweisung oder PayPal wählen.
+                            </span>
+                        </label>
                         <div class="payment-method" data-method="transfer">
                             <div class="payment-method-icon">💳</div>
                             <div class="payment-method-name">Banküberweisung</div>
@@ -922,10 +969,6 @@ body {
                             <div class="payment-method-icon">💰</div>
                             <div class="payment-method-name">PayPal</div>
                         </div>
-                    </div>
-                    <div id="paymentHint" style="margin-top: 10px; padding: 10px 12px; background: #e6f6ff; border: 1px solid #90cdf4; border-radius: 8px; font-size: 0.9em; color: #2a4365;">
-                        🏦 <strong>Bitte möglichst Lastschrift beibehalten.</strong><br>
-                        Der Betrag wird eingezogen, sobald wir dir mitteilen, dass deine Kleidung abholbereit ist.
                     </div>
                 </div>
 
@@ -1359,9 +1402,9 @@ grid.innerHTML = clothingItems.map(item => {
 
             paymentSection.style.display = 'block';
 
-            // Standard: Lastschrift (kann abgewählt werden)
-            if (!selectedPaymentMethod) {
-                selectPaymentMethod('sepa');
+            // Standard: Lastschrift (kann über den Haken abgewählt werden)
+            if (!selectedPaymentMethod && document.getElementById('keepSepa').checked) {
+                toggleKeepSepa();
             }
             updateSubmitButton();
         }
@@ -1372,7 +1415,37 @@ grid.innerHTML = clothingItems.map(item => {
             showAlert('Artikel aus dem Warenkorb entfernt', 'info');
         }
 
+        // Haken "Ja, ich zahle per Lastschrift": gesetzt = SEPA, andere Zahlungsarten gesperrt
+        function toggleKeepSepa() {
+            const keep = document.getElementById('keepSepa').checked;
+            document.querySelectorAll('.payment-method:not([data-method="sepa"])').forEach(el => {
+                el.classList.toggle('locked', keep);
+            });
+
+            if (keep) {
+                selectPaymentMethod('sepa');
+            } else {
+                // Lastschrift abgewählt: Mitglied muss bewusst eine andere Zahlungsart wählen
+                selectedPaymentMethod = null;
+                document.querySelectorAll('.payment-method').forEach(el => el.classList.remove('selected'));
+                updateSubmitButton();
+            }
+        }
+
         function selectPaymentMethod(method) {
+            const keepSepa = document.getElementById('keepSepa');
+
+            if (method === 'sepa' && !keepSepa.checked) {
+                // Klick auf Lastschrift setzt den Haken wieder
+                keepSepa.checked = true;
+                toggleKeepSepa();
+                return;
+            }
+            if (method !== 'sepa' && keepSepa.checked) {
+                showAlert('Bitte zuerst den Haken bei „Ja, ich zahle per Lastschrift“ entfernen.', 'info');
+                return;
+            }
+
             selectedPaymentMethod = method;
             
             document.querySelectorAll('.payment-method').forEach(el => {
@@ -1520,6 +1593,9 @@ try {
                 document.getElementById('memberSearch').value = '';
                 document.getElementById('selectedMember').classList.remove('active');
                 document.querySelectorAll('.payment-method').forEach(el => el.classList.remove('selected'));
+                document.getElementById('keepSepa').checked = true;
+                toggleKeepSepa();
+                selectedPaymentMethod = null;
                 updateCart();
                 
             } catch (error) {
