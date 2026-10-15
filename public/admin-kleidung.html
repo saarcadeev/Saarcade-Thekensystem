@@ -304,6 +304,20 @@
             </div>
         </div>
 
+        <!-- Produktinfo-PDF (wird Mitgliedern auf der Bestellseite verlinkt) -->
+        <div class="form-group">
+            <label>📄 Produktinfo-PDF (optional)</label>
+            <input type="hidden" id="articlePdfUrl">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <label style="display:inline-block;padding:8px 14px;background:#e2e8f0;border-radius:7px;cursor:pointer;font-size:0.88em;font-weight:600;color:#4a5568;">
+                    📄 PDF auswählen
+                    <input type="file" id="articlePdfFile" accept="application/pdf" style="display:none;" onchange="selectArticlePdf(this)">
+                </label>
+                <button type="button" class="btn-danger btn-sm" id="articleRemovePdfBtn" onclick="removeArticlePdf()" style="display:none;">✕ PDF entfernen</button>
+            </div>
+            <div id="articlePdfStatus" style="font-size:0.85em;color:#4a5568;margin-top:6px;"></div>
+        </div>
+
         <div class="form-row">
             <div class="form-group">
                 <label>Name *</label>
@@ -565,6 +579,9 @@ function openArticleModal(id = null) {
         document.getElementById('articleImagePreview').style.display = 'none';
         document.getElementById('articleRemoveImageBtn').style.display = 'none';
     }
+    document.getElementById('articlePdfUrl').value = article?.pdf_url || '';
+    document.getElementById('articlePdfFile').value = '';
+    showArticlePdfStatus();
     document.getElementById('articleModal').style.display = 'flex';
     document.getElementById('articleName').focus();
 }
@@ -605,7 +622,28 @@ async function saveArticle() {
         }
     }
 
-    const payload = { name, emoji, price, available, sizes, colors, image_url, image_file_path };
+    // PDF ggf. hochladen (gleicher Weg wie im großen Admin-Bereich)
+    const pdfFile = document.getElementById('articlePdfFile').files[0];
+    let pdf_url = document.getElementById('articlePdfUrl').value || null;
+    if (pdfFile) {
+        document.getElementById('articlePdfStatus').textContent = '⏳ PDF wird hochgeladen…';
+        try {
+            const base64 = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(pdfFile);
+            });
+            const pdfRes = await apiCall('/upload-pdf', { method: 'POST', body: JSON.stringify({ pdf: base64, fileName: pdfFile.name, itemId: id || 'new' }) });
+            pdf_url = pdfRes.pdfUrl;
+        } catch(e) {
+            showAlert('❌ PDF-Upload fehlgeschlagen: ' + e.message, 'error');
+            showArticlePdfStatus();
+            return;
+        }
+    }
+
+    const payload = { name, emoji, price, available, sizes, colors, image_url, image_file_path, pdf_url };
     try {
         if (id) {
             await apiCall('/clothing-items/' + id, { method: 'PUT', body: JSON.stringify(payload) });
@@ -618,6 +656,44 @@ async function saveArticle() {
         await loadArticles();
         await loadStock();
     } catch(e) { showAlert('❌ ' + e.message, 'error'); }
+}
+
+// ===== PRODUKTINFO-PDF =====
+function showArticlePdfStatus() {
+    const url = document.getElementById('articlePdfUrl').value;
+    const file = document.getElementById('articlePdfFile').files[0];
+    const status = document.getElementById('articlePdfStatus');
+    if (file) {
+        status.textContent = `📄 ${file.name} (wird beim Speichern hochgeladen)`;
+    } else if (url) {
+        status.innerHTML = `✅ <a href="${escHtml(url)}" target="_blank">Aktuelles PDF öffnen</a>`;
+    } else {
+        status.textContent = 'Kein PDF hinterlegt';
+    }
+    document.getElementById('articleRemovePdfBtn').style.display = (file || url) ? 'inline-block' : 'none';
+}
+
+function selectArticlePdf(input) {
+    const file = input.files[0];
+    if (!file) return;
+    if (file.type !== 'application/pdf') {
+        showAlert('❌ Bitte nur PDF-Dateien auswählen', 'error');
+        input.value = '';
+        return;
+    }
+    // Server nimmt max. ca. 4,5 MB an, als Base64 wird die Datei rund ein Drittel größer
+    if (file.size > 3 * 1024 * 1024) {
+        showAlert('❌ PDF darf maximal 3 MB groß sein', 'error');
+        input.value = '';
+        return;
+    }
+    showArticlePdfStatus();
+}
+
+function removeArticlePdf() {
+    document.getElementById('articlePdfUrl').value = '';
+    document.getElementById('articlePdfFile').value = '';
+    showArticlePdfStatus();
 }
 
 function previewArticleImage(input) {
