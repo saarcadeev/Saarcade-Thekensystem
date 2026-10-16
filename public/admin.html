@@ -5357,9 +5357,19 @@ async function loadClothingBillingData() {
 
 // Lade alle Bestellungen mit Status 'pending' und payment_method 'sepa'
 const allOrders = await apiCall('/api/clothing-orders');
-clothingBillingOrders = allOrders.filter(o => 
-    o.status === 'pending' && 
-    o.payment_method === 'sepa'
+// Bestellungen, von denen in admin-kleidung.html schon Stücke berechnet wurden, nicht doppelt anbieten
+let partlyBilled = new Set();
+try {
+    const positions = await apiCall('/api/clothing-positions');
+    partlyBilled = new Set(positions.filter(p => p.billed).map(p => p.order_id));
+} catch (e) {
+    console.error('Positionen konnten nicht geladen werden:', e);
+}
+clothingBillingOrders = allOrders.filter(o =>
+    o.status === 'pending' &&
+    o.payment_method === 'sepa' &&
+    !o.billed && // schon in admin-kleidung.html abgerechnet
+    !partlyBilled.has(o.id)
 );
         
         renderClothingBillingOrders();

@@ -194,8 +194,9 @@
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('artikel', this)">🏷️ Artikel</button>
         <button class="tab-btn" onclick="switchTab('bestand', this)">📦 Bestand</button>
-        <button class="tab-btn" onclick="switchTab('bestellungen', this)">📋 Bestellungen</button>
-        <button class="tab-btn" onclick="switchTab('unbezahlt', this)" id="tabUnbezahlt">💶 Unbezahlt</button>
+        <button class="tab-btn" onclick="switchTab('bedarf', this)">📋 Bestellbedarf</button>
+        <button class="tab-btn" onclick="switchTab('bestellungen', this)">🧾 Bestellungen</button>
+        <button class="tab-btn" onclick="switchTab('unbezahlt', this)" id="tabUnbezahlt">💶 Abzurechnen</button>
     </div>
 
     <!-- TAB: ARTIKEL -->
@@ -264,14 +265,50 @@
         </div>
     </div>
 
-    <!-- TAB: UNBEZAHLT -->
-    <div class="tab-content" id="tab-unbezahlt">
+    <!-- TAB: BESTELLBEDARF -->
+    <div class="tab-content" id="tab-bedarf">
         <div class="filter-bar">
-            <span style="color:#4a5568;font-size:0.9em;">Ausgelieferte Bestellungen, die noch nicht abgerechnet wurden.</span>
+            <span style="color:#4a5568;font-size:0.9em;">Was fehlt, damit alle offenen Stücke ausgegeben werden können (offene Bestellungen minus Bestand).</span>
             <div class="filter-right">
-                <button class="btn-secondary" onclick="loadOrders()">🔄 Aktualisieren</button>
+                <button class="btn-secondary" onclick="loadDemand()">🔄 Aktualisieren</button>
             </div>
         </div>
+        <div class="table-wrapper">
+            <div id="bedarfContent"><div class="loading">⏳ Lade Bestellbedarf…</div></div>
+        </div>
+    </div>
+
+    <!-- TAB: ABZURECHNEN (Stücke ab "abholbereit", noch nicht berechnet) -->
+    <div class="tab-content" id="tab-unbezahlt">
+        <div class="filter-bar">
+            <button class="filter-btn active" onclick="setBillFilter('all', this)">Alle <span class="filter-count" id="bcnt-all">0</span></button>
+            <button class="filter-btn" onclick="setBillFilter('sepa', this)">🏦 SEPA <span class="filter-count" id="bcnt-sepa">0</span></button>
+            <button class="filter-btn" onclick="setBillFilter('transfer', this)">💳 Überweisung <span class="filter-count" id="bcnt-transfer">0</span></button>
+            <button class="filter-btn" onclick="setBillFilter('paypal', this)">💰 PayPal <span class="filter-count" id="bcnt-paypal">0</span></button>
+            <div class="filter-right">
+                <button class="btn-secondary" onclick="loadBilling()">🔄 Aktualisieren</button>
+            </div>
+        </div>
+        <p style="color:#718096;font-size:0.88em;margin-bottom:14px;">
+            Stücke, die abholbereit oder schon ausgegeben, aber noch nicht berechnet sind – je Mitglied zusammengefasst.
+            Eine Lastschrift pro Mitglied über alle angehakten Stücke.
+        </p>
+        <div id="billSummary"></div>
+        <div class="filter-bar">
+            <label style="display:flex;align-items:center;gap:6px;font-weight:600;color:#4a5568;cursor:pointer;">
+                <input type="checkbox" id="billSelectAll" onchange="toggleBillAll(this.checked)" style="width:18px;height:18px;"> Alle auswählen
+            </label>
+            <div class="filter-right">
+                <button class="btn-primary" id="billSepaBtn" onclick="createBillingSepa()">🏦 SEPA-Datei erstellen</button>
+                <button class="btn-secondary" onclick="exportBillingCsv()">📄 Liste / CSV</button>
+                <button class="btn-success" onclick="markSelectedBilled()" style="padding:9px 16px;font-size:0.9em;">✓ Als berechnet markieren</button>
+            </div>
+        </div>
+        <div class="table-wrapper">
+            <div id="billContent"><div class="loading">⏳ Lade Daten…</div></div>
+        </div>
+
+        <h3 style="color:#4a5568;margin:30px 0 6px;font-size:1em;">Ältere ausgelieferte Bestellungen (vor der Umstellung, noch nicht abgerechnet)</h3>
         <div id="unbezahltSummary"></div>
         <div class="table-wrapper">
             <div id="unbezahltContent"><div class="loading">⏳ Lade Daten…</div></div>
@@ -351,6 +388,16 @@
                 <textarea id="articleColors" rows="4" placeholder="Schwarz&#10;Grau" style="resize:vertical;"></textarea>
             </div>
         </div>
+        <div class="form-group">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                <input type="checkbox" id="articleStockByColor" style="width:18px;height:18px;">
+                Bestand je Farbe führen
+            </label>
+            <div style="font-size:0.8em;color:#718096;margin-top:4px;">
+                Nur sinnvoll, wenn der Artikel mehrere Farben hat. Beim Umschalten wird vorhandener Bestand nicht umgebucht –
+                bitte danach im Tab „Bestand“ prüfen und ggf. korrigieren.
+            </div>
+        </div>
         <div class="modal-actions">
             <button class="btn-cancel" onclick="closeArticleModal()">Abbrechen</button>
             <button class="btn-primary" onclick="saveArticle()" style="flex:2;">💾 Speichern</button>
@@ -381,6 +428,10 @@
                 <input type="number" id="bookingQty" placeholder="z.B. 5" min="1" step="1">
             </div>
         </div>
+        <div class="form-group" id="bookingColorWrap" style="display:none;">
+            <label>Farbe *</label>
+            <select id="bookingColor"></select>
+        </div>
         <div class="modal-actions">
             <button class="btn-cancel" onclick="closeBookingModal()">Abbrechen</button>
             <button class="btn-primary" onclick="saveBooking()" style="flex:2;">✓ Zugang buchen</button>
@@ -396,7 +447,7 @@
         <input type="hidden" id="correctionStockId">
         <div class="form-group">
             <label>Neuer Bestand</label>
-            <input type="number" id="correctionQty" min="0" step="1">
+            <input type="number" id="correctionQty" step="1">
         </div>
         <div class="modal-actions">
             <button class="btn-cancel" onclick="closeCorrectionModal()">Abbrechen</button>
@@ -445,6 +496,8 @@ function onLoggedIn() {
     loadStock();
     loadOrders();
     loadOrderNotice();
+    loadDemand();
+    loadBilling();
 }
 
 // ===== HINWEIS BESTELLSEITE =====
@@ -567,6 +620,7 @@ function openArticleModal(id = null) {
     document.getElementById('articleAvailable').value = String(article?.available !== false);
     document.getElementById('articleSizes').value = (article?.sizes || ['S','M','L','XL']).join('\n');
     document.getElementById('articleColors').value = (article?.colors || []).join('\n');
+    document.getElementById('articleStockByColor').checked = !!article?.stock_by_color;
     document.getElementById('articleImageUrl').value = article?.image_url || '';
     document.getElementById('articleImagePath').value = article?.image_file_path || '';
     document.getElementById('articleImageFile').value = '';
@@ -643,7 +697,8 @@ async function saveArticle() {
         }
     }
 
-    const payload = { name, emoji, price, available, sizes, colors, image_url, image_file_path, pdf_url };
+    const stock_by_color = document.getElementById('articleStockByColor').checked;
+    const payload = { name, emoji, price, available, sizes, colors, image_url, image_file_path, pdf_url, stock_by_color };
     try {
         if (id) {
             await apiCall('/clothing-items/' + id, { method: 'PUT', body: JSON.stringify(payload) });
@@ -746,15 +801,18 @@ function renderStock() {
 
     // Summary
     const totalItems = filtered.length;
-    const totalQty = filtered.reduce((sum, s) => sum + (s.quantity || 0), 0);
+    const totalQty = filtered.reduce((sum, s) => sum + Math.max(0, s.quantity || 0), 0);
     const lowCount = filtered.filter(s => s.quantity > 0 && s.quantity <= 2).length;
     const zeroCount = filtered.filter(s => s.quantity === 0).length;
+    const negCount = filtered.filter(s => s.quantity < 0).length;
     document.getElementById('stockSummary').innerHTML = `<div class="summary-cards">
         <div class="summary-card"><div class="s-value">${totalItems}</div><div class="s-label">Varianten</div></div>
-        <div class="summary-card"><div class="s-value">${totalQty}</div><div class="s-label">Stück gesamt</div></div>
+        <div class="summary-card"><div class="s-value">${totalQty}</div><div class="s-label">Stück im Lager</div></div>
         <div class="summary-card ${lowCount > 0 ? 'highlight' : ''}"><div class="s-value">${lowCount}</div><div class="s-label">Niedrig (≤2)</div></div>
         <div class="summary-card ${zeroCount > 0 ? 'highlight' : ''}"><div class="s-value">${zeroCount}</div><div class="s-label">Ausverkauft</div></div>
-    </div>`;
+        <div class="summary-card ${negCount > 0 ? 'highlight' : ''}"><div class="s-value">${negCount}</div><div class="s-label">Fehlbestand (negativ)</div></div>
+    </div>
+    <p style="color:#718096;font-size:0.85em;margin:-12px 0 16px;">Bestellte Stücke sind schon abgebucht. Negativer Bestand = so viele fehlen für offene Bestellungen.</p>`;
 
     if (!filtered.length) {
         document.getElementById('bestandContent').innerHTML = '<div class="empty-state"><div class="empty-icon">📦</div><p>Kein Bestand vorhanden. Bitte zuerst einen Zugang buchen.</p></div>';
@@ -765,24 +823,27 @@ function renderStock() {
         const name = s.clothing_items?.name || '–';
         const emoji = s.clothing_items?.emoji || '👕';
         const qty = s.quantity || 0;
-        const qtyClass = qty === 0 ? 'qty-zero' : qty <= 2 ? 'qty-low' : 'qty-ok';
-        const badgeHtml = qty === 0 ? '<span class="badge badge-zero">Ausverkauft</span>' :
+        const qtyClass = qty <= 0 ? (qty < 0 ? 'qty-low' : 'qty-zero') : qty <= 2 ? 'qty-low' : 'qty-ok';
+        const badgeHtml = qty < 0  ? `<span class="badge badge-low">Fehlen ${-qty}</span>` :
+                          qty === 0 ? '<span class="badge badge-zero">Ausverkauft</span>' :
                           qty <= 2  ? '<span class="badge badge-low">Niedrig</span>' :
                                       '<span class="badge badge-ok">OK</span>';
+        const label = [name, s.size, s.color].filter(Boolean).join(' ');
         return `<tr>
             <td>${escHtml(emoji)} <strong>${escHtml(name)}</strong></td>
-            <td><span class="badge badge-confirmed">${escHtml(s.size)}</span></td>
+            <td>${s.size ? `<span class="badge badge-confirmed">${escHtml(s.size)}</span>` : '–'}</td>
+            <td>${escHtml(s.color || '–')}</td>
             <td><div class="qty-display"><span class="qty-num ${qtyClass}">${qty}</span>${badgeHtml}</div></td>
             <td style="color:#999;font-size:0.82em;">${fmtDate(s.updated_at)}</td>
             <td><div class="action-group">
-                <button class="btn-success btn-sm" onclick="openBookingModal(${s.clothing_item_id}, '${escHtml(s.size)}')">+ Zugang</button>
-                <button class="btn-warning btn-sm" onclick="openCorrectionModal(${s.id}, '${escHtml(name)} ${escHtml(s.size)}', ${qty})">✏️ Korr.</button>
+                <button class="btn-success btn-sm" onclick="openBookingModal(${s.clothing_item_id}, '${escHtml(s.size)}', '${escHtml(s.color || '')}')">+ Zugang</button>
+                <button class="btn-warning btn-sm" onclick="openCorrectionModal(${s.id}, '${escHtml(label)}', ${qty})">✏️ Korr.</button>
             </div></td>
         </tr>`;
     }).join('');
 
     document.getElementById('bestandContent').innerHTML = `<table>
-        <thead><tr><th>Artikel</th><th>Größe</th><th>Bestand</th><th>Zuletzt geändert</th><th>Aktion</th></tr></thead>
+        <thead><tr><th>Artikel</th><th>Größe</th><th>Farbe</th><th>Bestand</th><th>Zuletzt geändert</th><th>Aktion</th></tr></thead>
         <tbody>${rows}</tbody>
     </table>`;
 }
@@ -805,12 +866,15 @@ function populateArticleSelects() {
     }
 }
 
-function openBookingModal(preItemId = null, preSize = null) {
+function openBookingModal(preItemId = null, preSize = null, preColor = null) {
     populateArticleSelects();
     if (preItemId) {
         document.getElementById('bookingItem').value = preItemId;
         updateBookingSizes();
-        if (preSize) setTimeout(() => { document.getElementById('bookingSize').value = preSize; }, 50);
+        if (preSize) document.getElementById('bookingSize').value = preSize;
+        if (preColor) document.getElementById('bookingColor').value = preColor;
+    } else {
+        updateBookingSizes();
     }
     document.getElementById('bookingQty').value = '';
     document.getElementById('bookingModal').style.display = 'flex';
@@ -824,18 +888,25 @@ function updateBookingSizes() {
     const sizes = opt?.dataset?.sizes ? opt.dataset.sizes.split(',').filter(Boolean) : [];
     const sizeSel = document.getElementById('bookingSize');
     sizeSel.innerHTML = sizes.length
-        ? sizes.map(s => `<option value="${s}">${s}</option>`).join('')
-        : '<option value="">– keine Größen –</option>';
+        ? sizes.map(s => `<option value="${escHtml(s)}">${escHtml(s)}</option>`).join('')
+        : '<option value="">– ohne Größe –</option>';
+    // Farbe nur bei Artikeln mit "Bestand je Farbe"
+    const article = allArticles.find(a => String(a.id) === sel.value);
+    const colors = article && article.stock_by_color ? (article.colors || []) : [];
+    document.getElementById('bookingColor').innerHTML = colors.map(c => `<option value="${escHtml(c)}">${escHtml(c)}</option>`).join('');
+    document.getElementById('bookingColorWrap').style.display = colors.length ? 'block' : 'none';
 }
 
 async function saveBooking() {
     const itemId = parseInt(document.getElementById('bookingItem').value);
     const size   = document.getElementById('bookingSize').value;
     const qty    = parseInt(document.getElementById('bookingQty').value);
-    if (!itemId || !size) { showAlert('❌ Bitte Artikel und Größe wählen', 'error'); return; }
+    const color  = document.getElementById('bookingColorWrap').style.display === 'none' ? '' : document.getElementById('bookingColor').value;
+    const hasSizes = document.querySelectorAll('#bookingSize option[value]:not([value=""])').length > 0;
+    if (!itemId || (hasSizes && !size)) { showAlert('❌ Bitte Artikel und Größe wählen', 'error'); return; }
     if (isNaN(qty) || qty <= 0) { showAlert('❌ Bitte eine gültige Menge eingeben', 'error'); return; }
     try {
-        await apiCall('/clothing-stock/book', { method: 'POST', body: JSON.stringify({ clothing_item_id: itemId, size, quantity: qty }) });
+        await apiCall('/clothing-stock/book', { method: 'POST', body: JSON.stringify({ clothing_item_id: itemId, size, color, quantity: qty }) });
         closeBookingModal();
         showAlert(`✓ ${qty} Stück gebucht`, 'success');
         await loadStock();
@@ -854,7 +925,7 @@ function closeCorrectionModal() { document.getElementById('correctionModal').sty
 async function saveCorrection() {
     const stockId = document.getElementById('correctionStockId').value;
     const qty = parseInt(document.getElementById('correctionQty').value);
-    if (isNaN(qty) || qty < 0) { showAlert('❌ Ungültige Menge', 'error'); return; }
+    if (isNaN(qty)) { showAlert('❌ Ungültige Menge', 'error'); return; }
     try {
         await apiCall('/clothing-stock/' + stockId, { method: 'PUT', body: JSON.stringify({ quantity: qty }) });
         closeCorrectionModal();
@@ -909,11 +980,6 @@ function renderOrders() {
     document.getElementById('cnt-completed').textContent = allOrders.filter(o => o.status === 'completed').length;
     document.getElementById('cnt-cancelled').textContent = allOrders.filter(o => o.status === 'cancelled').length;
 
-    const unbilledCount = allOrders.filter(o => o.status === 'completed' && !o.billed).length;
-    document.getElementById('tabUnbezahlt').textContent = unbilledCount > 0
-        ? `💶 Unbezahlt (${unbilledCount})`
-        : '💶 Unbezahlt';
-
     const list = getSortedFiltered();
     if (!list.length) {
         document.getElementById('bestellungenContent').innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>Keine Bestellungen gefunden.</p></div>';
@@ -965,9 +1031,9 @@ async function markDelivered(id) {
         const o = allOrders.find(x => x.id === id);
         if (o) { o.status = 'completed'; o.delivered_at = new Date().toISOString(); }
         renderOrders();
-        renderUnbilled();
-        await loadStock(); // Bestand nach Abbuchung neu laden
-        showAlert('✓ Ausgeliefert – Bestand wurde aktualisiert', 'success');
+        await loadBilling();
+        await loadStock();
+        showAlert('✓ Ausgeliefert', 'success');
     } catch(e) { showAlert('❌ ' + e.message, 'error'); }
 }
 
@@ -978,6 +1044,7 @@ async function cancelOrder(id) {
         const o = allOrders.find(x => x.id === id);
         if (o) o.status = 'cancelled';
         renderOrders();
+        await loadStock(); // Stornieren bucht den Bestand zurück
         showAlert('✓ Bestellung storniert', 'success');
     } catch(e) { showAlert('❌ ' + e.message, 'error'); }
 }
@@ -988,14 +1055,16 @@ async function markBilled(id) {
         const o = allOrders.find(x => x.id === id);
         if (o) o.billed = true;
         renderOrders();
-        renderUnbilled();
+        await loadBilling();
         showAlert('✓ Als abgerechnet markiert', 'success');
     } catch(e) { showAlert('❌ ' + e.message, 'error'); }
 }
 
-// ===== UNBEZAHLT =====
+// ===== ALTE BESTELLUNGEN OHNE POSITIONEN (ausgeliefert, nicht abgerechnet) =====
 function renderUnbilled() {
-    const list = allOrders.filter(o => o.status === 'completed' && !o.billed);
+    if (!billLoaded) return; // erst wenn bekannt ist, welche Bestellungen Positionen haben
+    const withPositions = new Set(billPositions.map(p => p.order_id));
+    const list = allOrders.filter(o => o.status === 'completed' && !o.billed && !withPositions.has(o.id));
     const total = list.reduce((sum, o) => sum + (o.total || 0), 0);
 
     document.getElementById('unbezahltSummary').innerHTML = `<div class="summary-cards">
@@ -1028,6 +1097,407 @@ function renderUnbilled() {
         <tbody>${rows}</tbody>
         <tfoot><tr class="total-row"><td colspan="4">Gesamt</td><td>${total.toFixed(2)} €</td><td></td></tr></tfoot>
     </table>`;
+}
+
+// ===== ABZURECHNEN (Positionen ab "abholbereit", noch nicht berechnet) =====
+const BILLABLE_STATUSES = ['abholbereit', 'ausgegeben'];
+const POS_STATUS_ICONS = { abholbereit: '📦', ausgegeben: '✓' };
+let billPositions = [];   // alle Positionen
+let billUsers = [];
+let billLoaded = false;
+let billFilter = 'all';
+let billGroups = [];      // aktuell angezeigte Zeilen (Mitglied + Zahlungsart)
+
+async function loadBilling() {
+    document.getElementById('billContent').innerHTML = '<div class="loading">⏳ Lade Daten…</div>';
+    try {
+        const [positions, users] = await Promise.all([apiCall('/clothing-positions'), apiCall('/users')]);
+        billPositions = positions;
+        billUsers = users;
+        billLoaded = true;
+        renderBilling();
+        renderUnbilled();
+    } catch(e) {
+        document.getElementById('billContent').innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>${escHtml(e.message)}</p></div>`;
+    }
+}
+
+function setBillFilter(f, btn) {
+    billFilter = f;
+    document.querySelectorAll('#tab-unbezahlt .filter-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    renderBilling();
+}
+
+// Cent-genau rechnen, damit die SEPA-Summen stimmen
+function toCents(v) { return Math.round(Number(v || 0) * 100); }
+function centsToStr(c) { return (c / 100).toFixed(2); }
+function euro(c) { return (c / 100).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'; }
+
+// Eine Zeile je Mitglied und Zahlungsart (nur SEPA-Zeilen kommen in die Lastschrift)
+function groupBilling() {
+    const map = new Map();
+    for (const p of billPositions) {
+        if (p.billed || !BILLABLE_STATUSES.includes(p.status)) continue;
+        const pay = p.payment_method || 'unbekannt';
+        const key = (p.member_id || p.member_name) + '|' + pay;
+        if (!map.has(key)) {
+            map.set(key, {
+                member_id: p.member_id,
+                name: p.member_name || '–',
+                payment: pay,
+                user: billUsers.find(u => u.id === p.member_id) || null,
+                positions: [],
+                cents: 0
+            });
+        }
+        const g = map.get(key);
+        g.positions.push(p);
+        g.cents += toCents(p.price);
+    }
+    return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, 'de'));
+}
+
+function positionSummary(positions) {
+    const merged = {};
+    for (const p of positions) {
+        const label = [p.item_name || 'Artikel', p.color, p.size].filter(Boolean).join(' ');
+        merged[label] = (merged[label] || 0) + 1;
+    }
+    return Object.entries(merged).map(([label, n]) => `${n}x ${label}`);
+}
+
+function renderBilling() {
+    const all = groupBilling();
+    ['sepa', 'transfer', 'paypal'].forEach(pm =>
+        document.getElementById('bcnt-' + pm).textContent = all.filter(g => g.payment === pm).length);
+    document.getElementById('bcnt-all').textContent = all.length;
+    document.getElementById('tabUnbezahlt').textContent = all.length > 0 ? `💶 Abzurechnen (${all.length})` : '💶 Abzurechnen';
+
+    billGroups = billFilter === 'all' ? all : all.filter(g => g.payment === billFilter);
+    document.getElementById('billSelectAll').checked = false;
+
+    const totalCents = billGroups.reduce((s, g) => s + g.cents, 0);
+    const pieces = billGroups.reduce((s, g) => s + g.positions.length, 0);
+    document.getElementById('billSummary').innerHTML = `<div class="summary-cards">
+        <div class="summary-card ${billGroups.length ? 'highlight' : ''}"><div class="s-value">${billGroups.length}</div><div class="s-label">Mitglieder</div></div>
+        <div class="summary-card"><div class="s-value">${pieces}</div><div class="s-label">Stück</div></div>
+        <div class="summary-card ${totalCents ? 'highlight' : ''}"><div class="s-value">${euro(totalCents)}</div><div class="s-label">Summe</div></div>
+    </div>`;
+
+    if (!billGroups.length) {
+        document.getElementById('billContent').innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><p>Nichts abzurechnen.</p></div>';
+        return;
+    }
+
+    const rows = billGroups.map((g, i) => {
+        const items = g.positions.map(p => {
+            const label = [p.item_name || 'Artikel', p.color, p.size].filter(Boolean).join(' ');
+            return `<div>${POS_STATUS_ICONS[p.status] || ''} ${escHtml(label)} <span style="color:#718096;">${euro(toCents(p.price))}</span></div>`;
+        }).join('');
+        let ibanHtml = '–';
+        if (g.payment === 'sepa') {
+            ibanHtml = g.user && g.user.iban
+                ? `<code style="font-size:0.8em;">${escHtml(g.user.iban.replace(/\s/g, '').replace(/(.{4})/g, '$1 ').trim())}</code>`
+                : '<span style="color:#e53e3e;font-weight:600;">⚠️ keine IBAN</span>';
+        }
+        return `<tr>
+            <td><input type="checkbox" class="bill-check" value="${i}" style="width:18px;height:18px;"></td>
+            <td><strong>${escHtml(g.name)}</strong></td>
+            <td style="font-size:0.88em;line-height:1.6;">${items}</td>
+            <td>${payLabel(g.payment)}</td>
+            <td>${ibanHtml}</td>
+            <td><strong>${euro(g.cents)}</strong></td>
+            <td><button class="btn-success btn-sm" onclick="markGroupBilledSingle(${i})">✓ Berechnet</button></td>
+        </tr>`;
+    }).join('');
+
+    document.getElementById('billContent').innerHTML = `<table>
+        <thead><tr><th></th><th>Mitglied</th><th>Stücke <span style="font-weight:400;color:#718096;">(📦 abholbereit, ✓ ausgegeben)</span></th><th>Zahlung</th><th>IBAN</th><th>Summe</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot><tr class="total-row"><td colspan="5">Gesamt</td><td>${euro(totalCents)}</td><td></td></tr></tfoot>
+    </table>`;
+}
+
+function toggleBillAll(checked) {
+    document.querySelectorAll('.bill-check').forEach(cb => cb.checked = checked);
+}
+
+function selectedBillIdx() {
+    return [...document.querySelectorAll('.bill-check:checked')].map(cb => parseInt(cb.value));
+}
+
+async function markGroupsBilled(idxList, billingId) {
+    const groups = idxList.map(i => billGroups[i]).filter(Boolean);
+    const ids = groups.flatMap(g => g.positions.map(p => p.id));
+    if (!ids.length) return false;
+    const body = { ids, billed: true };
+    if (billingId) body.billing_id = billingId;
+    await apiCall('/clothing-positions/update', { method: 'POST', body: JSON.stringify(body) });
+    return true;
+}
+
+async function markSelectedBilled() {
+    const idx = selectedBillIdx();
+    if (!idx.length) { showAlert('❌ Bitte mindestens ein Mitglied anhaken', 'error'); return; }
+    const total = idx.reduce((s, i) => s + billGroups[i].cents, 0);
+    if (!confirm(`${idx.length} Mitglied(er) über ${euro(total)} als berechnet markieren?\n\n(Ohne SEPA-Datei – z. B. wenn die Überweisung eingegangen ist.)`)) return;
+    try {
+        await markGroupsBilled(idx);
+        showAlert('✓ Als berechnet markiert', 'success');
+    } catch(e) { showAlert('❌ ' + e.message, 'error'); }
+    await loadBilling();
+    await loadOrders();
+}
+
+// Einzelne Zeile über den Button in der Tabelle
+async function markGroupBilledSingle(i) {
+    const g = billGroups[i];
+    if (!g || !confirm(`${g.name}: ${euro(g.cents)} als berechnet markieren?`)) return;
+    try {
+        await markGroupsBilled([i]);
+        showAlert('✓ Als berechnet markiert', 'success');
+    } catch(e) { showAlert('❌ ' + e.message, 'error'); }
+    await loadBilling();
+    await loadOrders();
+}
+
+function downloadText(content, filename, type) {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function exportBillingCsv() {
+    let idx = selectedBillIdx();
+    if (!idx.length) idx = billGroups.map((g, i) => i); // nichts angehakt = alle angezeigten
+    if (!idx.length) { showAlert('❌ Nichts abzurechnen', 'error'); return; }
+    const esc = v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+    const lines = [['Mitglied', 'Zahlungsart', 'IBAN', 'Anzahl', 'Artikel', 'Betrag'].map(esc).join(';')];
+    let total = 0;
+    for (const i of idx) {
+        const g = billGroups[i];
+        total += g.cents;
+        lines.push([
+            g.name,
+            payLabel(g.payment).replace(/^\S+\s/, ''),
+            g.payment === 'sepa' && g.user && g.user.iban ? g.user.iban.replace(/\s/g, '') : '',
+            g.positions.length,
+            positionSummary(g.positions).join(', '),
+            centsToStr(g.cents).replace('.', ',')
+        ].map(esc).join(';'));
+    }
+    lines.push(['Gesamt', '', '', '', '', centsToStr(total).replace('.', ',')].map(esc).join(';'));
+    const d = new Date();
+    const stamp = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+    downloadText('﻿' + lines.join('\r\n'), `Kleidung_Abzurechnen_${stamp}.csv`, 'text/csv;charset=utf-8');
+}
+
+// Text für den SEPA-Verwendungszweck: nur erlaubte Zeichen, Umlaute umschreiben
+function sepaText(text, max) {
+    return String(text || '')
+        .replace(/Ä/g, 'Ae').replace(/Ö/g, 'Oe').replace(/Ü/g, 'Ue')
+        .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+        .replace(/[^A-Za-z0-9 \/\-?:().,'+]/g, ' ')
+        .replace(/\s+/g, ' ').trim()
+        .substring(0, max);
+}
+
+function xmlEsc(text) {
+    return String(text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+}
+
+// Aufbau wie die Getränke-Lastschrift in admin.html (gleiche Mandatsreferenz MANDATE-<Nr>)
+function buildClothingSepaXml(groups, settings, billing) {
+    const now = new Date();
+    const totalCents = groups.reduce((s, g) => s + g.cents, 0);
+    const execDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const sequenceType = settings.sepa_sequence_type || 'RCUR';
+    const cdtrAgt = settings.creditor_bic
+        ? `<BIC>${xmlEsc(settings.creditor_bic.replace(/\s/g, ''))}</BIC>`
+        : '<Othr><Id>NOTPROVIDED</Id></Othr>';
+
+    const tx = groups.map(g => {
+        const purpose = sepaText(`Saarcade Kleidung ${billing.billing_number}: ${positionSummary(g.positions).join(', ')}`, 140);
+        return `
+            <DrctDbtTxInf>
+                <PmtId>
+                    <EndToEndId>${xmlEsc(billing.billing_number + '-' + g.user.id)}</EndToEndId>
+                </PmtId>
+                <InstdAmt Ccy="EUR">${centsToStr(g.cents)}</InstdAmt>
+                <DrctDbtTx>
+                    <MndtRltdInf>
+                        <MndtId>MANDATE-${g.user.id}</MndtId>
+                        <DtOfSgntr>2024-01-01</DtOfSgntr>
+                    </MndtRltdInf>
+                </DrctDbtTx>
+                <DbtrAgt>
+                    <FinInstnId>
+                        <Othr>
+                            <Id>NOTPROVIDED</Id>
+                        </Othr>
+                    </FinInstnId>
+                </DbtrAgt>
+                <Dbtr>
+                    <Nm>${xmlEsc((g.user.first_name + ' ' + g.user.last_name).trim().substring(0, 70))}</Nm>
+                </Dbtr>
+                <DbtrAcct>
+                    <Id>
+                        <IBAN>${xmlEsc(g.user.iban.replace(/\s/g, '').toUpperCase())}</IBAN>
+                    </Id>
+                </DbtrAcct>
+                <RmtInf>
+                    <Ustrd>${xmlEsc(purpose)}</Ustrd>
+                </RmtInf>
+            </DrctDbtTxInf>`;
+    }).join('');
+
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.008.001.02" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <CstmrDrctDbtInitn>
+        <GrpHdr>
+            <MsgId>${xmlEsc(billing.billing_number)}</MsgId>
+            <CreDtTm>${now.toISOString().split('.')[0]}</CreDtTm>
+            <NbOfTxs>${groups.length}</NbOfTxs>
+            <CtrlSum>${centsToStr(totalCents)}</CtrlSum>
+            <InitgPty>
+                <Nm>${xmlEsc(settings.creditor_name)}</Nm>
+            </InitgPty>
+        </GrpHdr>
+        <PmtInf>
+            <PmtInfId>PMT-${xmlEsc(billing.billing_number)}</PmtInfId>
+            <PmtMtd>DD</PmtMtd>
+            <NbOfTxs>${groups.length}</NbOfTxs>
+            <CtrlSum>${centsToStr(totalCents)}</CtrlSum>
+            <PmtTpInf>
+                <SvcLvl>
+                    <Cd>SEPA</Cd>
+                </SvcLvl>
+                <LclInstrm>
+                    <Cd>CORE</Cd>
+                </LclInstrm>
+                <SeqTp>${xmlEsc(sequenceType)}</SeqTp>
+            </PmtTpInf>
+            <ReqdColltnDt>${execDate}</ReqdColltnDt>
+            <Cdtr>
+                <Nm>${xmlEsc(settings.creditor_name)}</Nm>
+            </Cdtr>
+            <CdtrAcct>
+                <Id>
+                    <IBAN>${xmlEsc(settings.creditor_iban.replace(/\s/g, ''))}</IBAN>
+                </Id>
+            </CdtrAcct>
+            <CdtrAgt>
+                <FinInstnId>${cdtrAgt}</FinInstnId>
+            </CdtrAgt>
+            <CdtrSchmeId>
+                <Id>
+                    <PrvtId>
+                        <Othr>
+                            <Id>${xmlEsc(settings.creditor_id)}</Id>
+                            <SchmeNm>
+                                <Prtry>SEPA</Prtry>
+                            </SchmeNm>
+                        </Othr>
+                    </PrvtId>
+                </Id>
+            </CdtrSchmeId>${tx}
+        </PmtInf>
+    </CstmrDrctDbtInitn>
+</Document>`;
+}
+
+async function createBillingSepa() {
+    const idx = selectedBillIdx();
+    if (!idx.length) { showAlert('❌ Bitte mindestens ein Mitglied anhaken', 'error'); return; }
+    const chosen = idx.map(i => billGroups[i]);
+    const sepa = chosen.filter(g => g.payment === 'sepa');
+    const others = chosen.length - sepa.length;
+    if (!sepa.length) { showAlert('❌ Keine SEPA-Zeile angehakt', 'error'); return; }
+    const noIban = sepa.filter(g => !g.user || !g.user.iban);
+    if (noIban.length) {
+        alert('⚠️ Folgende Mitglieder haben keine IBAN hinterlegt:\n\n' + noIban.map(g => g.name).join('\n') +
+              '\n\nBitte Haken entfernen oder IBAN im Admin-Bereich nachtragen.');
+        return;
+    }
+
+    const btn = document.getElementById('billSepaBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Erstelle…';
+    try {
+        const settings = await apiCall('/settings');
+        if (!settings.creditor_name || !settings.creditor_id || !settings.creditor_iban) {
+            alert('⚠️ SEPA-Gläubigerdaten (Name, Gläubiger-ID, IBAN) fehlen in den Einstellungen von admin.html.');
+            return;
+        }
+        const total = sepa.reduce((s, g) => s + g.cents, 0);
+        const msg = `SEPA-Datei für ${sepa.length} Mitglied(er) über ${euro(total)} erstellen?` +
+            (others ? `\n\n${others} angehakte Zeile(n) ohne SEPA werden nicht berücksichtigt.` : '') +
+            '\n\nDie Stücke werden danach als berechnet markiert.';
+        if (!confirm(msg)) return;
+
+        const orderIds = [...new Set(sepa.flatMap(g => g.positions.map(p => p.order_id)))];
+        const billing = await apiCall('/clothing-billings', {
+            method: 'POST',
+            body: JSON.stringify({
+                billing_type: 'clothing',
+                billing_date: new Date().toISOString(),
+                order_ids: orderIds,
+                member_ids: [...new Set(sepa.map(g => g.user.id))],
+                total_amount: total / 100,
+                order_count: orderIds.length
+            })
+        });
+
+        // Datei zuerst speichern, dann als berechnet markieren
+        downloadText(buildClothingSepaXml(sepa, settings, billing), `SEPA_Kleidung_${billing.billing_number}.xml`, 'application/xml');
+        const sepaIdx = idx.filter(i => billGroups[i].payment === 'sepa');
+        await markGroupsBilled(sepaIdx, billing.id);
+        showAlert(`✅ SEPA-Datei ${billing.billing_number}: ${sepa.length} Lastschrift(en), ${euro(total)}`, 'success');
+        await loadBilling();
+        await loadOrders();
+    } catch(e) {
+        showAlert('❌ Fehler: ' + e.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '🏦 SEPA-Datei erstellen';
+    }
+}
+
+// ===== BESTELLBEDARF =====
+async function loadDemand() {
+    document.getElementById('bedarfContent').innerHTML = '<div class="loading">⏳ Lade Bestellbedarf…</div>';
+    try {
+        const rows = await apiCall('/clothing-demand');
+        rows.sort((a, b) => (b.missing > 0) - (a.missing > 0) || (a.name || '').localeCompare(b.name || '', 'de'));
+        if (!rows.length) {
+            document.getElementById('bedarfContent').innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><p>Keine offenen Stücke – nichts nachzubestellen.</p></div>';
+            return;
+        }
+        const totalMissing = rows.reduce((s, r) => s + r.missing, 0);
+        const body = rows.map(r => `<tr class="${r.missing > 0 ? '' : 'delivered'}">
+            <td>${escHtml(r.emoji || '👕')} <strong>${escHtml(r.name || '–')}</strong></td>
+            <td>${escHtml(r.size || '–')}</td>
+            <td>${escHtml(r.color || '–')}</td>
+            <td><span class="qty-num ${r.stock < 0 ? 'qty-low' : 'qty-ok'}">${r.stock}</span></td>
+            <td>${r.open}</td>
+            <td>${r.missing > 0 ? `<span class="qty-num qty-low">${r.missing}</span>` : '–'}</td>
+            <td><button class="btn-success btn-sm" onclick="openBookingModal(${r.clothing_item_id}, '${escHtml(r.size || '')}', '${escHtml(r.color || '')}')">+ Zugang</button></td>
+        </tr>`).join('');
+        document.getElementById('bedarfContent').innerHTML = `<table>
+            <thead><tr><th>Artikel</th><th>Größe</th><th>Farbe</th><th>Bestand</th><th>Offene Stücke</th><th>Fehlen</th><th></th></tr></thead>
+            <tbody>${body}</tbody>
+            <tfoot><tr class="total-row"><td colspan="5">Fehlen gesamt</td><td>${totalMissing}</td><td></td></tr></tfoot>
+        </table>`;
+    } catch(e) {
+        document.getElementById('bedarfContent').innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>${escHtml(e.message)}</p></div>`;
+    }
 }
 
 // ===== INIT =====

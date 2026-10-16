@@ -127,5 +127,16 @@ Entscheidungen (16.10.2026): eine Position **pro Stück**; „Berechnet“ ist e
       „Nur Fehlbestand“, Druck-Button. Freimitglieder: fehlen Artikel/Größe, werden sie bei
       „Ausgeliefert“ abgefragt, dann Bestandsabbuchung. Fehler behoben: Mitgliedersuche beim
       Eintragen (fehlendes Hinweisfeld).
-- [ ] **4 – Admin**: Abzurechnen (SEPA + CSV, Haken „Berechnet“), Bestellbedarf, Bestand mit Farbe;
-      danach Kleidungsbereiche in `admin.html` aufräumen.
+- [x] **4 – Admin** (16.10.2026): `admin-kleidung.html`
+      - Tab „Abzurechnen“ (ersetzt „Unbezahlt“): Stücke ab „abholbereit“ (auch direkt ausgegebene), noch nicht
+        berechnet, je Mitglied + Zahlungsart. SEPA-Datei (eine Lastschrift pro Mitglied, Aufbau wie Getränke:
+        Mandat `MANDATE-<Nr>`, Sequenztyp aus Einstellungen, Verwendungszweck mit Artikeln, Umlaute umgeschrieben),
+        legt `clothing_billings` an und setzt billed + billing_id. Liste/CSV (Excel, Semikolon). „Berechnet“ von Hand.
+        Darunter alte ausgelieferte Bestellungen ohne Positionen.
+      - Tab „Bestellbedarf“ (`/clothing-demand`) mit „+ Zugang“.
+      - Bestand mit Farbspalte, negativ rot; Artikel: Schalter „Bestand je Farbe führen“; Zugang mit Farbe und für
+        Artikel ohne Größe; Korrektur auch negativ.
+      - `admin.html`: alte Kleidungsabrechnung zeigt keine Bestellungen mehr, von denen schon Stücke berechnet sind.
+- [ ] **5 – Aufräumen `admin.html`**: Kleidungsbereiche ausblenden, **erst nach der ersten echten Abrechnung**
+      mit dem neuen „Abzurechnen“ (Entscheidung 16.10.2026). Bis dahin bleibt die alte Abrechnung als Rückfall.
+      Hinweis: Die alte Kleidungs-SEPA nutzte `MAND-<Nr>` und `<BIC>NOTPROVIDED</BIC>` (ungültig) – nicht mehr verwenden.

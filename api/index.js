@@ -1515,7 +1515,8 @@ if (path === '/clothing-billings' && method === 'POST') {
                     image_url: itemData.image_url || null,
                     image_file_path: itemData.image_file_path || null,
                     pdf_url: itemData.pdf_url || null,
-                    sort_order: itemData.sort_order || 0
+                    sort_order: itemData.sort_order || 0,
+                    stock_by_color: !!itemData.stock_by_color
                 }])
                 .select()
                 .single();
@@ -2051,9 +2052,10 @@ if (pathParts[0] === 'users' && pathParts[1] && method === 'GET') {
         // POST /clothing-stock/book - Zugang buchen (Upsert), optional mit Farbe
         // (Farbe zählt nur bei Artikeln mit "Bestand nach Farbe")
         if (path === '/clothing-stock/book' && method === 'POST') {
-            const { clothing_item_id, size, color, quantity } = req.body;
-            if (!clothing_item_id || !size || quantity === undefined) {
-                return res.status(400).json({ error: 'clothing_item_id, size und quantity erforderlich' });
+            const { clothing_item_id, color, quantity } = req.body;
+            const size = req.body.size || ''; // leer = Artikel ohne Größen (z. B. Cap)
+            if (!clothing_item_id || quantity === undefined) {
+                return res.status(400).json({ error: 'clothing_item_id und quantity erforderlich' });
             }
             const qty = parseInt(quantity);
             if (isNaN(qty) || qty <= 0) return res.status(400).json({ error: 'Ungültige Menge' });
