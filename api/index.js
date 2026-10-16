@@ -40,6 +40,146 @@ function generateFileName(originalName, productId) {
     return `product_${productId}_${timestamp}.${extension}`;
 }
 
+// ============ KLEIDUNG: POSITIONEN (Status je Artikel) ============
+// Eine Position = ein Stück einer Bestellung. Bestand wird bei der Bestellung abgebucht
+// (SQL-Funktionen aus sql/kleidung_etappe2.sql).
+const POSITION_STATUSES = ['bestellt', 'fehlt', 'abholbereit', 'ausgegeben', 'storniert'];
+const POSITION_OPEN_STATUSES = ['bestellt', 'fehlt', 'abholbereit'];
+
+// Positionen einer Bestellung laden; null, wenn die Tabelle (noch) nicht existiert
+async function loadOrderPositions(orderId) {
+    const { data, error } = await supabase
+        .from('clothing_order_positions')
+        .select('*')
+        .eq('order_id', orderId)
+        .order('id');
+    if (error) {
+        console.error('Positionen laden fehlgeschlagen:', error.message);
+        return null;
+    }
+    return data || [];
+}
+
+// Bestand für eine Position ab- (book = true) oder zurückbuchen (false)
+async function positionStock(positionId, book) {
+    const { error } = await supabase.rpc('clothing_position_stock', { p_position_id: positionId, p_book: book });
+    if (error) throw error;
+}
+
+// Größe/Farbe einer Position ändern: alten Bestand zurück-, neuen abbuchen
+async function changePositionVariant(pos, size, color) {
+    const newSize = size !== undefined ? (size || null) : pos.size;
+    const newColor = color !== undefined ? (color || null) : pos.color;
+    if (newSize === pos.size && newColor === pos.color) return pos;
+    const wasBooked = pos.stock_booked;
+    if (wasBooked) await positionStock(pos.id, false);
+    const { data, error } = await supabase
+        .from('clothing_order_positions')
+        .update({ size: newSize, color: newColor, updated_at: new Date().toISOString() })
+        .eq('id', pos.id)
+        .select()
+        .single();
+    if (error) throw error;
+    if (wasBooked) await positionStock(pos.id, true);
+    return data;
+}
+
+// Eine Position ändern (Status, Größe, Farbe, Notiz, Berechnet) inkl. Bestandsbuchung
+async function updatePosition(positionId, changes) {
+    const { data: pos, error: loadError } = await supabase
+        .from('clothing_order_positions')
+        .select('*')
+        .eq('id', positionId)
+        .single();
+    if (loadError || !pos) {
+        const err = new Error('Position nicht gefunden');
+        err.statusCode = 404;
+        throw err;
+    }
+    if (changes.status !== undefined && !POSITION_STATUSES.includes(changes.status)) {
+        const err = new Error('Ungültiger Status: ' + changes.status);
+        err.statusCode = 400;
+        throw err;
+    }
+
+    if (changes.size !== undefined || changes.color !== undefined) {
+        await changePositionVariant(pos, changes.size, changes.color);
+    }
+
+    const now = new Date().toISOString();
+    const fields = { updated_at: now };
+    if (changes.status !== undefined && changes.status !== pos.status) {
+        fields.status = changes.status;
+        if (changes.status === 'abholbereit') fields.ready_at = now;
+        fields.delivered_at = changes.status === 'ausgegeben' ? now : null;
+        // Stornieren bucht zurück, Reaktivieren bucht wieder ab
+        if (changes.status === 'storniert') await positionStock(pos.id, false);
+        if (pos.status === 'storniert') await positionStock(pos.id, true);
+    }
+    if (changes.notes !== undefined) fields.notes = changes.notes || null;
+    if (changes.billed !== undefined) {
+        fields.billed = !!changes.billed;
+        fields.billed_at = changes.billed ? now : null;
+        if (changes.billing_id !== undefined) fields.billing_id = changes.billing_id || null;
+    }
+
+    const { data, error } = await supabase
+        .from('clothing_order_positions')
+        .update(fields)
+        .eq('id', positionId)
+        .select()
+        .single();
+    if (error) throw error;
+    return data;
+}
+
+// Status/billed der Bestellung aus den Positionen ableiten, damit die bisherigen Seiten stimmen
+async function syncOrderFromPositions(orderId) {
+    const positions = await loadOrderPositions(orderId);
+    if (!positions || positions.length === 0) return;
+    const { data: order } = await supabase
+        .from('clothing_orders')
+        .select('status, billed')
+        .eq('id', orderId)
+        .single();
+    if (!order) return;
+
+    const active = positions.filter(p => p.status !== 'storniert');
+    const fields = {};
+    if (active.length === 0) {
+        if (order.status !== 'cancelled') fields.status = 'cancelled';
+    } else if (active.every(p => p.status === 'ausgegeben')) {
+        const allBilled = active.every(p => p.billed);
+        const target = (order.status === 'shipped' && !allBilled) ? 'shipped' : 'completed';
+        if (order.status !== target) {
+            fields.status = target;
+            fields.delivered_at = new Date().toISOString();
+        }
+    } else if (order.status === 'completed' || order.status === 'cancelled' || order.status === 'shipped') {
+        fields.status = 'pending';
+    }
+    const allBilled = active.length > 0 && active.every(p => p.billed);
+    if (!!order.billed !== allBilled) fields.billed = allBilled;
+
+    if (Object.keys(fields).length > 0) {
+        fields.updated_at = new Date().toISOString();
+        await supabase.from('clothing_orders').update(fields).eq('id', orderId);
+    }
+}
+
+// Alle Zeilen einer Abfrage seitenweise laden (Supabase liefert max. 1000 pro Abfrage)
+async function fetchAllRows(buildQuery) {
+    const pageSize = 1000;
+    let all = [];
+    for (let from = 0; ; from += pageSize) {
+        const { data, error } = await buildQuery().range(from, from + pageSize - 1);
+        if (error) throw error;
+        all = all.concat(data || []);
+        if (!data || data.length < pageSize) break;
+    }
+    return all;
+}
+
 // Haupthandler fÃ¼r alle API-Requests
 module.exports = async (req, res) => {
     // CORS Preflight
@@ -973,7 +1113,8 @@ if (path === '/transactions' && method === 'GET') {
         }
 
         // GET /clothing-orders/{id} - Einzelne Kleidungsbestellung
-        if (pathParts[0] === 'clothing-orders' && pathParts[1] && method === 'GET') {
+        // (nicht für /stats und /member/{id}, die weiter unten stehen)
+        if (pathParts[0] === 'clothing-orders' && pathParts.length === 2 && pathParts[1] !== 'stats' && method === 'GET') {
             const orderId = parseInt(pathParts[1]);
             
             if (isNaN(orderId)) {
@@ -1024,8 +1165,17 @@ if (path === '/transactions' && method === 'GET') {
                 }])
                 .select()
                 .single();
-            
+
             if (error) throw error;
+
+            // Positionen anlegen + Bestand abbuchen. Ein Fehler hier darf die Bestellung nicht verhindern.
+            try {
+                const { error: posError } = await supabase.rpc('clothing_order_create_positions', { p_order_id: data.id });
+                if (posError) console.error('Positionen für Bestellung', data.id, 'nicht angelegt:', posError.message);
+            } catch (posErr) {
+                console.error('Positionen für Bestellung', data.id, 'nicht angelegt:', posErr.message);
+            }
+
             return res.status(201).json(data);
         }
 
@@ -1045,7 +1195,18 @@ if (path === '/transactions' && method === 'GET') {
             if (updateData.items !== undefined) updateFields.items = updateData.items;
             if (updateData.billed !== undefined) updateFields.billed = updateData.billed;
 
+            // Bestellungen mit Positionen: Bestand wurde schon bei der Bestellung abgebucht,
+            // Änderungen werden unten auf die Positionen übertragen.
+            const positions = await loadOrderPositions(orderId);
+            const hasPositions = Array.isArray(positions) && positions.length > 0;
+            const { data: previousOrder } = await supabase
+                .from('clothing_orders')
+                .select('status')
+                .eq('id', orderId)
+                .single();
+
             // Bei Auslieferung: Bestand automatisch reduzieren + Datum setzen
+            // (nur noch für alte Bestellungen ohne Positionen)
             if (updateData.status === 'completed') {
                 updateFields.delivered_at = new Date().toISOString();
                 const { data: currentOrder } = await supabase
@@ -1053,7 +1214,7 @@ if (path === '/transactions' && method === 'GET') {
                     .select('items, status')
                     .eq('id', orderId)
                     .single();
-                if (currentOrder && currentOrder.status !== 'completed' && Array.isArray(currentOrder.items)) {
+                if (!hasPositions && currentOrder && currentOrder.status !== 'completed' && Array.isArray(currentOrder.items)) {
                     const reductions = {};
                     for (const item of currentOrder.items) {
                         if (item.product_id && item.size) {
@@ -1086,16 +1247,79 @@ if (path === '/transactions' && method === 'GET') {
                 .eq('id', orderId)
                 .select()
                 .single();
-            
+
             if (error) throw error;
+
+            // Änderungen der bisherigen Seiten auf die Positionen übertragen
+            if (hasPositions) {
+                const now = new Date().toISOString();
+                const oldStatus = previousOrder ? previousOrder.status : null;
+
+                // Größe/Farbe geändert (Bearbeiten-Fenster): Bestand umbuchen
+                if (Array.isArray(updateData.items)) {
+                    for (const pos of positions) {
+                        const item = updateData.items[pos.item_index];
+                        if (!item) continue;
+                        await changePositionVariant(pos, item.size, item.color);
+                    }
+                }
+
+                const st = updateData.status;
+                if (st === 'cancelled') {
+                    // Stornieren: nicht ausgegebene Stücke zurückbuchen
+                    for (const pos of positions.filter(p => POSITION_OPEN_STATUSES.includes(p.status))) {
+                        await positionStock(pos.id, false);
+                        await supabase.from('clothing_order_positions')
+                            .update({ status: 'storniert', updated_at: now })
+                            .eq('id', pos.id);
+                    }
+                } else if (st === 'shipped' || st === 'completed') {
+                    // Ausgeliefert: alle offenen Stücke ausgegeben
+                    for (const pos of positions.filter(p => POSITION_OPEN_STATUSES.includes(p.status))) {
+                        if (!pos.stock_booked) await positionStock(pos.id, true);
+                        await supabase.from('clothing_order_positions')
+                            .update({ status: 'ausgegeben', delivered_at: now, updated_at: now })
+                            .eq('id', pos.id);
+                    }
+                }
+
+                // Berechnet: "bezahlt" (admin.html), shipped -> completed (admin.html) oder Haken billed
+                let billed;
+                if (st === 'paid') billed = true;
+                if (st === 'completed' && oldStatus === 'shipped') billed = true;
+                if (updateData.billed !== undefined) billed = !!updateData.billed;
+                if (billed !== undefined) {
+                    await supabase.from('clothing_order_positions')
+                        .update({ billed, billed_at: billed ? now : null, updated_at: now })
+                        .eq('order_id', orderId)
+                        .neq('status', 'storniert')
+                        .eq('billed', !billed);
+                }
+
+                // Zahlungsart geändert
+                if (updateData.payment_method !== undefined) {
+                    await supabase.from('clothing_order_positions')
+                        .update({ payment_method: updateData.payment_method, updated_at: now })
+                        .eq('order_id', orderId);
+                }
+            }
+
             return res.status(200).json(data);
         }
 
 // DELETE /clothing-orders/{id} - Bestellung löschen
         if (pathParts[0] === 'clothing-orders' && pathParts[1] && method === 'DELETE') {            const orderId = parseInt(pathParts[1]);
-            
+
             if (isNaN(orderId)) {
                 return res.status(400).json({ error: 'UngÃ¼ltige Bestell-ID' });
+            }
+
+            // Nicht ausgegebene Stücke zurückbuchen (Positionen werden mit der Bestellung gelöscht)
+            const positions = await loadOrderPositions(orderId);
+            if (positions) {
+                for (const pos of positions.filter(p => POSITION_OPEN_STATUSES.includes(p.status) && p.stock_booked)) {
+                    await positionStock(pos.id, false);
+                }
             }
 
             const { error } = await supabase
@@ -1320,6 +1544,7 @@ if (path === '/clothing-billings' && method === 'POST') {
             if (itemData.image_file_path !== undefined) updateData.image_file_path = itemData.image_file_path;
             if (itemData.pdf_url !== undefined) updateData.pdf_url = itemData.pdf_url;
             if (itemData.sort_order !== undefined) updateData.sort_order = itemData.sort_order;
+            if (itemData.stock_by_color !== undefined) updateData.stock_by_color = !!itemData.stock_by_color;
 
             const { data, error } = await supabase
                 .from('clothing_items')
@@ -1818,45 +2043,138 @@ if (pathParts[0] === 'users' && pathParts[1] && method === 'GET') {
             const { data, error } = await supabase
                 .from('clothing_stock')
                 .select('*, clothing_items(name, emoji)')
- .order('clothing_item_id, size');
+ .order('clothing_item_id').order('size').order('color');
             if (error) throw error;
             return res.status(200).json(data || []);
         }
 
-        // POST /clothing-stock/book - Zugang buchen (Upsert)
+        // POST /clothing-stock/book - Zugang buchen (Upsert), optional mit Farbe
+        // (Farbe zählt nur bei Artikeln mit "Bestand nach Farbe")
         if (path === '/clothing-stock/book' && method === 'POST') {
-            const { clothing_item_id, size, quantity } = req.body;
+            const { clothing_item_id, size, color, quantity } = req.body;
             if (!clothing_item_id || !size || quantity === undefined) {
                 return res.status(400).json({ error: 'clothing_item_id, size und quantity erforderlich' });
             }
             const qty = parseInt(quantity);
             if (isNaN(qty) || qty <= 0) return res.status(400).json({ error: 'Ungültige Menge' });
-            const { data: existing } = await supabase
+            const { data: stockColor, error: colorError } = await supabase
+                .rpc('clothing_stock_color', { p_item_id: clothing_item_id, p_color: color || '' });
+            if (colorError) throw colorError;
+            const { error: bookError } = await supabase.rpc('clothing_stock_adjust', {
+                p_item_id: clothing_item_id, p_size: size, p_color: stockColor || '', p_delta: qty
+            });
+            if (bookError) throw bookError;
+            const { data: result, error } = await supabase
                 .from('clothing_stock')
-                .select('id, quantity')
+                .select('*, clothing_items(name, emoji)')
                 .eq('clothing_item_id', clothing_item_id)
                 .eq('size', size)
+                .eq('color', stockColor || '')
+                .order('id')
+                .limit(1)
                 .single();
-            let result;
-            if (existing) {
-                const { data, error } = await supabase
-                    .from('clothing_stock')
-                    .update({ quantity: existing.quantity + qty, updated_at: new Date().toISOString() })
-                    .eq('id', existing.id)
-                    .select('*, clothing_items(name, emoji)')
-                    .single();
-                if (error) throw error;
-                result = data;
-            } else {
-                const { data, error } = await supabase
-                    .from('clothing_stock')
-                    .insert([{ clothing_item_id, size, quantity: qty }])
-                    .select('*, clothing_items(name, emoji)')
-                    .single();
-                if (error) throw error;
-                result = data;
-            }
+            if (error) throw error;
             return res.status(200).json(result);
+        }
+
+        // GET /clothing-demand - Bestellbedarf: was fehlt, damit alle offenen Stücke ausgegeben werden können
+        // (Bestand ist schon um die offenen Stücke gemindert, negativer Bestand = Bedarf)
+        if (path === '/clothing-demand' && method === 'GET') {
+            const stock = await fetchAllRows(() => supabase
+                .from('clothing_stock')
+                .select('*, clothing_items(name, emoji)')
+                .order('id'));
+            const openPositions = await fetchAllRows(() => supabase
+                .from('clothing_order_positions')
+                .select('clothing_item_id, stock_size, stock_color, status')
+                .in('status', POSITION_OPEN_STATUSES)
+                .eq('stock_booked', true)
+                .order('id'));
+
+            const rows = {};
+            const keyOf = (itemId, size, color) => `${itemId}__${size || ''}__${color || ''}`;
+            for (const s of stock) {
+                const key = keyOf(s.clothing_item_id, s.size, s.color);
+                rows[key] = {
+                    clothing_item_id: s.clothing_item_id,
+                    name: s.clothing_items ? s.clothing_items.name : null,
+                    emoji: s.clothing_items ? s.clothing_items.emoji : null,
+                    size: s.size || '',
+                    color: s.color || '',
+                    stock: (rows[key] ? rows[key].stock : 0) + (s.quantity || 0),
+                    open: 0,
+                    not_packed: 0
+                };
+            }
+            for (const p of openPositions) {
+                const key = keyOf(p.clothing_item_id, p.stock_size, p.stock_color);
+                if (!rows[key]) continue; // Bestandszeile entsteht beim Abbuchen, fehlt also nie
+                rows[key].open += 1;
+                if (p.status !== 'abholbereit') rows[key].not_packed += 1;
+            }
+            const result = Object.values(rows)
+                .map(r => ({ ...r, missing: Math.max(0, -r.stock) }))
+                .filter(r => r.open > 0 || r.stock < 0)
+                .sort((a, b) => (a.name || '').localeCompare(b.name || '') || a.size.localeCompare(b.size) || a.color.localeCompare(b.color));
+            return res.status(200).json(result);
+        }
+
+        // ============ CLOTHING POSITIONS (Status je Artikel) ============
+
+        // GET /clothing-positions - Positionen, Filter: ?status=a,b &open=1 &unbilled=1 &member_id= &order_id=
+        if (path === '/clothing-positions' && method === 'GET') {
+            const query = new URLSearchParams(url.split('?')[1] || '');
+            const data = await fetchAllRows(() => {
+                let q = supabase.from('clothing_order_positions').select('*');
+                if (query.get('status')) q = q.in('status', query.get('status').split(','));
+                if (query.get('open') === '1') q = q.in('status', POSITION_OPEN_STATUSES);
+                if (query.get('unbilled') === '1') q = q.eq('billed', false).neq('status', 'storniert');
+                if (query.get('member_id')) q = q.eq('member_id', parseInt(query.get('member_id')));
+                if (query.get('order_id')) q = q.eq('order_id', parseInt(query.get('order_id')));
+                return q.order('member_name').order('order_id').order('id');
+            });
+            return res.status(200).json(data);
+        }
+
+        // POST /clothing-positions/update - mehrere Positionen auf einmal ändern
+        // Body: { ids: [..], status?, notes?, billed?, billing_id? }
+        if (path === '/clothing-positions/update' && method === 'POST') {
+            const { ids, ...changes } = req.body || {};
+            if (!Array.isArray(ids) || ids.length === 0) {
+                return res.status(400).json({ error: 'ids erforderlich' });
+            }
+            delete changes.size;   // Größe/Farbe nur einzeln ändern
+            delete changes.color;
+            const updated = [];
+            const orderIds = new Set();
+            try {
+                for (const id of ids) {
+                    const pos = await updatePosition(parseInt(id), changes);
+                    updated.push(pos);
+                    orderIds.add(pos.order_id);
+                }
+            } catch (e) {
+                for (const oid of orderIds) await syncOrderFromPositions(oid);
+                if (e.statusCode) return res.status(e.statusCode).json({ error: e.message, updated });
+                throw e;
+            }
+            for (const oid of orderIds) await syncOrderFromPositions(oid);
+            return res.status(200).json(updated);
+        }
+
+        // PUT /clothing-positions/{id} - eine Position ändern
+        // Body: { status?, size?, color?, notes?, billed?, billing_id? }
+        if (pathParts[0] === 'clothing-positions' && pathParts.length === 2 && method === 'PUT') {
+            const positionId = parseInt(pathParts[1]);
+            if (isNaN(positionId)) return res.status(400).json({ error: 'Ungültige ID' });
+            try {
+                const pos = await updatePosition(positionId, req.body || {});
+                await syncOrderFromPositions(pos.order_id);
+                return res.status(200).json(pos);
+            } catch (e) {
+                if (e.statusCode) return res.status(e.statusCode).json({ error: e.message });
+                throw e;
+            }
         }
 
         // PUT /clothing-stock/{id} - Bestand direkt setzen
@@ -1888,13 +2206,15 @@ if (pathParts[0] === 'users' && pathParts[1] && method === 'GET') {
 
         // POST /free-shirts - Neuer Eintrag
         if (path === '/free-shirts' && method === 'POST') {
-            const { first_name, last_name, size, color, notes } = req.body;
+            const { first_name, last_name, size, color, notes, clothing_item_id } = req.body;
             if (!first_name || !last_name) {
                 return res.status(400).json({ error: 'Vorname und Nachname erforderlich' });
             }
+            const newShirt = { first_name, last_name, size: size || null, color: color || null, notes: notes || null };
+            if (clothing_item_id) newShirt.clothing_item_id = clothing_item_id;
             const { data, error } = await supabase
                 .from('free_shirts')
-                .insert([{ first_name, last_name, size: size || null, color: color || null, notes: notes || null }])
+                .insert([newShirt])
                 .select()
                 .single();
             if (error) throw error;
@@ -1910,6 +2230,10 @@ if (pathParts[0] === 'users' && pathParts[1] && method === 'GET') {
             if (updateData.delivered !== undefined)    fields.delivered    = updateData.delivered;
             if (updateData.delivered_at !== undefined) fields.delivered_at = updateData.delivered_at;
             if (updateData.notes !== undefined)        fields.notes        = updateData.notes;
+            // Artikel/Größe/Farbe (werden bei "ausgeliefert" für die Bestandsabbuchung gebraucht)
+            if (updateData.clothing_item_id !== undefined) fields.clothing_item_id = updateData.clothing_item_id || null;
+            if (updateData.size !== undefined)         fields.size         = updateData.size || null;
+            if (updateData.color !== undefined)        fields.color        = updateData.color || null;
             const { data, error } = await supabase
                 .from('free_shirts')
                 .update(fields)
@@ -1917,6 +2241,18 @@ if (pathParts[0] === 'users' && pathParts[1] && method === 'GET') {
                 .select()
                 .single();
             if (error) throw error;
+
+            // Ausgeliefert: Bestand abbuchen (nur mit Artikel); zurückgenommen: zurückbuchen
+            if (updateData.delivered !== undefined) {
+                const { error: stockError } = await supabase
+                    .rpc('clothing_free_shirt_stock', { p_shirt_id: shirtId, p_book: !!updateData.delivered });
+                if (stockError) {
+                    console.error('Bestandsbuchung Freimitglieder-Shirt fehlgeschlagen:', stockError.message);
+                } else {
+                    const { data: fresh } = await supabase.from('free_shirts').select('*').eq('id', shirtId).single();
+                    if (fresh) return res.status(200).json(fresh);
+                }
+            }
             return res.status(200).json(data);
         }
 

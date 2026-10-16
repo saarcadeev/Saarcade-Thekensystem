@@ -64,12 +64,61 @@ weitere Arbeitssitzungen. Erledigte Etappen abhaken.
 **Bestehende Daten**
 - Offene Bestellungen: alle Artikel starten als „Bestellt“. Ausgelieferte bleiben unverändert.
 
+## Ist-Stand (technisch, vor Etappe 2)
+
+- Tabellen: `clothing_items` (name, emoji, price, sizes[], colors[], available, image_url, pdf_url, sort_order),
+  `clothing_orders` (member_id, member_name, **items als JSONB-Array**, payment_method, total, status,
+  notes, billed, delivered_at), `clothing_stock` (clothing_item_id, size, quantity – **ohne Farbe**),
+  `clothing_billings` (billing_number, order_ids[], member_ids[], total_amount), `free_shirts`
+  (first_name, last_name, size, color, notes, delivered, delivered_at – **ohne Artikel-Bezug**).
+- Item im JSON: `product_id, name, emoji, size, color, quantity, price, total`.
+- Status heute pro Bestellung, uneinheitlich: `pending`, `paid`, `shipped`, `completed`, `cancelled`.
+  `admin.html` nutzt paid/shipped/completed (completed = bezahlt + ausgeliefert);
+  `admin-kleidung.html` und Olis Seite nutzen completed = ausgeliefert + Feld `billed`.
+- `PUT /api/clothing-orders/{id}` mit status `completed` bucht Bestand ab (min. 0).
+- SEPA-Abrechnung Kleidung in `admin.html` (Seite „Kleidungsabrechnung“): nimmt Bestellungen mit
+  status `pending` + payment_method `sepa`, IBAN aus `users`, erzeugt `clothing_billings` + SEPA-Datei.
+- Oli-Login: `/api/login` mit Rolle `kleidung` (oder `admin`), Sitzung in sessionStorage.
+
+## Stand nach Etappe 2 (technisch)
+
+Entscheidungen (16.10.2026): eine Position **pro Stück**; „Berechnet“ ist ein eigenes Feld
+(`billed`), unabhängig vom Status; offene Bestellungen wurden bei der Übernahme vom Bestand abgebucht.
+
+- **`clothing_order_positions`**: order_id, item_index (Stelle im items-JSON), member_id/-name,
+  clothing_item_id, item_name, emoji, size, color, price, payment_method,
+  status (`bestellt`, `fehlt`, `abholbereit`, `ausgegeben`, `storniert`), billed, billed_at, billing_id,
+  ready_at, delivered_at, notes, stock_booked/stock_size/stock_color (womit abgebucht wurde).
+- `clothing_stock.color` (leer = ohne Farbe), `clothing_items.stock_by_color` (Bestand je Farbe an/aus).
+  Farbe zählt beim Bestand nur, wenn `stock_by_color` an ist. Umschalten bucht nichts um (Etappe 4 beachten).
+- `free_shirts`: + clothing_item_id, stock_booked/-size/-color. „Ausgeliefert“ bucht ab, wenn ein Artikel eingetragen ist.
+- SQL-Funktionen: `clothing_stock_adjust`, `clothing_stock_color`, `clothing_position_stock`,
+  `clothing_free_shirt_stock`, `clothing_order_create_positions`.
+- Übernahme: pending/confirmed → bestellt, paid → bestellt + berechnet, shipped → ausgegeben (nicht berechnet).
+  completed/cancelled ohne Positionen (alte Bestellungen); „Unbezahlt“ in `admin-kleidung.html` zeigt sie weiter über `billed`.
+
+**API**
+- `POST /clothing-orders`: wie bisher + Positionen anlegen und abbuchen (Fehler dabei verhindern die Bestellung nicht).
+- `PUT /clothing-orders/{id}` (alte Seiten): items → Größe/Farbe umbuchen; cancelled → offene Stücke storniert + zurückgebucht;
+  shipped/completed → offene Stücke ausgegeben; paid, billed, shipped→completed → berechnet. Ohne Positionen: alte Abbuchung.
+- `DELETE /clothing-orders/{id}`: offene Stücke zurückbuchen.
+- `GET /clothing-positions?open=1&unbilled=1&status=a,b&member_id=&order_id=` (seitenweise, keine 1000er-Grenze).
+- `PUT /clothing-positions/{id}` `{status, size, color, notes, billed, billing_id}` – bucht Bestand passend.
+- `POST /clothing-positions/update` `{ids:[…], status?, notes?, billed?, billing_id?}` – mehrere auf einmal (Paket).
+- Nach jeder Positionsänderung wird die Bestellung angeglichen: alles ausgegeben → completed, alles storniert → cancelled,
+  alles berechnet → billed = true.
+- `GET /clothing-demand`: je Artikel/Größe/Farbe Bestand, offene Stücke, `missing` (= fehlender Bestand).
+- `POST /clothing-stock/book` nimmt optional `color`; `PUT /clothing-items/{id}` nimmt `stock_by_color`.
+- `PUT /free-shirts/{id}` nimmt zusätzlich clothing_item_id, size, color.
+
 ## Etappen
 
-- [x] **1 – Bestellseite** (15.10.2026): SEPA vorausgewählt + Hinweis; Hinweistext im Admin änderbar.
+- [x] **1 – Bestellseite** (15.10.2026): SEPA vorausgewählt; Haken „Ja, ich zahle per Lastschrift“
+      zwischen Lastschrift und Überweisung, andere Zahlungsarten erst nach Entfernen des Hakens;
+      Hinweistext (gelbe Box) im `admin-kleidung.html` änderbar (Setting `clothing_order_notice`);
+      PDF-Upload im Artikel-Fenster von `admin-kleidung.html` ergänzt.
       Zusätzlich: Fehler in `PUT /api/settings` behoben (löschte alle Einstellungen).
-- [ ] **2 – Datenbank & Server**: Positionen-Tabelle (Status je Artikel), Bestand mit optionaler
-      Farbe, Abbuchung bei Bestellung, Übernahme offener Bestellungen, API-Endpunkte.
+- [x] **2 – Datenbank & Server** (16.10.2026): `sql/kleidung_etappe2.sql` + `api/index.js`, Details unten.
 - [ ] **3 – Olis Handy-Seite**: Pakete, Abholbereit / Fehlt / Ausgegeben, Größe/Farbe ändern,
       Druckliste, Freimitglieder mit Bestandsabbuchung.
 - [ ] **4 – Admin**: Abzurechnen (SEPA + CSV, Haken „Berechnet“), Bestellbedarf, Bestand mit Farbe;
