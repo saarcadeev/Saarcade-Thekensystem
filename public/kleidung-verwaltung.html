@@ -476,8 +476,114 @@
         }
         .home-btn:hover { opacity: 1; }
 
+        /* ===== PAKETE (eine Karte pro Mitglied) ===== */
+        .search-input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1em;
+            margin-bottom: 14px;
+        }
+        .search-input:focus { outline: none; border-color: #667eea; }
+
+        .pkg-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 16px; }
+
+        .pkg-card {
+            border: 2px solid #e2e8f0;
+            border-radius: 14px;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+        .pkg-head {
+            background: #f7fafc;
+            padding: 12px 14px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .pkg-name { font-size: 1.15em; font-weight: 700; color: #2d3748; }
+        .pkg-meta { font-size: 0.85em; color: #718096; margin-top: 2px; }
+        .pkg-sum { font-size: 1.15em; font-weight: 700; color: #2d3748; white-space: nowrap; text-align: right; }
+
+        .pos-row { padding: 12px 14px; border-bottom: 1px solid #f0f0f0; }
+        .pos-row:last-child { border-bottom: none; }
+        .pos-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+        .pos-title { font-weight: 700; color: #2d3748; font-size: 1.05em; }
+        .pos-detail { color: #4a5568; font-size: 0.95em; margin-top: 2px; }
+        .pos-price { font-weight: 600; color: #2d3748; white-space: nowrap; }
+        .pos-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+
+        .badge-bestellt    { background: #fef9c3; color: #854d0e; }
+        .badge-fehlt       { background: #fee2e2; color: #b91c1c; }
+        .badge-abholbereit { background: #dbeafe; color: #1e40af; }
+        .badge-ausgegeben  { background: #dcfce7; color: #15803d; }
+
+        .big-btn {
+            min-height: 46px;
+            padding: 10px 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.98em;
+            font-weight: 700;
+            cursor: pointer;
+            flex: 1;
+            white-space: nowrap;
+        }
+        .big-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .bb-ready  { background: #2563eb; color: white; }
+        .bb-out    { background: #10b981; color: white; }
+        .bb-miss   { background: #fee2e2; color: #b91c1c; }
+        .bb-grey   { background: #e2e8f0; color: #4a5568; }
+        .bb-small  { flex: 0 0 auto; min-width: 52px; }
+
+        .pkg-foot { display: flex; gap: 8px; padding: 12px 14px; background: #f7fafc; border-top: 1px solid #e2e8f0; flex-wrap: wrap; }
+
+        .check-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        .check-row input { width: 24px; height: 24px; flex-shrink: 0; }
+
+        .modal-field { margin-bottom: 14px; }
+        .modal-field label { display: block; font-size: 0.85em; font-weight: 700; color: #4a5568; margin-bottom: 6px; }
+        .modal-field select, .modal-field input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1em;
+            background: white;
+        }
+
+        /* ===== DRUCKLISTE ===== */
+        .print-table td.num { text-align: right; font-weight: 700; font-size: 1.1em; }
+        .neg { color: #e53e3e; font-weight: 700; }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; border-radius: 0; padding-bottom: 0; }
+            .header, .tabs, .filter-bar, .no-print, .alert { display: none !important; }
+            .tab-content { display: none !important; padding: 0; }
+            #tab-print { display: block !important; }
+            .print-only { display: block !important; }
+        }
+        .print-only { display: none; }
+
         /* ===== MOBILE ===== */
         @media (max-width: 640px) {
+            .pkg-list { grid-template-columns: 1fr; }
+            .modal-box { width: 95% !important; max-height: 90vh; overflow-y: auto; }
             body { padding: 10px 10px 0 10px; }
 
             .header {
@@ -574,7 +680,7 @@
         </div>
         <div class="header-text">
             <h1>👕 Kleidungsverwaltung</h1>
-            <p>Bestellungen und Freimitglieder-Shirts verwalten</p>
+            <p>Pakete packen und ausgeben, Freimitglieder-Shirts</p>
         </div>
         <div class="header-actions">
             <div class="user-badge" id="userBadge">–</div>
@@ -583,30 +689,53 @@
     </div>
 
     <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('orders')">📦 Kleidungsbestellungen</button>
-        <button class="tab-btn" onclick="switchTab('freeshirts')">🎁 Freimitglieder-Shirts</button>
+        <button class="tab-btn active" onclick="switchTab('orders')">📦 Pakete</button>
+        <button class="tab-btn" onclick="switchTab('print')">🖨️ Druckliste</button>
+        <button class="tab-btn" onclick="switchTab('freeshirts')">🎁 Freimitglieder</button>
     </div>
 
-    <!-- TAB: Kleidungsbestellungen -->
+    <!-- TAB: Pakete (eine Karte pro Mitglied) -->
     <div class="tab-content active" id="tab-orders">
         <div class="filter-bar">
-<button class="filter-btn" onclick="setOrderFilter('all')" id="f-all">
-    Alle <span class="filter-count" id="cnt-all">0</span>
-</button>
-<button class="filter-btn active" onclick="setOrderFilter('open')" id="f-open">
-    Offen <span class="filter-count" id="cnt-open">0</span>
-</button>
-            <button class="filter-btn" onclick="setOrderFilter('completed')" id="f-completed">
-                Ausgeliefert <span class="filter-count" id="cnt-completed">0</span>
+            <button class="filter-btn active" onclick="setOrderFilter('open')" id="f-open">
+                Alle offenen <span class="filter-count" id="cnt-open">0</span>
+            </button>
+            <button class="filter-btn" onclick="setOrderFilter('bestellt')" id="f-bestellt">
+                Zu packen <span class="filter-count" id="cnt-bestellt">0</span>
+            </button>
+            <button class="filter-btn" onclick="setOrderFilter('fehlt')" id="f-fehlt">
+                Fehlt <span class="filter-count" id="cnt-fehlt">0</span>
+            </button>
+            <button class="filter-btn" onclick="setOrderFilter('abholbereit')" id="f-abholbereit">
+                Abholbereit <span class="filter-count" id="cnt-abholbereit">0</span>
+            </button>
+            <button class="filter-btn" onclick="setOrderFilter('ausgegeben')" id="f-ausgegeben">
+                Ausgegeben (30 Tage)
             </button>
             <div class="filter-right">
                 <button class="btn-primary" onclick="loadOrders()">🔄 Aktualisieren</button>
             </div>
         </div>
+        <input type="search" class="search-input" id="pkgSearch" placeholder="🔍 Name suchen…" oninput="renderOrders()">
+        <div id="ordersContent"><div class="loading">⏳ Lade Pakete…</div></div>
+    </div>
 
-        <div class="table-wrapper">
-            <div id="ordersContent"><div class="loading">⏳ Lade Bestellungen…</div></div>
+    <!-- TAB: Druckliste -->
+    <div class="tab-content" id="tab-print">
+        <div class="filter-bar">
+            <button class="filter-btn active" onclick="setPrintMode('open')" id="pm-open">Bestellt + Fehlt</button>
+            <button class="filter-btn" onclick="setPrintMode('missing')" id="pm-missing">Nur Fehlbestand</button>
+            <div class="filter-right" style="display:flex; gap:8px;">
+                <button class="btn-primary" onclick="loadPrintList()">🔄</button>
+                <button class="btn-primary" onclick="window.print()">🖨️ Drucken</button>
+            </div>
         </div>
+        <p class="section-subtitle no-print" id="printHint"></p>
+        <div class="print-only" style="margin-bottom:12px;">
+            <h2 id="printTitle">Druckliste</h2>
+            <div id="printDate" style="color:#666;"></div>
+        </div>
+        <div id="printContent"><div class="loading">⏳ Lade…</div></div>
     </div>
 
     <!-- TAB: Freimitglieder-Shirts -->
@@ -622,6 +751,7 @@
                             oninput="handleFreeShirtMemberSearch(this.value)">
                         <div class="member-dropdown" id="freeShirtDropdown"></div>
                     </div>
+                    <div id="selectedMemberHint" style="display:none; color:#15803d; font-size:0.85em; font-weight:600; margin-top:6px;"></div>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px;">
                         <div>
                             <label style="font-size:0.82em; font-weight:600; color:#4a5568; display:block; margin-bottom:4px;">Vorname *</label>
@@ -677,15 +807,58 @@
     </div>
 </div>
 
-<!-- EDIT ORDER MODAL -->
-<div class="modal-overlay" id="editOrderModal" style="display:none;">
-    <div class="modal-box" style="max-width:500px; width:95%;">
-        <h3>✏️ Bestellung ändern</h3>
-        <p style="color:#718096; font-size:0.88em; margin-bottom:16px;">Größe und Farbe der Artikel anpassen</p>
-        <div id="editOrderItems"></div>
+<!-- STÜCK ÄNDERN (Größe/Farbe) -->
+<div class="modal-overlay" id="editPosModal" style="display:none;">
+    <div class="modal-box" style="max-width:460px; width:95%;">
+        <h3 id="editPosTitle">✏️ Stück ändern</h3>
+        <div class="modal-field">
+            <label>Größe</label>
+            <select id="editPosSize"></select>
+        </div>
+        <div class="modal-field" id="editPosColorWrap">
+            <label>Farbe</label>
+            <select id="editPosColor"></select>
+        </div>
         <div class="modal-actions">
-            <button class="btn-cancel" onclick="closeEditOrder()">Abbrechen</button>
-            <button class="btn-primary" onclick="saveEditOrder()" style="flex:2;">💾 Speichern</button>
+            <button class="btn-cancel" onclick="closeModal('editPosModal')">Abbrechen</button>
+            <button class="btn-primary" onclick="saveEditPos()" style="flex:2;">💾 Speichern</button>
+        </div>
+    </div>
+</div>
+
+<!-- AUSGEBEN -->
+<div class="modal-overlay" id="handoutModal" style="display:none;">
+    <div class="modal-box" style="max-width:460px; width:95%;">
+        <h3 id="handoutTitle">📤 Ausgeben</h3>
+        <p style="color:#718096; font-size:0.9em; margin-bottom:12px;">Was wird jetzt übergeben? Nicht angehakte Stücke bleiben im Paket.</p>
+        <div id="handoutItems"></div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeModal('handoutModal')">Abbrechen</button>
+            <button class="btn-primary" id="handoutBtn" onclick="confirmHandout()" style="flex:2;">📤 Ausgeben</button>
+        </div>
+    </div>
+</div>
+
+<!-- FREIMITGLIEDER-SHIRT AUSLIEFERN (Artikel/Größe/Farbe abfragen) -->
+<div class="modal-overlay" id="shirtModal" style="display:none;">
+    <div class="modal-box" style="max-width:460px; width:95%;">
+        <h3 id="shirtModalTitle">🎁 Shirt ausliefern</h3>
+        <p style="color:#718096; font-size:0.9em; margin-bottom:12px;">Welches Teil wird ausgegeben? Es wird vom Bestand abgebucht.</p>
+        <div class="modal-field">
+            <label>Artikel</label>
+            <select id="shirtItem" onchange="fillShirtVariants()"></select>
+        </div>
+        <div class="modal-field">
+            <label>Größe</label>
+            <select id="shirtSize"></select>
+        </div>
+        <div class="modal-field" id="shirtColorWrap">
+            <label>Farbe</label>
+            <select id="shirtColor"></select>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeModal('shirtModal')">Abbrechen</button>
+            <button class="btn-primary" onclick="confirmShirtDelivered()" style="flex:2;">✓ Ausgeliefert</button>
         </div>
     </div>
 </div>
@@ -800,17 +973,39 @@ function switchTab(tab) {
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     document.getElementById('tab-' + tab).classList.add('active');
     event.target.classList.add('active');
+    if (tab === 'print') loadPrintList();
 }
 
-// ===== ORDERS =====
-async function loadOrders() {
-    document.getElementById('ordersContent').innerHTML = '<div class="loading">⏳ Lade Bestellungen…</div>';
+// ===== PAKETE (Positionen je Mitglied) =====
+// Eine Position = ein Stück. Status: bestellt, fehlt, abholbereit, ausgegeben, storniert.
+const STATUS_LABELS = { bestellt: '⏳ Bestellt', fehlt: '✗ Fehlt', abholbereit: '📦 Abholbereit', ausgegeben: '✓ Ausgegeben' };
+const PAY_LABELS = { sepa: 'Lastschrift', transfer: 'Überweisung', paypal: 'PayPal' };
+const DEFAULT_SIZES = ['XS','S','M','L','XL','XXL','3XL'];
+let allPositions = [];        // offene Stücke
+let deliveredPositions = [];  // ausgegeben in den letzten 30 Tagen
+let clothingItems = [];
+let currentPkgs = [];
+
+async function loadClothingItems() {
+    if (clothingItems.length === 0) clothingItems = await apiCall('/clothing-items');
+    return clothingItems;
+}
+
+async function loadOrders(silent) {
+    if (!silent) document.getElementById('ordersContent').innerHTML = '<div class="loading">⏳ Lade Pakete…</div>';
     try {
-        allOrders = await apiCall('/clothing-orders');
+        const since = Date.now() - 30 * 24 * 60 * 60 * 1000;
+        const [open, delivered] = await Promise.all([
+            apiCall('/clothing-positions?open=1'),
+            apiCall('/clothing-positions?status=ausgegeben'),
+            loadClothingItems().catch(() => [])
+        ]);
+        allPositions = open;
+        deliveredPositions = delivered.filter(p => p.delivered_at && new Date(p.delivered_at).getTime() >= since);
         renderOrders();
     } catch (e) {
         document.getElementById('ordersContent').innerHTML =
-            '<div class="empty-state"><div class="empty-icon">⚠️</div><p>Fehler: ' + e.message + '</p></div>';
+            '<div class="empty-state"><div class="empty-icon">⚠️</div><p>Fehler: ' + escHtml(e.message) + '</p></div>';
     }
 }
 
@@ -821,167 +1016,320 @@ function setOrderFilter(f) {
     renderOrders();
 }
 
+// Alle Stücke eines Mitglieds = ein Paket
+function groupPackages(positions) {
+    const map = new Map();
+    for (const p of positions) {
+        const key = p.member_id ? 'm' + p.member_id : 'n' + (p.member_name || '?');
+        if (!map.has(key)) map.set(key, { name: p.member_name || '–', positions: [] });
+        map.get(key).positions.push(p);
+    }
+    const pkgs = [...map.values()];
+    pkgs.forEach(k => k.positions.sort((a, b) => a.order_id - b.order_id || a.id - b.id));
+    return pkgs.sort((a, b) => a.name.localeCompare(b.name, 'de'));
+}
+
 function renderOrders() {
-    const isCompleted = o => o.status === 'completed';
-    const isCancelled = o => o.status === 'cancelled';
+    const openPkgs = groupPackages(allPositions);
+    const has = (pkg, st) => pkg.positions.some(p => p.status === st);
+    document.getElementById('cnt-open').textContent        = openPkgs.length;
+    document.getElementById('cnt-bestellt').textContent    = openPkgs.filter(k => has(k, 'bestellt')).length;
+    document.getElementById('cnt-fehlt').textContent       = openPkgs.filter(k => has(k, 'fehlt')).length;
+    document.getElementById('cnt-abholbereit').textContent = openPkgs.filter(k => has(k, 'abholbereit')).length;
 
-    const filtered = allOrders.filter(o => {
-        if (orderFilter === 'open')      return !isCompleted(o) && !isCancelled(o);
-        if (orderFilter === 'completed') return isCompleted(o);
-        return true;
-    });
+    let pkgs;
+    if (orderFilter === 'ausgegeben') pkgs = groupPackages(deliveredPositions);
+    else if (orderFilter === 'open')  pkgs = openPkgs;
+    else                              pkgs = openPkgs.filter(k => has(k, orderFilter));
 
-    document.getElementById('cnt-all').textContent       = allOrders.length;
-    document.getElementById('cnt-open').textContent      = allOrders.filter(o => !isCompleted(o) && !isCancelled(o)).length;
-    document.getElementById('cnt-completed').textContent = allOrders.filter(o => isCompleted(o)).length;
+    const q = (document.getElementById('pkgSearch').value || '').trim().toLowerCase();
+    if (q) pkgs = pkgs.filter(k => k.name.toLowerCase().includes(q));
+    currentPkgs = pkgs;
 
-    if (filtered.length === 0) {
+    if (pkgs.length === 0) {
+        const msg = q ? 'Kein Paket für diesen Namen.'
+            : orderFilter === 'ausgegeben' ? 'In den letzten 30 Tagen wurde nichts ausgegeben.'
+            : 'Hier ist gerade nichts zu tun. 🎉';
         document.getElementById('ordersContent').innerHTML =
-            '<div class="empty-state"><div class="empty-icon">📭</div><p>Keine Bestellungen gefunden.</p></div>';
+            `<div class="empty-state"><div class="empty-icon">📭</div><p>${msg}</p></div>`;
         return;
     }
+    document.getElementById('ordersContent').innerHTML =
+        `<div class="pkg-list">${pkgs.map((k, i) => renderPackage(k, i)).join('')}</div>`;
+}
 
-    const rows = filtered.map(o => {
-        const date = new Date(o.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
-        const itemsHtml = formatItems(o.items);
-        const badgeHtml = statusBadge(o.status);
-        const canDeliver = o.status !== 'completed' && o.status !== 'cancelled';
-        const actionHtml = canDeliver
-            ? `<div style="display:flex;gap:6px;flex-wrap:wrap;">
-                 <button class="btn-deliver" onclick="markOrderDelivered(${o.id})">✓ Ausgeliefert</button>
-                 <button class="btn-edit" onclick="openEditOrder(${o.id})">✏️ Ändern</button>
-               </div>`
-            : (o.status === 'completed'
-                ? '<span style="color:#15803d;font-size:0.85em;">✓ Erledigt</span>'
-                : '<span style="color:#999;font-size:0.85em;">Storniert</span>');
+function renderPackage(pkg, idx) {
+    const delivered = orderFilter === 'ausgegeben';
+    const sum = pkg.positions.reduce((s, p) => s + Number(p.price || 0), 0);
+    const pays = [...new Set(pkg.positions.map(p => PAY_LABELS[p.payment_method] || p.payment_method || '–'))].join(', ');
+    const canReady = pkg.positions.some(p => p.status === 'bestellt' || p.status === 'fehlt');
+    const foot = delivered ? '' : `
+        <div class="pkg-foot">
+            <button class="big-btn bb-ready" onclick="markPackageReady(${idx})" ${canReady ? '' : 'disabled'}>✓ Alles fertig</button>
+            <button class="big-btn bb-out" onclick="openHandout(${idx})">📤 Ausgeben</button>
+        </div>`;
+    return `<div class="pkg-card">
+        <div class="pkg-head">
+            <div>
+                <div class="pkg-name">${escHtml(pkg.name)}</div>
+                <div class="pkg-meta">${pkg.positions.length} Stück · ${escHtml(pays)}</div>
+            </div>
+            <div class="pkg-sum">${formatEuro(sum)}</div>
+        </div>
+        ${pkg.positions.map(p => renderPosition(p, delivered)).join('')}
+        ${foot}
+    </div>`;
+}
 
-        return `<tr class="${o.status === 'completed' ? 'delivered' : ''}">
-            <td data-label="Datum" style="white-space:nowrap;">${date}</td>
-            <td data-label="Mitglied"><strong>${escHtml(o.member_name || '–')}</strong></td>
-            <td data-label="Artikel"><div class="items-list">${itemsHtml}</div></td>
-            <td data-label="Status">${badgeHtml}</td>
-            <td data-label="">${actionHtml}</td>
-        </tr>`;
-    }).join('');
+function renderPosition(p, delivered) {
+    const detail = [p.color, p.size ? 'Größe ' + p.size : ''].filter(Boolean).join(' · ');
+    const when = delivered ? 'ausgegeben ' + formatDate(p.delivered_at) : 'bestellt ' + formatDate(p.created_at);
+    const btns = [];
+    if (delivered) {
+        btns.push(`<button class="big-btn bb-grey" onclick="undoHandout(${p.id})">↩ Doch nicht ausgegeben</button>`);
+    } else {
+        if (p.status === 'abholbereit') {
+            btns.push(`<button class="big-btn bb-grey" onclick="setPosStatus(${p.id}, 'bestellt')">↩ Nicht fertig</button>`);
+        } else {
+            btns.push(`<button class="big-btn bb-ready" onclick="setPosStatus(${p.id}, 'abholbereit')">✓ Fertig</button>`);
+        }
+        if (p.status === 'bestellt') {
+            btns.push(`<button class="big-btn bb-miss" onclick="setPosStatus(${p.id}, 'fehlt')">✗ Fehlt</button>`);
+        }
+        if (p.status === 'fehlt') {
+            btns.push(`<button class="big-btn bb-grey" onclick="setPosStatus(${p.id}, 'bestellt')">↩ Fehlt nicht</button>`);
+        }
+        btns.push(`<button class="big-btn bb-grey bb-small" onclick="openEditPos(${p.id})" title="Größe/Farbe ändern">✏️</button>`);
+        btns.push(`<button class="big-btn bb-grey bb-small" onclick="cancelPos(${p.id})" title="Stornieren">🗑️</button>`);
+    }
+    return `<div class="pos-row">
+        <div class="pos-top">
+            <div>
+                <div class="pos-title">${escHtml(p.emoji || '👕')} ${escHtml(p.item_name || 'Artikel')}</div>
+                ${detail ? `<div class="pos-detail">${escHtml(detail)}</div>` : ''}
+                <div style="margin-top:6px;"><span class="badge badge-${p.status}">${STATUS_LABELS[p.status] || p.status}</span>
+                    <span style="color:#a0aec0; font-size:0.8em; margin-left:6px;">${when}</span></div>
+            </div>
+            <div class="pos-price">${formatEuro(p.price)}</div>
+        </div>
+        <div class="pos-actions">${btns.join('')}</div>
+    </div>`;
+}
 
-    document.getElementById('ordersContent').innerHTML = `
-        <table>
-            <thead>
-                <tr>
-                    <th>Datum</th>
-                    <th>Mitglied</th>
-                    <th>Artikel</th>
-                    <th>Status</th>
-                    <th>Aktion</th>
-                </tr>
-            </thead>
-            <tbody>${rows}</tbody>
+function findPos(id) {
+    return allPositions.find(p => p.id === id) || deliveredPositions.find(p => p.id === id);
+}
+
+function posLabel(p) {
+    return [p.item_name || 'Artikel', p.color, p.size].filter(Boolean).join(' ');
+}
+
+// Stücke ändern und danach neu laden (ohne die Seite springen zu lassen)
+async function updatePositions(ids, changes, msg) {
+    try {
+        await apiCall('/clothing-positions/update', {
+            method: 'POST',
+            body: JSON.stringify({ ids, ...changes })
+        });
+        showAlert(msg, 'success');
+    } catch (e) {
+        showAlert('❌ Fehler: ' + e.message, 'error');
+    }
+    await loadOrders(true);
+}
+
+function setPosStatus(id, status) {
+    const msgs = { abholbereit: '✓ Fertig – liegt im Paket', fehlt: '✗ Als fehlend markiert', bestellt: '↩ Zurückgesetzt' };
+    updatePositions([id], { status }, msgs[status] || '✓ Gespeichert');
+}
+
+function cancelPos(id) {
+    const p = findPos(id);
+    if (!p) return;
+    if (!confirm(`Dieses Stück wirklich stornieren?\n\n${posLabel(p)}\nfür ${p.member_name}\n\nEs wird aus dem Paket entfernt und der Bestand zurückgebucht.`)) return;
+    updatePositions([id], { status: 'storniert' }, '🗑️ Storniert');
+}
+
+function markPackageReady(idx) {
+    const pkg = currentPkgs[idx];
+    if (!pkg) return;
+    const ids = pkg.positions.filter(p => p.status === 'bestellt' || p.status === 'fehlt').map(p => p.id);
+    if (ids.length === 0) return;
+    updatePositions(ids, { status: 'abholbereit' }, `✓ ${ids.length} Stück fertig – Paket abholbereit`);
+}
+
+function undoHandout(id) {
+    const p = findPos(id);
+    if (!p) return;
+    if (!confirm(`${posLabel(p)} für ${p.member_name} doch nicht ausgegeben?\n\nDas Stück kommt zurück ins Paket (abholbereit).`)) return;
+    updatePositions([id], { status: 'abholbereit' }, '↩ Zurück im Paket');
+}
+
+// ===== AUSGEBEN =====
+let handoutPkgIdx = null;
+
+function openHandout(idx) {
+    const pkg = currentPkgs[idx];
+    if (!pkg) return;
+    handoutPkgIdx = idx;
+    const anyReady = pkg.positions.some(p => p.status === 'abholbereit');
+    document.getElementById('handoutTitle').textContent = '📤 Ausgeben an ' + pkg.name;
+    document.getElementById('handoutItems').innerHTML = pkg.positions.map(p => `
+        <label class="check-row">
+            <input type="checkbox" value="${p.id}" ${p.status === 'abholbereit' ? 'checked' : ''} onchange="updateHandoutBtn()">
+            <span style="flex:1;"><strong>${escHtml(posLabel(p))}</strong><br>
+                <span class="badge badge-${p.status}" style="margin-top:4px;">${STATUS_LABELS[p.status] || p.status}</span></span>
+            <span style="font-weight:600;">${formatEuro(p.price)}</span>
+        </label>`).join('') +
+        (anyReady ? '' : '<p style="color:#b45309; font-size:0.9em;">Noch nichts als fertig markiert – bitte anhaken, was übergeben wird.</p>');
+    updateHandoutBtn();
+    document.getElementById('handoutModal').style.display = 'flex';
+}
+
+function handoutChecked() {
+    return [...document.querySelectorAll('#handoutItems input:checked')].map(i => parseInt(i.value));
+}
+
+function updateHandoutBtn() {
+    const n = handoutChecked().length;
+    const btn = document.getElementById('handoutBtn');
+    btn.textContent = n > 0 ? `📤 ${n} Stück ausgeben` : '📤 Ausgeben';
+    btn.disabled = n === 0;
+    btn.style.opacity = n === 0 ? 0.5 : 1;
+}
+
+async function confirmHandout() {
+    const ids = handoutChecked();
+    if (ids.length === 0) return;
+    closeModal('handoutModal');
+    await updatePositions(ids, { status: 'ausgegeben' }, `📤 ${ids.length} Stück ausgegeben`);
+}
+
+// ===== STÜCK ÄNDERN (Größe/Farbe) =====
+let editPosId = null;
+
+function fillSelect(id, values, current) {
+    const list = [...(values || [])];
+    if (current && !list.includes(current)) list.unshift(current);
+    if (list.length === 0) list.push('');
+    document.getElementById(id).innerHTML = list.map(v =>
+        `<option value="${escHtml(v)}" ${v === current ? 'selected' : ''}>${escHtml(v || '–')}</option>`).join('');
+}
+
+async function openEditPos(id) {
+    const p = findPos(id);
+    if (!p) return;
+    editPosId = id;
+    await loadClothingItems().catch(() => []);
+    const item = clothingItems.find(i => i.id === p.clothing_item_id);
+    const sizes = item ? (item.sizes || []) : DEFAULT_SIZES;
+    const colors = item ? (item.colors || []) : [];
+    fillSelect('editPosSize', sizes.length ? sizes : (item ? [] : DEFAULT_SIZES), p.size);
+    fillSelect('editPosColor', colors, p.color);
+    document.getElementById('editPosColorWrap').style.display = (colors.length || p.color) ? '' : 'none';
+    document.getElementById('editPosTitle').textContent = '✏️ ' + (p.item_name || 'Stück') + ' – ' + p.member_name;
+    document.getElementById('editPosModal').style.display = 'flex';
+}
+
+async function saveEditPos() {
+    const body = { size: document.getElementById('editPosSize').value };
+    if (document.getElementById('editPosColorWrap').style.display !== 'none') {
+        body.color = document.getElementById('editPosColor').value;
+    }
+    try {
+        await apiCall('/clothing-positions/' + editPosId, { method: 'PUT', body: JSON.stringify(body) });
+        closeModal('editPosModal');
+        showAlert('✓ Geändert', 'success');
+    } catch (e) {
+        showAlert('❌ Fehler: ' + e.message, 'error');
+    }
+    await loadOrders(true);
+}
+
+function closeModal(id) {
+    document.getElementById(id).style.display = 'none';
+}
+
+// ===== DRUCKLISTE =====
+let printMode = 'open';
+let demandRows = [];
+
+function setPrintMode(m) {
+    printMode = m;
+    document.querySelectorAll('[id^="pm-"]').forEach(b => b.classList.remove('active'));
+    document.getElementById('pm-' + m).classList.add('active');
+    renderPrintList();
+}
+
+async function loadPrintList() {
+    document.getElementById('printContent').innerHTML = '<div class="loading">⏳ Lade…</div>';
+    try {
+        const [open, demand] = await Promise.all([
+            apiCall('/clothing-positions?open=1'),
+            apiCall('/clothing-demand')
+        ]);
+        allPositions = open;
+        demandRows = demand;
+        renderPrintList();
+    } catch (e) {
+        document.getElementById('printContent').innerHTML =
+            '<div class="empty-state"><div class="empty-icon">⚠️</div><p>Fehler: ' + escHtml(e.message) + '</p></div>';
+    }
+}
+
+function sizeRank(s) {
+    const i = DEFAULT_SIZES.indexOf(s);
+    return i === -1 ? 99 : i;
+}
+
+function renderPrintList() {
+    let rows = [];
+    if (printMode === 'open') {
+        const map = {};
+        for (const p of allPositions.filter(p => p.status === 'bestellt' || p.status === 'fehlt')) {
+            const key = [p.item_name, p.color, p.size].join('|');
+            if (!map[key]) map[key] = { name: p.item_name || 'Artikel', color: p.color || '', size: p.size || '', count: 0 };
+            map[key].count++;
+        }
+        rows = Object.values(map);
+        document.getElementById('printHint').textContent = 'Alle Stücke, die noch nicht gepackt sind (Bestellt + Fehlt), zusammengezählt.';
+        document.getElementById('printTitle').textContent = 'Druckliste – Bestellt + Fehlt';
+    } else {
+        rows = demandRows.filter(d => d.missing > 0)
+            .map(d => ({ name: d.name || 'Artikel', color: d.color || '', size: d.size || '', count: d.missing }));
+        document.getElementById('printHint').textContent = 'Nur was im Lager fehlt (offene Bestellungen minus Bestand).';
+        document.getElementById('printTitle').textContent = 'Druckliste – Fehlbestand';
+    }
+    document.getElementById('printDate').textContent = 'Stand: ' + new Date().toLocaleString('de-DE');
+    rows.sort((a, b) => a.name.localeCompare(b.name, 'de') || a.color.localeCompare(b.color, 'de') || sizeRank(a.size) - sizeRank(b.size));
+
+    if (rows.length === 0) {
+        document.getElementById('printContent').innerHTML =
+            '<div class="empty-state"><div class="empty-icon">✅</div><p>Nichts zu drucken.</p></div>';
+        return;
+    }
+    const total = rows.reduce((s, r) => s + r.count, 0);
+    document.getElementById('printContent').innerHTML = `
+        <table class="print-table">
+            <thead><tr><th>Artikel</th><th>Farbe</th><th>Größe</th><th style="text-align:right;">Anzahl</th></tr></thead>
+            <tbody>
+                ${rows.map(r => `<tr>
+                    <td><strong>${escHtml(r.name)}</strong></td>
+                    <td>${escHtml(r.color || '–')}</td>
+                    <td>${escHtml(r.size || '–')}</td>
+                    <td class="num">${r.count}</td>
+                </tr>`).join('')}
+                <tr><td colspan="3"><strong>Gesamt</strong></td><td class="num">${total}</td></tr>
+            </tbody>
         </table>`;
 }
 
-function formatItems(items) {
-    if (!Array.isArray(items) || items.length === 0) return '<span style="color:#999;">–</span>';
-    return items.map(item => {
-        const parts = [item.name || item.product_name];
-        if (item.color) parts.push(item.color);
-        if (item.size)  parts.push(item.size);
-        const qty = item.quantity > 1 ? ` ×${item.quantity}` : '';
-        return `<div class="item-line">👕 ${escHtml(parts[0])}${qty}</div>`
-             + (parts.length > 1 ? `<div class="item-detail" style="padding-left:18px;">${escHtml(parts.slice(1).join(' · '))}</div>` : '');
-    }).join('');
+function formatEuro(v) {
+    return Number(v || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 }
 
-function statusBadge(status) {
-    const map = {
-        pending:   ['badge-pending',   '⏳ Offen'],
-        confirmed: ['badge-confirmed', '✅ Bestätigt'],
-        shipped:   ['badge-shipped',   '🚚 Versendet'],
-        completed: ['badge-completed', '✓ Ausgeliefert'],
-        cancelled: ['badge-cancelled', '✗ Storniert'],
-    };
-    const [cls, label] = map[status] || ['', status];
-    return `<span class="badge ${cls}">${label}</span>`;
-}
-
-async function markOrderDelivered(id) {
-    try {
-        await apiCall('/clothing-orders/' + id, {
-            method: 'PUT',
-            body: JSON.stringify({ status: 'completed' })
-        });
-        const order = allOrders.find(o => o.id === id);
-        if (order) order.status = 'completed';
-        renderOrders();
-        showAlert('✓ Bestellung als ausgeliefert markiert', 'success');
-    } catch (e) {
-        showAlert('❌ Fehler: ' + e.message, 'error');
-    }
-}
-
-// ===== EDIT ORDER MODAL =====
-let editOrderId = null;
-
-function openEditOrder(id) {
-    const order = allOrders.find(o => o.id === id);
-    if (!order) return;
-    editOrderId = id;
-
-    const items = Array.isArray(order.items) ? order.items : [];
-    const SIZES = ['XS','S','M','L','XL','XXL','3XL'];
-
-    const itemsHtml = items.map((item, idx) => `
-        <div style="background:#f7fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-bottom:10px;">
-            <div style="font-weight:600; margin-bottom:8px;">👕 ${escHtml(item.name || item.product_name || 'Artikel ' + (idx+1))}</div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                <div>
-                    <label style="font-size:0.82em; font-weight:600; color:#4a5568; display:block; margin-bottom:4px;">Größe</label>
-                    <select id="edit-size-${idx}" style="width:100%; padding:8px; border:2px solid #e2e8f0; border-radius:6px; font-size:0.95em;">
-                        <option value="">– wählen –</option>
-                        ${SIZES.map(s => `<option value="${s}" ${item.size === s ? 'selected' : ''}>${s}</option>`).join('')}
-                    </select>
-                </div>
-                <div>
-                    <label style="font-size:0.82em; font-weight:600; color:#4a5568; display:block; margin-bottom:4px;">Farbe</label>
-                    <input type="text" id="edit-color-${idx}" value="${escHtml(item.color || '')}"
-                        style="width:100%; padding:8px; border:2px solid #e2e8f0; border-radius:6px; font-size:0.95em;">
-                </div>
-            </div>
-        </div>
-    `).join('');
-
-    document.getElementById('editOrderItems').innerHTML = itemsHtml ||
-        '<p style="color:#999;">Keine Artikel in dieser Bestellung.</p>';
-    document.getElementById('editOrderModal').style.display = 'flex';
-}
-
-function closeEditOrder() {
-    document.getElementById('editOrderModal').style.display = 'none';
-    editOrderId = null;
-}
-
-async function saveEditOrder() {
-    const order = allOrders.find(o => o.id === editOrderId);
-    if (!order) return;
-
-    const items = Array.isArray(order.items) ? order.items : [];
-    const updatedItems = items.map((item, idx) => ({
-        ...item,
-        size:  document.getElementById('edit-size-' + idx)?.value  || item.size,
-        color: document.getElementById('edit-color-' + idx)?.value || item.color,
-    }));
-
-    try {
-        await apiCall('/clothing-orders/' + editOrderId, {
-            method: 'PUT',
-            body: JSON.stringify({ items: updatedItems })
-        });
-        order.items = updatedItems;
-        closeEditOrder();
-        renderOrders();
-        showAlert('✓ Bestellung aktualisiert', 'success');
-    } catch (e) {
-        showAlert('❌ Fehler: ' + e.message, 'error');
-    }
+function formatDate(d) {
+    return d ? new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }) : '';
 }
     
 // ===== FREE SHIRTS =====
@@ -1066,19 +1414,74 @@ function renderFreeShirts() {
         </table>`;
 }
 
+// Fehlen Artikel oder Größe, werden sie vor dem Ausliefern abgefragt (für die Bestandsabbuchung)
 async function markShirtDelivered(id) {
+    const s = allShirts.find(x => x.id === id);
+    if (!s) return;
+    if (!s.clothing_item_id || !s.size) {
+        openShirtModal(s);
+        return;
+    }
+    await deliverShirt(id, {});
+}
+
+async function deliverShirt(id, extra) {
     try {
-        await apiCall('/free-shirts/' + id, {
+        const updated = await apiCall('/free-shirts/' + id, {
             method: 'PUT',
-            body: JSON.stringify({ delivered: true, delivered_at: new Date().toISOString() })
+            body: JSON.stringify({ ...extra, delivered: true, delivered_at: new Date().toISOString() })
         });
-        const s = allShirts.find(s => s.id === id);
-        if (s) { s.delivered = true; s.delivered_at = new Date().toISOString(); }
+        const idx = allShirts.findIndex(x => x.id === id);
+        if (idx !== -1) allShirts[idx] = { ...allShirts[idx], ...updated, delivered: true };
         renderFreeShirts();
         showAlert('✓ Shirt als ausgeliefert markiert', 'success');
     } catch (e) {
         showAlert('❌ Fehler: ' + e.message, 'error');
     }
+}
+
+let shirtModalId = null;
+
+async function openShirtModal(s) {
+    shirtModalId = s.id;
+    try {
+        await loadClothingItems();
+    } catch (e) {
+        showAlert('❌ Artikel konnten nicht geladen werden', 'error');
+        return;
+    }
+    const items = [...clothingItems].sort((a, b) => (b.available !== false) - (a.available !== false) || (a.sort_order || 0) - (b.sort_order || 0));
+    const preset = s.clothing_item_id
+        || (items.find(i => /shirt/i.test(i.name || '') && (!s.color || (i.name || '').toLowerCase().includes(s.color.toLowerCase()))) || {}).id
+        || (items[0] || {}).id;
+    document.getElementById('shirtItem').innerHTML = items.map(i =>
+        `<option value="${i.id}" ${i.id === preset ? 'selected' : ''}>${escHtml((i.emoji || '') + ' ' + i.name)}</option>`).join('');
+    document.getElementById('shirtModalTitle').textContent = '🎁 ' + s.first_name + ' ' + s.last_name;
+    fillShirtVariants(s.size, s.color);
+    document.getElementById('shirtModal').style.display = 'flex';
+}
+
+function fillShirtVariants(prefSize, prefColor) {
+    const item = clothingItems.find(i => i.id === parseInt(document.getElementById('shirtItem').value));
+    const sizes = item && item.sizes && item.sizes.length ? item.sizes : DEFAULT_SIZES;
+    const colors = item && item.colors ? item.colors : [];
+    const curSize = typeof prefSize === 'string' ? prefSize : document.getElementById('shirtSize').value;
+    const curColor = typeof prefColor === 'string' ? prefColor : document.getElementById('shirtColor').value;
+    fillSelect('shirtSize', sizes, sizes.includes(curSize) ? curSize : sizes[0]);
+    fillSelect('shirtColor', colors, colors.includes(curColor) ? curColor : colors[0]);
+    document.getElementById('shirtColorWrap').style.display = colors.length ? '' : 'none';
+}
+
+async function confirmShirtDelivered() {
+    const extra = {
+        clothing_item_id: parseInt(document.getElementById('shirtItem').value),
+        size: document.getElementById('shirtSize').value
+    };
+    if (document.getElementById('shirtColorWrap').style.display !== 'none') {
+        extra.color = document.getElementById('shirtColor').value;
+    }
+    closeModal('shirtModal');
+    await deliverShirt(shirtModalId, extra);
 }
 
 // ===== MEMBER SEARCH FOR FREE SHIRTS =====

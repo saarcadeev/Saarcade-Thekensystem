@@ -119,7 +119,13 @@ Entscheidungen (16.10.2026): eine Position **pro Stück**; „Berechnet“ ist e
       PDF-Upload im Artikel-Fenster von `admin-kleidung.html` ergänzt.
       Zusätzlich: Fehler in `PUT /api/settings` behoben (löschte alle Einstellungen).
 - [x] **2 – Datenbank & Server** (16.10.2026): `sql/kleidung_etappe2.sql` + `api/index.js`, Details unten.
-- [ ] **3 – Olis Handy-Seite**: Pakete, Abholbereit / Fehlt / Ausgegeben, Größe/Farbe ändern,
-      Druckliste, Freimitglieder mit Bestandsabbuchung.
+- [x] **3 – Olis Handy-Seite** (16.10.2026): `kleidung-verwaltung.html` umgebaut. Seiten bleiben getrennt
+      (Oli: Handy-Seite, Jochen: `admin-kleidung.html`). Tab „Pakete“: Karte pro Mitglied, je Stück
+      Fertig / Fehlt / Ändern (Größe/Farbe aus dem Artikel) / Stornieren (mit Rückfrage); pro Karte
+      „Alles fertig“ und „Ausgeben“ (Haken, was übergeben wird; auch direkt ohne „Fertig“); Filter
+      inkl. „Ausgegeben (30 Tage)“ mit Rückgängig. Tab „Druckliste“: umschaltbar „Bestellt + Fehlt“ /
+      „Nur Fehlbestand“, Druck-Button. Freimitglieder: fehlen Artikel/Größe, werden sie bei
+      „Ausgeliefert“ abgefragt, dann Bestandsabbuchung. Fehler behoben: Mitgliedersuche beim
+      Eintragen (fehlendes Hinweisfeld).
 - [ ] **4 – Admin**: Abzurechnen (SEPA + CSV, Haken „Berechnet“), Bestellbedarf, Bestand mit Farbe;
       danach Kleidungsbereiche in `admin.html` aufräumen.
