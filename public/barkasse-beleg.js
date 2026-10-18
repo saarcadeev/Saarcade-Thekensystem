@@ -44,8 +44,38 @@
         }).join('');
     }
 
-    // Baut den kompletten Beleg als HTML-Dokument (A4)
-    function buildCashClosingReceipt(c) {
+    function formatTime(dateTime) {
+        return new Date(dateTime).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // Tagesübersicht: alle Abrechnungen des Tages (Schichtwechsel + Tagesabschluss)
+    function dayOverview(dayClosings) {
+        const list = (dayClosings || []).slice().sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+        if (list.length < 2) return '';
+        const sum = (key) => list.reduce((s, x) => s + (parseFloat(x[key]) || 0), 0);
+        const rows = list.map(x => `
+                <tr>
+                    <td>${formatTime(x.created_at)}</td>
+                    <td>${x.closing_type === 'shift' ? 'Schichtwechsel' : 'Tagesabschluss'}</td>
+                    <td>BK-${x.id}</td>
+                    <td>${escapeHtml(x.closing_name || '')}</td>
+                    <td class="num">${euro(x.revenue_counted)}</td>
+                    <td class="num">${euro(x.revenue_system)}</td>
+                    <td class="num">${signed(x.difference)}</td>
+                </tr>`).join('');
+        return `
+    <h2 style="margin-top: 18px;">Tagesübersicht</h2>
+    <table class="count">
+        <thead><tr><th>Uhrzeit</th><th>Art</th><th>Beleg</th><th>Abgerechnet von</th><th class="num">Einnahmen gezählt</th><th class="num">laut Tablet</th><th class="num">Differenz</th></tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot><tr><td colspan="4">Tag gesamt</td><td class="num">${euro(sum('revenue_counted'))}</td><td class="num">${euro(sum('revenue_system'))}</td><td class="num">${signed(sum('difference'))}</td></tr></tfoot>
+    </table>`;
+    }
+
+    // Baut den kompletten Beleg als HTML-Dokument (A4).
+    // c.closing_type: 'shift' = Zwischenabrechnung beim Schichtwechsel, sonst Tagesabschluss (auch ältere Belege).
+    // dayClosings: alle Abrechnungen des Tages (für die Tagesübersicht beim Tagesabschluss).
+    function buildCashClosingReceipt(c, dayClosings) {
         const b = c.system_breakdown || {};
         const diff = parseFloat(c.difference) || 0;
         let diffNote = 'Kasse stimmt.';
@@ -53,6 +83,65 @@
         if (diff < 0) diffNote = `Fehlbetrag von ${euro(-diff)}.`;
 
         const created = new Date(c.created_at);
+        const isShift = c.closing_type === 'shift';
+        const fromShift = !!c.opening_source_id;
+        const opening = (c.opening_total !== null && c.opening_total !== undefined) ? c.opening_total : c.change_total;
+        const withdrawal = parseFloat(c.withdrawal) || 0;
+        const title = isShift ? 'Zwischenabrechnung Barkasse – Schichtwechsel' : 'Abrechnung Barkasse – Tagesabschluss';
+
+        // Rechte Spalte: Anfangsbestand bzw. Wechselgeld
+        const openingBox = `
+            <h2>Anfangsbestand</h2>
+            <p style="margin: 0 0 10px;">${euro(opening)} – übernommen aus der Zwischenabrechnung BK-${c.opening_source_id}</p>`;
+        const changeTable = (heading, totalLabel) => `
+            <h2>${heading}</h2>
+            <table class="count">
+                <thead><tr><th>Wert</th><th class="num">Anzahl</th><th class="num">Summe</th></tr></thead>
+                <tbody>${countRows(CHANGE_VALUES, c.change_counts)}</tbody>
+                <tfoot><tr><td colspan="2">${totalLabel}</td><td class="num">${euro(c.change_total)}</td></tr></tfoot>
+            </table>`;
+        let rightColumn;
+        if (isShift) {
+            rightColumn = fromShift ? openingBox : changeTable('Anfangsbestand (Wechselgeld)', 'Anfangsbestand gesamt');
+        } else {
+            rightColumn = (fromShift ? openingBox : '') + changeTable('Wechselgeld (bleibt in der Kasse)', 'Wechselgeld gesamt');
+        }
+
+        const revenueLabel = isShift ? 'Einnahmen dieser Schicht' : (fromShift ? 'Einnahmen letzte Schicht' : 'Tageseinnahmen');
+        // Überschuss kommt in die Trinkgeldkasse und ist nicht mehr in der Kasse
+        const surplus = diff > 0 ? diff : 0;
+        const surplusRow = surplus ? `<tr><td>Überschuss in die Trinkgeldkasse</td><td class="num">− ${euro(surplus)}</td></tr>` : '';
+        const extraRows = isShift
+            ? `<tr><td colspan="2" style="height: 6px;"></td></tr>
+        ${withdrawal ? `<tr><td>Entnahme</td><td class="num">− ${euro(withdrawal)}</td></tr>` : ''}
+        ${surplusRow}
+        <tr class="sep"><td>Übergabe an neue Schicht</td><td class="num">${euro(c.handover_total ?? ((parseFloat(c.cash_total) || 0) - withdrawal - surplus))}</td></tr>`
+            : `<tr><td colspan="2" style="height: 6px;"></td></tr>
+        <tr><td>Kasse abzügl. Wechselgeld</td><td class="num">${euro((parseFloat(c.cash_total) || 0) - (parseFloat(c.change_total) || 0))}</td></tr>
+        ${surplusRow}
+        <tr class="sep"><td>Abschöpfen</td><td class="num">${euro((parseFloat(c.cash_total) || 0) - (parseFloat(c.change_total) || 0) - surplus)}</td></tr>`;
+
+        const signRows = isShift
+            ? `<tr>
+            <td style="width: 25%;"><strong>Übergabe (alte Schicht)</strong></td>
+            <td style="width: 35%;">${escapeHtml(c.closing_name)}<div class="line">Name</div></td>
+            <td><div class="line">Unterschrift</div></td>
+        </tr>
+        <tr>
+            <td><strong>Übernahme (neue Schicht)</strong></td>
+            <td>${escapeHtml(c.handover_name || '')}<div class="line">Name</div></td>
+            <td><div class="line">Unterschrift</div></td>
+        </tr>`
+            : `<tr>
+            <td style="width: 25%;"><strong>Übernahme Kasse</strong></td>
+            <td style="width: 35%;">${escapeHtml(c.handover_name || '')}<div class="line">Name</div></td>
+            <td><div class="line">Unterschrift</div></td>
+        </tr>
+        <tr>
+            <td><strong>Abrechnung Kasse</strong></td>
+            <td>${escapeHtml(c.closing_name)}<div class="line">Name</div></td>
+            <td><div class="line">Unterschrift</div></td>
+        </tr>`;
 
         return `<!DOCTYPE html>
 <html lang="de">
@@ -88,14 +177,14 @@
 </head>
 <body>
     <div class="head">
-        <h1>Abrechnung Barkasse Besuchertag</h1>
+        <h1>${title}</h1>
         <img src="${location.origin}/Saarcade-Logo.png" alt="Saarcade e.V." onerror="this.style.display='none'">
     </div>
 
     <table class="meta">
         <tr><td style="width: 25%;"><strong>Veranstaltung:</strong></td><td>${escapeHtml(c.event_name)}</td>
             <td style="width: 20%;"><strong>Beleg-Nr.:</strong></td><td>BK-${c.id}</td></tr>
-        <tr><td><strong>Datum:</strong></td><td>${formatDate(c.closing_date)}</td>
+        <tr><td><strong>Datum:</strong></td><td>${formatDate(c.closing_date)}, ${formatTime(c.created_at)} Uhr</td>
             <td><strong>Kasse:</strong></td><td>${escapeHtml(c.bartender_name || '–')}</td></tr>
     </table>
 
@@ -109,39 +198,28 @@
             </table>
         </div>
         <div>
-            <h2>Wechselgeld</h2>
-            <table class="count">
-                <thead><tr><th>Wert</th><th class="num">Anzahl</th><th class="num">Summe</th></tr></thead>
-                <tbody>${countRows(CHANGE_VALUES, c.change_counts)}</tbody>
-                <tfoot><tr><td colspan="2">Wechselgeld gesamt</td><td class="num">${euro(c.change_total)}</td></tr></tfoot>
-            </table>
+            ${rightColumn}
         </div>
     </div>
 
     <table class="result">
         <tr><td>Summe Kasse gesamt</td><td class="num">${euro(c.cash_total)}</td></tr>
-        <tr><td>abzügl. Wechselgeld</td><td class="num">− ${euro(c.change_total)}</td></tr>
-        <tr class="sep"><td>Tageseinnahmen</td><td class="num">${euro(c.revenue_counted)}</td></tr>
+        <tr><td>abzügl. ${(isShift || fromShift) ? 'Anfangsbestand' : 'Wechselgeld'}</td><td class="num">− ${euro(opening)}</td></tr>
+        <tr class="sep"><td>${revenueLabel}</td><td class="num">${euro(c.revenue_counted)}</td></tr>
         <tr><td>Einnahmen gemäß Tablet</td><td class="num">${euro(c.revenue_system)}</td></tr>
         <tr><td class="small" colspan="2">
             davon Barverkäufe ${euro(b.cash_sales_total)} (${b.cash_sales_count || 0} Buchungen)${b.voucher_sales_count ? `,
             Verzehrkarten ${euro(b.voucher_sales_total)} (${b.voucher_sales_count})` : ''}${b.voucher_refunds_count ? `, Rückgaben −${euro(b.voucher_refunds_total)} (${b.voucher_refunds_count})` : ''}
         </td></tr>
         <tr class="sep"><td>Differenz (+/-)</td><td class="num">${signed(diff)}</td></tr>
+        ${extraRows}
     </table>
     <div class="note">${diffNote}</div>
 
+    ${isShift ? '' : dayOverview(dayClosings)}
+
     <table class="sign">
-        <tr>
-            <td style="width: 25%;"><strong>Übernahme Kasse</strong></td>
-            <td style="width: 35%;">${escapeHtml(c.handover_name || '')}<div class="line">Name</div></td>
-            <td><div class="line">Unterschrift</div></td>
-        </tr>
-        <tr>
-            <td><strong>Abrechnung Kasse</strong></td>
-            <td>${escapeHtml(c.closing_name)}<div class="line">Name</div></td>
-            <td><div class="line">Unterschrift</div></td>
-        </tr>
+        ${signRows}
     </table>
 
     <div class="foot">
@@ -154,14 +232,14 @@
     }
 
     // Schreibt den Beleg in ein (bereits geöffnetes) Fenster und startet den Druck
-    function writeCashClosingReceipt(win, closing) {
+    function writeCashClosingReceipt(win, closing, dayClosings) {
         win.document.open();
-        win.document.write(buildCashClosingReceipt(closing));
+        win.document.write(buildCashClosingReceipt(closing, dayClosings));
         win.document.close();
     }
 
     // Druckt den Beleg direkt aus der aktuellen Seite (unsichtbarer Rahmen, kein Pop-up nötig)
-    function printCashClosingReceipt(closing) {
+    function printCashClosingReceipt(closing, dayClosings) {
         let frame = document.getElementById('cashClosingPrintFrame');
         if (!frame) {
             frame = document.createElement('iframe');
@@ -169,7 +247,7 @@
             frame.style.cssText = 'position: fixed; right: 0; bottom: 0; width: 0; height: 0; border: 0;';
             document.body.appendChild(frame);
         }
-        writeCashClosingReceipt(frame.contentWindow, closing);
+        writeCashClosingReceipt(frame.contentWindow, closing, dayClosings);
     }
 
     window.buildCashClosingReceipt = buildCashClosingReceipt;

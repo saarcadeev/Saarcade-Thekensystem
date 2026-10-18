@@ -45,4 +45,9 @@ Jochen ist kein Entwickler: Schritte für GitHub Desktop/Supabase konkret erklä
 
 - `PUT /api/settings` ergänzt/aktualisiert nur noch (früher wurden alle Einstellungen gelöscht, behoben 15.10.2026).
 - Supabase liefert standardmäßig max. 1000 Zeilen pro Abfrage.
+- Barkassen-Abrechnung (`cash_closings`): `closing_type` 'shift' (Schichtwechsel) / 'final' (Tagesabschluss).
+  Anfangsbestand der Folgeschicht = `handover_total` der letzten Zwischenabrechnung des Tages; der
+  Kassenabschluss vergleicht nur Buchungen seit der letzten Abrechnung (`since`). Das grüne Feld zeigt
+  für Barkeeper Saldo minus `balance_at_closing` (Schichtsumme). Überschuss → Trinkgeldkasse (wird von
+  Übergabe/Abschöpfen abgezogen).
 - In `kasse.html` steht am Ende des ersten `<style>` ein verirrtes `` `; `` – neue CSS-Regeln **davor** einfügen.

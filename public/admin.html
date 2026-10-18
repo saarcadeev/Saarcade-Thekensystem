@@ -1285,9 +1285,10 @@ body {
                 <thead>
                     <tr>
                         <th>Datum</th>
+                        <th>Art</th>
                         <th>Veranstaltung</th>
                         <th>Abrechnung durch</th>
-                        <th style="text-align: right;">Tageseinnahmen</th>
+                        <th style="text-align: right;">Einnahmen</th>
                         <th style="text-align: right;">Laut Kasse</th>
                         <th style="text-align: right;">Differenz</th>
                         <th style="text-align: center;">Beleg</th>
@@ -1295,7 +1296,7 @@ body {
                 </thead>
                 <tbody>
                     <tr>
-                        <td colspan="7" style="text-align: center; padding: 30px; color: #666;">
+                        <td colspan="8" style="text-align: center; padding: 30px; color: #666;">
                             Wird geladen...
                         </td>
                     </tr>
@@ -7533,7 +7534,7 @@ function renderCashClosings() {
     if (!allCashClosings || allCashClosings.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="7" style="text-align: center; padding: 30px; color: #666;">
+                <td colspan="8" style="text-align: center; padding: 30px; color: #666;">
                     Noch keine Barkassen-Abrechnungen vorhanden
                 </td>
             </tr>
@@ -7547,7 +7548,8 @@ function renderCashClosings() {
 
         return `
             <tr>
-                <td>${ccDate(c.closing_date)}</td>
+                <td>${ccDate(c.closing_date)}<br><small style="color: #888;">${new Date(c.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr</small></td>
+                <td>${c.closing_type === 'shift' ? '🔄 Schichtwechsel' : '🏁 Tagesabschluss'}</td>
                 <td>${ccEscape(c.event_name)}</td>
                 <td>${ccEscape(c.closing_name)}</td>
                 <td style="text-align: right; font-weight: bold;">${ccEuro(c.revenue_counted)}</td>
@@ -7570,7 +7572,12 @@ function printCashClosing(closingId) {
         showAlert('Pop-up wurde blockiert. Bitte Pop-ups für diese Seite erlauben.', 'error');
         return;
     }
-    writeCashClosingReceipt(win, c);
+    // Tagesübersicht: Abrechnungen desselben Accounts am selben Tag bis einschließlich dieser
+    const dayClosings = allCashClosings.filter(x =>
+        x.bartender_user_id === c.bartender_user_id &&
+        x.closing_date === c.closing_date &&
+        new Date(x.created_at) <= new Date(c.created_at));
+    writeCashClosingReceipt(win, c, dayClosings);
 }
     
     </script>

@@ -1076,6 +1076,48 @@ const additionalCSS = `
 }
 
         /* ===== BARKASSEN-ABRECHNUNG ===== */
+        .cc-type {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .cc-type button {
+            padding: 12px;
+            font-size: 1.1em;
+            font-weight: 700;
+            border: 2px solid #cfc8d8;
+            border-radius: 10px;
+            background: #ffffff;
+            color: #4a5568;
+            cursor: pointer;
+        }
+        .cc-type button small {
+            display: block;
+            font-size: 0.75em;
+            font-weight: 400;
+            color: #718096;
+        }
+        .cc-type button.active {
+            border-color: #e6007e;
+            background: #fde8f3;
+            color: #b8006a;
+        }
+        .cc-opening-info {
+            margin-bottom: 12px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: #e6f6ff;
+            border: 1px solid #90cdf4;
+            color: #2a4365;
+        }
+        /* Schichtsumme im grünen Feld (Barkeeper) */
+        .user-balance-sub {
+            font-size: 0.55em;
+            font-weight: 600;
+            opacity: 0.9;
+            margin-top: 2px;
+        }
         .cc-layout {
             display: grid;
             grid-template-columns: 1fr 260px;
@@ -1704,6 +1746,13 @@ try {
             <span class="close" onclick="closeCashCountModal()">&times;</span>
         </div>
         <div class="modal-body">
+            <!-- Art der Abrechnung -->
+            <div class="cc-type">
+                <button type="button" id="ccTypeShift" onclick="setCashCountType('shift')">🔄 Schichtwechsel<small>Zwischenabrechnung</small></button>
+                <button type="button" id="ccTypeFinal" onclick="setCashCountType('final')">🏁 Tagesabschluss<small>Endabrechnung</small></button>
+            </div>
+            <div id="ccOpeningInfo" class="cc-opening-info" style="display: none;"></div>
+
             <div class="cc-layout">
                 <div>
                     <div class="cc-names">
@@ -1716,11 +1765,11 @@ try {
                             <input type="text" id="ccDate" class="cc-text" readonly style="background: #f7fafc;">
                         </div>
                         <div class="form-group">
-                            <label>Übernahme Kasse (Name)</label>
+                            <label id="ccHandoverLabel">Übernahme Kasse (Name)</label>
                             <input type="text" id="ccHandoverName" class="cc-text" inputmode="none" autocomplete="off" onclick="openKeyboardFor(this)">
                         </div>
                         <div class="form-group">
-                            <label>Abrechnung Kasse (Name) *</label>
+                            <label id="ccClosingLabel">Abrechnung Kasse (Name) *</label>
                             <input type="text" id="ccClosingName" class="cc-text" inputmode="none" autocomplete="off" onclick="openKeyboardFor(this)">
                         </div>
                     </div>
@@ -1735,15 +1784,34 @@ try {
                             </table>
                         </div>
                         <div>
-                            <h4 class="cc-title">🪙 Wechselgeld (bleibt in der Kasse)</h4>
-                            <table class="cc-table">
-                                <thead><tr><th>Wert</th><th>Anzahl</th><th>Summe</th></tr></thead>
-                                <tbody id="ccChangeRows"></tbody>
-                                <tfoot><tr><td colspan="2">Wechselgeld gesamt</td><td id="ccChangeTotal">0,00 €</td></tr></tfoot>
-                            </table>
-                            <p style="font-size: 0.85em; color: #666; margin-top: 8px;">
-                                Ins Wechselgeld nur 20 €, 10 €, 5 €, 2 €, 1 € und 0,50 € übernehmen, den Rest abschöpfen.
-                            </p>
+                            <div id="ccChangeBlock">
+                                <h4 class="cc-title" id="ccChangeTitle">🪙 Wechselgeld (bleibt in der Kasse)</h4>
+                                <table class="cc-table">
+                                    <thead><tr><th>Wert</th><th>Anzahl</th><th>Summe</th></tr></thead>
+                                    <tbody id="ccChangeRows"></tbody>
+                                    <tfoot><tr><td colspan="2" id="ccChangeTotalLabel">Wechselgeld gesamt</td><td id="ccChangeTotal">0,00 €</td></tr></tfoot>
+                                </table>
+                                <p id="ccChangeHint" style="font-size: 0.85em; color: #666; margin-top: 8px;">
+                                    Ins Wechselgeld nur 20 €, 10 €, 5 €, 2 €, 1 € und 0,50 € übernehmen, den Rest abschöpfen.
+                                </p>
+                            </div>
+                            <!-- Optionale Entnahme beim Schichtwechsel (ganze Euro) -->
+                            <div id="ccWithdrawalBlock" style="display: none;">
+                                <h4 class="cc-title">💸 Entnahme (optional)</h4>
+                                <table class="cc-table">
+                                    <tbody><tr>
+                                        <td>Betrag (ganze €)</td>
+                                        <td><input type="text" class="cc-count" id="ccWithdrawal" data-group="withdrawal" data-value="1"
+                                                   inputmode="none" autocomplete="off" maxlength="4"
+                                                   onfocus="setCashCountField(this)" onclick="setCashCountField(this)"
+                                                   oninput="this.value = this.value.replace(/\D/g, ''); updateCashCount()"></td>
+                                        <td class="cc-row-sum">–</td>
+                                    </tr></tbody>
+                                </table>
+                                <p style="font-size: 0.85em; color: #666; margin-top: 8px;">
+                                    Nur ausfüllen, wenn beim Schichtwechsel Geld aus der Kasse genommen wird.
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1769,10 +1837,11 @@ try {
                     <div class="cc-result">
                         <table>
                             <tr><td>Summe Kasse</td><td id="ccResCash">0,00 €</td></tr>
-                            <tr><td>abzügl. Wechselgeld</td><td id="ccResChange">0,00 €</td></tr>
-                            <tr class="cc-sep"><td><strong>Tageseinnahmen</strong></td><td id="ccResRevenue"><strong>0,00 €</strong></td></tr>
+                            <tr><td id="ccResChangeLabel">abzügl. Wechselgeld</td><td id="ccResChange">0,00 €</td></tr>
+                            <tr class="cc-sep"><td><strong id="ccResRevenueLabel">Tageseinnahmen</strong></td><td id="ccResRevenue"><strong>0,00 €</strong></td></tr>
                             <tr><td>Einnahmen laut Kasse</td><td id="ccResSoll">0,00 €</td></tr>
                             <tr class="cc-sep"><td><strong>Differenz (+/-)</strong></td><td id="ccResDiff"><strong>0,00 €</strong></td></tr>
+                            <tr class="cc-sep"><td id="ccResExtraLabel">Abschöpfen</td><td id="ccResExtra">0,00 €</td></tr>
                         </table>
                         <div id="ccHint" style="display: none;"></div>
                     </div>
@@ -2465,7 +2534,36 @@ function debugImageDisplay() {
 window.debugImageDisplay = debugImageDisplay;
         
         // ============ UI FUNCTIONS ============
-        
+
+        // Grünes Feld: Barkeeper sehen nach einer Abrechnung nur den Stand seit der letzten Abrechnung
+        // (Schicht), klein darunter die Tagessumme. Berechnet aus dem Saldo, ohne zusätzliche Abfragen.
+        function formatUserBalanceHtml() {
+            const balance = currentUser.balance;
+            const latest = ccState.loadedFor === currentUser.id ? ccState.latest : null;
+
+            if (currentUser.role !== 'bartender' || !latest || latest.balance_at_closing === null || latest.balance_at_closing === undefined) {
+                return `${balance.toFixed(2)}€`;
+            }
+
+            // Verkäufe senken den Saldo. Liegt er über dem Stand der letzten Abrechnung, wurde der Account
+            // inzwischen im Admin abgerechnet (Saldo auf 0 gesetzt) – dann gilt wieder der normale Saldo.
+            // Ohne Abrechnung dazwischen zählt das Feld auch an einem neuen Tag ab der letzten Abrechnung.
+            const baseline = parseFloat(latest.balance_at_closing);
+            if (balance > baseline + 0.005) {
+                return `${balance.toFixed(2)}€`;
+            }
+
+            const shift = balance - baseline;
+            if (ccState.today.length === 0) {
+                return `${shift.toFixed(2)}€`;
+            }
+
+            // Tagessumme: bereits abgerechnete Schichten des Tages + laufende Schicht (gleiches Vorzeichen wie der Saldo)
+            const closedToday = ccState.today.reduce((sum, c) => sum + (parseFloat(c.revenue_system) || 0), 0);
+            const day = shift - closedToday;
+            return `${shift.toFixed(2)}€<div class="user-balance-sub">Schicht · Tag: ${day.toFixed(2)}€</div>`;
+        }
+
         function showStatus(message, type = 'info') {
             const statusEl = document.getElementById('statusMessage');
             statusEl.textContent = message;
@@ -2502,7 +2600,7 @@ window.debugImageDisplay = debugImageDisplay;
             userInfoEl.className = `user-info ${currentUser.role}`;
             userInfoEl.innerHTML = `
                 <div class="user-name">${currentUser.first_name} ${currentUser.last_name}</div>
-                <div class="user-balance">${currentUser.balance.toFixed(2)}€</div>
+                <div class="user-balance">${formatUserBalanceHtml()}</div>
             `;
             
             // Kassierhilfe-Toggle ein/ausblenden
@@ -3028,6 +3126,10 @@ function requiresPinCheck(user, isFromBarcode = false) {
             currentUser = user;
             showStatus(`${user.first_name} ${user.last_name} ausgewählt! Jetzt Getränke wählen.`, 'success');
             updateUserInfo();
+            // Barkeeper: letzte Barkassen-Abrechnung laden (Schichtsumme im grünen Feld)
+            if (user.role === 'bartender') {
+                loadCashClosingState().then(updateUserInfo).catch(() => {});
+            }
             updateProductsView();
             setScannerMode('product');
             closeKeyboard();
@@ -4333,8 +4435,11 @@ async function openCashClosingModal() {
     
     try {
        // Hole alle nicht abgerechneten Transaktionen des Barkeepers
-        // Nur offene Transaktionen dieses Barkeepers laden (Server filtert, entlastet das Tablet)
-        const response = await apiCall(`/api/transactions?user_id=${currentUser.id}&unbilled=true`);
+        // Nur offene Transaktionen dieses Barkeepers laden (Server filtert, entlastet das Tablet).
+        // Seit Schichtwechsel/Tagesabschluss: nur Buchungen seit der letzten Barkassen-Abrechnung.
+        await loadCashClosingState();
+        const since = ccState.latest ? `&since=${encodeURIComponent(ccState.latest.created_at)}` : '';
+        const response = await apiCall(`/api/transactions?user_id=${currentUser.id}&unbilled=true${since}`);
         const allTransactions = Array.isArray(response) ? response : (response.transactions || []);
         
         const unbilledTransactions = allTransactions.filter(t => 
@@ -4385,8 +4490,9 @@ async function openCashClosingModal() {
         <h2 style="margin: 0; color: #e6007e;">📊 KASSENABSCHLUSS</h2>
         <p style="margin: 5px 0; color: #666;">Barkeeper: ${currentUser.first_name} ${currentUser.last_name}</p>
         <p style="margin: 5px 0; color: #666;">${now.toLocaleDateString('de-DE')} - ${now.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'})} Uhr</p>
+        ${ccState.latest ? `<p style="margin: 5px 0; color: #666;">Buchungen seit der letzten Abrechnung: ${new Date(ccState.latest.created_at).toLocaleString('de-DE', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'})} Uhr</p>` : ''}
     </div>
-    
+
     <div style="margin-bottom: 20px;">
         <h3 style="color: #48bb78; margin-bottom: 10px;">💰 BARVERKÄUFE</h3>
         <div style="padding-left: 15px;">
@@ -4568,6 +4674,73 @@ let ccSoll = 0;
 let ccSystemBreakdown = {};
 let ccActiveInput = null;
 
+// Schichtwechsel / Tagesabschluss
+let ccState = { loadedFor: null, latest: null, today: [] }; // letzte Abrechnung + Abrechnungen des Tages
+let ccType = 'final';      // 'shift' = Schichtwechsel, 'final' = Tagesabschluss
+let ccPrevShift = null;    // Zwischenabrechnung von heute, deren Bestand übernommen wird
+
+function localDateString(date = new Date()) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+// Eine kleine Abfrage: letzte Abrechnung des Barkeeper-Accounts + Abrechnungen von heute
+async function loadCashClosingState() {
+    if (!currentUser) return;
+    const userId = currentUser.id;
+    try {
+        const state = await apiCall(`/api/cash-closings/state?bartender_user_id=${userId}&date=${localDateString()}`);
+        ccState = { loadedFor: userId, latest: state.latest || null, today: state.today || [] };
+    } catch (error) {
+        // Ohne diese Daten funktioniert die Kasse wie vorher (Vergleich mit allen offenen Buchungen)
+        console.warn('Barkassen-Status nicht geladen:', error);
+        ccState = { loadedFor: userId, latest: null, today: [] };
+    }
+}
+
+function setCashCountType(type) {
+    ccType = type;
+    const isShift = type === 'shift';
+
+    document.getElementById('ccTypeShift').classList.toggle('active', isShift);
+    document.getElementById('ccTypeFinal').classList.toggle('active', !isShift);
+
+    // Anfangsbestand: aus der letzten Zwischenabrechnung von heute oder aus dem Wechselgeld
+    const info = document.getElementById('ccOpeningInfo');
+    if (ccPrevShift) {
+        const time = new Date(ccPrevShift.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+        info.innerHTML = `🔄 <strong>Anfangsbestand: ${formatEuro(ccOpeningFromPrevShift())}</strong> – übernommen aus der Zwischenabrechnung von ${time} Uhr (BK-${ccPrevShift.id}).`;
+        info.style.display = 'block';
+    } else {
+        info.style.display = 'none';
+    }
+
+    // Wechselgeld-Tabelle: beim ersten Schichtwechsel = Anfangsbestand, beim Tagesabschluss = bleibt in der Kasse
+    document.getElementById('ccChangeBlock').style.display = (isShift && ccPrevShift) ? 'none' : 'block';
+    document.getElementById('ccChangeTitle').textContent = isShift
+        ? '🪙 Anfangsbestand (Wechselgeld zu Schichtbeginn)'
+        : '🪙 Wechselgeld (bleibt in der Kasse)';
+    document.getElementById('ccChangeTotalLabel').textContent = isShift ? 'Anfangsbestand gesamt' : 'Wechselgeld gesamt';
+    document.getElementById('ccChangeHint').style.display = isShift ? 'none' : 'block';
+    document.getElementById('ccWithdrawalBlock').style.display = isShift ? 'block' : 'none';
+
+    // Namen
+    document.getElementById('ccClosingLabel').textContent = isShift ? 'Übergabe durch (alte Schicht) *' : 'Abrechnung Kasse (Name) *';
+    document.getElementById('ccHandoverLabel').textContent = isShift ? 'Übernahme durch (neue Schicht) *' : 'Übernahme Kasse (Name)';
+    // Beim Schichtwechsel zuerst die alte Schicht (Übergabe), dann die neue (Übernahme)
+    document.getElementById('ccClosingName').closest('.form-group').style.order = isShift ? '3' : '';
+    document.getElementById('ccHandoverName').closest('.form-group').style.order = isShift ? '4' : '';
+
+    updateCashCount();
+}
+
+function ccOpeningFromPrevShift() {
+    if (!ccPrevShift) return 0;
+    if (ccPrevShift.handover_total !== null && ccPrevShift.handover_total !== undefined) {
+        return parseFloat(ccPrevShift.handover_total);
+    }
+    return (parseFloat(ccPrevShift.cash_total) || 0) - (parseFloat(ccPrevShift.withdrawal) || 0);
+}
+
 function formatEuro(amount) {
     return amount.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 }
@@ -4615,9 +4788,17 @@ function openCashCountModal() {
     document.getElementById('ccMessage').style.display = 'none';
     document.getElementById('ccConfirm').style.display = 'none';
     document.getElementById('ccButtons').style.display = 'flex';
+    document.getElementById('ccWithdrawal').value = '';
+
+    // Letzte Abrechnung von heute war ein Schichtwechsel? Dann dessen Bestand als Anfangsbestand übernehmen.
+    const latest = ccState.loadedFor === currentUser.id ? ccState.latest : null;
+    ccPrevShift = (latest && latest.closing_type === 'shift' && latest.closing_date === localDateString()) ? latest : null;
+    if (ccPrevShift && ccPrevShift.event_name) {
+        document.getElementById('ccEventName').value = ccPrevShift.event_name;
+    }
 
     document.getElementById('cashCountModal').style.display = 'block';
-    updateCashCount();
+    setCashCountType('final');
 
     setTimeout(() => {
         const first = document.querySelector('#ccCashRows .cc-count');
@@ -4666,7 +4847,8 @@ function clearCashCountField() {
 }
 
 function nextCashCountField() {
-    const fields = Array.from(document.querySelectorAll('.cc-count'));
+    // Nur sichtbare Felder (je nach Art der Abrechnung sind Tabellen ausgeblendet)
+    const fields = Array.from(document.querySelectorAll('.cc-count')).filter(el => el.offsetParent !== null);
     const index = fields.indexOf(ccActiveInput);
     const next = fields[(index + 1) % fields.length];
     setCashCountField(next);
@@ -4694,17 +4876,37 @@ function readCashCountGroup(group) {
 }
 
 function updateCashCount() {
+    const round = (x) => Math.round(x * 100) / 100;
+    const isShift = ccType === 'shift';
     const cash = readCashCountGroup('cash');
     const change = readCashCountGroup('change');
-    const revenue = Math.round((cash.total - change.total) * 100) / 100;
-    const diff = Math.round((revenue - ccSoll) * 100) / 100;
+    const withdrawal = isShift ? readCashCountGroup('withdrawal').total : 0;
+
+    // Anfangsbestand: übernommen aus dem Schichtwechsel, sonst das Wechselgeld (wie bisher)
+    const opening = ccPrevShift ? ccOpeningFromPrevShift() : change.total;
+    const revenue = round(cash.total - opening);
+    const diff = round(revenue - ccSoll);
+    // Überschuss kommt laut Anleitung in die Trinkgeldkasse, ist also nicht mehr in der Kasse
+    const surplus = diff > 0 ? diff : 0;
+    // Schichtwechsel: Übergabebestand an die neue Schicht; Tagesabschluss: abzuschöpfender Betrag
+    const extra = isShift ? round(cash.total - withdrawal - surplus) : round(cash.total - change.total - surplus);
 
     document.getElementById('ccCashTotal').textContent = formatEuro(cash.total);
     document.getElementById('ccChangeTotal').textContent = formatEuro(change.total);
     document.getElementById('ccResCash').textContent = formatEuro(cash.total);
-    document.getElementById('ccResChange').textContent = '− ' + formatEuro(change.total);
+    document.getElementById('ccResChangeLabel').textContent = (ccPrevShift || isShift) ? 'abzügl. Anfangsbestand' : 'abzügl. Wechselgeld';
+    document.getElementById('ccResChange').textContent = '− ' + formatEuro(opening);
+    document.getElementById('ccResRevenueLabel').textContent = isShift ? 'Einnahmen dieser Schicht'
+        : (ccPrevShift ? 'Einnahmen letzte Schicht' : 'Tageseinnahmen');
     document.getElementById('ccResRevenue').innerHTML = `<strong>${formatEuro(revenue)}</strong>`;
     document.getElementById('ccResSoll').textContent = formatEuro(ccSoll);
+    const deductions = [];
+    if (isShift && withdrawal) deductions.push(`Entnahme ${formatEuro(withdrawal)}`);
+    if (surplus) deductions.push(`Überschuss ${formatEuro(surplus)} → Trinkgeldkasse`);
+    document.getElementById('ccResExtraLabel').innerHTML = isShift
+        ? `<strong>Übergabe an neue Schicht</strong>${deductions.length ? `<br><small>nach ${deductions.join(', ')}</small>` : ''}`
+        : `<strong>Abschöpfen</strong><br><small>Kasse minus Wechselgeld${surplus ? ` und Überschuss` : ''}</small>`;
+    document.getElementById('ccResExtra').innerHTML = `<strong>${formatEuro(extra)}</strong>`;
 
     const diffColor = diff === 0 ? '#38a169' : (diff > 0 ? '#d69e2e' : '#e53e3e');
     document.getElementById('ccResDiff').innerHTML =
@@ -4727,7 +4929,7 @@ function updateCashCount() {
         hint.innerHTML = 'Kasse stimmt. 👍';
     }
 
-    return { cash, change, revenue, diff };
+    return { cash, change, revenue, diff, opening, withdrawal, extra };
 }
 
 async function saveCashCount(withPrint = false) {
@@ -4740,12 +4942,21 @@ async function saveCashCount(withPrint = false) {
         showCashCountMessage('Bitte Veranstaltung eintragen.', 'error');
         return;
     }
+    const isShift = ccType === 'shift';
     if (!closingName) {
-        showCashCountMessage('Bitte Namen bei „Abrechnung Kasse“ eintragen.', 'error');
+        showCashCountMessage(isShift ? 'Bitte Namen bei „Übergabe durch (alte Schicht)“ eintragen.' : 'Bitte Namen bei „Abrechnung Kasse“ eintragen.', 'error');
+        return;
+    }
+    if (isShift && !handoverName) {
+        showCashCountMessage('Bitte Namen bei „Übernahme durch (neue Schicht)“ eintragen.', 'error');
         return;
     }
     if (result.cash.total === 0) {
         showCashCountMessage('Bitte zuerst die Kasse zählen.', 'error');
+        return;
+    }
+    if (isShift && result.withdrawal > result.cash.total) {
+        showCashCountMessage('Die Entnahme ist größer als der Kassenbestand.', 'error');
         return;
     }
 
@@ -4753,10 +4964,11 @@ async function saveCashCount(withPrint = false) {
     ccPendingPrint = withPrint;
     const diffText = `${result.diff > 0 ? '+' : ''}${formatEuro(result.diff)}`;
     document.getElementById('ccConfirmText').innerHTML = `
-        <strong>Abrechnung ${withPrint ? 'drucken und ' : ''}speichern?</strong><br>
-        Tageseinnahmen: <strong>${formatEuro(result.revenue)}</strong> ·
+        <strong>${isShift ? 'Zwischenabrechnung (Schichtwechsel)' : 'Tagesabschluss'} ${withPrint ? 'drucken und ' : ''}speichern?</strong><br>
+        ${isShift ? 'Einnahmen dieser Schicht' : (ccPrevShift ? 'Einnahmen letzte Schicht' : 'Tageseinnahmen')}: <strong>${formatEuro(result.revenue)}</strong> ·
         Laut Kasse: <strong>${formatEuro(ccSoll)}</strong> ·
-        Differenz: <strong>${diffText}</strong>`;
+        Differenz: <strong>${diffText}</strong>
+        ${isShift ? `<br>Übergabe an neue Schicht: <strong>${formatEuro(result.extra)}</strong>` : ''}`;
     document.getElementById('ccConfirmBtn').textContent = withPrint ? '🖨️ Ja, drucken und speichern' : '✓ Ja, speichern';
     document.getElementById('ccMessage').style.display = 'none';
     document.getElementById('ccButtons').style.display = 'none';
@@ -4793,10 +5005,24 @@ async function confirmCashCountSave() {
     confirmBtn.textContent = '⏳ Speichere...';
 
     // Datum in lokaler Zeit (nicht UTC), damit späte Abrechnungen nicht auf den Folgetag rutschen
-    const now = new Date();
-    const closingDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const closingDate = localDateString();
+    const isShift = ccType === 'shift';
+    const periodStart = (ccState.loadedFor === currentUser.id && ccState.latest) ? ccState.latest.created_at : null;
+    const todayBefore = ccState.loadedFor === currentUser.id ? ccState.today.slice() : [];
 
     try {
+        // Aktueller Saldo vom Server: Ausgangspunkt für die Schichtsumme im grünen Feld
+        let balanceAtClosing = currentUser.balance;
+        try {
+            const fresh = await apiCall(`/api/users/id/${currentUser.id}`);
+            if (fresh && typeof fresh.balance === 'number') {
+                balanceAtClosing = fresh.balance;
+                currentUser.balance = fresh.balance;
+            }
+        } catch (e) {
+            console.warn('Saldo nicht neu geladen, nutze lokalen Wert:', e);
+        }
+
         const saved = await apiCall('/api/cash-closings', {
             method: 'POST',
             body: JSON.stringify({
@@ -4813,16 +5039,28 @@ async function confirmCashCountSave() {
                 revenue_counted: result.revenue,
                 revenue_system: ccSoll,
                 difference: result.diff,
-                system_breakdown: ccSystemBreakdown
+                system_breakdown: ccSystemBreakdown,
+                closing_type: isShift ? 'shift' : 'final',
+                opening_total: result.opening,
+                opening_source_id: ccPrevShift ? ccPrevShift.id : null,
+                withdrawal: result.withdrawal,
+                handover_total: isShift ? result.extra : null,
+                balance_at_closing: balanceAtClosing,
+                period_start: periodStart
             })
         });
 
         if (withPrint) {
-            printCashClosingReceipt(saved);
+            // Tagesübersicht: alle Abrechnungen des Tages inkl. der gerade gespeicherten
+            printCashClosingReceipt(saved, todayBefore.concat([saved]));
         }
 
-        showStatus('🧾 Barkassen-Abrechnung gespeichert', 'success');
+        showStatus(isShift ? '🔄 Zwischenabrechnung gespeichert – neue Schicht beginnt bei 0' : '🧾 Tagesabschluss gespeichert', 'success');
         closeCashCountModal();
+
+        // Neuer Stand für das grüne Feld (Schicht beginnt wieder bei 0)
+        await loadCashClosingState();
+        updateUserInfo();
     } catch (error) {
         console.error('Cash count save error:', error);
         cancelCashCountSave();

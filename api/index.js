@@ -847,6 +847,11 @@ if (path === '/transactions' && method === 'GET') {
             return res.status(400).json({ error: 'Ungültige Benutzer-ID' });
         }
         const unbilledOnly = url.searchParams.get('unbilled') === 'true';
+        // Optional: nur Buchungen nach diesem Zeitpunkt (Barkasse: seit der letzten Abrechnung)
+        const since = url.searchParams.get('since');
+        if (since && isNaN(Date.parse(since))) {
+            return res.status(400).json({ error: 'Ungültiger Zeitpunkt (since)' });
+        }
         const pageSize = 1000;
         let all = [];
 
@@ -860,6 +865,9 @@ if (path === '/transactions' && method === 'GET') {
 
             if (unbilledOnly) {
                 userQuery = userQuery.is('billing_id', null).not('is_billed', 'is', true);
+            }
+            if (since) {
+                userQuery = userQuery.gt('created_at', since);
             }
 
             const { data, error } = await userQuery;
@@ -1883,6 +1891,40 @@ if (path === '/cash-closings' && method === 'GET') {
     return res.status(200).json(data || []);
 }
 
+// GET /cash-closings/state?bartender_user_id=X&date=YYYY-MM-DD
+// Für die Kasse (Raspberry Pi): nur die letzte Abrechnung des Accounts und die Abrechnungen des Tages.
+// Muss vor /cash-closings/{id} stehen.
+if (pathParts[0] === 'cash-closings' && pathParts[1] === 'state' && method === 'GET') {
+    const url = new URL(req.url, `https://${req.headers.host}`);
+    const bartenderId = parseInt(url.searchParams.get('bartender_user_id'));
+    const date = url.searchParams.get('date');
+
+    if (isNaN(bartenderId) || !/^\d{4}-\d{2}-\d{2}$/.test(date || '')) {
+        return res.status(400).json({ error: 'bartender_user_id und date (YYYY-MM-DD) erforderlich' });
+    }
+
+    const { data: latestRows, error: latestError } = await supabase
+        .from('cash_closings')
+        .select('*')
+        .eq('bartender_user_id', bartenderId)
+        .order('created_at', { ascending: false })
+        .limit(1);
+    if (latestError) throw latestError;
+
+    const { data: today, error: todayError } = await supabase
+        .from('cash_closings')
+        .select('*')
+        .eq('bartender_user_id', bartenderId)
+        .eq('closing_date', date)
+        .order('created_at', { ascending: true });
+    if (todayError) throw todayError;
+
+    return res.status(200).json({
+        latest: (latestRows && latestRows[0]) || null,
+        today: today || []
+    });
+}
+
 // GET /cash-closings/{id} - Einzelne Barkassen-Abrechnung
 if (pathParts[0] === 'cash-closings' && pathParts[1] && method === 'GET') {
     const closingId = parseInt(pathParts[1]);
@@ -1925,7 +1967,15 @@ if (path === '/cash-closings' && method === 'POST') {
             revenue_counted: c.revenue_counted || 0,
             revenue_system: c.revenue_system || 0,
             difference: c.difference || 0,
-            system_breakdown: c.system_breakdown || {}
+            system_breakdown: c.system_breakdown || {},
+            // Schichtwechsel / Tagesabschluss (sql/cash_closings_schichten.sql)
+            closing_type: c.closing_type === 'shift' ? 'shift' : 'final',
+            opening_total: c.opening_total ?? null,
+            opening_source_id: c.opening_source_id || null,
+            withdrawal: c.withdrawal || 0,
+            handover_total: c.handover_total ?? null,
+            balance_at_closing: c.balance_at_closing ?? null,
+            period_start: c.period_start || null
         }])
         .select()
         .single();
