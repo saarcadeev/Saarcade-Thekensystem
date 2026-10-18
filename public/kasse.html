@@ -1792,7 +1792,7 @@ try {
                                     <tfoot><tr><td colspan="2" id="ccChangeTotalLabel">Wechselgeld gesamt</td><td id="ccChangeTotal">0,00 €</td></tr></tfoot>
                                 </table>
                                 <p id="ccChangeHint" style="font-size: 0.85em; color: #666; margin-top: 8px;">
-                                    Ins Wechselgeld nur 20 €, 10 €, 5 €, 2 €, 1 € und 0,50 € übernehmen, den Rest abschöpfen.
+                                    Alles eintragen, was als Wechselgeld in der Kasse bleibt (üblich: 20 €, 10 €, 5 €, 2 €, 1 € und 0,50 €). Der Rest wird abgeschöpft.
                                 </p>
                             </div>
                             <!-- Optionale Entnahme beim Schichtwechsel (ganze Euro) -->
@@ -4714,14 +4714,15 @@ function setCashCountType(type) {
         info.style.display = 'none';
     }
 
-    // Wechselgeld-Tabelle: beim ersten Schichtwechsel = Anfangsbestand, beim Tagesabschluss = bleibt in der Kasse
-    document.getElementById('ccChangeBlock').style.display = (isShift && ccPrevShift) ? 'none' : 'block';
-    document.getElementById('ccChangeTitle').textContent = isShift
-        ? '🪙 Anfangsbestand (Wechselgeld zu Schichtbeginn)'
-        : '🪙 Wechselgeld (bleibt in der Kasse)';
-    document.getElementById('ccChangeTotalLabel').textContent = isShift ? 'Anfangsbestand gesamt' : 'Wechselgeld gesamt';
-    document.getElementById('ccChangeHint').style.display = isShift ? 'none' : 'block';
+    // Wechselgeld-Tabelle = Anfangsbestand. Nur nötig, wenn heute noch kein Schichtwechsel war.
+    // (Abschöpfen und Auffüllen des Wechselgelds macht Jochen später zu Hause.)
+    document.getElementById('ccChangeBlock').style.display = ccPrevShift ? 'none' : 'block';
+    document.getElementById('ccChangeTitle').textContent = '🪙 Anfangsbestand (Wechselgeld zu Beginn)';
+    document.getElementById('ccChangeTotalLabel').textContent = 'Anfangsbestand gesamt';
+    document.getElementById('ccChangeHint').style.display = 'none';
     document.getElementById('ccWithdrawalBlock').style.display = isShift ? 'block' : 'none';
+    // Übergabebestand nur beim Schichtwechsel
+    document.getElementById('ccResExtra').closest('tr').style.display = isShift ? '' : 'none';
 
     // Namen
     document.getElementById('ccClosingLabel').textContent = isShift ? 'Übergabe durch (alte Schicht) *' : 'Abrechnung Kasse (Name) *';
@@ -4776,10 +4777,9 @@ function openCashCountModal() {
 
     document.getElementById('ccCashRows').innerHTML =
         CC_CASH_VALUES.map(v => rowHtml('cash', v, '')).join('');
+    // Wechselgeld/Anfangsbestand: alle Werte, da nach einem Schichtwechsel auch Kleingeld in der Kasse bleiben kann
     document.getElementById('ccChangeRows').innerHTML =
-        Object.keys(CC_CHANGE_DEFAULTS)
-            .sort((a, b) => b - a)
-            .map(v => rowHtml('change', parseFloat(v), CC_CHANGE_DEFAULTS[v])).join('');
+        CC_CASH_VALUES.map(v => rowHtml('change', v, CC_CHANGE_DEFAULTS[String(v)] ?? '')).join('');
 
     document.getElementById('ccEventName').value = 'Besuchertag';
     document.getElementById('ccDate').value = new Date().toLocaleDateString('de-DE');
@@ -4888,13 +4888,13 @@ function updateCashCount() {
     const diff = round(revenue - ccSoll);
     // Überschuss kommt laut Anleitung in die Trinkgeldkasse, ist also nicht mehr in der Kasse
     const surplus = diff > 0 ? diff : 0;
-    // Schichtwechsel: Übergabebestand an die neue Schicht; Tagesabschluss: abzuschöpfender Betrag
-    const extra = isShift ? round(cash.total - withdrawal - surplus) : round(cash.total - change.total - surplus);
+    // Schichtwechsel: Übergabebestand an die neue Schicht (beim Tagesabschluss nicht benötigt)
+    const extra = isShift ? round(cash.total - withdrawal - surplus) : 0;
 
     document.getElementById('ccCashTotal').textContent = formatEuro(cash.total);
     document.getElementById('ccChangeTotal').textContent = formatEuro(change.total);
     document.getElementById('ccResCash').textContent = formatEuro(cash.total);
-    document.getElementById('ccResChangeLabel').textContent = (ccPrevShift || isShift) ? 'abzügl. Anfangsbestand' : 'abzügl. Wechselgeld';
+    document.getElementById('ccResChangeLabel').textContent = 'abzügl. Anfangsbestand';
     document.getElementById('ccResChange').textContent = '− ' + formatEuro(opening);
     document.getElementById('ccResRevenueLabel').textContent = isShift ? 'Einnahmen dieser Schicht'
         : (ccPrevShift ? 'Einnahmen letzte Schicht' : 'Tageseinnahmen');
@@ -4903,9 +4903,8 @@ function updateCashCount() {
     const deductions = [];
     if (isShift && withdrawal) deductions.push(`Entnahme ${formatEuro(withdrawal)}`);
     if (surplus) deductions.push(`Überschuss ${formatEuro(surplus)} → Trinkgeldkasse`);
-    document.getElementById('ccResExtraLabel').innerHTML = isShift
-        ? `<strong>Übergabe an neue Schicht</strong>${deductions.length ? `<br><small>nach ${deductions.join(', ')}</small>` : ''}`
-        : `<strong>Abschöpfen</strong><br><small>Kasse minus Wechselgeld${surplus ? ` und Überschuss` : ''}</small>`;
+    document.getElementById('ccResExtraLabel').innerHTML =
+        `<strong>Übergabe an neue Schicht</strong>${deductions.length ? `<br><small>nach ${deductions.join(', ')}</small>` : ''}`;
     document.getElementById('ccResExtra').innerHTML = `<strong>${formatEuro(extra)}</strong>`;
 
     const diffColor = diff === 0 ? '#38a169' : (diff > 0 ? '#d69e2e' : '#e53e3e');
@@ -5032,8 +5031,9 @@ async function confirmCashCountSave() {
                 bartender_name: currentUser ? `${currentUser.first_name} ${currentUser.last_name}` : null,
                 handover_name: handoverName,
                 closing_name: closingName,
-                change_counts: result.change.counts,
-                change_total: result.change.total,
+                // Wechselgeld-Tabelle ist nur ohne vorherigen Schichtwechsel sichtbar (= Anfangsbestand)
+                change_counts: ccPrevShift ? {} : result.change.counts,
+                change_total: ccPrevShift ? 0 : result.change.total,
                 cash_counts: result.cash.counts,
                 cash_total: result.cash.total,
                 revenue_counted: result.revenue,

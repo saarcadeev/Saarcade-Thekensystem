@@ -44,6 +44,11 @@
         }).join('');
     }
 
+    // Wechselgeld-Tabelle: die üblichen Werte plus alle weiteren, die tatsächlich gezählt wurden
+    function changeValues(counts) {
+        return CASH_VALUES.filter(v => CHANGE_VALUES.includes(v) || (counts || {})[String(v)]);
+    }
+
     function formatTime(dateTime) {
         return new Date(dateTime).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
     }
@@ -97,15 +102,16 @@
             <h2>${heading}</h2>
             <table class="count">
                 <thead><tr><th>Wert</th><th class="num">Anzahl</th><th class="num">Summe</th></tr></thead>
-                <tbody>${countRows(CHANGE_VALUES, c.change_counts)}</tbody>
+                <tbody>${countRows(changeValues(c.change_counts), c.change_counts)}</tbody>
                 <tfoot><tr><td colspan="2">${totalLabel}</td><td class="num">${euro(c.change_total)}</td></tr></tfoot>
             </table>`;
-        let rightColumn;
-        if (isShift) {
-            rightColumn = fromShift ? openingBox : changeTable('Anfangsbestand (Wechselgeld)', 'Anfangsbestand gesamt');
-        } else {
-            rightColumn = (fromShift ? openingBox : '') + changeTable('Wechselgeld (bleibt in der Kasse)', 'Wechselgeld gesamt');
-        }
+        // Abrechnungen vor dem Schichtwechsel-Umbau (ohne closing_type) behalten ihre alte Darstellung
+        const legacy = !c.closing_type;
+        const rightColumn = fromShift
+            ? openingBox
+            : (legacy
+                ? changeTable('Wechselgeld', 'Wechselgeld gesamt')
+                : changeTable('Anfangsbestand (Wechselgeld)', 'Anfangsbestand gesamt'));
 
         const revenueLabel = isShift ? 'Einnahmen dieser Schicht' : (fromShift ? 'Einnahmen letzte Schicht' : 'Tageseinnahmen');
         // Überschuss kommt in die Trinkgeldkasse und ist nicht mehr in der Kasse
@@ -116,10 +122,7 @@
         ${withdrawal ? `<tr><td>Entnahme</td><td class="num">− ${euro(withdrawal)}</td></tr>` : ''}
         ${surplusRow}
         <tr class="sep"><td>Übergabe an neue Schicht</td><td class="num">${euro(c.handover_total ?? ((parseFloat(c.cash_total) || 0) - withdrawal - surplus))}</td></tr>`
-            : `<tr><td colspan="2" style="height: 6px;"></td></tr>
-        <tr><td>Kasse abzügl. Wechselgeld</td><td class="num">${euro((parseFloat(c.cash_total) || 0) - (parseFloat(c.change_total) || 0))}</td></tr>
-        ${surplusRow}
-        <tr class="sep"><td>Abschöpfen</td><td class="num">${euro((parseFloat(c.cash_total) || 0) - (parseFloat(c.change_total) || 0) - surplus)}</td></tr>`;
+            : ''; // Tagesabschluss: Abschöpfen/Auffüllen des Wechselgelds erfolgt später zu Hause
 
         const signRows = isShift
             ? `<tr>
@@ -204,7 +207,7 @@
 
     <table class="result">
         <tr><td>Summe Kasse gesamt</td><td class="num">${euro(c.cash_total)}</td></tr>
-        <tr><td>abzügl. ${(isShift || fromShift) ? 'Anfangsbestand' : 'Wechselgeld'}</td><td class="num">− ${euro(opening)}</td></tr>
+        <tr><td>abzügl. ${legacy ? 'Wechselgeld' : 'Anfangsbestand'}</td><td class="num">− ${euro(opening)}</td></tr>
         <tr class="sep"><td>${revenueLabel}</td><td class="num">${euro(c.revenue_counted)}</td></tr>
         <tr><td>Einnahmen gemäß Tablet</td><td class="num">${euro(c.revenue_system)}</td></tr>
         <tr><td class="small" colspan="2">

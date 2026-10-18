@@ -48,6 +48,7 @@ Jochen ist kein Entwickler: Schritte für GitHub Desktop/Supabase konkret erklä
 - Barkassen-Abrechnung (`cash_closings`): `closing_type` 'shift' (Schichtwechsel) / 'final' (Tagesabschluss).
   Anfangsbestand der Folgeschicht = `handover_total` der letzten Zwischenabrechnung des Tages; der
   Kassenabschluss vergleicht nur Buchungen seit der letzten Abrechnung (`since`). Das grüne Feld zeigt
-  für Barkeeper Saldo minus `balance_at_closing` (Schichtsumme). Überschuss → Trinkgeldkasse (wird von
-  Übergabe/Abschöpfen abgezogen).
+  für Barkeeper Saldo minus `balance_at_closing` (Schichtsumme; liegt der Saldo darüber, wurde im Admin
+  abgerechnet → normaler Saldo). Überschuss → Trinkgeldkasse (wird vom Übergabebestand abgezogen).
+  Kein Abschöpfen beim Tagesabschluss – macht Jochen zu Hause. Wechselgeld-Tabelle = Anfangsbestand.
 - In `kasse.html` steht am Ende des ersten `<style>` ein verirrtes `` `; `` – neue CSS-Regeln **davor** einfügen.
