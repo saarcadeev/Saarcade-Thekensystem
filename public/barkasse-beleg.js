@@ -111,7 +111,7 @@
             ? openingBox
             : (legacy
                 ? changeTable('Wechselgeld', 'Wechselgeld gesamt')
-                : changeTable('Anfangsbestand (Wechselgeld)', 'Anfangsbestand gesamt'));
+                : changeTable('Anfangsbestand', 'Anfangsbestand gesamt'));
 
         const revenueLabel = isShift ? 'Einnahmen dieser Schicht' : (fromShift ? 'Einnahmen letzte Schicht' : 'Tageseinnahmen');
         // Überschuss kommt in die Trinkgeldkasse und ist nicht mehr in der Kasse

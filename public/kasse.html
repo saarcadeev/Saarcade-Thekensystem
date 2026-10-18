@@ -4571,10 +4571,8 @@ async function openCashClosingModal() {
             timestamp: now.toISOString()
         };
         
-        const modal = document.getElementById('cashClosingModal');
-        modal.style.display = 'block';
-        
-        showStatus('Kassenabschluss geladen', 'success');
+        // Übersichtsfenster wird übersprungen: alle Zahlen stehen in der Barkassen-Abrechnung und auf dem Beleg
+        openCashCountModal();
         
     } catch (error) {
         showStatus('Fehler beim Laden der Daten', 'error');
@@ -4717,7 +4715,7 @@ function setCashCountType(type) {
     // Wechselgeld-Tabelle = Anfangsbestand. Nur nötig, wenn heute noch kein Schichtwechsel war.
     // (Abschöpfen und Auffüllen des Wechselgelds macht Jochen später zu Hause.)
     document.getElementById('ccChangeBlock').style.display = ccPrevShift ? 'none' : 'block';
-    document.getElementById('ccChangeTitle').textContent = '🪙 Anfangsbestand (Wechselgeld zu Beginn)';
+    document.getElementById('ccChangeTitle').textContent = '🪙 Anfangsbestand';
     document.getElementById('ccChangeTotalLabel').textContent = 'Anfangsbestand gesamt';
     document.getElementById('ccChangeHint').style.display = 'none';
     document.getElementById('ccWithdrawalBlock').style.display = isShift ? 'block' : 'none';
