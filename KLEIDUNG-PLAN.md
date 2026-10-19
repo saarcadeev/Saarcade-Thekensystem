@@ -137,6 +137,10 @@ Entscheidungen (16.10.2026): eine Position **pro Stück**; „Berechnet“ ist e
       - Bestand mit Farbspalte, negativ rot; Artikel: Schalter „Bestand je Farbe führen“; Zugang mit Farbe und für
         Artikel ohne Größe; Korrektur auch negativ.
       - `admin.html`: alte Kleidungsabrechnung zeigt keine Bestellungen mehr, von denen schon Stücke berechnet sind.
-- [ ] **5 – Aufräumen `admin.html`**: Kleidungsbereiche ausblenden, **erst nach der ersten echten Abrechnung**
-      mit dem neuen „Abzurechnen“ (Entscheidung 16.10.2026). Bis dahin bleibt die alte Abrechnung als Rückfall.
+- [x] **5 – Aufräumen `admin.html`** (18.10.2026): Menüpunkte „Kleidung“, „Bestellungen“, „Abrechnung Kleidung“
+      ausgeblendet (Klasse `legacy-clothing`, nichts gelöscht). Neuer Menüpunkt „👕 Kleidung-Admin ↗“ öffnet
+      `admin-kleidung.html`; Dashboard-Karte „Offene Kleidungsbestellungen“ ebenso. Unten im Menü Schalter
+      „🗄️ Alte Kleidungsbereiche einblenden/ausblenden“ (pro Browser in localStorage `showLegacyClothing`).
+      `admin-kleidung.html` übernimmt eine gültige Admin-Anmeldung aus `admin.html` (localStorage `adminLogin`).
       Hinweis: Die alte Kleidungs-SEPA nutzte `MAND-<Nr>` und `<BIC>NOTPROVIDED</BIC>` (ungültig) – nicht mehr verwenden.
+      Später möglich: alten Kleidungs-Code in `admin.html` ganz entfernen, wenn er lange nicht gebraucht wurde.

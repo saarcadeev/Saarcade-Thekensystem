@@ -1505,7 +1505,18 @@ document.addEventListener('DOMContentLoaded', () => {
     ['loginUsername','loginPassword'].forEach(id => {
         document.getElementById(id).addEventListener('keypress', e => { if (e.key === 'Enter') doLogin(); });
     });
-    const session = getSession();
+    let session = getSession();
+    // Schon in admin.html angemeldet? Dann diese Anmeldung übernehmen (nur Admins, nicht abgelaufen)
+    if (!session) {
+        try {
+            const adminLogin = JSON.parse(localStorage.getItem('adminLogin') || 'null');
+            if (adminLogin && adminLogin.user && adminLogin.user.role === 'admin' &&
+                (!adminLogin.expires || Date.now() <= adminLogin.expires)) {
+                session = adminLogin.user;
+                saveSession(session);
+            }
+        } catch (e) {}
+    }
     if (session) { currentUser = session; onLoggedIn(); }
     else { document.getElementById('loginOverlay').style.display = 'flex'; document.getElementById('loginUsername').focus(); }
 });

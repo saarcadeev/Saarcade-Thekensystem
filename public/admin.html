@@ -738,7 +738,10 @@ body {
                 justify-content: center;
             }
         }
-        
+
+        /* Alte Kleidungsbereiche (ersetzt durch admin-kleidung.html), per Schalter im Menü einblendbar */
+        body:not(.show-legacy-clothing) .legacy-clothing { display: none !important; }
+
     </style>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -819,13 +822,18 @@ body {
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link" onclick="showTab('clothing'); return false;">
-                        👕 Kleidung
+                    <a href="/admin-kleidung.html" class="nav-link" target="_blank">
+                        👕 Kleidung-Admin ↗
                     </a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item legacy-clothing">
+                    <a href="#" class="nav-link" onclick="showTab('clothing'); return false;">
+                        👕 Kleidung (alt)
+                    </a>
+                </li>
+                <li class="nav-item legacy-clothing">
                     <a href="#" class="nav-link" onclick="showTab('orders'); return false;">
-                        📦 Bestellungen
+                        📦 Bestellungen (alt)
                     </a>
                 </li>
                 
@@ -848,9 +856,9 @@ body {
                     </a>
                 </li>
 
-                <li class="nav-item">
+                <li class="nav-item legacy-clothing">
                     <a href="#" class="nav-link" onclick="showTab('clothing-billing'); return false;">
-                        👕 Abrechnung Kleidung
+                        👕 Abrechnung Kleidung (alt)
                     </a>
                 </li>
 
@@ -870,6 +878,11 @@ body {
                 <li class="nav-item">
                     <a href="#" class="nav-link" onclick="showTab('settings'); return false;">
                         ⚙️ Einstellungen
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" id="legacyClothingToggle" onclick="toggleLegacyClothing(); return false;" style="font-size: 0.8em; opacity: 0.7;">
+                        🗄️ Alte Kleidungsbereiche einblenden
                     </a>
                 </li>
             </ul>
@@ -954,7 +967,7 @@ body {
             </div>
 
             <!-- Offene Kleidungsbestellungen -->
-            <div class="card" onclick="showTab('orders')" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+            <div class="card" onclick="window.open('/admin-kleidung.html', '_blank')" title="Öffnet den Kleidung-Admin" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                 <div class="card-header">👕 Offene Kleidungsbestellungen</div>
                 <div id="pendingClothingOrdersList" style="padding: 10px;">
                 <div style="text-align: center; padding: 20px; color: #666;">Lade Daten...</div>
@@ -2648,6 +2661,28 @@ function closeMobileMenu() {
 }
         
 // ============ TAB NAVIGATION ============
+// Alte Kleidungsbereiche ein-/ausblenden (Einstellung bleibt in diesem Browser gespeichert)
+function applyLegacyClothing(show) {
+    document.body.classList.toggle('show-legacy-clothing', show);
+    const link = document.getElementById('legacyClothingToggle');
+    if (link) link.textContent = show ? '🗄️ Alte Kleidungsbereiche ausblenden' : '🗄️ Alte Kleidungsbereiche einblenden';
+}
+
+function toggleLegacyClothing() {
+    const show = !document.body.classList.contains('show-legacy-clothing');
+    try { localStorage.setItem('showLegacyClothing', show ? '1' : '0'); } catch (e) {}
+    applyLegacyClothing(show);
+    if (!show && ['clothing', 'orders', 'clothing-billing'].some(id => document.getElementById(id)?.style.display === 'block')) {
+        showTab('dashboard');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    let show = false;
+    try { show = localStorage.getItem('showLegacyClothing') === '1'; } catch (e) {}
+    applyLegacyClothing(show);
+});
+
 function showTab(tabName) {
     // Sidebar Links aktualisieren
     document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
