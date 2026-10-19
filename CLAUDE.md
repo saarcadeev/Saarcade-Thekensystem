@@ -18,8 +18,10 @@ Jochen ist kein Entwickler: Schritte für GitHub Desktop/Supabase konkret erklä
     keine Blur-/Dauer-Animationen. Nur ändern, wenn ausdrücklich gewünscht.
   - `admin.html` – großer Admin-Bereich (Getränke, Abrechnung, SEPA, Einstellungen, Barkassen-Abrechnungen).
   - `kleidung.html` – Mitglieder bestellen Vereinskleidung (private Geräte).
-  - `kleidung-verwaltung.html` – Oli (Rolle `kleidung`), **nur Handy**, wenig IT-affin.
-  - `admin-kleidung.html` – Kleidung-Admin für Jochen (Artikel, Bestand, Bestellungen).
+  - `admin-kleidung.html` – **eine Seite für Kleidung** (seit 19.10.2026), Menü links (Handy: ☰).
+    Rolle `kleidung` (Oli, **nur Handy**, wenig IT-affin): Pakete, Druckliste, Freimitglieder, Bestand
+    (Zugang buchen, nicht korrigieren), Bestellbedarf. Rolle `admin` zusätzlich Artikel, Bestellungen, Abzurechnen.
+  - `kleidung-verwaltung.html` – nur noch Weiterleitung auf `admin-kleidung.html` (alte Lesezeichen).
   - `barkasse-beleg.js` – gemeinsamer Druckbeleg (Kasse + Admin).
 - `sql/` – SQL-Dateien, die Jochen im Supabase **SQL Editor** ausführt.
 

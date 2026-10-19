@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>👕 Kleidung Admin – Saarcade</title>
+    <title>👕 Kleidung – Saarcade</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -158,6 +158,132 @@
 
         select#sortOrder { padding: 8px 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 0.88em; font-weight: 600; color: #4a5568; background: white; cursor: pointer; }
         select#sortOrder:focus { outline: none; border-color: #f093fb; }
+
+        /* ===== MENÜ LINKS ===== */
+        .layout { display: flex; min-height: 70vh; }
+        .side-nav { width: 230px; flex-shrink: 0; background: #f8fafc; border-right: 2px solid #e2e8f0; padding: 10px 0 20px; }
+        .side-cat { font-size: 0.72em; text-transform: uppercase; letter-spacing: 0.05em; color: #a0aec0; font-weight: 700; padding: 16px 20px 6px; }
+        .side-link { display: block; width: 100%; text-align: left; padding: 11px 20px; border: none; background: none; font-size: 0.95em; font-weight: 600; color: #4a5568; cursor: pointer; border-left: 4px solid transparent; font-family: inherit; }
+        .side-link:hover { background: #f1f5f9; }
+        .side-link.active { color: #f5576c; background: #fdf0f8; border-left-color: #f5576c; }
+        .main-area { flex: 1; min-width: 0; }
+        .menu-btn { display: none; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.5); color: white; padding: 8px 14px; border-radius: 8px; font-size: 1em; font-weight: 700; cursor: pointer; }
+        .nav-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 8400; }
+        .current-tab-title { display: none; font-weight: 700; }
+
+        /* ===== PAKETE (Olis Bereich) ===== */
+        .search-input { width: 100%; padding: 12px 14px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 1em; margin-bottom: 14px; }
+        .search-input:focus { outline: none; border-color: #f093fb; }
+        .section-subtitle { color: #718096; font-size: 0.88em; margin-bottom: 20px; }
+        .pkg-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 16px; }
+        .pkg-card { border: 2px solid #e2e8f0; border-radius: 14px; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow: hidden; }
+        .pkg-head { background: #f7fafc; padding: 12px 14px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+        .pkg-name { font-size: 1.15em; font-weight: 700; color: #2d3748; }
+        .pkg-meta { font-size: 0.85em; color: #718096; margin-top: 2px; }
+        .pkg-sum { font-size: 1.15em; font-weight: 700; color: #2d3748; white-space: nowrap; text-align: right; }
+        .pos-row { padding: 12px 14px; border-bottom: 1px solid #f0f0f0; }
+        .pos-row:last-child { border-bottom: none; }
+        .pos-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+        .pos-title { font-weight: 700; color: #2d3748; font-size: 1.05em; }
+        .pos-detail { color: #4a5568; font-size: 0.95em; margin-top: 2px; }
+        .pos-price { font-weight: 600; color: #2d3748; white-space: nowrap; }
+        .pos-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+        .badge-bestellt    { background: #fef9c3; color: #854d0e; }
+        .badge-fehlt       { background: #fee2e2; color: #b91c1c; }
+        .badge-abholbereit { background: #dbeafe; color: #1e40af; }
+        .badge-ausgegeben  { background: #dcfce7; color: #15803d; }
+        .badge-open        { background: #fef9c3; color: #854d0e; }
+        .badge-delivered   { background: #dcfce7; color: #15803d; }
+        .big-btn { min-height: 46px; padding: 10px 14px; border: none; border-radius: 10px; font-size: 0.98em; font-weight: 700; cursor: pointer; flex: 1; white-space: nowrap; font-family: inherit; }
+        .big-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .bb-ready { background: #2563eb; color: white; }
+        .bb-out   { background: #10b981; color: white; }
+        .bb-miss  { background: #fee2e2; color: #b91c1c; }
+        .bb-grey  { background: #e2e8f0; color: #4a5568; }
+        .bb-small { flex: 0 0 auto; min-width: 52px; }
+        .pkg-foot { display: flex; gap: 8px; padding: 12px 14px; background: #f7fafc; border-top: 1px solid #e2e8f0; flex-wrap: wrap; }
+        .check-row { display: flex; align-items: center; gap: 12px; padding: 12px; border: 2px solid #e2e8f0; border-radius: 10px; margin-bottom: 8px; cursor: pointer; font-size: 1em; }
+        .check-row input { width: 24px; height: 24px; flex-shrink: 0; }
+        .modal-field { margin-bottom: 14px; }
+        .modal-field label { display: block; font-size: 0.85em; font-weight: 700; color: #4a5568; margin-bottom: 6px; }
+        .modal-field select, .modal-field input { width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1em; background: white; }
+        .print-table td.num { text-align: right; font-weight: 700; font-size: 1.1em; }
+        .print-only { display: none; }
+
+        /* ===== FREIMITGLIEDER ===== */
+        .btn-deliver { padding: 7px 14px; background: linear-gradient(135deg, #34d399, #10b981); color: white; border: none; border-radius: 7px; cursor: pointer; font-size: 0.85em; font-weight: 600; white-space: nowrap; }
+        .btn-delete { padding: 7px 12px; background: #e53e3e; color: white; border: none; border-radius: 7px; cursor: pointer; font-size: 0.85em; font-weight: 600; }
+        .add-section { background: #f7fafc; border: 2px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 24px; }
+        .add-section h3 { color: #4a5568; margin-bottom: 15px; font-size: 1em; font-weight: 700; }
+        .add-form { display: grid; grid-template-columns: 1fr 1fr auto auto auto auto; gap: 10px; align-items: end; }
+        .member-search-wrap { position: relative; }
+        .member-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #f093fb; border-top: none; border-radius: 0 0 8px 8px; max-height: 200px; overflow-y: auto; z-index: 100; display: none; }
+        .member-dropdown.active { display: block; }
+        .member-option { padding: 9px 12px; cursor: pointer; font-size: 0.9em; border-bottom: 1px solid #f0f0f0; }
+        .member-option:hover { background: #fdf0f8; }
+
+        /* ===== BESTAND (aufklappbar je Artikel) ===== */
+        .stock-group { border: 2px solid #e2e8f0; border-radius: 12px; margin-bottom: 10px; overflow: hidden; background: white; }
+        .stock-head { display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer; user-select: none; background: #f8fafc; }
+        .stock-head:hover { background: #f1f5f9; }
+        .stock-arrow { width: 16px; color: #718096; font-size: 0.9em; }
+        .stock-name { font-weight: 700; color: #2d3748; flex: 1; }
+        .stock-total { font-weight: 700; color: #2d3748; white-space: nowrap; }
+        .stock-missing { color: #e53e3e; font-weight: 700; font-size: 0.88em; white-space: nowrap; }
+        .stock-body { display: none; border-top: 1px solid #e2e8f0; }
+        .stock-group.open .stock-body { display: block; }
+        .stock-row { display: flex; align-items: center; gap: 12px; padding: 9px 16px 9px 44px; border-bottom: 1px solid #f0f0f0; flex-wrap: wrap; }
+        .stock-row:last-child { border-bottom: none; }
+        .stock-variant { min-width: 120px; font-weight: 600; color: #4a5568; }
+        .stock-row .qty-display { min-width: 150px; }
+        .stock-row .action-group { margin-left: auto; }
+        .stock-date { color: #a0aec0; font-size: 0.8em; }
+
+        @media (max-width: 900px) {
+            .add-form { grid-template-columns: 1fr 1fr; }
+        }
+
+        /* ===== HANDY ===== */
+        @media (max-width: 800px) {
+            body { padding: 0; }
+            .container { border-radius: 0; }
+            .header { padding: 10px 12px; gap: 10px; }
+            .header-logo, .header p, .home-btn { display: none; }
+            .header h1 { font-size: 1.1em; margin: 0; }
+            .menu-btn { display: inline-block; }
+            .user-badge { display: none; }
+            .logout-btn { padding: 6px 10px; font-size: 0.8em; }
+            .side-nav { display: none; position: fixed; top: 0; bottom: 0; left: 0; width: 270px; max-width: 85vw; z-index: 8500; overflow-y: auto; box-shadow: 4px 0 20px rgba(0,0,0,0.25); }
+            .side-nav.open, .nav-backdrop.open { display: block; }
+            .side-link { padding: 15px 20px; font-size: 1.05em; }
+            .tab-content { padding: 14px 12px; }
+            .pkg-list { grid-template-columns: 1fr; }
+            .filter-right { margin-left: 0; width: 100%; flex-wrap: wrap; }
+            .filter-btn { padding: 10px 14px; }
+            .add-form { grid-template-columns: 1fr !important; }
+            .modal-box { padding: 20px 16px; }
+            .stock-row { padding: 9px 12px 9px 16px; flex-wrap: nowrap; gap: 8px; }
+            .stock-variant { min-width: 0; flex: 0 0 64px; }
+            .stock-row .qty-display { min-width: 0; flex: 1; }
+            .stock-date { display: none; }
+            .stock-row .action-group { margin-left: auto; flex-wrap: nowrap; }
+            /* Freimitglieder-Tabelle als Karten */
+            #tab-freeshirts table thead { display: none; }
+            #tab-freeshirts table, #tab-freeshirts tbody, #tab-freeshirts tr, #tab-freeshirts td { display: block; width: 100%; }
+            #tab-freeshirts tbody tr { border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 12px; padding: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+            #tab-freeshirts tbody td { padding: 4px 0; border: none; }
+            #tab-freeshirts tbody td:before { content: attr(data-label); font-weight: 700; color: #718096; font-size: 0.78em; text-transform: uppercase; display: block; }
+            #tab-freeshirts .btn-deliver { padding: 12px 14px; font-size: 0.95em; width: 100%; margin-top: 8px; }
+        }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; border-radius: 0; padding-bottom: 0; }
+            .header, .side-nav, .filter-bar, .no-print, .alert, .nav-backdrop { display: none !important; }
+            .tab-content { display: none !important; padding: 0; }
+            #tab-print { display: block !important; }
+            .print-only { display: block !important; }
+        }
     </style>
 </head>
 <body>
@@ -166,8 +292,8 @@
 <div class="login-overlay" id="loginOverlay">
     <div class="login-box">
         <div style="font-size:3em;margin-bottom:10px;">👕</div>
-        <h2>Kleidung Admin</h2>
-        <p>Saarcade e.V. – Nur für Administratoren</p>
+        <h2>Kleidung</h2>
+        <p>Saarcade e.V. – Bitte anmelden</p>
         <input type="text" id="loginUsername" placeholder="Benutzername" autocomplete="username">
         <input type="password" id="loginPassword" placeholder="Passwort" autocomplete="current-password">
         <button class="login-btn" onclick="doLogin()">✓ Anmelden</button>
@@ -177,13 +303,14 @@
 
 <div class="container">
     <div class="header">
+        <button class="menu-btn" onclick="toggleNav()" aria-label="Menü">☰</button>
         <a href="/" class="home-btn" title="Startseite">🏠</a>
         <div class="header-logo">
             <img src="Saarcade-Logo.png" alt="Saarcade e.V.">
         </div>
         <div class="header-text">
-            <h1>👕 Kleidung Admin</h1>
-            <p>Artikel · Bestand · Bestellungen · Abrechnung</p>
+            <h1 id="headerTitle">👕 Kleidung</h1>
+            <p>Pakete · Lager · Artikel · Abrechnung</p>
         </div>
         <div class="header-actions">
             <div class="user-badge" id="userBadge">–</div>
@@ -191,16 +318,137 @@
         </div>
     </div>
 
-    <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('artikel', this)">🏷️ Artikel</button>
-        <button class="tab-btn" onclick="switchTab('bestand', this)">📦 Bestand</button>
-        <button class="tab-btn" onclick="switchTab('bedarf', this)">📋 Bestellbedarf</button>
-        <button class="tab-btn" onclick="switchTab('bestellungen', this)">🧾 Bestellungen</button>
-        <button class="tab-btn" onclick="switchTab('unbezahlt', this)" id="tabUnbezahlt">💶 Abzurechnen</button>
+    <div class="nav-backdrop" id="navBackdrop" onclick="toggleNav(false)"></div>
+    <div class="layout">
+    <!-- MENÜ LINKS (data-admin = nur für Admins) -->
+    <nav class="side-nav" id="sideNav">
+        <div class="side-cat">Ausgabe</div>
+        <button class="side-link" data-tab="pakete" onclick="switchTab('pakete', this)">📦 Pakete</button>
+        <button class="side-link" data-tab="print" onclick="switchTab('print', this)">🖨️ Druckliste</button>
+        <button class="side-link" data-tab="freeshirts" onclick="switchTab('freeshirts', this)">🎁 Freimitglieder</button>
+        <div class="side-cat">Lager</div>
+        <button class="side-link" data-tab="bestand" onclick="switchTab('bestand', this)">🏬 Bestand</button>
+        <button class="side-link" data-tab="bedarf" onclick="switchTab('bedarf', this)">📋 Bestellbedarf</button>
+        <div class="side-cat" data-admin>Verwaltung</div>
+        <button class="side-link" data-admin data-tab="artikel" onclick="switchTab('artikel', this)">🏷️ Artikel</button>
+        <button class="side-link" data-admin data-tab="bestellungen" onclick="switchTab('bestellungen', this)">🧾 Bestellungen</button>
+        <button class="side-link" data-admin data-tab="unbezahlt" onclick="switchTab('unbezahlt', this)" id="tabUnbezahlt">💶 Abzurechnen</button>
+    </nav>
+    <div class="main-area">
+
+    <!-- TAB: PAKETE (eine Karte pro Mitglied) -->
+    <div class="tab-content" id="tab-pakete">
+        <div class="filter-bar">
+            <button class="filter-btn active" onclick="setPkgFilter('open')" id="pf-open">
+                Alle offenen <span class="filter-count" id="pcnt-open">0</span>
+            </button>
+            <button class="filter-btn" onclick="setPkgFilter('bestellt')" id="pf-bestellt">
+                Zu packen <span class="filter-count" id="pcnt-bestellt">0</span>
+            </button>
+            <button class="filter-btn" onclick="setPkgFilter('fehlt')" id="pf-fehlt">
+                Fehlt <span class="filter-count" id="pcnt-fehlt">0</span>
+            </button>
+            <button class="filter-btn" onclick="setPkgFilter('abholbereit')" id="pf-abholbereit">
+                Abholbereit <span class="filter-count" id="pcnt-abholbereit">0</span>
+            </button>
+            <button class="filter-btn" onclick="setPkgFilter('ausgegeben')" id="pf-ausgegeben">
+                Ausgegeben (30 Tage)
+            </button>
+            <div class="filter-right">
+                <button class="btn-secondary" onclick="loadPackages()">🔄 Aktualisieren</button>
+            </div>
+        </div>
+        <input type="search" class="search-input" id="pkgSearch" placeholder="🔍 Name suchen…" oninput="renderPackages()">
+        <div id="pkgContent"><div class="loading">⏳ Lade Pakete…</div></div>
+    </div>
+
+    <!-- TAB: DRUCKLISTE -->
+    <div class="tab-content" id="tab-print">
+        <div class="filter-bar">
+            <button class="filter-btn active" onclick="setPrintMode('open')" id="pm-open">Bestellt + Fehlt</button>
+            <button class="filter-btn" onclick="setPrintMode('missing')" id="pm-missing">Nur Fehlbestand</button>
+            <div class="filter-right">
+                <button class="btn-secondary" onclick="loadPrintList()">🔄</button>
+                <button class="btn-primary" onclick="window.print()">🖨️ Drucken</button>
+            </div>
+        </div>
+        <p class="section-subtitle no-print" id="printHint"></p>
+        <div class="print-only" style="margin-bottom:12px;">
+            <h2 id="printTitle">Druckliste</h2>
+            <div id="printDate" style="color:#666;"></div>
+        </div>
+        <div id="printContent"><div class="loading">⏳ Lade…</div></div>
+    </div>
+
+    <!-- TAB: FREIMITGLIEDER-SHIRTS -->
+    <div class="tab-content" id="tab-freeshirts">
+        <!-- Neu eintragen (nur Admin) -->
+        <div class="add-section" id="addFreeShirtSection" style="display:none;">
+            <h3>➕ Neues Freimitglied hinzufügen</h3>
+            <div class="add-form">
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>Mitglied suchen *</label>
+                    <div class="member-search-wrap">
+                        <input type="text" id="newMemberSearch" placeholder="Name eingeben…" autocomplete="off"
+                            oninput="handleFreeShirtMemberSearch(this.value)">
+                        <div class="member-dropdown" id="freeShirtDropdown"></div>
+                    </div>
+                    <div id="selectedMemberHint" style="display:none; color:#15803d; font-size:0.85em; font-weight:600; margin-top:6px;"></div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px;">
+                        <div>
+                            <label>Vorname *</label>
+                            <input type="text" id="newFirstName" placeholder="Vorname">
+                        </div>
+                        <div>
+                            <label>Nachname *</label>
+                            <input type="text" id="newLastName" placeholder="Nachname">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Größe</label>
+                    <select id="newSize">
+                        <option value="">– wählen –</option>
+                        <option>XS</option><option>S</option><option>M</option>
+                        <option>L</option><option>XL</option><option>XXL</option><option>3XL</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Farbe</label>
+                    <input type="text" id="newColor" placeholder="z.B. Schwarz">
+                </div>
+                <div class="form-group">
+                    <label>Notiz</label>
+                    <input type="text" id="newNotes" placeholder="Optional">
+                </div>
+                <div class="form-group">
+                    <label>&nbsp;</label>
+                    <button class="btn-primary" onclick="addFreeShirt()">➕ Hinzufügen</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="filter-bar">
+            <button class="filter-btn" onclick="setShirtFilter('all')" id="sf-all">
+                Alle <span class="filter-count" id="scnt-all">0</span>
+            </button>
+            <button class="filter-btn active" onclick="setShirtFilter('open')" id="sf-open">
+                Ausstehend <span class="filter-count" id="scnt-open">0</span>
+            </button>
+            <button class="filter-btn" onclick="setShirtFilter('delivered')" id="sf-delivered">
+                Ausgeliefert <span class="filter-count" id="scnt-delivered">0</span>
+            </button>
+            <div class="filter-right">
+                <button class="btn-secondary" onclick="loadFreeShirts()">🔄 Aktualisieren</button>
+            </div>
+        </div>
+        <div class="table-wrapper">
+            <div id="freeShirtsContent"><div class="loading">⏳ Lade Liste…</div></div>
+        </div>
     </div>
 
     <!-- TAB: ARTIKEL -->
-    <div class="tab-content active" id="tab-artikel">
+    <div class="tab-content" id="tab-artikel">
         <!-- Hinweistext für die Bestellseite (Einstellung clothing_order_notice) -->
         <div style="background:#fef3cd;border:1px solid #f6c23e;border-radius:10px;padding:14px 16px;margin-bottom:16px;">
             <label for="orderNoticeText" style="display:block;font-weight:700;color:#4a5568;margin-bottom:6px;">
@@ -312,6 +560,64 @@
         <div id="unbezahltSummary"></div>
         <div class="table-wrapper">
             <div id="unbezahltContent"><div class="loading">⏳ Lade Daten…</div></div>
+        </div>
+    </div>
+    </div><!-- /main-area -->
+    </div><!-- /layout -->
+</div>
+
+<!-- STÜCK ÄNDERN (Größe/Farbe) -->
+<div class="modal-overlay" id="editPosModal" style="display:none;">
+    <div class="modal-box" style="max-width:460px;">
+        <h3 id="editPosTitle">✏️ Stück ändern</h3>
+        <div class="modal-field">
+            <label>Größe</label>
+            <select id="editPosSize"></select>
+        </div>
+        <div class="modal-field" id="editPosColorWrap">
+            <label>Farbe</label>
+            <select id="editPosColor"></select>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeModal('editPosModal')">Abbrechen</button>
+            <button class="btn-primary" onclick="saveEditPos()" style="flex:2;">💾 Speichern</button>
+        </div>
+    </div>
+</div>
+
+<!-- AUSGEBEN -->
+<div class="modal-overlay" id="handoutModal" style="display:none;">
+    <div class="modal-box" style="max-width:460px;">
+        <h3 id="handoutTitle">📤 Ausgeben</h3>
+        <p class="modal-sub">Was wird jetzt übergeben? Nicht angehakte Stücke bleiben im Paket.</p>
+        <div id="handoutItems"></div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeModal('handoutModal')">Abbrechen</button>
+            <button class="btn-primary" id="handoutBtn" onclick="confirmHandout()" style="flex:2;">📤 Ausgeben</button>
+        </div>
+    </div>
+</div>
+
+<!-- FREIMITGLIEDER-SHIRT AUSLIEFERN (Artikel/Größe/Farbe abfragen) -->
+<div class="modal-overlay" id="shirtModal" style="display:none;">
+    <div class="modal-box" style="max-width:460px;">
+        <h3 id="shirtModalTitle">🎁 Shirt ausliefern</h3>
+        <p class="modal-sub">Welches Teil wird ausgegeben? Es wird vom Bestand abgebucht.</p>
+        <div class="modal-field">
+            <label>Artikel</label>
+            <select id="shirtItem" onchange="fillShirtVariants()"></select>
+        </div>
+        <div class="modal-field">
+            <label>Größe</label>
+            <select id="shirtSize"></select>
+        </div>
+        <div class="modal-field" id="shirtColorWrap">
+            <label>Farbe</label>
+            <select id="shirtColor"></select>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeModal('shirtModal')">Abbrechen</button>
+            <button class="btn-primary" onclick="confirmShirtDelivered()" style="flex:2;">✓ Ausgeliefert</button>
         </div>
     </div>
 </div>
@@ -480,24 +786,39 @@ async function doLogin() {
         const res = await fetch('/api/login', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({username, password}) });
         const data = await res.json();
         if (!res.ok) { errEl.textContent = '❌ ' + (data.error || 'Anmeldung fehlgeschlagen'); errEl.style.display = 'block'; document.getElementById('loginPassword').value = ''; return; }
-        if (data.user.role !== 'admin') { errEl.textContent = '❌ Nur Administratoren haben Zugang'; errEl.style.display = 'block'; document.getElementById('loginPassword').value = ''; return; }
+        if (data.user.role !== 'admin' && data.user.role !== 'kleidung') { errEl.textContent = '❌ Keine Berechtigung für diesen Bereich'; errEl.style.display = 'block'; document.getElementById('loginPassword').value = ''; return; }
         currentUser = data.user;
         saveSession(currentUser);
         onLoggedIn();
     } catch(e) { errEl.textContent = '❌ Verbindungsfehler'; errEl.style.display = 'block'; }
 }
 
-function doLogout() { clearSession(); currentUser = null; document.getElementById('loginOverlay').style.display = 'flex'; document.getElementById('loginPassword').value = ''; document.getElementById('loginError').style.display = 'none'; }
+function doLogout() { clearSession(); try { sessionStorage.removeItem('kleidungVerwaltung'); sessionStorage.removeItem('kleidungTab'); } catch(e) {} currentUser = null; document.getElementById('loginOverlay').style.display = 'flex'; document.getElementById('loginPassword').value = ''; document.getElementById('loginError').style.display = 'none'; }
+
+function isAdmin() { return !!currentUser && currentUser.role === 'admin'; }
 
 function onLoggedIn() {
     document.getElementById('loginOverlay').style.display = 'none';
-    document.getElementById('userBadge').textContent = '👤 ' + currentUser.username;
+    document.getElementById('userBadge').textContent = '👤 ' + currentUser.username + (isAdmin() ? ' (Admin)' : '');
+    // Verwaltung (Artikel, Bestellungen, Abzurechnen) nur für Admins
+    document.querySelectorAll('[data-admin]').forEach(el => el.style.display = isAdmin() ? '' : 'none');
+    document.getElementById('addFreeShirtSection').style.display = isAdmin() ? 'block' : 'none';
+
     loadArticles();
     loadStock();
-    loadOrders();
-    loadOrderNotice();
     loadDemand();
-    loadBilling();
+    loadPackages();
+    loadFreeShirts();
+    if (isAdmin()) {
+        loadOrders();
+        loadOrderNotice();
+        loadBilling();
+    }
+    let start = 'pakete';
+    try { start = sessionStorage.getItem('kleidungTab') || 'pakete'; } catch (e) {}
+    const startBtn = document.querySelector(`.side-link[data-tab="${start}"]`);
+    if (!startBtn || startBtn.style.display === 'none') start = 'pakete';
+    switchTab(start, document.querySelector(`.side-link[data-tab="${start}"]`));
 }
 
 // ===== HINWEIS BESTELLSEITE =====
@@ -531,10 +852,25 @@ async function apiCall(endpoint, options = {}) {
 
 // ===== TABS =====
 function switchTab(tab, btn) {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.side-link').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     document.getElementById('tab-' + tab).classList.add('active');
     if (btn) btn.classList.add('active');
+    // Am Handy steht der Bereich in der Kopfzeile
+    if (btn) document.getElementById('headerTitle').textContent =
+        '👕 Kleidung · ' + btn.textContent.trim().replace(/\s*\(\d+\)$/, '').replace(/^\S+\s/, '');
+    try { sessionStorage.setItem('kleidungTab', tab); } catch (e) {}
+    toggleNav(false);
+    if (tab === 'print') loadPrintList();
+    window.scrollTo(0, 0);
+}
+
+// Handy: Menü links ein-/ausklappen
+function toggleNav(open) {
+    const nav = document.getElementById('sideNav');
+    const show = open === undefined ? !nav.classList.contains('open') : open;
+    nav.classList.toggle('open', show);
+    document.getElementById('navBackdrop').classList.toggle('open', show);
 }
 
 // ===== HELPERS =====
@@ -576,6 +912,7 @@ async function loadArticles() {
         allArticles = await apiCall('/clothing-items');
         renderArticles();
         populateArticleSelects();
+        if (allStock.length) renderStock(); // Reihenfolge/Größen der Artikel für die Bestandsliste
     } catch(e) {
         document.getElementById('artikelContent').innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>${e.message}</p></div>`;
     }
@@ -805,47 +1142,95 @@ function renderStock() {
     const lowCount = filtered.filter(s => s.quantity > 0 && s.quantity <= 2).length;
     const zeroCount = filtered.filter(s => s.quantity === 0).length;
     const negCount = filtered.filter(s => s.quantity < 0).length;
-    document.getElementById('stockSummary').innerHTML = `<div class="summary-cards">
-        <div class="summary-card"><div class="s-value">${totalItems}</div><div class="s-label">Varianten</div></div>
-        <div class="summary-card"><div class="s-value">${totalQty}</div><div class="s-label">Stück im Lager</div></div>
-        <div class="summary-card ${lowCount > 0 ? 'highlight' : ''}"><div class="s-value">${lowCount}</div><div class="s-label">Niedrig (≤2)</div></div>
-        <div class="summary-card ${zeroCount > 0 ? 'highlight' : ''}"><div class="s-value">${zeroCount}</div><div class="s-label">Ausverkauft</div></div>
-        <div class="summary-card ${negCount > 0 ? 'highlight' : ''}"><div class="s-value">${negCount}</div><div class="s-label">Fehlbestand (negativ)</div></div>
+    // Kompakte Kennzahlen in einer Zeile, damit die Artikel gleich sichtbar sind
+    document.getElementById('stockSummary').innerHTML = `
+    <div style="display:flex;flex-wrap:wrap;gap:8px 18px;padding:10px 14px;background:#f7fafc;border:2px solid #e2e8f0;border-radius:10px;margin-bottom:8px;font-size:0.92em;color:#4a5568;">
+        <span><strong>${totalQty}</strong> Stück im Lager</span>
+        <span><strong>${totalItems}</strong> Varianten</span>
+        <span style="${lowCount ? 'color:#c05621;' : ''}"><strong>${lowCount}</strong> niedrig (≤2)</span>
+        <span><strong>${zeroCount}</strong> ausverkauft</span>
+        <span style="${negCount ? 'color:#e53e3e;' : ''}"><strong>${negCount}</strong> mit Fehlbestand</span>
     </div>
-    <p style="color:#718096;font-size:0.85em;margin:-12px 0 16px;">Bestellte Stücke sind schon abgebucht. Negativer Bestand = so viele fehlen für offene Bestellungen.</p>`;
+    <p style="color:#718096;font-size:0.82em;margin:0 0 14px;">Bestellte Stücke sind schon abgebucht. Negativer Bestand = so viele fehlen für offene Bestellungen.</p>`;
 
     if (!filtered.length) {
         document.getElementById('bestandContent').innerHTML = '<div class="empty-state"><div class="empty-icon">📦</div><p>Kein Bestand vorhanden. Bitte zuerst einen Zugang buchen.</p></div>';
         return;
     }
 
-    const rows = filtered.map(s => {
-        const name = s.clothing_items?.name || '–';
-        const emoji = s.clothing_items?.emoji || '👕';
-        const qty = s.quantity || 0;
-        const qtyClass = qty <= 0 ? (qty < 0 ? 'qty-low' : 'qty-zero') : qty <= 2 ? 'qty-low' : 'qty-ok';
-        const badgeHtml = qty < 0  ? `<span class="badge badge-low">Fehlen ${-qty}</span>` :
-                          qty === 0 ? '<span class="badge badge-zero">Ausverkauft</span>' :
-                          qty <= 2  ? '<span class="badge badge-low">Niedrig</span>' :
-                                      '<span class="badge badge-ok">OK</span>';
-        const label = [name, s.size, s.color].filter(Boolean).join(' ');
-        return `<tr>
-            <td>${escHtml(emoji)} <strong>${escHtml(name)}</strong></td>
-            <td>${s.size ? `<span class="badge badge-confirmed">${escHtml(s.size)}</span>` : '–'}</td>
-            <td>${escHtml(s.color || '–')}</td>
-            <td><div class="qty-display"><span class="qty-num ${qtyClass}">${qty}</span>${badgeHtml}</div></td>
-            <td style="color:#999;font-size:0.82em;">${fmtDate(s.updated_at)}</td>
-            <td><div class="action-group">
-                <button class="btn-success btn-sm" onclick="openBookingModal(${s.clothing_item_id}, '${escHtml(s.size)}', '${escHtml(s.color || '')}')">+ Zugang</button>
-                <button class="btn-warning btn-sm" onclick="openCorrectionModal(${s.id}, '${escHtml(label)}', ${qty})">✏️ Korr.</button>
-            </div></td>
-        </tr>`;
+    // Gruppiert je Artikel, aufklappbar. Reihenfolge wie bei den Artikeln, Größen wie beim Artikel hinterlegt.
+    const groups = new Map();
+    for (const s of filtered) {
+        if (!groups.has(s.clothing_item_id)) groups.set(s.clothing_item_id, []);
+        groups.get(s.clothing_item_id).push(s);
+    }
+    const articleIndex = id => { const i = allArticles.findIndex(a => a.id === id); return i === -1 ? 9999 : i; };
+    const sorted = [...groups.entries()].sort((a, b) => articleIndex(a[0]) - articleIndex(b[0]));
+
+    const html = sorted.map(([itemId, rows]) => {
+        const article = allArticles.find(a => a.id === itemId);
+        const name = article?.name || rows[0].clothing_items?.name || '–';
+        const emoji = article?.emoji || rows[0].clothing_items?.emoji || '👕';
+        const sizeOrder = article?.sizes || [];
+        const rank = s => { const i = sizeOrder.indexOf(s); return i === -1 ? 99 : i; };
+        rows.sort((a, b) => rank(a.size) - rank(b.size) || (a.color || '').localeCompare(b.color || '', 'de'));
+        const inStock = rows.reduce((sum, s) => sum + Math.max(0, s.quantity || 0), 0);
+        const missing = rows.reduce((sum, s) => sum + Math.max(0, -(s.quantity || 0)), 0);
+        const open = expandedStock.has(itemId);
+
+        const body = rows.map(s => {
+            const qty = s.quantity || 0;
+            const qtyClass = qty <= 0 ? (qty < 0 ? 'qty-low' : 'qty-zero') : qty <= 2 ? 'qty-low' : 'qty-ok';
+            const badgeHtml = qty < 0  ? `<span class="badge badge-low">Fehlen ${-qty}</span>` :
+                              qty === 0 ? '<span class="badge badge-zero">Ausverkauft</span>' :
+                              qty <= 2  ? '<span class="badge badge-low">Niedrig</span>' :
+                                          '<span class="badge badge-ok">OK</span>';
+            const variant = [s.size || 'ohne Größe', s.color].filter(Boolean).join(' · ');
+            const label = [name, s.size, s.color].filter(Boolean).join(' ');
+            return `<div class="stock-row">
+                <span class="stock-variant">${escHtml(variant)}</span>
+                <div class="qty-display"><span class="qty-num ${qtyClass}">${qty}</span>${badgeHtml}</div>
+                <span class="stock-date">${fmtDate(s.updated_at)}</span>
+                <div class="action-group">
+                    <button class="btn-success btn-sm" onclick="openBookingModal(${s.clothing_item_id}, '${escHtml(s.size)}', '${escHtml(s.color || '')}')">+ Zugang</button>
+                    ${isAdmin() ? `<button class="btn-warning btn-sm" onclick="openCorrectionModal(${s.id}, '${escHtml(label)}', ${qty})">✏️ Korr.</button>` : ''}
+                </div>
+            </div>`;
+        }).join('');
+
+        return `<div class="stock-group ${open ? 'open' : ''}">
+            <div class="stock-head" onclick="toggleStockGroup(${itemId}, this)">
+                <span class="stock-arrow">${open ? '▾' : '▸'}</span>
+                <span class="stock-name">${escHtml(emoji)} ${escHtml(name)}</span>
+                ${missing > 0 ? `<span class="stock-missing">${missing} fehlen</span>` : ''}
+                <span class="stock-total">${inStock} Stück</span>
+            </div>
+            <div class="stock-body">${body}</div>
+        </div>`;
     }).join('');
 
-    document.getElementById('bestandContent').innerHTML = `<table>
-        <thead><tr><th>Artikel</th><th>Größe</th><th>Farbe</th><th>Bestand</th><th>Zuletzt geändert</th><th>Aktion</th></tr></thead>
-        <tbody>${rows}</tbody>
-    </table>`;
+    document.getElementById('bestandContent').innerHTML = `
+        <div style="display:flex;gap:8px;margin-bottom:10px;">
+            <button class="btn-secondary btn-sm" onclick="setAllStockGroups(true)">▾ Alle aufklappen</button>
+            <button class="btn-secondary btn-sm" onclick="setAllStockGroups(false)">▸ Alle zuklappen</button>
+        </div>${html}`;
+}
+
+// Aufgeklappte Artikel merken (bleiben nach Buchungen offen)
+const expandedStock = new Set();
+
+function toggleStockGroup(itemId, head) {
+    const group = head.parentElement;
+    const open = !group.classList.contains('open');
+    group.classList.toggle('open', open);
+    head.querySelector('.stock-arrow').textContent = open ? '▾' : '▸';
+    if (open) expandedStock.add(itemId); else expandedStock.delete(itemId);
+}
+
+function setAllStockGroups(open) {
+    expandedStock.clear();
+    if (open) allStock.forEach(s => expandedStock.add(s.clothing_item_id));
+    renderStock();
 }
 
 function populateArticleSelects() {
@@ -909,7 +1294,9 @@ async function saveBooking() {
         await apiCall('/clothing-stock/book', { method: 'POST', body: JSON.stringify({ clothing_item_id: itemId, size, color, quantity: qty }) });
         closeBookingModal();
         showAlert(`✓ ${qty} Stück gebucht`, 'success');
+        expandedStock.add(itemId); // gebuchten Artikel aufgeklappt zeigen
         await loadStock();
+        loadDemand();
     } catch(e) { showAlert('❌ ' + e.message, 'error'); }
 }
 
@@ -1033,6 +1420,7 @@ async function markDelivered(id) {
         renderOrders();
         await loadBilling();
         await loadStock();
+        loadPackages(true);
         showAlert('✓ Ausgeliefert', 'success');
     } catch(e) { showAlert('❌ ' + e.message, 'error'); }
 }
@@ -1045,6 +1433,9 @@ async function cancelOrder(id) {
         if (o) o.status = 'cancelled';
         renderOrders();
         await loadStock(); // Stornieren bucht den Bestand zurück
+        loadDemand();
+        loadPackages(true);
+        loadBilling();
         showAlert('✓ Bestellung storniert', 'success');
     } catch(e) { showAlert('❌ ' + e.message, 'error'); }
 }
@@ -1500,12 +1891,597 @@ async function loadDemand() {
     }
 }
 
+// ===== PAKETE (Positionen je Mitglied) – früher kleidung-verwaltung.html =====
+// Eine Position = ein Stück. Status: bestellt, fehlt, abholbereit, ausgegeben, storniert.
+const STATUS_LABELS = { bestellt: '⏳ Bestellt', fehlt: '✗ Fehlt', abholbereit: '📦 Abholbereit', ausgegeben: '✓ Ausgegeben' };
+const PAY_LABELS = { sepa: 'Lastschrift', transfer: 'Überweisung', paypal: 'PayPal' };
+const DEFAULT_SIZES = ['XS','S','M','L','XL','XXL','3XL'];
+let openPositions = [];       // offene Stücke
+let deliveredPositions = [];  // ausgegeben in den letzten 30 Tagen
+let clothingItems = [];
+let currentPkgs = [];
+let pkgFilter = 'open';
+
+async function loadClothingItems() {
+    if (clothingItems.length === 0) clothingItems = allArticles.length ? allArticles : await apiCall('/clothing-items');
+    return clothingItems;
+}
+
+async function loadPackages(silent) {
+    if (!silent) document.getElementById('pkgContent').innerHTML = '<div class="loading">⏳ Lade Pakete…</div>';
+    try {
+        const since = Date.now() - 30 * 24 * 60 * 60 * 1000;
+        const [open, delivered] = await Promise.all([
+            apiCall('/clothing-positions?open=1'),
+            apiCall('/clothing-positions?status=ausgegeben'),
+            loadClothingItems().catch(() => [])
+        ]);
+        openPositions = open;
+        deliveredPositions = delivered.filter(p => p.delivered_at && new Date(p.delivered_at).getTime() >= since);
+        renderPackages();
+    } catch (e) {
+        document.getElementById('pkgContent').innerHTML =
+            '<div class="empty-state"><div class="empty-icon">⚠️</div><p>Fehler: ' + escHtml(e.message) + '</p></div>';
+    }
+}
+
+function setPkgFilter(f) {
+    pkgFilter = f;
+    document.querySelectorAll('[id^="pf-"]').forEach(b => b.classList.remove('active'));
+    document.getElementById('pf-' + f).classList.add('active');
+    renderPackages();
+}
+
+// Alle Stücke eines Mitglieds = ein Paket
+function groupPackages(positions) {
+    const map = new Map();
+    for (const p of positions) {
+        const key = p.member_id ? 'm' + p.member_id : 'n' + (p.member_name || '?');
+        if (!map.has(key)) map.set(key, { name: p.member_name || '–', positions: [] });
+        map.get(key).positions.push(p);
+    }
+    const pkgs = [...map.values()];
+    pkgs.forEach(k => k.positions.sort((a, b) => a.order_id - b.order_id || a.id - b.id));
+    return pkgs.sort((a, b) => a.name.localeCompare(b.name, 'de'));
+}
+
+function renderPackages() {
+    const openPkgs = groupPackages(openPositions);
+    const has = (pkg, st) => pkg.positions.some(p => p.status === st);
+    document.getElementById('pcnt-open').textContent        = openPkgs.length;
+    document.getElementById('pcnt-bestellt').textContent    = openPkgs.filter(k => has(k, 'bestellt')).length;
+    document.getElementById('pcnt-fehlt').textContent       = openPkgs.filter(k => has(k, 'fehlt')).length;
+    document.getElementById('pcnt-abholbereit').textContent = openPkgs.filter(k => has(k, 'abholbereit')).length;
+
+    let pkgs;
+    if (pkgFilter === 'ausgegeben') pkgs = groupPackages(deliveredPositions);
+    else if (pkgFilter === 'open')  pkgs = openPkgs;
+    else                            pkgs = openPkgs.filter(k => has(k, pkgFilter));
+
+    const q = (document.getElementById('pkgSearch').value || '').trim().toLowerCase();
+    if (q) pkgs = pkgs.filter(k => k.name.toLowerCase().includes(q));
+    currentPkgs = pkgs;
+
+    if (pkgs.length === 0) {
+        const msg = q ? 'Kein Paket für diesen Namen.'
+            : pkgFilter === 'ausgegeben' ? 'In den letzten 30 Tagen wurde nichts ausgegeben.'
+            : 'Hier ist gerade nichts zu tun. 🎉';
+        document.getElementById('pkgContent').innerHTML =
+            `<div class="empty-state"><div class="empty-icon">📭</div><p>${msg}</p></div>`;
+        return;
+    }
+    document.getElementById('pkgContent').innerHTML =
+        `<div class="pkg-list">${pkgs.map((k, i) => renderPackage(k, i)).join('')}</div>`;
+}
+
+function renderPackage(pkg, idx) {
+    const delivered = pkgFilter === 'ausgegeben';
+    const sum = pkg.positions.reduce((s, p) => s + Number(p.price || 0), 0);
+    const pays = [...new Set(pkg.positions.map(p => PAY_LABELS[p.payment_method] || p.payment_method || '–'))].join(', ');
+    const canReady = pkg.positions.some(p => p.status === 'bestellt' || p.status === 'fehlt');
+    const foot = delivered ? '' : `
+        <div class="pkg-foot">
+            <button class="big-btn bb-ready" onclick="markPackageReady(${idx})" ${canReady ? '' : 'disabled'}>✓ Alles fertig</button>
+            <button class="big-btn bb-out" onclick="openHandout(${idx})">📤 Ausgeben</button>
+        </div>`;
+    return `<div class="pkg-card">
+        <div class="pkg-head">
+            <div>
+                <div class="pkg-name">${escHtml(pkg.name)}</div>
+                <div class="pkg-meta">${pkg.positions.length} Stück · ${escHtml(pays)}</div>
+            </div>
+            <div class="pkg-sum">${formatEuro(sum)}</div>
+        </div>
+        ${pkg.positions.map(p => renderPosition(p, delivered)).join('')}
+        ${foot}
+    </div>`;
+}
+
+function renderPosition(p, delivered) {
+    const detail = [p.color, p.size ? 'Größe ' + p.size : ''].filter(Boolean).join(' · ');
+    const when = delivered ? 'ausgegeben ' + formatDate(p.delivered_at) : 'bestellt ' + formatDate(p.created_at);
+    const btns = [];
+    if (delivered) {
+        btns.push(`<button class="big-btn bb-grey" onclick="undoHandout(${p.id})">↩ Doch nicht ausgegeben</button>`);
+    } else {
+        if (p.status === 'abholbereit') {
+            btns.push(`<button class="big-btn bb-grey" onclick="setPosStatus(${p.id}, 'bestellt')">↩ Nicht fertig</button>`);
+        } else {
+            btns.push(`<button class="big-btn bb-ready" onclick="setPosStatus(${p.id}, 'abholbereit')">✓ Fertig</button>`);
+        }
+        if (p.status === 'bestellt') {
+            btns.push(`<button class="big-btn bb-miss" onclick="setPosStatus(${p.id}, 'fehlt')">✗ Fehlt</button>`);
+        }
+        if (p.status === 'fehlt') {
+            btns.push(`<button class="big-btn bb-grey" onclick="setPosStatus(${p.id}, 'bestellt')">↩ Fehlt nicht</button>`);
+        }
+        btns.push(`<button class="big-btn bb-grey bb-small" onclick="openEditPos(${p.id})" title="Größe/Farbe ändern">✏️</button>`);
+        btns.push(`<button class="big-btn bb-grey bb-small" onclick="cancelPos(${p.id})" title="Stornieren">🗑️</button>`);
+    }
+    return `<div class="pos-row">
+        <div class="pos-top">
+            <div>
+                <div class="pos-title">${escHtml(p.emoji || '👕')} ${escHtml(p.item_name || 'Artikel')}</div>
+                ${detail ? `<div class="pos-detail">${escHtml(detail)}</div>` : ''}
+                <div style="margin-top:6px;"><span class="badge badge-${p.status}">${STATUS_LABELS[p.status] || p.status}</span>
+                    <span style="color:#a0aec0; font-size:0.8em; margin-left:6px;">${when}</span></div>
+            </div>
+            <div class="pos-price">${formatEuro(p.price)}</div>
+        </div>
+        <div class="pos-actions">${btns.join('')}</div>
+    </div>`;
+}
+
+function findPos(id) {
+    return openPositions.find(p => p.id === id) || deliveredPositions.find(p => p.id === id);
+}
+
+function posLabel(p) {
+    return [p.item_name || 'Artikel', p.color, p.size].filter(Boolean).join(' ');
+}
+
+// Stücke ändern und danach neu laden (Pakete, Bestand und Abzurechnen hängen davon ab)
+async function updatePositions(ids, changes, msg) {
+    try {
+        await apiCall('/clothing-positions/update', {
+            method: 'POST',
+            body: JSON.stringify({ ids, ...changes })
+        });
+        showAlert(msg, 'success');
+    } catch (e) {
+        showAlert('❌ Fehler: ' + e.message, 'error');
+    }
+    await loadPackages(true);
+    refreshAfterPositionChange();
+}
+
+function refreshAfterPositionChange() {
+    loadStock();
+    loadDemand();
+    if (isAdmin()) { loadBilling(); loadOrders(); }
+}
+
+function setPosStatus(id, status) {
+    const msgs = { abholbereit: '✓ Fertig – liegt im Paket', fehlt: '✗ Als fehlend markiert', bestellt: '↩ Zurückgesetzt' };
+    updatePositions([id], { status }, msgs[status] || '✓ Gespeichert');
+}
+
+function cancelPos(id) {
+    const p = findPos(id);
+    if (!p) return;
+    if (!confirm(`Dieses Stück wirklich stornieren?\n\n${posLabel(p)}\nfür ${p.member_name}\n\nEs wird aus dem Paket entfernt und der Bestand zurückgebucht.`)) return;
+    updatePositions([id], { status: 'storniert' }, '🗑️ Storniert');
+}
+
+function markPackageReady(idx) {
+    const pkg = currentPkgs[idx];
+    if (!pkg) return;
+    const ids = pkg.positions.filter(p => p.status === 'bestellt' || p.status === 'fehlt').map(p => p.id);
+    if (ids.length === 0) return;
+    updatePositions(ids, { status: 'abholbereit' }, `✓ ${ids.length} Stück fertig – Paket abholbereit`);
+}
+
+function undoHandout(id) {
+    const p = findPos(id);
+    if (!p) return;
+    if (!confirm(`${posLabel(p)} für ${p.member_name} doch nicht ausgegeben?\n\nDas Stück kommt zurück ins Paket (abholbereit).`)) return;
+    updatePositions([id], { status: 'abholbereit' }, '↩ Zurück im Paket');
+}
+
+// ===== AUSGEBEN =====
+function openHandout(idx) {
+    const pkg = currentPkgs[idx];
+    if (!pkg) return;
+    const anyReady = pkg.positions.some(p => p.status === 'abholbereit');
+    document.getElementById('handoutTitle').textContent = '📤 Ausgeben an ' + pkg.name;
+    document.getElementById('handoutItems').innerHTML = pkg.positions.map(p => `
+        <label class="check-row">
+            <input type="checkbox" value="${p.id}" ${p.status === 'abholbereit' ? 'checked' : ''} onchange="updateHandoutBtn()">
+            <span style="flex:1;"><strong>${escHtml(posLabel(p))}</strong><br>
+                <span class="badge badge-${p.status}" style="margin-top:4px;">${STATUS_LABELS[p.status] || p.status}</span></span>
+            <span style="font-weight:600;">${formatEuro(p.price)}</span>
+        </label>`).join('') +
+        (anyReady ? '' : '<p style="color:#b45309; font-size:0.9em;">Noch nichts als fertig markiert – bitte anhaken, was übergeben wird.</p>');
+    updateHandoutBtn();
+    document.getElementById('handoutModal').style.display = 'flex';
+}
+
+function handoutChecked() {
+    return [...document.querySelectorAll('#handoutItems input:checked')].map(i => parseInt(i.value));
+}
+
+function updateHandoutBtn() {
+    const n = handoutChecked().length;
+    const btn = document.getElementById('handoutBtn');
+    btn.textContent = n > 0 ? `📤 ${n} Stück ausgeben` : '📤 Ausgeben';
+    btn.disabled = n === 0;
+    btn.style.opacity = n === 0 ? 0.5 : 1;
+}
+
+async function confirmHandout() {
+    const ids = handoutChecked();
+    if (ids.length === 0) return;
+    closeModal('handoutModal');
+    await updatePositions(ids, { status: 'ausgegeben' }, `📤 ${ids.length} Stück ausgegeben`);
+}
+
+// ===== STÜCK ÄNDERN (Größe/Farbe) =====
+let editPosId = null;
+
+function fillSelect(id, values, current) {
+    const list = [...(values || [])];
+    if (current && !list.includes(current)) list.unshift(current);
+    if (list.length === 0) list.push('');
+    document.getElementById(id).innerHTML = list.map(v =>
+        `<option value="${escHtml(v)}" ${v === current ? 'selected' : ''}>${escHtml(v || '–')}</option>`).join('');
+}
+
+async function openEditPos(id) {
+    const p = findPos(id);
+    if (!p) return;
+    editPosId = id;
+    await loadClothingItems().catch(() => []);
+    const item = clothingItems.find(i => i.id === p.clothing_item_id);
+    const sizes = item ? (item.sizes || []) : DEFAULT_SIZES;
+    const colors = item ? (item.colors || []) : [];
+    fillSelect('editPosSize', sizes.length ? sizes : (item ? [] : DEFAULT_SIZES), p.size);
+    fillSelect('editPosColor', colors, p.color);
+    document.getElementById('editPosColorWrap').style.display = (colors.length || p.color) ? '' : 'none';
+    document.getElementById('editPosTitle').textContent = '✏️ ' + (p.item_name || 'Stück') + ' – ' + p.member_name;
+    document.getElementById('editPosModal').style.display = 'flex';
+}
+
+async function saveEditPos() {
+    const body = { size: document.getElementById('editPosSize').value };
+    if (document.getElementById('editPosColorWrap').style.display !== 'none') {
+        body.color = document.getElementById('editPosColor').value;
+    }
+    try {
+        await apiCall('/clothing-positions/' + editPosId, { method: 'PUT', body: JSON.stringify(body) });
+        closeModal('editPosModal');
+        showAlert('✓ Geändert', 'success');
+    } catch (e) {
+        showAlert('❌ Fehler: ' + e.message, 'error');
+    }
+    await loadPackages(true);
+    refreshAfterPositionChange();
+}
+
+function closeModal(id) {
+    document.getElementById(id).style.display = 'none';
+}
+
+// ===== DRUCKLISTE =====
+let printMode = 'open';
+let demandRows = [];
+
+function setPrintMode(m) {
+    printMode = m;
+    document.querySelectorAll('[id^="pm-"]').forEach(b => b.classList.remove('active'));
+    document.getElementById('pm-' + m).classList.add('active');
+    renderPrintList();
+}
+
+async function loadPrintList() {
+    document.getElementById('printContent').innerHTML = '<div class="loading">⏳ Lade…</div>';
+    try {
+        const [open, demand] = await Promise.all([
+            apiCall('/clothing-positions?open=1'),
+            apiCall('/clothing-demand')
+        ]);
+        openPositions = open;
+        demandRows = demand;
+        renderPrintList();
+    } catch (e) {
+        document.getElementById('printContent').innerHTML =
+            '<div class="empty-state"><div class="empty-icon">⚠️</div><p>Fehler: ' + escHtml(e.message) + '</p></div>';
+    }
+}
+
+function sizeRank(s) {
+    const i = DEFAULT_SIZES.indexOf(s);
+    return i === -1 ? 99 : i;
+}
+
+function renderPrintList() {
+    let rows = [];
+    if (printMode === 'open') {
+        const map = {};
+        for (const p of openPositions.filter(p => p.status === 'bestellt' || p.status === 'fehlt')) {
+            const key = [p.item_name, p.color, p.size].join('|');
+            if (!map[key]) map[key] = { name: p.item_name || 'Artikel', color: p.color || '', size: p.size || '', count: 0 };
+            map[key].count++;
+        }
+        rows = Object.values(map);
+        document.getElementById('printHint').textContent = 'Alle Stücke, die noch nicht gepackt sind (Bestellt + Fehlt), zusammengezählt.';
+        document.getElementById('printTitle').textContent = 'Druckliste – Bestellt + Fehlt';
+    } else {
+        rows = demandRows.filter(d => d.missing > 0)
+            .map(d => ({ name: d.name || 'Artikel', color: d.color || '', size: d.size || '', count: d.missing }));
+        document.getElementById('printHint').textContent = 'Nur was im Lager fehlt (offene Bestellungen minus Bestand).';
+        document.getElementById('printTitle').textContent = 'Druckliste – Fehlbestand';
+    }
+    document.getElementById('printDate').textContent = 'Stand: ' + new Date().toLocaleString('de-DE');
+    rows.sort((a, b) => a.name.localeCompare(b.name, 'de') || a.color.localeCompare(b.color, 'de') || sizeRank(a.size) - sizeRank(b.size));
+
+    if (rows.length === 0) {
+        document.getElementById('printContent').innerHTML =
+            '<div class="empty-state"><div class="empty-icon">✅</div><p>Nichts zu drucken.</p></div>';
+        return;
+    }
+    const total = rows.reduce((s, r) => s + r.count, 0);
+    document.getElementById('printContent').innerHTML = `
+        <table class="print-table">
+            <thead><tr><th>Artikel</th><th>Farbe</th><th>Größe</th><th style="text-align:right;">Anzahl</th></tr></thead>
+            <tbody>
+                ${rows.map(r => `<tr>
+                    <td><strong>${escHtml(r.name)}</strong></td>
+                    <td>${escHtml(r.color || '–')}</td>
+                    <td>${escHtml(r.size || '–')}</td>
+                    <td class="num">${r.count}</td>
+                </tr>`).join('')}
+                <tr class="total-row"><td colspan="3">Gesamt</td><td class="num">${total}</td></tr>
+            </tbody>
+        </table>`;
+}
+
+function formatEuro(v) {
+    return Number(v || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+}
+
+function formatDate(d) {
+    return d ? new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }) : '';
+}
+
+// ===== FREIMITGLIEDER-SHIRTS =====
+let allShirts = [];
+let shirtFilter = 'open';
+
+async function loadFreeShirts() {
+    document.getElementById('freeShirtsContent').innerHTML = '<div class="loading">⏳ Lade Liste…</div>';
+    try {
+        allShirts = await apiCall('/free-shirts');
+        renderFreeShirts();
+    } catch (e) {
+        document.getElementById('freeShirtsContent').innerHTML =
+            '<div class="empty-state"><div class="empty-icon">⚠️</div><p>Fehler: ' + escHtml(e.message) + '</p></div>';
+    }
+}
+
+function setShirtFilter(f) {
+    shirtFilter = f;
+    document.querySelectorAll('[id^="sf-"]').forEach(b => b.classList.remove('active'));
+    document.getElementById('sf-' + f).classList.add('active');
+    renderFreeShirts();
+}
+
+function renderFreeShirts() {
+    const filtered = allShirts.filter(s => {
+        if (shirtFilter === 'open')      return !s.delivered;
+        if (shirtFilter === 'delivered') return s.delivered;
+        return true;
+    });
+
+    document.getElementById('scnt-all').textContent       = allShirts.length;
+    document.getElementById('scnt-open').textContent      = allShirts.filter(s => !s.delivered).length;
+    document.getElementById('scnt-delivered').textContent = allShirts.filter(s => s.delivered).length;
+
+    if (filtered.length === 0) {
+        document.getElementById('freeShirtsContent').innerHTML =
+            '<div class="empty-state"><div class="empty-icon">📭</div><p>Keine Einträge gefunden.</p></div>';
+        return;
+    }
+
+    const rows = filtered.map(s => {
+        const delivDate = s.delivered && s.delivered_at ? new Date(s.delivered_at).toLocaleDateString('de-DE') : '';
+        const statusHtml = s.delivered
+            ? `<span class="badge badge-delivered">✓ Ausgeliefert${delivDate ? ' ' + delivDate : ''}</span>`
+            : `<span class="badge badge-open">⏳ Ausstehend</span>`;
+        const actionHtml = !s.delivered
+            ? `<button class="btn-deliver" onclick="markShirtDelivered(${s.id})">✓ Ausgeliefert</button>`
+            : '<span style="color:#15803d;font-size:0.85em;">✓ Erledigt</span>';
+        const deleteBtn = isAdmin()
+            ? `<button class="btn-delete" onclick="deleteFreeShirt(${s.id})" title="Eintrag löschen" style="margin-left:6px;">🗑️</button>`
+            : '';
+        return `<tr class="${s.delivered ? 'delivered' : ''}">
+            <td data-label="Name"><strong>${escHtml(s.first_name)} ${escHtml(s.last_name)}</strong></td>
+            <td data-label="Größe">${escHtml(s.size || '–')}</td>
+            <td data-label="Farbe">${escHtml(s.color || '–')}</td>
+            <td data-label="Notiz" style="color:#718096;font-size:0.85em;">${escHtml(s.notes || '–')}</td>
+            <td data-label="Eingetragen" style="color:#999;font-size:0.82em;">${fmtDate(s.created_at)}</td>
+            <td data-label="Status">${statusHtml}</td>
+            <td data-label="">${actionHtml}${deleteBtn}</td>
+        </tr>`;
+    }).join('');
+
+    document.getElementById('freeShirtsContent').innerHTML = `
+        <table>
+            <thead><tr><th>Name</th><th>Größe</th><th>Farbe</th><th>Notiz</th><th>Eingetragen</th><th>Status</th><th>Aktion</th></tr></thead>
+            <tbody>${rows}</tbody>
+        </table>`;
+}
+
+// Fehlen Artikel oder Größe, werden sie vor dem Ausliefern abgefragt (für die Bestandsabbuchung)
+async function markShirtDelivered(id) {
+    const s = allShirts.find(x => x.id === id);
+    if (!s) return;
+    if (!s.clothing_item_id || !s.size) {
+        openShirtModal(s);
+        return;
+    }
+    await deliverShirt(id, {});
+}
+
+async function deliverShirt(id, extra) {
+    try {
+        const updated = await apiCall('/free-shirts/' + id, {
+            method: 'PUT',
+            body: JSON.stringify({ ...extra, delivered: true, delivered_at: new Date().toISOString() })
+        });
+        const idx = allShirts.findIndex(x => x.id === id);
+        if (idx !== -1) allShirts[idx] = { ...allShirts[idx], ...updated, delivered: true };
+        renderFreeShirts();
+        loadStock();
+        loadDemand();
+        showAlert('✓ Shirt als ausgeliefert markiert', 'success');
+    } catch (e) {
+        showAlert('❌ Fehler: ' + e.message, 'error');
+    }
+}
+
+let shirtModalId = null;
+
+async function openShirtModal(s) {
+    shirtModalId = s.id;
+    try {
+        await loadClothingItems();
+    } catch (e) {
+        showAlert('❌ Artikel konnten nicht geladen werden', 'error');
+        return;
+    }
+    const items = [...clothingItems].sort((a, b) => (b.available !== false) - (a.available !== false) || (a.sort_order || 0) - (b.sort_order || 0));
+    const preset = s.clothing_item_id
+        || (items.find(i => /shirt/i.test(i.name || '') && (!s.color || (i.name || '').toLowerCase().includes(s.color.toLowerCase()))) || {}).id
+        || (items[0] || {}).id;
+    document.getElementById('shirtItem').innerHTML = items.map(i =>
+        `<option value="${i.id}" ${i.id === preset ? 'selected' : ''}>${escHtml((i.emoji || '') + ' ' + i.name)}</option>`).join('');
+    document.getElementById('shirtModalTitle').textContent = '🎁 ' + s.first_name + ' ' + s.last_name;
+    fillShirtVariants(s.size, s.color);
+    document.getElementById('shirtModal').style.display = 'flex';
+}
+
+function fillShirtVariants(prefSize, prefColor) {
+    const item = clothingItems.find(i => i.id === parseInt(document.getElementById('shirtItem').value));
+    const sizes = item && item.sizes && item.sizes.length ? item.sizes : DEFAULT_SIZES;
+    const colors = item && item.colors ? item.colors : [];
+    const curSize = typeof prefSize === 'string' ? prefSize : document.getElementById('shirtSize').value;
+    const curColor = typeof prefColor === 'string' ? prefColor : document.getElementById('shirtColor').value;
+    fillSelect('shirtSize', sizes, sizes.includes(curSize) ? curSize : sizes[0]);
+    fillSelect('shirtColor', colors, colors.includes(curColor) ? curColor : colors[0]);
+    document.getElementById('shirtColorWrap').style.display = colors.length ? '' : 'none';
+}
+
+async function confirmShirtDelivered() {
+    const extra = {
+        clothing_item_id: parseInt(document.getElementById('shirtItem').value),
+        size: document.getElementById('shirtSize').value
+    };
+    if (document.getElementById('shirtColorWrap').style.display !== 'none') {
+        extra.color = document.getElementById('shirtColor').value;
+    }
+    closeModal('shirtModal');
+    await deliverShirt(shirtModalId, extra);
+}
+
+// Mitgliedersuche beim Eintragen (nur Admin)
+let freeShirtMembers = [];
+
+async function handleFreeShirtMemberSearch(query) {
+    const dropdown = document.getElementById('freeShirtDropdown');
+    document.getElementById('newFirstName').value = '';
+    document.getElementById('newLastName').value = '';
+    document.getElementById('selectedMemberHint').style.display = 'none';
+    if (query.length < 2) { dropdown.classList.remove('active'); return; }
+    try {
+        if (freeShirtMembers.length === 0) freeShirtMembers = await apiCall('/users');
+        const q = query.toLowerCase();
+        const filtered = freeShirtMembers.filter(m => `${m.first_name} ${m.last_name}`.toLowerCase().includes(q));
+        dropdown.innerHTML = filtered.length === 0
+            ? '<div class="member-option" style="color:#999;">Keine Mitglieder gefunden</div>'
+            : filtered.slice(0, 8).map((m, i) =>
+                `<div class="member-option" onclick="selectFreeShirtMember(${freeShirtMembers.indexOf(m)})">${escHtml(m.first_name)} ${escHtml(m.last_name)}</div>`).join('');
+        dropdown.classList.add('active');
+    } catch (e) {
+        dropdown.classList.remove('active');
+    }
+}
+
+function selectFreeShirtMember(idx) {
+    const m = freeShirtMembers[idx];
+    if (!m) return;
+    document.getElementById('newMemberSearch').value = `${m.first_name} ${m.last_name}`;
+    document.getElementById('newFirstName').value = m.first_name;
+    document.getElementById('newLastName').value = m.last_name;
+    document.getElementById('freeShirtDropdown').classList.remove('active');
+    const hint = document.getElementById('selectedMemberHint');
+    hint.textContent = `✓ ${m.first_name} ${m.last_name} ausgewählt`;
+    hint.style.display = 'block';
+}
+
+document.addEventListener('click', e => {
+    if (!e.target.closest('.member-search-wrap')) {
+        document.getElementById('freeShirtDropdown')?.classList.remove('active');
+    }
+});
+
+async function addFreeShirt() {
+    const firstName = document.getElementById('newFirstName').value.trim();
+    const lastName  = document.getElementById('newLastName').value.trim();
+    const size      = document.getElementById('newSize').value;
+    const color     = document.getElementById('newColor').value.trim();
+    const notes     = document.getElementById('newNotes').value.trim();
+    if (!firstName || !lastName) { showAlert('❌ Vorname und Nachname sind Pflichtfelder', 'error'); return; }
+    try {
+        const newEntry = await apiCall('/free-shirts', {
+            method: 'POST',
+            body: JSON.stringify({ first_name: firstName, last_name: lastName, size, color, notes })
+        });
+        allShirts.unshift(newEntry);
+        ['newFirstName','newLastName','newColor','newNotes','newMemberSearch'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('newSize').value = '';
+        document.getElementById('selectedMemberHint').style.display = 'none';
+        renderFreeShirts();
+        showAlert('✓ Eintrag hinzugefügt', 'success');
+    } catch (e) {
+        showAlert('❌ Fehler: ' + e.message, 'error');
+    }
+}
+
+async function deleteFreeShirt(id) {
+    if (!confirm('Diesen Eintrag wirklich löschen?')) return;
+    try {
+        await apiCall('/free-shirts/' + id, { method: 'DELETE' });
+        allShirts = allShirts.filter(s => s.id !== id);
+        renderFreeShirts();
+        showAlert('✓ Eintrag gelöscht', 'success');
+    } catch (e) {
+        showAlert('❌ Fehler: ' + e.message, 'error');
+    }
+}
+
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', () => {
     ['loginUsername','loginPassword'].forEach(id => {
         document.getElementById(id).addEventListener('keypress', e => { if (e.key === 'Enter') doLogin(); });
     });
     let session = getSession();
+    // Anmeldung von der früheren Seite kleidung-verwaltung.html (Weiterleitung) übernehmen
+    if (!session) {
+        try {
+            const old = JSON.parse(sessionStorage.getItem('kleidungVerwaltung') || 'null');
+            if (old && (old.role === 'admin' || old.role === 'kleidung')) { session = old; saveSession(session); }
+        } catch (e) {}
+    }
     // Schon in admin.html angemeldet? Dann diese Anmeldung übernehmen (nur Admins, nicht abgelaufen)
     if (!session) {
         try {

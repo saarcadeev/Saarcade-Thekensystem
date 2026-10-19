@@ -14,8 +14,8 @@ weitere Arbeitssitzungen. Erledigte Etappen abhaken.
 | Wer | Gerät | Aufgaben |
 |---|---|---|
 | Mitglieder | private Geräte | bestellen (`kleidung.html`) |
-| Oli (Rolle `kleidung`) | nur Handy, wenig IT-affin | drucken, Pakete packen, abholbereit melden, ausgeben (`kleidung-verwaltung.html`) |
-| Jochen (Admin) | Notebook | Artikel, Wareneingang, Bestellbedarf, Abrechnung (`admin-kleidung.html`) |
+| Oli (Rolle `kleidung`) | nur Handy, wenig IT-affin | drucken, Pakete packen, abholbereit melden, ausgeben, Zugang buchen (`admin-kleidung.html`, eingeschränktes Menü) |
+| Jochen (Admin) | Notebook | alles, zusätzlich Artikel, Korrekturen, Abrechnung (`admin-kleidung.html`) |
 
 ## Entscheidungen
 
@@ -144,3 +144,10 @@ Entscheidungen (16.10.2026): eine Position **pro Stück**; „Berechnet“ ist e
       `admin-kleidung.html` übernimmt eine gültige Admin-Anmeldung aus `admin.html` (localStorage `adminLogin`).
       Hinweis: Die alte Kleidungs-SEPA nutzte `MAND-<Nr>` und `<BIC>NOTPROVIDED</BIC>` (ungültig) – nicht mehr verwenden.
       Später möglich: alten Kleidungs-Code in `admin.html` ganz entfernen, wenn er lange nicht gebraucht wurde.
+- [x] **6 – Eine Seite für Kleidung** (19.10.2026, Entscheidung Jochen; ersetzt die frühere Trennung):
+      Olis Seite ist in `admin-kleidung.html` aufgegangen. Menü links (Ausgabe: Pakete, Druckliste,
+      Freimitglieder · Lager: Bestand, Bestellbedarf · Verwaltung nur Admin: Artikel, Bestellungen, Abzurechnen),
+      am Handy über ☰. Login für Rollen `admin` und `kleidung`; Oli darf Zugang buchen, aber nicht korrigieren,
+      keine Freimitglieder eintragen/löschen. Startbereich: Pakete (letzter Bereich wird je Sitzung gemerkt).
+      `kleidung-verwaltung.html` leitet weiter und übernimmt die Anmeldung. Bestand: aufklappbare Liste je
+      Artikel (Summe + „x fehlen“ im Kopf, Größen in Artikel-Reihenfolge), Kennzahlen als schmale Zeile.
