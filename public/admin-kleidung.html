@@ -339,10 +339,10 @@
     <!-- TAB: PAKETE (eine Karte pro Mitglied) -->
     <div class="tab-content" id="tab-pakete">
         <div class="filter-bar">
-            <button class="filter-btn active" onclick="setPkgFilter('open')" id="pf-open">
+            <button class="filter-btn" onclick="setPkgFilter('open')" id="pf-open">
                 Alle offenen <span class="filter-count" id="pcnt-open">0</span>
             </button>
-            <button class="filter-btn" onclick="setPkgFilter('bestellt')" id="pf-bestellt">
+            <button class="filter-btn active" onclick="setPkgFilter('bestellt')" id="pf-bestellt">
                 Zu packen <span class="filter-count" id="pcnt-bestellt">0</span>
             </button>
             <button class="filter-btn" onclick="setPkgFilter('fehlt')" id="pf-fehlt">
@@ -1900,7 +1900,7 @@ let openPositions = [];       // offene Stücke
 let deliveredPositions = [];  // ausgegeben in den letzten 30 Tagen
 let clothingItems = [];
 let currentPkgs = [];
-let pkgFilter = 'open';
+let pkgFilter = 'bestellt'; // Start: Zu packen
 
 async function loadClothingItems() {
     if (clothingItems.length === 0) clothingItems = allArticles.length ? allArticles : await apiCall('/clothing-items');
@@ -1956,7 +1956,12 @@ function renderPackages() {
     let pkgs;
     if (pkgFilter === 'ausgegeben') pkgs = groupPackages(deliveredPositions);
     else if (pkgFilter === 'open')  pkgs = openPkgs;
-    else                            pkgs = openPkgs.filter(k => has(k, pkgFilter));
+    // Bei Zu packen / Fehlt / Abholbereit nur die Stücke mit diesem Status zeigen
+    else pkgs = openPkgs.filter(k => has(k, pkgFilter)).map(k => ({
+        name: k.name,
+        total: k.positions.length,
+        positions: k.positions.filter(p => p.status === pkgFilter)
+    }));
 
     const q = (document.getElementById('pkgSearch').value || '').trim().toLowerCase();
     if (q) pkgs = pkgs.filter(k => k.name.toLowerCase().includes(q));
@@ -1988,7 +1993,9 @@ function renderPackage(pkg, idx) {
         <div class="pkg-head">
             <div>
                 <div class="pkg-name">${escHtml(pkg.name)}</div>
-                <div class="pkg-meta">${pkg.positions.length} Stück · ${escHtml(pays)}</div>
+                <div class="pkg-meta">${pkg.total && pkg.total !== pkg.positions.length
+                    ? `${pkg.positions.length} von ${pkg.total} Stück`
+                    : `${pkg.positions.length} Stück`} · ${escHtml(pays)}</div>
             </div>
             <div class="pkg-sum">${formatEuro(sum)}</div>
         </div>
