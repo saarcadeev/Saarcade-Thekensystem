@@ -134,6 +134,13 @@
             </select>
             <div class="hinweis">Wird am Beamer unten rechts etwas gewählt, gilt dort diese Wahl.</div>
           </div>
+          <div class="feld"><label for="e-qr">QR-Code oben rechts</label>
+            <select id="e-qr" name="qr_zeigen"><option value="1">Anzeigen</option><option value="0">Ausblenden</option></select>
+          </div>
+          <div class="feld"><label for="e-qr-adresse">QR-Code führt zu</label>
+            <input id="e-qr-adresse" name="qr_adresse" maxlength="200" placeholder="leer lassen = automatisch">
+            <div class="hinweis">Leer lassen: Der QR-Code nimmt automatisch die aktuelle WLAN-Adresse des Notebooks<span id="e-qr-auto"></span>. Nur ausfüllen, wenn es später eine feste Internet-Adresse gibt.</div>
+          </div>
         </div>
         <button class="haupt" type="submit">Speichern</button>
       </form>
@@ -402,12 +409,13 @@ $('scores-tabelle').addEventListener('click', async ev => {
 async function einstellungenLaden() {
   const e = await HS.api('einstellungen');
   for (const el of $('einst-form').elements) if (el.name && e[el.name] !== undefined) el.value = e[el.name];
+  $('e-qr-auto').textContent = !e.qr_adresse && e.eingabe_adresse ? ` (gerade: ${e.eingabe_adresse})` : '';
 }
 $('einst-form').addEventListener('submit', async ev => {
   ev.preventDefault();
   const daten = {};
   for (const el of $('einst-form').elements) if (el.name) daten[el.name] = el.value;
-  try { await HS.api('einstellungen', { methode: 'PUT', daten, admin: true }); HS.meldung('Gespeichert – der Beamer übernimmt es in ein paar Sekunden.'); }
+  try { await HS.api('einstellungen', { methode: 'PUT', daten, admin: true }); await einstellungenLaden(); HS.meldung('Gespeichert – der Beamer übernimmt es in ein paar Sekunden.'); }
   catch (e) { HS.meldung(e.message, 'fehler'); }
 });
 $('pw-form').addEventListener('submit', async ev => {

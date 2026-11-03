@@ -44,6 +44,8 @@ STANDARD_EINSTELLUNGEN = {
     'liste': 'wechselnd',         # Standard am Beamer: wechselnd | monat | jahr | ewig
     'detail_sekunden': '10',      # Detailanzeige schließt sich danach
     'hinweis': '',                # freier Text oben rechts am Beamer
+    'qr_zeigen': '1',             # QR-Code zur Eingabe oben rechts am Beamer
+    'qr_adresse': '',             # leer = aktuelle WLAN-Adresse des Notebooks automatisch
 }
 LISTEN = ('wechselnd', 'monat', 'jahr', 'ewig')
 
@@ -166,20 +168,33 @@ def passwort_hash(passwort, salz=None):
 
 
 def lokale_adressen():
-    adressen = set()
+    # die Adresse im aktuellen WLAN zuerst, danach weitere Netzwerkkarten
+    haupt = None
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(('10.255.255.255', 1))       # es wird nichts gesendet
-        adressen.add(s.getsockname()[0])
+        haupt = s.getsockname()[0]
         s.close()
     except OSError:
         pass
+    weitere = set()
     try:
         for a in socket.gethostbyname_ex(socket.gethostname())[2]:
-            adressen.add(a)
+            weitere.add(a)
     except OSError:
         pass
-    return sorted(a for a in adressen if not a.startswith('127.'))
+    adressen = [haupt] if haupt else []
+    adressen += sorted(weitere - set(adressen))
+    return [a for a in adressen if not a.startswith('127.')]
+
+
+def eingabe_adresse(con, port):
+    # Ziel des QR-Codes am Beamer: feste Adresse aus den Einstellungen, sonst die aktuelle WLAN-Adresse
+    fest = einstellung(con, 'qr_adresse', '')
+    if fest:
+        return fest
+    adressen = lokale_adressen()
+    return f'http://{adressen[0]}:{port}/eingabe' if adressen else ''
 
 
 # ---------------------------------------------------------------- Datenbank
@@ -354,7 +369,9 @@ def api_routen(con, methode, teile, q, d, handler):
         return board(con, q.get('liste', 'ewig'))
 
     if route == ('GET', 'einstellungen'):
-        return {k: einstellung(con, k, v) for k, v in STANDARD_EINSTELLUNGEN.items()}
+        e = {k: einstellung(con, k, v) for k, v in STANDARD_EINSTELLUNGEN.items()}
+        e['eingabe_adresse'] = eingabe_adresse(con, handler.server.server_address[1])
+        return e
 
     if route == ('GET', 'flipper') and not t[1]:
         rows = con.execute("""SELECT m.id, m.name, m.active, COUNT(s.id) AS anzahl
@@ -476,6 +493,12 @@ def api_routen(con, methode, teile, q, d, handler):
                 raise Fehler(400, 'Ungültige Liste.')
             elif k in ('titel', 'hinweis'):
                 v = v[:80]
+            elif k == 'qr_zeigen':
+                v = '1' if v in ('1', 'true', 'True') else '0'
+            elif k == 'qr_adresse':
+                v = v[:200]
+                if v and not v.startswith(('http://', 'https://')):
+                    raise Fehler(400, 'Die QR-Adresse muss mit http:// oder https:// beginnen.')
             neu[k] = v
         with SCHREIBSPERRE:
             for k, v in neu.items():

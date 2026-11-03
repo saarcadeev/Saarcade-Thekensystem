@@ -63,7 +63,10 @@ Gibt es einen Flipper doppelt (z. B. zwei „Star Wars“), bitte unterscheiden:
 - Neue Einträge erscheinen nach spätestens 10 Sekunden. 24 Stunden lang steht „NEU“ daneben.
 
 **Handy**
-- Im Museums-WLAN die Adresse aufrufen, die im schwarzen Server-Fenster steht, z. B.
+- Am einfachsten: den **QR-Code oben rechts am Beamer** scannen. Er nimmt automatisch die
+  aktuelle WLAN-Adresse des Notebooks – ändert sich die IP, passt sich der QR-Code beim nächsten
+  Start von selbst an. Ausblenden oder feste Adresse: Verwaltung → Einstellungen.
+- Oder im Museums-WLAN die Adresse aufrufen, die im schwarzen Server-Fenster steht, z. B.
   `http://192.168.178.23:8080/eingabe` (steht auch in der Verwaltung unter „Sicherung“).
 - Tipp für später: `…/eingabe?flipper=Medieval Madness` wählt den Flipper schon vor. Damit
   kann man an jedem Gerät einen QR-Code aufkleben.

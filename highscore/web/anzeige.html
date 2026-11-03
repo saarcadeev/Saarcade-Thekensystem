@@ -54,6 +54,11 @@
   #uhr { font-size: 4.4vh; font-weight: 700; font-variant-numeric: tabular-nums; }
   #hinweis { font-size: 2vh; color: var(--text2); max-width: 32vw; }
   #status { font-size: 2vh; color: #ff6b6b; font-weight: 600; }
+  #qr { display: flex; align-items: center; gap: .8vw; }
+  #qr-text { font-size: 1.8vh; line-height: 1.25; color: var(--text2); text-align: right; }
+  #qr-text b { display: block; color: var(--gelb); font-size: 2.1vh; }
+  #qr-bild { height: 10vh; width: 10vh; border-radius: .6vh; overflow: hidden; }
+  #qr-bild svg { display: block; width: 100%; height: 100%; }
 
   #modus {
     position: fixed; right: 1.2vw; bottom: 1.4vh; z-index: 8;
@@ -180,6 +185,10 @@
     <div id="hinweis"></div>
     <div id="status"></div>
   </div>
+  <div id="qr" hidden>
+    <div id="qr-text"><b>Score eintragen</b>mit dem Handy<br>(Museums-WLAN)</div>
+    <div id="qr-bild"></div>
+  </div>
 </header>
 
 <main id="fenster">
@@ -213,6 +222,7 @@
 </div>
 
 <script src="gemeinsam.js"></script>
+<script src="qrcode.js"></script>
 <script>
 const MONATE = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August',
                 'September', 'Oktober', 'November', 'Dezember'];
@@ -251,9 +261,23 @@ function listenName(l) {
   return 'Ewige Bestenliste';
 }
 
+// QR-Code zur Eingabe; Adresse kommt vom Server (aktuelle WLAN-Adresse oder fest eingestellt)
+let qrFuer = null;
+function qrAktualisieren() {
+  const ziel = einst.qr_zeigen === '0' ? '' : (einst.eingabe_adresse || '');
+  if (ziel === qrFuer) return;
+  qrFuer = ziel;
+  const box = document.getElementById('qr');
+  try {
+    document.getElementById('qr-bild').innerHTML = ziel ? QR.svg(ziel) : '';
+    box.hidden = !ziel;
+  } catch (e) { box.hidden = true; }
+}
+
 function kopfAktualisieren() {
   document.getElementById('titel').textContent = einst.titel || 'Highscores';
   document.getElementById('hinweis').textContent = einst.hinweis || '';
+  qrAktualisieren();
   document.getElementById('listen-name').textContent = listenName(aktuelleListe);
   const m = effektiverModus();
   document.getElementById('punkte-rot').innerHTML = m === 'wechselnd'
