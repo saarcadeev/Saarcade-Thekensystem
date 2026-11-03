@@ -38,7 +38,8 @@ RUECKGAENGIG_MINUTEN = 10          # so lange kann ein Eintrag an der Eingabe zu
 
 STANDARD_EINSTELLUNGEN = {
     'titel': 'Highscores',
-    'spalten': '4',               # Kacheln nebeneinander am Beamer
+    'spalten': '5',               # Kacheln nebeneinander am Beamer
+    'zeilen': '4',                # so viele Reihen passen gleichzeitig auf den Beamer
     'tempo': '35',                # Scroll-Geschwindigkeit in Bildpunkten pro Sekunde
     'pause_sekunden': '5',        # Pause oben und unten
     'liste': 'wechselnd',         # Standard am Beamer: wechselnd | monat | jahr | ewig
@@ -483,6 +484,8 @@ def api_routen(con, methode, teile, q, d, handler):
             v = str(v).strip()
             if k == 'spalten':
                 v = str(min(max(int_param(v, 'Spalten'), 2), 8))
+            elif k == 'zeilen':
+                v = str(min(max(int_param(v, 'Reihen'), 1), 8))
             elif k == 'tempo':
                 v = str(min(max(int_param(v, 'Tempo'), 5), 300))
             elif k == 'pause_sekunden':

@@ -17,7 +17,7 @@
     --blau: #009fe3;
     --silber: #d3dae3;
     --bronze: #e39a62;
-    --spalten: 4;
+    --spalten: 5;
     --fs: 28px;            /* wird per JS an die Spaltenbreite angepasst */
   }
   * { box-sizing: border-box; }
@@ -232,7 +232,7 @@ const fenster = document.getElementById('fenster');
 const band = document.getElementById('band');
 const raster = document.getElementById('raster');
 
-let einst = { spalten: 4, tempo: 35, pause_sekunden: 5, liste: 'wechselnd', detail_sekunden: 10, titel: 'Highscores', hinweis: '' };
+let einst = { spalten: 5, zeilen: 4, tempo: 35, pause_sekunden: 5, liste: 'wechselnd', detail_sekunden: 10, titel: 'Highscores', hinweis: '' };
 let modus = null;            // am Beamer gewählt (gespeichert) oder Standard aus den Einstellungen
 let aktuelleListe = 'ewig';
 let stand = -1;
@@ -285,11 +285,25 @@ function kopfAktualisieren() {
   document.querySelectorAll('#modus button').forEach(b => b.classList.toggle('an', b.dataset.l === m));
 }
 
+let kachelEm = 0;             // Höhe einer Kachel in em, einmal gemessen
 function schriftAnpassen() {
-  const spalten = Number(einst.spalten) || 4;
+  const spalten = Number(einst.spalten) || 5;
+  const zeilen = Number(einst.zeilen) || 4;
   document.documentElement.style.setProperty('--spalten', spalten);
-  const breite = (window.innerWidth * (1 - 0.032) - (spalten - 1) * window.innerWidth * 0.011) / spalten;
-  document.documentElement.style.setProperty('--fs', (breite * 0.061).toFixed(1) + 'px');
+  const w = window.innerWidth, h = window.innerHeight, abstand = w * 0.011;
+  const breite = (w * (1 - 0.032) - (spalten - 1) * abstand) / spalten;
+  if (!kachelEm) {
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:absolute;visibility:hidden;font-size:100px;width:3000px';
+    probe.innerHTML = '<div class="kachel"><div class="kname">X</div><div class="zeilen"></div></div>';
+    document.body.appendChild(probe);
+    kachelEm = probe.firstChild.offsetHeight / 100;
+    probe.remove();
+  }
+  // so groß, dass die gewünschte Anzahl Reihen ganz auf den Bildschirm passt und die Spaltenbreite reicht
+  const hoehe = (h * (0.89 - 0.022) - zeilen * abstand) / zeilen;
+  const fs = Math.min(breite * 0.061, hoehe / kachelEm);
+  document.documentElement.style.setProperty('--fs', fs.toFixed(1) + 'px');
 }
 
 function zeileHtml(s, platz) {
