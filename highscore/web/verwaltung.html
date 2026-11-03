@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Highscore-Verwaltung – Saarcade</title>
+<link rel="icon" href="logo.png">
+<link rel="stylesheet" href="basis.css">
+<style>
+  main { max-width: 1000px; margin: 0 auto; padding: 18px 16px 40px; }
+  #anmeldung { max-width: 420px; margin: 40px auto; }
+  nav { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  nav button { background: var(--flaeche); }
+  nav button.an { background: var(--magenta); border-color: var(--magenta); color: #fff; }
+  section[hidden] { display: none; }
+  .zeile { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+  .zeile > * { flex: 1 1 200px; }
+  .zeile > button { flex: 0 0 auto; }
+  td input { padding: 6px 9px; }
+  td .knoepfe { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+  .aus td { opacity: .5; }
+  .suche { margin-bottom: 12px; }
+  .raster2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  .adresse { font-family: Consolas, monospace; font-size: 1.15rem; color: var(--gelb); }
+  .klein { color: var(--text2); font-size: .85rem; }
+  .tabelle-scroll { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="kopf">
+  <img src="logo.png" alt="Saarcade">
+  <h1>Highscore-Verwaltung</h1>
+  <div class="rechts"><a href="/eingabe">Eingabe</a><a href="/anzeige" target="_blank">Anzeige</a><a href="#" id="abmelden" hidden>Abmelden</a></div>
+</div>
+
+<main>
+  <form id="anmeldung" class="karte" hidden>
+    <h2 id="anm-titel">Anmelden</h2>
+    <p id="anm-text" class="hinweis"></p>
+    <div class="feld"><label for="pw">Admin-Passwort</label><input type="password" id="pw" autocomplete="current-password"></div>
+    <div class="feld" id="pw2-feld" hidden><label for="pw2">Passwort wiederholen</label><input type="password" id="pw2" autocomplete="new-password"></div>
+    <button class="haupt" type="submit">Weiter</button>
+  </form>
+
+  <div id="bereich" hidden>
+    <nav>
+      <button data-t="flipper" class="an">Flipper</button>
+      <button data-t="spieler">Spieler</button>
+      <button data-t="zusammen">Zusammenführen</button>
+      <button data-t="scores">Scores</button>
+      <button data-t="einstellungen">Einstellungen</button>
+      <button data-t="sicherung">Sicherung</button>
+    </nav>
+
+    <!-- Flipper -->
+    <section id="t-flipper">
+      <div class="karte">
+        <h3>Flipper anlegen</h3>
+        <p class="hinweis">Einen oder mehrere Flipper eintragen – <b>eine Zeile pro Flipper</b>. Schon vorhandene werden übersprungen.</p>
+        <textarea id="neue-flipper" placeholder="Medieval Madness&#10;Attack from Mars&#10;The Addams Family"></textarea>
+        <div style="margin-top:10px"><button class="haupt" id="flipper-anlegen">Anlegen</button></div>
+      </div>
+      <div class="karte">
+        <h3>Alle Flipper <span id="flipper-zahl" class="klein"></span></h3>
+        <p class="hinweis">Deaktivierte Flipper (z. B. verkauft oder in Reparatur) erscheinen nicht am Beamer, ihre Scores bleiben erhalten.</p>
+        <input class="suche" id="flipper-suche" placeholder="Suchen …">
+        <div class="tabelle-scroll"><table id="flipper-tabelle"></table></div>
+      </div>
+    </section>
+
+    <!-- Spieler -->
+    <section id="t-spieler" hidden>
+      <div class="karte">
+        <h3>Alle Spieler <span id="spieler-zahl" class="klein"></span></h3>
+        <p class="hinweis">Neue Spieler entstehen automatisch beim Eintragen. Doppelte bitte über „Zusammenführen“ bereinigen.</p>
+        <input class="suche" id="spieler-suche" placeholder="Suchen …">
+        <div class="tabelle-scroll"><table id="spieler-tabelle"></table></div>
+      </div>
+    </section>
+
+    <!-- Zusammenführen -->
+    <section id="t-zusammen" hidden>
+      <div class="karte">
+        <h3>Doppelte zusammenführen</h3>
+        <p class="hinweis">Alle Scores vom doppelten Eintrag werden auf den richtigen übertragen, danach wird der doppelte gelöscht.</p>
+        <div class="feld">
+          <label>Was?</label>
+          <select id="z-art"><option value="spieler">Spieler</option><option value="flipper">Flipper</option></select>
+        </div>
+        <div class="raster2">
+          <div class="feld"><label for="z-von">Doppelter Eintrag (wird entfernt)</label><select id="z-von"></select></div>
+          <div class="feld"><label for="z-nach">Richtiger Eintrag (bleibt)</label><select id="z-nach"></select></div>
+        </div>
+        <div id="z-vorschau" class="hinweis" style="margin-bottom:12px"></div>
+        <button class="haupt" id="z-los">Zusammenführen</button>
+      </div>
+      <div class="karte">
+        <h3>Mögliche Doppelte</h3>
+        <p class="hinweis">Namen, die sich sehr ähnlich sind. Antippen übernimmt sie oben.</p>
+        <div id="z-vorschlaege"></div>
+      </div>
+    </section>
+
+    <!-- Scores -->
+    <section id="t-scores" hidden>
+      <div class="karte">
+        <h3>Scores bearbeiten</h3>
+        <div class="raster2" style="margin-bottom:12px">
+          <div><label for="s-flipper">Flipper</label><select id="s-flipper"></select></div>
+          <div><label for="s-spieler">Spieler</label><select id="s-spieler"></select></div>
+        </div>
+        <p class="hinweis">Zeigt die zuletzt eingetragenen Scores (max. 300). Punkte und Datum lassen sich direkt ändern.</p>
+        <div class="tabelle-scroll"><table id="scores-tabelle"></table></div>
+      </div>
+    </section>
+
+    <!-- Einstellungen -->
+    <section id="t-einstellungen" hidden>
+      <form class="karte" id="einst-form">
+        <h3>Beamer-Anzeige</h3>
+        <div class="raster2">
+          <div class="feld"><label for="e-titel">Überschrift</label><input id="e-titel" name="titel" maxlength="80"></div>
+          <div class="feld"><label for="e-hinweis">Hinweis oben rechts</label><input id="e-hinweis" name="hinweis" maxlength="80" placeholder="z. B. Highscore eintragen an der Theke"></div>
+          <div class="feld"><label for="e-spalten">Flipper nebeneinander</label><input id="e-spalten" name="spalten" type="number" min="2" max="8"></div>
+          <div class="feld"><label for="e-tempo">Scroll-Tempo (Bildpunkte/Sek.)</label><input id="e-tempo" name="tempo" type="number" min="5" max="300"><div class="hinweis">Standard 35</div></div>
+          <div class="feld"><label for="e-pause">Pause oben/unten (Sek.)</label><input id="e-pause" name="pause_sekunden" type="number" min="0" max="120"></div>
+          <div class="feld"><label for="e-detail">Detailanzeige schließt nach (Sek.)</label><input id="e-detail" name="detail_sekunden" type="number" min="3" max="300"></div>
+          <div class="feld"><label for="e-liste">Standard-Liste</label>
+            <select id="e-liste" name="liste">
+              <option value="wechselnd">Wechselnd (Ewig → Jahr → Monat)</option>
+              <option value="monat">Nur Monat</option>
+              <option value="jahr">Nur Jahr</option>
+              <option value="ewig">Nur Ewig</option>
+            </select>
+            <div class="hinweis">Wird am Beamer unten rechts etwas gewählt, gilt dort diese Wahl.</div>
+          </div>
+        </div>
+        <button class="haupt" type="submit">Speichern</button>
+      </form>
+      <form class="karte" id="pw-form">
+        <h3>Admin-Passwort ändern</h3>
+        <div class="raster2">
+          <div class="feld"><label for="pw-neu">Neues Passwort</label><input type="password" id="pw-neu" autocomplete="new-password"></div>
+          <div class="feld"><label for="pw-neu2">Wiederholen</label><input type="password" id="pw-neu2" autocomplete="new-password"></div>
+        </div>
+        <button type="submit">Passwort ändern</button>
+      </form>
+    </section>
+
+    <!-- Sicherung -->
+    <section id="t-sicherung" hidden>
+      <div class="karte">
+        <h3>Adresse für Handys im WLAN</h3>
+        <div id="netz"></div>
+        <p class="hinweis">Handy und Notebook müssen im selben WLAN sein. Beim ersten Start fragt Windows, ob Python ins Netzwerk darf – „Private Netzwerke“ erlauben.</p>
+      </div>
+      <div class="karte">
+        <h3>Sicherung</h3>
+        <p class="hinweis">Der Server legt jeden Tag automatisch eine Sicherung im Ordner <code>highscore\daten\sicherungen</code> an (die letzten 60 Tage). Zusätzlich hier herunterladen, z. B. auf einen USB-Stick:</p>
+        <div class="zeile">
+          <button class="haupt" id="sicherung-laden">Datenbank herunterladen (.db)</button>
+          <button id="export-laden">Alle Scores als Excel-Liste (.csv)</button>
+        </div>
+        <p class="hinweis" id="db-pfad"></p>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="gemeinsam.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+let flipperListe = [], spielerListe = [];
+
+// ---------- Anmeldung
+let ersteinrichtung = false;
+async function anmeldungPruefen() {
+  const st = await HS.api('admin/status');
+  ersteinrichtung = !st.passwort_gesetzt;
+  if (!ersteinrichtung && sessionStorage.getItem('hsAdmin')) {
+    try { await HS.api('admin/login', { methode: 'POST', daten: {}, admin: true }); return freischalten(); }
+    catch (e) { sessionStorage.removeItem('hsAdmin'); }
+  }
+  $('anmeldung').hidden = false;
+  $('anm-titel').textContent = ersteinrichtung ? 'Admin-Passwort festlegen' : 'Anmelden';
+  $('anm-text').textContent = ersteinrichtung ? 'Erster Start: Bitte jetzt ein Passwort für die Verwaltung festlegen (mind. 4 Zeichen).' : '';
+  $('pw2-feld').hidden = !ersteinrichtung;
+  $('pw').focus();
+}
+$('anmeldung').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const pw = $('pw').value;
+  try {
+    if (ersteinrichtung) {
+      if (pw !== $('pw2').value) throw new Error('Die Passwörter stimmen nicht überein.');
+      await HS.api('admin/passwort', { methode: 'POST', daten: { neu: pw } });
+    }
+    sessionStorage.setItem('hsAdmin', pw);
+    await HS.api('admin/login', { methode: 'POST', daten: {}, admin: true });
+    freischalten();
+  } catch (e) { sessionStorage.removeItem('hsAdmin'); HS.meldung(e.message, 'fehler'); }
+});
+$('abmelden').onclick = ev => { ev.preventDefault(); sessionStorage.removeItem('hsAdmin'); location.reload(); };
+
+async function freischalten() {
+  $('anmeldung').hidden = true;
+  $('bereich').hidden = false;
+  $('abmelden').hidden = false;
+  await allesLaden();
+}
+
+// ---------- Reiter
+document.querySelector('nav').addEventListener('click', ev => {
+  const b = ev.target.closest('button');
+  if (!b) return;
+  document.querySelectorAll('nav button').forEach(x => x.classList.toggle('an', x === b));
+  document.querySelectorAll('main section').forEach(s => { s.hidden = s.id !== 't-' + b.dataset.t; });
+  if (b.dataset.t === 'scores') scoresLaden();
+  if (b.dataset.t === 'einstellungen') einstellungenLaden();
+  if (b.dataset.t === 'sicherung') netzLaden();
+  if (b.dataset.t === 'zusammen') zusammenFuellen();
+});
+
+async function allesLaden() {
+  [flipperListe, spielerListe] = await Promise.all([HS.api('flipper'), HS.api('spieler')]);
+  flipperZeichnen(); spielerZeichnen(); zusammenFuellen(); filterFuellen();
+}
+
+async function aktion(fn, erfolg) {
+  try { await fn(); if (erfolg) HS.meldung(erfolg); await allesLaden(); return true; }
+  catch (e) { HS.meldung(e.message, 'fehler'); return false; }
+}
+
+// ---------- Flipper
+$('flipper-anlegen').onclick = () => {
+  const namen = $('neue-flipper').value.split('\n').map(s => s.trim()).filter(Boolean);
+  if (!namen.length) return;
+  aktion(async () => {
+    const r = await HS.api('admin/flipper', { methode: 'POST', daten: { namen }, admin: true });
+    HS.meldung(`${r.angelegt.length} angelegt` + (r.vorhanden.length ? `, ${r.vorhanden.length} gab es schon` : ''));
+    $('neue-flipper').value = '';
+  });
+};
+$('flipper-suche').oninput = flipperZeichnen;
+
+function flipperZeichnen() {
+  const k = HS.schluessel($('flipper-suche').value);
+  const liste = flipperListe.filter(f => !k || HS.schluessel(f.name).includes(k));
+  $('flipper-zahl').textContent = `(${flipperListe.length}, davon ${flipperListe.filter(f => f.active).length} aktiv)`;
+  $('flipper-tabelle').innerHTML = '<tr><th>Name</th><th class="zahl">Scores</th><th>Am Beamer</th><th></th></tr>'
+    + liste.map(f => `<tr class="${f.active ? '' : 'aus'}" data-id="${f.id}">
+      <td><input value="${HS.esc(f.name)}" data-alt="${HS.esc(f.name)}"></td>
+      <td class="zahl">${f.anzahl}</td>
+      <td><label style="margin:0;display:flex;gap:6px;align-items:center"><input type="checkbox" style="width:auto" ${f.active ? 'checked' : ''}> aktiv</label></td>
+      <td><div class="knoepfe">${f.anzahl ? '' : '<button class="gefahr klein" data-loeschen>Löschen</button>'}</div></td></tr>`).join('');
+}
+$('flipper-tabelle').addEventListener('change', ev => {
+  const tr = ev.target.closest('tr[data-id]');
+  if (!tr) return;
+  const id = tr.dataset.id;
+  if (ev.target.type === 'checkbox') {
+    aktion(() => HS.api('admin/flipper/' + id, { methode: 'PUT', daten: { active: ev.target.checked }, admin: true }), 'Gespeichert');
+  } else if (ev.target.value.trim() && ev.target.value.trim() !== ev.target.dataset.alt) {
+    aktion(() => HS.api('admin/flipper/' + id, { methode: 'PUT', daten: { name: ev.target.value }, admin: true }), 'Umbenannt');
+  }
+});
+$('flipper-tabelle').addEventListener('click', async ev => {
+  if (!ev.target.matches('[data-loeschen]')) return;
+  const tr = ev.target.closest('tr');
+  const name = tr.querySelector('input').dataset.alt;
+  if (await HS.dialog('Flipper löschen?', `„${HS.esc(name)}“ wird gelöscht.`, [{ text: 'Abbrechen', wert: false }, { text: 'Löschen', wert: true, klasse: 'haupt' }]))
+    aktion(() => HS.api('admin/flipper/' + tr.dataset.id, { methode: 'DELETE', admin: true }), 'Gelöscht');
+});
+
+// ---------- Spieler
+$('spieler-suche').oninput = spielerZeichnen;
+function spielerZeichnen() {
+  const k = HS.schluessel($('spieler-suche').value);
+  const liste = spielerListe.filter(p => !k || HS.schluessel(p.name).includes(k));
+  $('spieler-zahl').textContent = `(${spielerListe.length})`;
+  $('spieler-tabelle').innerHTML = '<tr><th>Name</th><th class="zahl">Scores</th><th></th></tr>'
+    + liste.map(p => `<tr data-id="${p.id}">
+      <td><input value="${HS.esc(p.name)}" data-alt="${HS.esc(p.name)}"></td>
+      <td class="zahl">${p.anzahl}</td>
+      <td><div class="knoepfe">${p.anzahl ? '' : '<button class="gefahr klein" data-loeschen>Löschen</button>'}</div></td></tr>`).join('');
+}
+$('spieler-tabelle').addEventListener('change', ev => {
+  const tr = ev.target.closest('tr[data-id]');
+  if (!tr || !ev.target.value.trim() || ev.target.value.trim() === ev.target.dataset.alt) return;
+  aktion(() => HS.api('admin/spieler/' + tr.dataset.id, { methode: 'PUT', daten: { name: ev.target.value }, admin: true }), 'Umbenannt');
+});
+$('spieler-tabelle').addEventListener('click', async ev => {
+  if (!ev.target.matches('[data-loeschen]')) return;
+  const tr = ev.target.closest('tr');
+  if (await HS.dialog('Spieler löschen?', `„${HS.esc(tr.querySelector('input').dataset.alt)}“ wird gelöscht.`, [{ text: 'Abbrechen', wert: false }, { text: 'Löschen', wert: true, klasse: 'haupt' }]))
+    aktion(() => HS.api('admin/spieler/' + tr.dataset.id, { methode: 'DELETE', admin: true }), 'Gelöscht');
+});
+
+// ---------- Zusammenführen
+function optionen(liste, leer) {
+  return `<option value="">${leer}</option>` + liste.map(e => `<option value="${e.id}">${HS.esc(e.name)} (${e.anzahl} Scores)</option>`).join('');
+}
+function zusammenFuellen() {
+  const liste = $('z-art').value === 'flipper' ? flipperListe : spielerListe;
+  const von = $('z-von').value, nach = $('z-nach').value;
+  $('z-von').innerHTML = optionen(liste, '– auswählen –');
+  $('z-nach').innerHTML = optionen(liste, '– auswählen –');
+  $('z-von').value = liste.some(e => String(e.id) === von) ? von : '';
+  $('z-nach').value = liste.some(e => String(e.id) === nach) ? nach : '';
+  vorschau();
+  // ähnliche Namenspaare suchen
+  const paare = [];
+  for (let i = 0; i < liste.length; i++) {
+    for (let j = i + 1; j < liste.length; j++) {
+      const a = HS.schluessel(liste[i].name), b = HS.schluessel(liste[j].name);
+      const grenze = Math.max(1, Math.floor(Math.min(a.length, b.length) / 5));
+      if (Math.abs(a.length - b.length) <= grenze && HS.abstand(a, b) <= grenze) paare.push([liste[i], liste[j]]);
+      if (paare.length >= 40) break;
+    }
+  }
+  $('z-vorschlaege').innerHTML = paare.length
+    ? paare.map(([a, b]) => `<button class="klein" style="margin:0 6px 6px 0" data-a="${a.id}" data-b="${b.id}">${HS.esc(a.name)} ⇄ ${HS.esc(b.name)}</button>`).join('')
+    : '<span class="klein">Keine auffälligen Doppelten gefunden.</span>';
+}
+$('z-art').onchange = () => { $('z-von').value = ''; $('z-nach').value = ''; zusammenFuellen(); };
+$('z-von').onchange = $('z-nach').onchange = vorschau;
+$('z-vorschlaege').addEventListener('click', ev => {
+  const b = ev.target.closest('button');
+  if (!b) return;
+  const liste = $('z-art').value === 'flipper' ? flipperListe : spielerListe;
+  const a = liste.find(e => e.id == b.dataset.a), c = liste.find(e => e.id == b.dataset.b);
+  // weniger Scores = vermutlich der doppelte
+  const [von, nach] = a.anzahl <= c.anzahl ? [a, c] : [c, a];
+  $('z-von').value = von.id; $('z-nach').value = nach.id;
+  vorschau();
+});
+function vorschau() {
+  const liste = $('z-art').value === 'flipper' ? flipperListe : spielerListe;
+  const von = liste.find(e => e.id == $('z-von').value), nach = liste.find(e => e.id == $('z-nach').value);
+  $('z-vorschau').innerHTML = von && nach && von !== nach
+    ? `${von.anzahl} Scores von <b>„${HS.esc(von.name)}“</b> gehen an <b>„${HS.esc(nach.name)}“</b>. „${HS.esc(von.name)}“ wird danach gelöscht.`
+    : '';
+}
+$('z-los').onclick = async () => {
+  const art = $('z-art').value, von = $('z-von').value, nach = $('z-nach').value;
+  if (!von || !nach || von === nach) { HS.meldung('Bitte zwei verschiedene Einträge auswählen.', 'fehler'); return; }
+  if (!await HS.dialog('Wirklich zusammenführen?', $('z-vorschau').innerHTML + '<br><br>Das lässt sich nicht rückgängig machen.',
+    [{ text: 'Abbrechen', wert: false }, { text: 'Zusammenführen', wert: true, klasse: 'haupt' }])) return;
+  if (await aktion(() => HS.api('admin/zusammenfuehren', { methode: 'POST', daten: { art, von, nach }, admin: true }), 'Zusammengeführt')) {
+    $('z-von').value = ''; $('z-nach').value = ''; zusammenFuellen();
+  }
+};
+
+// ---------- Scores
+function filterFuellen() {
+  const f = $('s-flipper').value, s = $('s-spieler').value;
+  $('s-flipper').innerHTML = optionen(flipperListe, 'Alle Flipper');
+  $('s-spieler').innerHTML = optionen(spielerListe, 'Alle Spieler');
+  $('s-flipper').value = f; $('s-spieler').value = s;
+}
+$('s-flipper').onchange = $('s-spieler').onchange = scoresLaden;
+async function scoresLaden() {
+  const q = new URLSearchParams();
+  if ($('s-flipper').value) q.set('flipper_id', $('s-flipper').value);
+  if ($('s-spieler').value) q.set('spieler_id', $('s-spieler').value);
+  let liste = [];
+  try { liste = await HS.api('admin/scores?' + q, { admin: true }); } catch (e) { HS.meldung(e.message, 'fehler'); }
+  $('scores-tabelle').innerHTML = '<tr><th>Flipper</th><th>Spieler</th><th class="zahl">Punkte</th><th>Gespielt am</th><th></th></tr>'
+    + liste.map(s => `<tr data-id="${s.id}">
+      <td>${HS.esc(s.flipper)}</td><td>${HS.esc(s.spieler)}</td>
+      <td><input class="zahl" style="text-align:right;min-width:150px" value="${HS.zahl(s.score)}" data-feld="score" data-alt="${s.score}"></td>
+      <td><input type="date" value="${s.datum.slice(0, 10)}" data-feld="datum" data-alt="${s.datum.slice(0, 10)}"></td>
+      <td><div class="knoepfe"><button class="gefahr klein" data-loeschen>Löschen</button></div></td></tr>`).join('')
+    + (liste.length ? '' : '<tr><td colspan="5" class="klein">Keine Scores.</td></tr>');
+}
+$('scores-tabelle').addEventListener('change', async ev => {
+  const tr = ev.target.closest('tr[data-id]');
+  if (!tr || !ev.target.dataset.feld) return;
+  const feld = ev.target.dataset.feld;
+  let wert = ev.target.value;
+  if (feld === 'score') wert = wert.replace(/\D/g, '');
+  if (!wert || wert === ev.target.dataset.alt) return;
+  try {
+    await HS.api('admin/scores/' + tr.dataset.id, { methode: 'PUT', daten: { [feld]: wert }, admin: true });
+    HS.meldung('Gespeichert');
+    scoresLaden();
+  } catch (e) { HS.meldung(e.message, 'fehler'); }
+});
+$('scores-tabelle').addEventListener('click', async ev => {
+  if (!ev.target.matches('[data-loeschen]')) return;
+  const tr = ev.target.closest('tr');
+  const text = [...tr.children].slice(0, 2).map(td => td.textContent).join(' · ') + ' · ' + tr.querySelector('input').value;
+  if (!await HS.dialog('Score löschen?', HS.esc(text), [{ text: 'Abbrechen', wert: false }, { text: 'Löschen', wert: true, klasse: 'haupt' }])) return;
+  try {
+    await HS.api('admin/scores/' + tr.dataset.id, { methode: 'DELETE', admin: true });
+    HS.meldung('Gelöscht');
+    scoresLaden(); allesLaden();
+  } catch (e) { HS.meldung(e.message, 'fehler'); }
+});
+
+// ---------- Einstellungen
+async function einstellungenLaden() {
+  const e = await HS.api('einstellungen');
+  for (const el of $('einst-form').elements) if (el.name && e[el.name] !== undefined) el.value = e[el.name];
+}
+$('einst-form').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const daten = {};
+  for (const el of $('einst-form').elements) if (el.name) daten[el.name] = el.value;
+  try { await HS.api('einstellungen', { methode: 'PUT', daten, admin: true }); HS.meldung('Gespeichert – der Beamer übernimmt es in ein paar Sekunden.'); }
+  catch (e) { HS.meldung(e.message, 'fehler'); }
+});
+$('pw-form').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const neu = $('pw-neu').value;
+  if (neu !== $('pw-neu2').value) { HS.meldung('Die Passwörter stimmen nicht überein.', 'fehler'); return; }
+  try {
+    await HS.api('admin/passwort', { methode: 'POST', daten: { neu }, admin: true });
+    sessionStorage.setItem('hsAdmin', neu);
+    $('pw-neu').value = $('pw-neu2').value = '';
+    HS.meldung('Passwort geändert');
+  } catch (e) { HS.meldung(e.message, 'fehler'); }
+});
+
+// ---------- Netzwerk und Sicherung
+async function netzLaden() {
+  try {
+    const n = await HS.api('admin/netzwerk', { admin: true });
+    $('netz').innerHTML = n.adressen.length
+      ? n.adressen.map(a => `<div class="adresse">http://${a}:${n.port}/eingabe</div>`).join('')
+      : '<span class="klein">Keine Netzwerkverbindung gefunden.</span>';
+    $('db-pfad').textContent = 'Datenbank-Datei: ' + n.datenbank;
+  } catch (e) { HS.meldung(e.message, 'fehler'); }
+}
+async function herunterladen(pfad) {
+  try {
+    const antwort = await HS.api(pfad, { admin: true, roh: true });
+    const name = (antwort.headers.get('Content-Disposition') || '').match(/filename="(.+)"/)?.[1] || 'download';
+    const url = URL.createObjectURL(await antwort.blob());
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  } catch (e) { HS.meldung(e.message, 'fehler'); }
+}
+$('sicherung-laden').onclick = () => herunterladen('admin/sicherung');
+$('export-laden').onclick = () => herunterladen('admin/export');
+
+anmeldungPruefen().catch(e => HS.meldung('Keine Verbindung zum Highscore-Server.', 'fehler'));
+</script>
+</body>
+</html>

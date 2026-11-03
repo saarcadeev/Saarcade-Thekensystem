@@ -25,6 +25,13 @@ Buchungen, z. B. in der Getränke-Abrechnung. Prüfen: Anzahl Zeilen in `transac
 im Supabase-Dashboard. Die Kasse nutzt seit dem 30.09.2026 bereits
 `?user_id=...` (Server lädt seitenweise, ohne Grenze).
 
+## Highscores ins Internet (notiert am 02.11.2026)
+
+`highscore/` läuft im Museums-WLAN, die Eingabe ist ohne Login. Bevor es öffentlich
+erreichbar wird: HTTPS (z. B. hinter einem Reverse-Proxy) und eine Eingabe-PIN ergänzen.
+Das Admin-Passwort wird bei jeder Anfrage im Header mitgeschickt – über HTTP im WLAN ok,
+im Internet nur mit HTTPS. Idee: QR-Codes an den Geräten (`/eingabe?flipper=<Name>`).
+
 ## Admin-Bereich im Saarcade-Design (notiert am 30.09.2026)
 
 Die Kasse hat die Logo-Farben (Magenta/Cyan/Gelb, dunkler Hintergrund). Admin-Bereich

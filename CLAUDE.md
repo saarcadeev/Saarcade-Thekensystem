@@ -24,6 +24,11 @@ Jochen ist kein Entwickler: Schritte für GitHub Desktop/Supabase konkret erklä
   - `kleidung-verwaltung.html` – nur noch Weiterleitung auf `admin-kleidung.html` (alte Lesezeichen).
   - `barkasse-beleg.js` – gemeinsamer Druckbeleg (Kasse + Admin).
 - `sql/` – SQL-Dateien, die Jochen im Supabase **SQL Editor** ausführt.
+- `highscore/` – **eigenständiges** Highscore-System (seit 02.11.2026), **ohne Supabase/Vercel**:
+  `server.py` (nur Python-Standardbibliothek + SQLite, Port 8080), Seiten in `highscore/web/`
+  (`anzeige.html` Beamer, `eingabe.html`, `verwaltung.html`). Läuft auf dem Notebook im Museum,
+  Daten in `highscore/daten/` (gitignored). Details: `highscore/ANLEITUNG.md`. Lokal testen:
+  `py highscore/server.py --port 8090 --db <Testdatei>` (Testdatenbank nie in `highscore/daten`).
 
 ## Arbeitsweise
 

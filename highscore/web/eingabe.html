@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Highscore eintragen – Saarcade</title>
+<link rel="icon" href="logo.png">
+<link rel="stylesheet" href="basis.css">
+<style>
+  main { max-width: 620px; margin: 0 auto; padding: 18px 16px 40px; }
+  #punkte { font-size: 1.6rem; font-weight: 700; letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+  #speichern { width: 100%; font-size: 1.25rem; padding: 15px; margin-top: 4px; }
+  .bisher { margin-top: 8px; font-size: .92rem; color: var(--text2); }
+  .bisher b { color: var(--text); }
+  #datum-umschalten { background: none; border: 0; color: var(--blau); padding: 0; font-weight: 400; font-size: .92rem; }
+  #erfolg { border-color: var(--gruen); }
+  #erfolg h2 { color: var(--gruen); font-size: 1.3rem; }
+  .plaetze { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
+  .plaetze div {
+    flex: 1 1 140px; text-align: center;
+    background: var(--flaeche2); border-radius: 10px; padding: 10px 8px;
+  }
+  .plaetze b { display: block; font-size: 1.7rem; color: var(--gelb); }
+  .plaetze .top b { color: var(--magenta); }
+  .plaetze small { color: var(--text2); }
+  .erfolg-knoepfe { display: flex; gap: 10px; flex-wrap: wrap; }
+  #neueste td { font-size: .92rem; }
+  #neueste .klein { color: var(--text2); font-size: .8rem; }
+  @media (max-width: 480px) {
+    .kopf img { height: 40px; }
+    .kopf h1 { font-size: 1.1rem; }
+    .karte { padding: 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="kopf">
+  <img src="logo.png" alt="Saarcade">
+  <h1>Highscore eintragen</h1>
+  <div class="rechts"><a href="/anzeige" target="_blank">Anzeige</a><a href="/verwaltung">Verwaltung</a></div>
+</div>
+
+<main>
+  <div id="erfolg" class="karte" hidden></div>
+
+  <form id="formular" class="karte" autocomplete="off">
+    <div class="feld">
+      <label for="flipper-eingabe">Flipper</label>
+      <div id="flipper-feld"><input id="flipper-eingabe" placeholder="Mindestens 2 Buchstaben tippen …" enterkeyhint="next"></div>
+      <div id="flipper-chip" hidden></div>
+      <div id="bisher" class="bisher"></div>
+    </div>
+
+    <div class="feld">
+      <label for="spieler-eingabe">Spieler</label>
+      <div id="spieler-feld"><input id="spieler-eingabe" placeholder="Name oder Kürzel …" enterkeyhint="next"></div>
+      <div id="spieler-chip" hidden></div>
+    </div>
+
+    <div class="feld">
+      <label for="punkte">Punkte</label>
+      <input id="punkte" inputmode="numeric" placeholder="0" enterkeyhint="done">
+    </div>
+
+    <div class="feld">
+      <button type="button" id="datum-umschalten">Gespielt: heute · anderes Datum wählen</button>
+      <input type="date" id="datum" hidden>
+    </div>
+
+    <button type="submit" class="haupt" id="speichern">Speichern</button>
+  </form>
+
+  <div class="karte">
+    <h3>Zuletzt eingetragen</h3>
+    <table id="neueste"><tbody><tr><td>…</td></tr></tbody></table>
+  </div>
+</main>
+
+<script src="gemeinsam.js"></script>
+<script>
+let flipperListe = [], spielerListe = [];
+let flipper = null;   // {id, name} oder {neu: true, name}
+let spieler = null;
+let letzterEintrag = null;
+
+const $ = id => document.getElementById(id);
+
+async function listenLaden() {
+  [flipperListe, spielerListe] = await Promise.all([HS.api('flipper'), HS.api('spieler')]);
+  flipperListe = flipperListe.filter(f => f.active);
+}
+
+function chipZeigen(art) {
+  const wert = art === 'flipper' ? flipper : spieler;
+  const chip = $(art + '-chip'), feld = $(art + '-feld');
+  if (!wert) {
+    chip.hidden = true; feld.hidden = false;
+    $(art + '-eingabe').value = '';
+    if (art === 'flipper') $('bisher').innerHTML = '';
+    return;
+  }
+  chip.innerHTML = `<div class="chip">${HS.esc(wert.name)}${wert.neu ? '<span class="neu-marke">NEU</span>' : ''}`
+    + `<button type="button" class="klein">ändern</button></div>`;
+  chip.querySelector('button').onclick = () => {
+    if (art === 'flipper') flipper = null; else spieler = null;
+    chipZeigen(art);
+    $(art + '-eingabe').focus();
+  };
+  chip.hidden = false; feld.hidden = true;
+}
+
+async function bisherZeigen() {
+  const el = $('bisher');
+  if (!flipper || flipper.neu) { el.innerHTML = flipper ? 'Neuer Flipper – noch keine Scores.' : ''; return; }
+  try {
+    const d = await HS.api(`flipper/${flipper.id}/scores`);
+    flipper.rekord = d.scores.length ? d.scores[0].score : 0;
+    el.innerHTML = d.scores.length
+      ? 'Bisher: ' + d.scores.slice(0, 3).map((s, i) => `${i + 1}. <b>${HS.zahl(s.score)}</b> ${HS.esc(s.spieler)}`).join(' · ')
+      : 'Noch keine Scores – das wird der erste!';
+  } catch (e) { el.innerHTML = ''; }
+}
+
+async function neuPruefen(art, name, liste) {
+  const aehnlich = HS.aehnliche(name, liste);
+  if (!aehnlich.length) return { neu: true, name };
+  const knoepfe = aehnlich.map(e => ({ text: e.name, wert: e, klasse: 'haupt' }));
+  knoepfe.push({ text: `„${name}“ neu anlegen`, wert: { neu: true, name } });
+  knoepfe.push({ text: 'Abbrechen', wert: null });
+  return HS.dialog(`Gibt es ${art === 'flipper' ? 'den Flipper' : 'den Spieler'} schon?`,
+    'Es gibt schon ähnliche Namen. Bitte den richtigen antippen, damit keine doppelten Einträge entstehen:', knoepfe);
+}
+
+HS.vorschlag($('flipper-eingabe'), {
+  art: 'Flipper',
+  liste: () => flipperListe,
+  aufWahl: e => { flipper = e; chipZeigen('flipper'); bisherZeigen(); weiter('flipper'); },
+  aufNeu: async name => {
+    const w = await neuPruefen('flipper', name, flipperListe);
+    if (!w) return;
+    flipper = w; chipZeigen('flipper'); bisherZeigen(); weiter('flipper');
+  },
+});
+HS.vorschlag($('spieler-eingabe'), {
+  art: 'Spieler',
+  liste: () => spielerListe,
+  aufWahl: e => { spieler = e; chipZeigen('spieler'); weiter('spieler'); },
+  aufNeu: async name => {
+    const w = await neuPruefen('spieler', name, spielerListe);
+    if (!w) return;
+    spieler = w; chipZeigen('spieler'); weiter('spieler');
+  },
+});
+
+function weiter(nach) {
+  if (nach === 'flipper' && !spieler) $('spieler-eingabe').focus();
+  else $('punkte').focus();
+}
+
+// Punkte beim Tippen mit Tausenderpunkten anzeigen
+$('punkte').addEventListener('input', ev => {
+  const ziffern = ev.target.value.replace(/\D/g, '').replace(/^0+/, '').slice(0, 16);
+  ev.target.value = ziffern ? HS.zahl(BigInt(ziffern)) : '';
+});
+
+$('datum-umschalten').onclick = () => {
+  const d = $('datum');
+  d.hidden = !d.hidden;
+  d.max = heute();
+  if (!d.value) d.value = heute();
+  $('datum-umschalten').textContent = d.hidden ? 'Gespielt: heute · anderes Datum wählen' : 'Gespielt am:';
+};
+function heute() {
+  const h = new Date();
+  return `${h.getFullYear()}-${String(h.getMonth() + 1).padStart(2, '0')}-${String(h.getDate()).padStart(2, '0')}`;
+}
+
+$('formular').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  if (!flipper) { HS.meldung('Bitte zuerst den Flipper auswählen.', 'fehler'); $('flipper-eingabe').focus(); return; }
+  if (!spieler) { HS.meldung('Bitte den Spieler auswählen.', 'fehler'); $('spieler-eingabe').focus(); return; }
+  const ziffern = $('punkte').value.replace(/\D/g, '');
+  if (!ziffern || Number(ziffern) <= 0) { HS.meldung('Bitte die Punktzahl eingeben.', 'fehler'); $('punkte').focus(); return; }
+  const score = Number(ziffern);
+
+  if (flipper.rekord && score > flipper.rekord * 5) {
+    const ok = await HS.dialog('Punktzahl prüfen',
+      `<b style="font-size:1.4rem">${HS.zahl(score)}</b><br>Das ist mehr als das Fünffache des bisherigen Rekords (${HS.zahl(flipper.rekord)}). Stimmt die Zahl?`,
+      [{ text: 'Korrigieren', wert: false }, { text: 'Ja, stimmt', wert: true, klasse: 'haupt' }]);
+    if (!ok) { $('punkte').focus(); return; }
+  }
+
+  const daten = { score: ziffern };
+  if (flipper.neu) daten.flipper_name = flipper.name; else daten.flipper_id = flipper.id;
+  if (spieler.neu) daten.spieler_name = spieler.name; else daten.spieler_id = spieler.id;
+  if (!$('datum').hidden && $('datum').value && $('datum').value !== heute()) daten.datum = $('datum').value;
+
+  $('speichern').disabled = true;
+  try {
+    const r = await HS.api('scores', { methode: 'POST', daten });
+    letzterEintrag = r;
+    erfolgZeigen(r);
+    // Flipper bleibt gewählt (oft spielen mehrere nacheinander), Spieler und Punkte leeren
+    flipper = { id: r.flipper_id, name: r.flipper };
+    spieler = null;
+    $('punkte').value = '';
+    await listenLaden();
+    chipZeigen('flipper'); chipZeigen('spieler'); bisherZeigen();
+    neuesteLaden();
+  } catch (e) {
+    HS.meldung(e.message, 'fehler');
+  } finally {
+    $('speichern').disabled = false;
+  }
+});
+
+function erfolgZeigen(r) {
+  const kachel = (titel, p) => p
+    ? `<div class="${p.platz <= 5 ? 'top' : ''}"><b>${p.platz}.</b><small>${titel} · von ${p.von}</small></div>`
+    : `<div><b>–</b><small>${titel}</small></div>`;
+  const top = ['monat', 'jahr', 'ewig'].some(l => r.plaetze[l] && r.plaetze[l].platz <= 5);
+  $('erfolg').innerHTML = `<h2>✔ Gespeichert${top ? ' – in den Top 5!' : ''}</h2>
+    <div><b>${HS.esc(r.spieler)}</b> · ${HS.esc(r.flipper)} · <b>${HS.zahl(r.score)}</b> Punkte</div>
+    <div class="plaetze">${kachel('Monat', r.plaetze.monat)}${kachel('Jahr', r.plaetze.jahr)}${kachel('Ewig', r.plaetze.ewig)}</div>
+    <div class="erfolg-knoepfe"><button type="button" class="gefahr klein" id="rueckgaengig">Rückgängig (Tippfehler)</button></div>`;
+  $('erfolg').hidden = false;
+  $('rueckgaengig').onclick = rueckgaengig;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  $('spieler-eingabe').focus({ preventScroll: true });
+}
+
+async function rueckgaengig() {
+  if (!letzterEintrag) return;
+  const r = letzterEintrag;
+  try {
+    await HS.api(`scores/${r.id}?token=${r.token}`, { methode: 'DELETE' });
+    HS.meldung('Eintrag zurückgenommen.');
+    $('erfolg').hidden = true;
+    // Eingabe wiederherstellen, damit man nur korrigieren muss
+    flipper = { id: r.flipper_id, name: r.flipper };
+    spieler = { id: r.spieler_id, name: r.spieler };
+    $('punkte').value = HS.zahl(r.score);
+    letzterEintrag = null;
+    await listenLaden();
+    chipZeigen('flipper'); chipZeigen('spieler'); bisherZeigen();
+    $('punkte').focus();
+    neuesteLaden();
+  } catch (e) { HS.meldung(e.message, 'fehler'); }
+}
+
+async function neuesteLaden() {
+  try {
+    const liste = await HS.api('neueste?limit=10');
+    $('neueste').innerHTML = '<tbody>' + (liste.map(s => `<tr><td>${HS.esc(s.flipper)}<div class="klein">${HS.esc(s.spieler)}</div></td>`
+      + `<td class="zahl"><b>${HS.zahl(s.score)}</b><div class="klein">${HS.datum(s.eingetragen)} ${s.eingetragen.slice(11, 16)}</div></td></tr>`).join('')
+      || '<tr><td>Noch nichts eingetragen.</td></tr>') + '</tbody>';
+  } catch (e) { /* egal */ }
+}
+
+(async function start() {
+  try { await listenLaden(); } catch (e) { HS.meldung('Keine Verbindung zum Highscore-Server.', 'fehler'); }
+  // ?flipper=12 oder ?flipper=Name wählt den Flipper vor (z. B. QR-Code am Gerät)
+  const vor = new URLSearchParams(location.search).get('flipper');
+  if (vor) {
+    const f = flipperListe.find(x => String(x.id) === vor || HS.schluessel(x.name) === HS.schluessel(vor));
+    if (f) { flipper = f; chipZeigen('flipper'); bisherZeigen(); }
+  }
+  (flipper ? $('spieler-eingabe') : $('flipper-eingabe')).focus();
+  neuesteLaden();
+  setInterval(neuesteLaden, 30000);
+})();
+</script>
+</body>
+</html>
