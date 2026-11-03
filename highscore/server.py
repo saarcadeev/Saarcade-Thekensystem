@@ -393,6 +393,33 @@ def api_routen(con, methode, teile, q, d, handler):
                               ORDER BY s.score DESC, s.played_at, s.id""", (mid,)).fetchall()
         return {'flipper': dict(m), 'scores': [score_zeile(r) for r in rows]}
 
+    if route == ('GET', 'spieler') and t[2] == 'scores':
+        # bestes Ergebnis des Spielers auf jedem Flipper, mit seinem Platz in der ewigen Liste
+        pid = int_param(t[1], 'Spieler')
+        p = con.execute('SELECT id, name FROM players WHERE id = ?', (pid,)).fetchone()
+        if not p:
+            raise Fehler(404, 'Spieler nicht gefunden.')
+        rows = con.execute("""
+            SELECT * FROM (
+                SELECT s.id, s.machine_id, s.player_id, s.score, s.played_at, s.created_at,
+                       m.name AS flipper,
+                       ROW_NUMBER() OVER (PARTITION BY s.machine_id
+                                          ORDER BY s.score DESC, s.played_at, s.id) AS platz
+                FROM scores s JOIN machines m ON m.id = s.machine_id
+                WHERE m.active = 1
+            ) WHERE player_id = ?
+            ORDER BY platz
+        """, (pid,)).fetchall()
+        neu_ab = (datetime.now() - timedelta(hours=24)).strftime('%Y-%m-%d %H:%M:%S')
+        beste = {}
+        for r in rows:
+            if r['machine_id'] not in beste:
+                beste[r['machine_id']] = {'flipper': r['flipper'], 'flipper_id': r['machine_id'],
+                                          'platz': r['platz'], 'score': r['score'], 'datum': r['played_at'],
+                                          'neu': r['created_at'] >= neu_ab}
+        liste = sorted(beste.values(), key=lambda b: (b['platz'], sortierschluessel(b['flipper'])))
+        return {'spieler': dict(p), 'eintraege': len(rows), 'bestwerte': liste}
+
     if route == ('GET', 'spieler'):
         rows = con.execute("""SELECT p.id, p.name, COUNT(s.id) AS anzahl
                               FROM players p LEFT JOIN scores s ON s.player_id = p.id

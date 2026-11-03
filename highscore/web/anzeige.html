@@ -89,14 +89,11 @@
   .kachel {
     background: linear-gradient(180deg, #221536 0%, var(--kachel) 40%);
     border: 1px solid var(--rand);
-    border-top: .18em solid var(--magenta);
+    border-top: .18em solid var(--blau);
     border-radius: .45em;
     padding: .45em .6em .5em;
     cursor: pointer;
   }
-  .kachel:nth-child(4n+2) { border-top-color: var(--blau); }
-  .kachel:nth-child(4n+3) { border-top-color: var(--gelb); }
-  .kachel:nth-child(4n+4) { border-top-color: #b5006e; }
   .kname {
     font-size: 1.08em; font-weight: 800;
     color: var(--gelb);
@@ -122,6 +119,7 @@
   .p3 .platz { background: var(--bronze); color: #2b1606; }
   .name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .p1 .name { font-weight: 700; }
+  .zeile[data-spieler]:hover .name { color: var(--blau); text-decoration: underline; }
   .punkte { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .p1 .punkte { color: var(--gelb); }
   .neu {
@@ -308,7 +306,7 @@ function schriftAnpassen() {
 
 function zeileHtml(s, platz) {
   if (!s) return `<div class="zeile leer p${platz}"><span class="platz">${platz}</span><span class="name">–</span><span class="punkte">–</span></div>`;
-  return `<div class="zeile p${platz}"><span class="platz">${platz}</span>`
+  return `<div class="zeile p${platz}" data-spieler="${s.spieler_id}"><span class="platz">${platz}</span>`
     + `<span class="name">${HS.esc(s.spieler)}</span>${s.neu ? '<span class="neu">NEU</span>' : ''}`
     + `<span class="punkte">${HS.zahl(s.score)}</span></div>`;
 }
@@ -407,21 +405,39 @@ async function pruefen() {
   } catch (e) { verbunden(false); }
 }
 
-// ---------- Detailanzeige
+// ---------- Detailanzeige (Flipper: alle Scores, Spieler: Bestwerte je Flipper)
 async function detailZeigen(id) {
   let d;
   try { d = await HS.api(`flipper/${id}/scores`); } catch (e) { return; }
+  const n = d.scores.length;
+  detailAufbauen(d.flipper.name,
+    n ? `Alle Highscores · ${n} ${n === 1 ? 'Eintrag' : 'Einträge'}` : 'Noch keine Highscores',
+    d.scores.map((s, i) => ({ platz: i + 1, name: s.spieler, score: s.score, datum: s.datum, neu: s.neu })),
+    'Einträge');
+}
+
+async function spielerZeigen(id) {
+  let d;
+  try { d = await HS.api(`spieler/${id}/scores`); } catch (e) { return; }
+  const n = d.bestwerte.length, siege = d.bestwerte.filter(b => b.platz === 1).length;
+  detailAufbauen(d.spieler.name,
+    n ? `Beste Ergebnisse auf ${n} ${n === 1 ? 'Flipper' : 'Flippern'}${siege ? ` · ${siege}× Platz 1` : ''} · Platz in der ewigen Liste`
+      : 'Noch keine Highscores',
+    d.bestwerte.map(b => ({ platz: b.platz, name: b.flipper, score: b.score, datum: b.datum, neu: b.neu })),
+    'Flipper', 2);            // Flippernamen sind lang: höchstens 2 Spalten
+}
+
+function detailAufbauen(titel, info, eintraege, mehrWort, maxSpalten = 4) {
   detailOffen = true;
   const box = document.getElementById('detail');
-  document.getElementById('detail-name').textContent = d.flipper.name;
-  const n = d.scores.length;
-  document.getElementById('detail-info').textContent = n
-    ? `Alle Highscores · ${n} ${n === 1 ? 'Eintrag' : 'Einträge'}` : 'Noch keine Highscores';
+  document.getElementById('detail-name').textContent = titel;
+  const n = eintraege.length;
+  document.getElementById('detail-info').textContent = info;
   box.hidden = false;
 
   const liste = document.getElementById('detail-liste');
   // je mehr Spalten, desto kleiner die Schrift, damit die Namen lesbar bleiben
-  const groessen = [2.9, 2.7, 2.3, 1.95];
+  const groessen = [2.9, 2.7, 2.3, 1.95].slice(0, maxSpalten);
   let spalten = 1, proSpalte = 5;
   for (; spalten <= groessen.length; spalten++) {
     proSpalte = Math.max(5, Math.floor((liste.clientHeight - 4) / (window.innerHeight * groessen[spalten - 1] / 100 * 1.95)));
@@ -429,14 +445,14 @@ async function detailZeigen(id) {
   }
   liste.style.fontSize = groessen[spalten - 1] + 'vh';
   const passt = proSpalte * spalten;
-  const zeigen = d.scores.slice(0, n > passt ? passt : n);
+  const zeigen = eintraege.slice(0, n > passt ? passt : n);
   liste.style.gridTemplateRows = `repeat(${Math.min(proSpalte, Math.max(zeigen.length, 1))}, auto)`;
   liste.style.gridTemplateColumns = spalten === 1 ? 'minmax(0, 60vw)' : `repeat(${spalten}, minmax(0, 1fr))`;
   liste.style.justifyContent = spalten === 1 ? 'center' : 'stretch';
-  liste.innerHTML = zeigen.map((s, i) => `<div class="dz p${i + 1}"><span class="platz">${i + 1}</span>`
-    + `<span class="name">${HS.esc(s.spieler)} ${s.neu ? '<span class="neu">NEU</span>' : ''}</span>`
-    + `<span class="punkte">${HS.zahl(s.score)}</span><span class="datum">${HS.datum(s.datum)}</span></div>`).join('');
-  document.getElementById('detail-mehr').textContent = n > zeigen.length ? `… und ${n - zeigen.length} weitere Einträge` : '';
+  liste.innerHTML = zeigen.map(e => `<div class="dz p${e.platz}"><span class="platz">${e.platz}</span>`
+    + `<span class="name">${HS.esc(e.name)} ${e.neu ? '<span class="neu">NEU</span>' : ''}</span>`
+    + `<span class="punkte">${HS.zahl(e.score)}</span><span class="datum">${HS.datum(e.datum)}</span></div>`).join('');
+  document.getElementById('detail-mehr').textContent = n > zeigen.length ? `… und ${n - zeigen.length} weitere ${mehrWort}` : '';
 
   const sek = Number(einst.detail_sekunden) || 10;
   const balken = document.querySelector('#detail-balken div');
@@ -455,7 +471,10 @@ function detailSchliessen() {
   zuletzt = performance.now();
 }
 
+// Klick auf einen Namen: Bestwerte des Spielers, sonst alle Scores des Flippers
 raster.addEventListener('click', ev => {
+  const z = ev.target.closest('.zeile[data-spieler]');
+  if (z) { spielerZeigen(z.dataset.spieler); return; }
   const k = ev.target.closest('.kachel');
   if (k) detailZeigen(k.dataset.id);
 });

@@ -60,6 +60,8 @@ Gibt es einen Flipper doppelt (z. B. zwei „Star Wars“), bitte unterscheiden:
 - Rechts unten (Maus bewegen) wählst du **Wechselnd / Monat / Jahr / Ewig**. Die Wahl
   bleibt gespeichert. Tasten 1–4 gehen auch.
 - Klick auf einen Flipper: alle Scores mit Datum. Zurück nach 10 Sekunden oder per Klick.
+- Klick auf einen Spielernamen: sein bestes Ergebnis auf jedem Flipper mit seinem Platz
+  in der ewigen Liste (beste Plätze zuerst). Ebenfalls 10 Sekunden.
 - Neue Einträge erscheinen nach spätestens 10 Sekunden. 24 Stunden lang steht „NEU“ daneben.
 
 **Handy**
