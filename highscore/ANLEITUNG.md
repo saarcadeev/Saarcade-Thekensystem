@@ -82,6 +82,16 @@ Gibt es einen Flipper doppelt (z. B. zwei „Star Wars“), bitte unterscheiden:
 - **Wiederherstellen:** Server-Fenster schließen, gesicherte Datei nach
   `highscore\daten\highscores.db` kopieren (alte ersetzen), neu starten.
 
+**Auf ein anderes Notebook umziehen** (z. B. vom Test-Notebook aufs Museums-Notebook):
+1. Altes Notebook: Verwaltung → Sicherung → **„Datenbank herunterladen“** → Datei auf USB-Stick.
+2. Neues Notebook: Programm einrichten (Abschnitt 1), aber **noch nicht starten**
+   (falls doch schon gestartet: das schwarze Server-Fenster schließen).
+3. Im Ordner `highscore` den Ordner `daten` anlegen (falls nicht vorhanden) und die Datei vom
+   Stick hineinkopieren. Sie muss genau **`highscores.db`** heißen (umbenennen, falls ein Datum im Namen steht).
+4. `Highscore starten.bat` – alle Flipper, Spieler, Scores, Einstellungen und das Admin-Passwort sind da.
+
+Die Beamer-Wahl unten rechts (Wechselnd/Monat/…) merkt sich jeder Rechner selbst – einmal neu wählen.
+
 ## 5. Später: Umzug auf einen eigenen Server
 
 - Das Programm braucht nur Python 3 und läuft unverändert auch unter Linux:
