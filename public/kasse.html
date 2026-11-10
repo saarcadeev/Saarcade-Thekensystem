@@ -1389,77 +1389,78 @@ const additionalCSS = `
         }
 
         .header-main {
-            grid-template-columns: auto 1fr 350px; /* 350px = Breite des Warenkorbs */
+            /* Spalten: Ablauf | PIN/Scanner/Kassierhilfe | Logo + Eingabe | grünes Feld.
+               Letzte Spalte = Warenkorb-Breite (350px) minus Innenabstand (15px) und Rand (2px)
+               der Kopfzeile, damit das grüne Feld links und rechts bündig über dem Warenkorb steht. */
+            grid-template-columns: 190px 190px 1fr 333px;
             grid-template-rows: 100px; /* feste Höhe: nichts springt, wenn sich das grüne Feld ändert */
-            gap: 20px;
+            gap: 15px; /* = Abstand zwischen Produkten und Warenkorb */
             align-items: stretch;
             margin-bottom: 0;
         }
 
-        /* Links: Logo, darunter die Einstellungen (Kassierhilfe, Verzehrkarten, PIN) */
-        .header-brand {
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            gap: 8px;
-        }
-
-        .header .header-brand h1 {
-            justify-content: flex-start;
-            margin: 0;
-            font-size: 1.6em;
-            white-space: nowrap;
-        }
-
+        /* Linke zwei Spalten: je drei gleich hohe Felder übereinander */
+        .header .workflow-steps,
         .header-tools {
+            display: grid;
+            grid-template-rows: repeat(3, 1fr);
+            gap: 4px;
+            height: 100%;
+        }
+
+        .header .workflow-step,
+        .header .scanner-status,
+        .header-tools .cash-helper-toggle.show {
             display: flex;
-            gap: 8px;
-            align-items: stretch;
-            flex-wrap: wrap;
-            min-height: 36px; /* gleich hoch, ob die Kassierhilfe sichtbar ist oder nicht */
+            align-items: center;
+            justify-content: center;
+            padding: 0 10px;
+            font-size: 0.85em;
+            font-weight: 600;
+            white-space: nowrap;
+            border-radius: 6px;
+            min-height: 0;
         }
 
         .header-tools .cash-helper-toggle {
-            padding: 6px 12px;
+            border-width: 1px;
+            margin: 0 !important;
+        }
+
+        .header-tools .pin-button-container {
+            min-height: 0;
         }
 
         .header-tools .pin-button-container .btn {
             min-width: 0;
             height: 100%;
             margin: 0;
-            padding: 6px 16px;
+            padding: 0 10px;
+            font-size: 0.85em !important;
         }
 
-        /* Mitte: Ablauf (1-2-3) + Scanner-Modus + Meldungen in einer Zeile, darunter das Eingabefeld */
+        .header-tools .pin-button-container .btn:hover {
+            transform: none;
+        }
+
+        /* Mitte: oben Logo + Meldungen, darunter das Eingabefeld */
         .scanner-pin-area {
             justify-content: space-between;
+            min-width: 0;
         }
 
         .scanner-status-row {
-            gap: 10px;
-            align-items: stretch;
-            min-height: 36px;
+            gap: 15px;
+            align-items: center;
+            min-height: 44px;
         }
 
-        .header .workflow-steps {
-            flex-direction: row;
-            height: auto;
-            gap: 4px;
+        .header .scanner-status-row h1 {
+            justify-content: flex-start;
+            margin: 0;
+            font-size: 1.6em;
+            white-space: nowrap;
             flex: 0 0 auto;
-        }
-
-        .header .workflow-step {
-            display: flex;
-            align-items: center;
-            padding: 6px 14px;
-            font-size: 0.9em;
-            white-space: nowrap;
-        }
-
-        .header .scanner-status {
-            display: flex;
-            align-items: center;
-            white-space: nowrap;
         }
 
         .header .status-messages-inline .status-message,
@@ -1530,6 +1531,12 @@ const additionalCSS = `
             margin-bottom: 4px;
         }
 
+        /* Beim Antippen/Überfahren nur pinker Rand, kein Hochrutschen
+           (sonst verschwindet der obere Rand der ersten Reihe) */
+        .products-grid .product-card:hover {
+            transform: none;
+        }
+
         /* Gut greifbare Scrollleiste für den Touchmonitor */
         .products-grid::-webkit-scrollbar {
             width: 14px;
@@ -1568,15 +1575,16 @@ const additionalCSS = `
         /* Etwas kleinere Bildschirme (z. B. 1280 breit): Kopfzeile darf umbrechen */
         @media (max-width: 1400px) {
             .header-main {
-                grid-template-columns: auto 1fr 320px;
-                gap: 12px;
+                grid-template-columns: 150px 160px 1fr 303px;
             }
-            .header .workflow-step {
-                padding: 5px 8px;
-                font-size: 0.8em;
+            .header .workflow-step,
+            .header .scanner-status,
+            .header-tools .cash-helper-toggle.show,
+            .header-tools .pin-button-container .btn {
+                font-size: 0.75em !important;
             }
-            .scanner-status-row {
-                flex-wrap: wrap;
+            .header .scanner-status-row h1 .brand-sub {
+                display: none;
             }
         }
         `;
@@ -1616,12 +1624,27 @@ try {
     
     <div class="container">
         <div class="header" style="position: relative;">
-            <!-- KOPFZEILE (10.11.2026): eine Zeile statt zwei. Links Logo + Einstellungen,
-                 Mitte Ablauf/Scanner, rechts das grüne Feld genau über dem Warenkorb. -->
+            <!-- KOPFZEILE (10.11.2026): eine Zeile. Links zwei Spalten mit je drei Feldern
+                 (Ablauf 1-2-3 | PIN, Scanner-Modus, Kassierhilfe), Mitte Logo + Meldung + Eingabe,
+                 rechts das grüne Feld genau über dem Warenkorb. -->
             <div class="header-main">
-                <div class="header-brand">
-                    <h1><img src="/Saarcade-Logo-Farbe.png" alt="Saarcade e.V." class="brand-logo" onerror="this.style.display='none'"> <span class="brand-sub">Kassensystem</span></h1>
-                    <div class="header-tools">
+                <div class="workflow-steps">
+                    <div class="workflow-step" id="step1">1️⃣ Mitglied</div>
+                    <div class="workflow-step" id="step2">2️⃣ Getränke</div>
+                    <div class="workflow-step" id="step3">3️⃣ Checkout</div>
+                </div>
+
+                <div class="header-tools">
+                        <div class="pin-button-container">
+                            <button class="btn" id="pinChangeBtn" onclick="openPinModal()" style="width: 100%; font-size: 0.8em;">
+                                🔐 PIN
+                            </button>
+                        </div>
+
+                        <div class="scanner-status" id="scannerStatus">
+                            🔍 Bereit für Barcode-Scanner
+                        </div>
+
                         <!-- Kassierhilfe Toggle (nur für Barkeeper sichtbar) -->
                         <div class="cash-helper-toggle" id="cashHelperToggle" style="position: relative; top: auto; right: auto;">
                             <input type="checkbox" id="cashHelperCheckbox" onchange="toggleCashHelper()">
@@ -1633,26 +1656,11 @@ try {
                             <input type="checkbox" id="voucherSystemCheckbox" onchange="toggleVoucherSystem()">
                             <label for="voucherSystemCheckbox">🎫 Verzehrkarten</label>
                         </div>
-
-                        <div class="pin-button-container">
-                            <button class="btn" id="pinChangeBtn" onclick="openPinModal()" style="width: 100%; font-size: 0.8em;">
-                                🔐 PIN
-                            </button>
-                        </div>
-                    </div>
                 </div>
 
                 <div class="scanner-pin-area">
                     <div class="scanner-status-row">
-                        <div class="workflow-steps">
-                            <div class="workflow-step" id="step1">1️⃣ Mitglied</div>
-                            <div class="workflow-step" id="step2">2️⃣ Getränke</div>
-                            <div class="workflow-step" id="step3">3️⃣ Checkout</div>
-                        </div>
-
-                        <div class="scanner-status" id="scannerStatus">
-                            🔍 Bereit für Barcode-Scanner
-                        </div>
+                        <h1><img src="/Saarcade-Logo-Farbe.png" alt="Saarcade e.V." class="brand-logo" onerror="this.style.display='none'"> <span class="brand-sub">Kassensystem</span></h1>
                         <div class="status-messages-inline">
                             <div class="offline-indicator" id="offlineIndicator" style="display: none;">
                                 ⚠️ Keine Verbindung zur Datenbank
