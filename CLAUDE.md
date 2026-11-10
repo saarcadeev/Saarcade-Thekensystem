@@ -24,11 +24,13 @@ Jochen ist kein Entwickler: Schritte für GitHub Desktop/Supabase konkret erklä
   - `kleidung-verwaltung.html` – nur noch Weiterleitung auf `admin-kleidung.html` (alte Lesezeichen).
   - `barkasse-beleg.js` – gemeinsamer Druckbeleg (Kasse + Admin).
 - `sql/` – SQL-Dateien, die Jochen im Supabase **SQL Editor** ausführt.
-- `highscore/` – **eigenständiges** Highscore-System (seit 02.11.2026), **ohne Supabase/Vercel**:
-  `server.py` (nur Python-Standardbibliothek + SQLite, Port 8080), Seiten in `highscore/web/`
-  (`anzeige.html` Beamer, `eingabe.html`, `verwaltung.html`). Läuft auf dem Notebook im Museum,
-  Daten in `highscore/daten/` (gitignored). Details: `highscore/ANLEITUNG.md`. Lokal testen:
-  `py highscore/server.py --port 8090 --db <Testdatei>` (Testdatenbank nie in `highscore/daten`).
+- `kassen-pc/` – Einrichtung eines **Windows-Mini-PCs** (geplant Nov. 2026: Dell OptiPlex 3060 Micro) als
+  Ersatz für den Raspi an der Theke: `Kasse starten.bat` (Edge `--app` + Vollbild mit eigenem Profil
+  `%LOCALAPPDATA%\SaarcadeKasse`, **nicht** `--kiosk`, weil Edge-Kiosk InPrivate läuft und `kasseLogin`
+  verlöre; `--kiosk-printing` für den Beleg ohne Dialog auf den UTAX), `Kassen-PC einrichten.bat` +
+  `einrichten.ps1` (UTF-8 mit BOM lassen), `EINRICHTUNG-KASSEN-PC.md`. Wird nicht deployt.
+- Das Highscore-System ist ein **eigenes Repo** `Saarcade-Highscore` (Ordner
+  `Dokumente\GitHub\Saarcade-Highscore`, seit 03.11.2026) und gehört nicht hierher.
 
 ## Arbeitsweise
 

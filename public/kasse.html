@@ -1373,6 +1373,212 @@ const additionalCSS = `
         .cart-section #cartItems > div:not(.cart-item) {
             color: #b9a6c6 !important;
         }
+
+        /* ===== FULL-HD-LAYOUT (10.11.2026) =====
+           Alles passt in den Bildschirm (1920x1080), ohne dass die Seite scrollt:
+           Kopfzeile so hoch wie nötig, der Rest füllt genau den restlichen Platz.
+           Zum Zurücknehmen: diesen Block löschen und die Kopfzeile im HTML zurücksetzen. */
+        .container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            flex: 0 0 auto;
+            padding: 12px 15px;
+        }
+
+        .header-main {
+            grid-template-columns: auto 1fr 350px; /* 350px = Breite des Warenkorbs */
+            grid-template-rows: 100px; /* feste Höhe: nichts springt, wenn sich das grüne Feld ändert */
+            gap: 20px;
+            align-items: stretch;
+            margin-bottom: 0;
+        }
+
+        /* Links: Logo, darunter die Einstellungen (Kassierhilfe, Verzehrkarten, PIN) */
+        .header-brand {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .header .header-brand h1 {
+            justify-content: flex-start;
+            margin: 0;
+            font-size: 1.6em;
+            white-space: nowrap;
+        }
+
+        .header-tools {
+            display: flex;
+            gap: 8px;
+            align-items: stretch;
+            flex-wrap: wrap;
+            min-height: 36px; /* gleich hoch, ob die Kassierhilfe sichtbar ist oder nicht */
+        }
+
+        .header-tools .cash-helper-toggle {
+            padding: 6px 12px;
+        }
+
+        .header-tools .pin-button-container .btn {
+            min-width: 0;
+            height: 100%;
+            margin: 0;
+            padding: 6px 16px;
+        }
+
+        /* Mitte: Ablauf (1-2-3) + Scanner-Modus + Meldungen in einer Zeile, darunter das Eingabefeld */
+        .scanner-pin-area {
+            justify-content: space-between;
+        }
+
+        .scanner-status-row {
+            gap: 10px;
+            align-items: stretch;
+            min-height: 36px;
+        }
+
+        .header .workflow-steps {
+            flex-direction: row;
+            height: auto;
+            gap: 4px;
+            flex: 0 0 auto;
+        }
+
+        .header .workflow-step {
+            display: flex;
+            align-items: center;
+            padding: 6px 14px;
+            font-size: 0.9em;
+            white-space: nowrap;
+        }
+
+        .header .scanner-status {
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+        }
+
+        .header .status-messages-inline .status-message,
+        .header .status-messages-inline .offline-indicator {
+            margin: 0;
+            padding: 7px 14px;
+        }
+
+        /* Rechts: grünes Feld, genau über dem Warenkorb */
+        .header .user-info {
+            padding: 8px 14px;
+            line-height: 1.15;
+            overflow: hidden;
+        }
+
+        .header .user-name {
+            font-size: 1.25em;
+            margin-bottom: 0;
+        }
+
+        .header .user-balance {
+            font-size: 1.7em;
+        }
+
+        /* Hauptbereich füllt den Rest bis zum unteren Rand */
+        .main-content {
+            flex: 1 1 auto;
+            min-height: 0;
+            height: auto;
+        }
+
+        .products-section,
+        .cart-section {
+            min-height: 0;
+        }
+
+        /* Produkte: Zeilen teilen sich die verfügbare Höhe exakt auf (Alle: 3 Zeilen,
+           Favoriten: 2 Zeilen). Beim Scrollen rastet das Raster zeilenweise ein,
+           damit nie eine halbe Zeile abgeschnitten stehen bleibt. */
+        .products-grid {
+            flex: 1 1 0;
+            min-height: 0;
+            max-height: none;
+            grid-template-rows: none;
+            grid-auto-rows: calc((100% - 20px) / 3);
+            align-content: start;
+            padding: 0 6px 0 0;
+            scroll-snap-type: y mandatory;
+            scroll-padding: 0;
+            overscroll-behavior: contain;
+        }
+
+        .products-grid.favorites-grid {
+            grid-template-rows: none !important;
+            grid-auto-rows: calc((100% - 15px) / 2);
+        }
+
+        .products-grid .product-card,
+        .products-grid.favorites-grid .product-card {
+            height: auto !important;
+            min-height: 0;
+            scroll-snap-align: start;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .products-grid .product-image {
+            margin-bottom: 4px;
+        }
+
+        /* Gut greifbare Scrollleiste für den Touchmonitor */
+        .products-grid::-webkit-scrollbar {
+            width: 14px;
+        }
+
+        .products-grid::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.08);
+            border-radius: 7px;
+        }
+
+        .products-grid::-webkit-scrollbar-thumb {
+            background: #e6007e;
+            border-radius: 7px;
+        }
+
+        .products-header {
+            margin-bottom: 12px;
+        }
+
+        /* Warenkorb: Liste wächst, Schaltflächen sitzen unten am Rand */
+        .cart-items {
+            max-height: none;
+            min-height: 0;
+        }
+
+        .cart-actions {
+            margin-top: auto !important;
+        }
+
+        .cart-actions .btn {
+            margin: 0;
+            padding: 14px 15px;
+            font-size: 1em;
+        }
+
+        /* Etwas kleinere Bildschirme (z. B. 1280 breit): Kopfzeile darf umbrechen */
+        @media (max-width: 1400px) {
+            .header-main {
+                grid-template-columns: auto 1fr 320px;
+                gap: 12px;
+            }
+            .header .workflow-step {
+                padding: 5px 8px;
+                font-size: 0.8em;
+            }
+            .scanner-status-row {
+                flex-wrap: wrap;
+            }
+        }
         `;
         
     </style>
@@ -1410,29 +1616,40 @@ try {
     
     <div class="container">
         <div class="header" style="position: relative;">
-            <h1><img src="/Saarcade-Logo-Farbe.png" alt="Saarcade e.V." class="brand-logo" onerror="this.style.display='none'"> <span class="brand-sub">Kassensystem</span></h1>
-            
+            <!-- KOPFZEILE (10.11.2026): eine Zeile statt zwei. Links Logo + Einstellungen,
+                 Mitte Ablauf/Scanner, rechts das grüne Feld genau über dem Warenkorb. -->
             <div class="header-main">
-                <div class="scanner-pin-area">
-                    <div class="scanner-status-row">
+                <div class="header-brand">
+                    <h1><img src="/Saarcade-Logo-Farbe.png" alt="Saarcade e.V." class="brand-logo" onerror="this.style.display='none'"> <span class="brand-sub">Kassensystem</span></h1>
+                    <div class="header-tools">
                         <!-- Kassierhilfe Toggle (nur für Barkeeper sichtbar) -->
                         <div class="cash-helper-toggle" id="cashHelperToggle" style="position: relative; top: auto; right: auto;">
                             <input type="checkbox" id="cashHelperCheckbox" onchange="toggleCashHelper()">
                             <label for="cashHelperCheckbox">💰 Kassierhilfe</label>
                         </div>
-                        
+
                         <!-- Verzehrkarten Toggle (nur für Barkeeper sichtbar) -->
-                        <div class="cash-helper-toggle" id="voucherToggle" style="position: relative; top: auto; right: auto; margin-top: 10px;">
+                        <div class="cash-helper-toggle" id="voucherToggle" style="position: relative; top: auto; right: auto;">
                             <input type="checkbox" id="voucherSystemCheckbox" onchange="toggleVoucherSystem()">
                             <label for="voucherSystemCheckbox">🎫 Verzehrkarten</label>
                         </div>
-                        
+
                         <div class="pin-button-container">
                             <button class="btn" id="pinChangeBtn" onclick="openPinModal()" style="width: 100%; font-size: 0.8em;">
                                 🔐 PIN
                             </button>
                         </div>
-                        
+                    </div>
+                </div>
+
+                <div class="scanner-pin-area">
+                    <div class="scanner-status-row">
+                        <div class="workflow-steps">
+                            <div class="workflow-step" id="step1">1️⃣ Mitglied</div>
+                            <div class="workflow-step" id="step2">2️⃣ Getränke</div>
+                            <div class="workflow-step" id="step3">3️⃣ Checkout</div>
+                        </div>
+
                         <div class="scanner-status" id="scannerStatus">
                             🔍 Bereit für Barcode-Scanner
                         </div>
@@ -1458,13 +1675,7 @@ try {
         <div class="user-name">Kein Benutzer</div>
         <div class="user-balance">Bitte scannen</div>
     </div>
-</div>    
-                
-                <div class="workflow-steps">
-                    <div class="workflow-step" id="step1">1️⃣ Mitglied</div>
-                    <div class="workflow-step" id="step2">2️⃣ Getränke</div>
-                    <div class="workflow-step" id="step3">3️⃣ Checkout</div>
-                </div>
+</div>
             </div>
         </div>
 
@@ -1521,7 +1732,7 @@ try {
                 
                 <div id="cartTotal" style="display: none;"></div>
                 
-                <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;">
+                <div class="cart-actions" style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;">
                     <div style="display: flex; gap: 10px;">
                         <button class="btn btn-danger" onclick="clearCart()" id="clearBtn" disabled style="flex: 1;">🗑️ Leeren</button>
                         <button class="btn" onclick="resetSession()" style="flex: 1;">🔄 Reset</button>
@@ -2346,6 +2557,32 @@ async function loadProducts() {
             } catch (error) {
                 console.error('Fehler beim Laden der Einstellungen:', error);
             }
+        }
+
+        // SCHNELLE SCAN-SUCHE (07.11.2026): zuerst in den bereits geladenen Listen suchen,
+        // den Server nur fragen, wenn der Code dort nicht vorkommt (z. B. ganz neues Mitglied).
+        function findLocalUserByBarcode(barcode) {
+            const code = String(barcode).toUpperCase();
+            return users.find(u => Array.isArray(u.barcodes) &&
+                u.barcodes.some(bc => String(bc).toUpperCase() === code)) || null;
+        }
+
+        function findLocalProductByBarcode(barcode) {
+            const code = String(barcode).toUpperCase();
+            return products.find(p => Array.isArray(p.barcodes) &&
+                p.barcodes.some(bc => String(bc).toUpperCase() === code)) || null;
+        }
+
+        // Kontostand im Hintergrund aktualisieren (die lokale Liste kann bis zu 5 Min. alt sein)
+        function refreshUserBalanceInBackground(user, barcode) {
+            searchUserByBarcode(barcode).then(fresh => {
+                if (!fresh || fresh.id !== user.id || fresh.balance === undefined) return;
+                user.balance = fresh.balance;
+                if (currentUser && currentUser.id === user.id) {
+                    currentUser.balance = fresh.balance;
+                    updateUserInfo();
+                }
+            }).catch(() => {});
         }
 
         async function searchUserByBarcode(barcode) {
@@ -4028,8 +4265,20 @@ if (trimmedBarcode === specialBarcodes.checkout.toUpperCase()) {
             }
 
             if (scannerMode === 'user') {
+                // Schnell: Mitglied aus der geladenen Liste, ohne auf den Server zu warten
+                const quickUser = findLocalUserByBarcode(trimmedBarcode);
+                if (quickUser) {
+                    if (requiresPinCheck(quickUser, true)) {
+                        promptForPin(quickUser, true);
+                    } else {
+                        selectUser(quickUser, true);
+                    }
+                    refreshUserBalanceInBackground(quickUser, trimmedBarcode);
+                    return;
+                }
+
                 showStatus('Suche Mitglied...', 'loading');
-                
+
                 try {
                     const user = await searchUserByBarcode(trimmedBarcode);
                     if (user) {
@@ -4065,8 +4314,15 @@ if (trimmedBarcode === specialBarcodes.checkout.toUpperCase()) {
                     return;
                 }
 
+                // Schnell: Getränk aus der geladenen Liste, ohne auf den Server zu warten
+                const quickProduct = findLocalProductByBarcode(trimmedBarcode);
+                if (quickProduct) {
+                    addToCart(quickProduct.id, true);
+                    return;
+                }
+
                 showStatus('Suche Produkt...', 'loading');
-                
+
                 try {
                     const product = await searchProductByBarcode(trimmedBarcode);
                     if (product) {

@@ -4,5 +4,4 @@
 node_modules/
 .vercel/
 *.log
-highscore/daten/
-__pycache__/
+kassen-pc/kasse-adresse.txt
