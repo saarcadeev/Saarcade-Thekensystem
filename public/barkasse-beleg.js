@@ -69,7 +69,7 @@
                     <td class="num">${signed(x.difference)}</td>
                 </tr>`).join('');
         return `
-    <h2 style="margin-top: 18px;">Tagesübersicht</h2>
+    <h2 style="margin-top: 12px;">Tagesübersicht</h2>
     <table class="count">
         <thead><tr><th>Uhrzeit</th><th>Art</th><th>Beleg</th><th>Abgerechnet von</th><th class="num">Einnahmen gezählt</th><th class="num">laut Tablet</th><th class="num">Differenz</th></tr></thead>
         <tbody>${rows}</tbody>
@@ -155,27 +155,35 @@
     @page { size: A4; margin: 15mm; }
     body { font-family: Arial, Helvetica, sans-serif; font-size: 11pt; color: #000; margin: 0; }
     .head { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 12px; }
-    .head img { height: 50px; }
+    .head img { height: 40px; }
     h1 { font-size: 16pt; margin: 0; }
-    .meta { width: 100%; margin-bottom: 14px; }
+    .meta { width: 100%; margin-bottom: 8px; }
     .meta td { padding: 2px 0; }
     .cols { display: flex; gap: 20px; }
     .cols > div { flex: 1; }
     h2 { font-size: 11pt; margin: 0 0 4px; }
     table.count { width: 100%; border-collapse: collapse; }
-    table.count th, table.count td { border: 1px solid #999; padding: 3px 6px; }
+    table.count th, table.count td { border: 1px solid #999; padding: 2px 6px; }
     table.count th { background: #eee; }
     .num { text-align: right; }
     table.count tfoot td { font-weight: bold; background: #f5f5f5; }
-    table.result { width: 60%; margin: 16px 0 0 auto; border-collapse: collapse; }
+    table.result { width: 100%; margin: 14px 0 0; border-collapse: collapse; }
     table.result td { padding: 3px 6px; }
     table.result tr.sep td { border-top: 1px solid #000; font-weight: bold; }
     .small { font-size: 9pt; color: #444; }
     .note { margin-top: 8px; text-align: right; font-weight: bold; }
-    .sign { width: 100%; margin-top: 40px; border-collapse: collapse; }
-    .sign td { padding: 30px 8px 4px 0; vertical-align: bottom; }
+    .sign { width: 100%; margin-top: 14px; border-collapse: collapse; }
+    .sign td { padding: 22px 8px 4px 0; vertical-align: bottom; }
     .line { border-top: 1px solid #000; padding-top: 3px; font-size: 9pt; }
-    .foot { margin-top: 25px; font-size: 8pt; color: #666; }
+    .foot { margin-top: 12px; font-size: 8pt; color: #666; }
+    /* Bereich zum Ausfüllen von Hand durch den Kassenwart */
+    .treasurer { margin-top: 16px; border: 1px solid #000; padding: 8px 12px; page-break-inside: avoid; }
+    .treasurer table { width: 100%; border-collapse: collapse; }
+    .treasurer td { padding: 10px 6px 3px 0; vertical-align: bottom; }
+    .treasurer td.field { width: 45mm; border-bottom: 1px solid #000; }
+    .treasurer tr.sep td { font-weight: bold; padding-top: 12px; }
+    .treasurer tr.sep td.field { border-bottom: 3px double #000; }
+    .treasurer-sign td { width: 50%; padding: 24px 12px 0 0; }
 </style>
 </head>
 <body>
@@ -202,9 +210,8 @@
         </div>
         <div>
             ${rightColumn}
-        </div>
-    </div>
 
+    <!-- Ergebnis steht rechts unter dem Anfangsbestand (10.11.2026), damit unten Platz frei wird -->
     <table class="result">
         <tr><td>Summe Kasse gesamt</td><td class="num">${euro(c.cash_total)}</td></tr>
         <tr><td>abzügl. ${legacy ? 'Wechselgeld' : 'Anfangsbestand'}</td><td class="num">− ${euro(opening)}</td></tr>
@@ -218,12 +225,30 @@
         ${extraRows}
     </table>
     <div class="note">${diffNote}</div>
+        </div>
+    </div>
 
     ${isShift ? '' : dayOverview(dayClosings)}
 
     <table class="sign">
         ${signRows}
     </table>
+
+    ${isShift ? '' : `
+    <div class="treasurer">
+        <h2>Eintragungen Kassenwart</h2>
+        <table>
+            <tr><td>Barkassenbestand alt</td><td class="field"></td></tr>
+            <tr><td>+ Einnahmen gem. o. a. Abrechnung</td><td class="field"></td></tr>
+            <tr class="sep"><td>= Barkassenbestand neu</td><td class="field"></td></tr>
+        </table>
+        <table class="treasurer-sign">
+            <tr>
+                <td><div class="line">Datum</div></td>
+                <td><div class="line">Unterschrift Kassenwart</div></td>
+            </tr>
+        </table>
+    </div>`}
 
     <div class="foot">
         Erfasst an der Kasse am ${created.toLocaleDateString('de-DE')} um ${created.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr · Saarcade e.V. Thekensystem
