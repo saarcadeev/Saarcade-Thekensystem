@@ -1392,20 +1392,30 @@ const additionalCSS = `
             /* Spalten: Ablauf | PIN/Scanner/Kassierhilfe | Logo + Eingabe | grünes Feld.
                Letzte Spalte = Warenkorb-Breite (350px) minus Innenabstand (15px) und Rand (2px)
                der Kopfzeile, damit das grüne Feld links und rechts bündig über dem Warenkorb steht. */
-            grid-template-columns: 190px 190px 1fr 333px;
+            grid-template-columns: 386px 1fr 333px;
             grid-template-rows: 100px; /* feste Höhe: nichts springt, wenn sich das grüne Feld ändert */
             gap: 15px; /* = Abstand zwischen Produkten und Warenkorb */
             align-items: stretch;
             margin-bottom: 0;
         }
 
-        /* Linke zwei Spalten: je drei gleich hohe Felder übereinander */
+        /* Links: 2 Spalten x 3 Felder, alle gleich groß, überall derselbe Abstand (6px) */
+        .header-left {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            min-width: 0;
+        }
+
         .header .workflow-steps,
         .header-tools {
             display: grid;
+            grid-template-columns: minmax(0, 1fr);
             grid-template-rows: repeat(3, 1fr);
-            gap: 4px;
+            justify-content: stretch;
+            gap: 6px;
             height: 100%;
+            min-width: 0;
         }
 
         .header .workflow-step,
@@ -1449,18 +1459,37 @@ const additionalCSS = `
             min-width: 0;
         }
 
+        /* Logo mittig über dem Eingabefeld, Meldung klein rechts daneben */
         .scanner-status-row {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
             gap: 15px;
             align-items: center;
             min-height: 44px;
         }
 
         .header .scanner-status-row h1 {
-            justify-content: flex-start;
+            grid-column: 2;
+            grid-row: 1;
+            justify-content: center;
             margin: 0;
             font-size: 1.6em;
             white-space: nowrap;
-            flex: 0 0 auto;
+        }
+
+        .header .status-messages-inline {
+            grid-column: 3;
+            grid-row: 1;
+            min-width: 0;
+        }
+
+        .header .status-messages-inline .status-message,
+        .header .status-messages-inline .offline-indicator {
+            padding: 5px 10px !important;
+            font-size: 0.85em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .header .status-messages-inline .status-message,
@@ -1575,7 +1604,7 @@ const additionalCSS = `
         /* Etwas kleinere Bildschirme (z. B. 1280 breit): Kopfzeile darf umbrechen */
         @media (max-width: 1400px) {
             .header-main {
-                grid-template-columns: 150px 160px 1fr 303px;
+                grid-template-columns: 306px 1fr 303px;
             }
             .header .workflow-step,
             .header .scanner-status,
@@ -1628,6 +1657,7 @@ try {
                  (Ablauf 1-2-3 | PIN, Scanner-Modus, Kassierhilfe), Mitte Logo + Meldung + Eingabe,
                  rechts das grüne Feld genau über dem Warenkorb. -->
             <div class="header-main">
+              <div class="header-left">
                 <div class="workflow-steps">
                     <div class="workflow-step" id="step1">1️⃣ Mitglied</div>
                     <div class="workflow-step" id="step2">2️⃣ Getränke</div>
@@ -1657,6 +1687,7 @@ try {
                             <label for="voucherSystemCheckbox">🎫 Verzehrkarten</label>
                         </div>
                 </div>
+              </div>
 
                 <div class="scanner-pin-area">
                     <div class="scanner-status-row">
